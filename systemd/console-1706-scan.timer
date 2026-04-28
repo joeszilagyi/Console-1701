@@ -1,0 +1,11 @@
+[Unit]
+Description=Run console-1706 scanner every 30 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=30min
+Persistent=true
+Unit=console-1706-scan.service
+
+[Install]
+WantedBy=timers.target

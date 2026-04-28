@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>console-1706</title>
+    <link rel="stylesheet" href="/static/app.css">
+  </head>
+  <body>
+    <header class="hero">
+      <div class="rail"></div>
+      <div>
+        <p class="eyebrow">Local-only repo and workflow console</p>
+        <h1>What is going on</h1>
+      </div>
+      <button id="scan-button" class="action-button" type="button">Manual scan</button>
+    </header>
+
+    <main class="shell">
+      <section class="state-strip" aria-label="System state">
+        <article class="state-cell severity-{{ summary.system_state | lower }}">
+          <span>System state</span>
+          <strong>{{ summary.system_state }}</strong>
+        </article>
+        <article class="state-cell">
+          <span>Human attention</span>
+          <strong>{{ "YES" if summary.human_attention else "NO" }}</strong>
+        </article>
+        <article class="state-cell">
+          <span>Active area</span>
+          <strong>{{ summary.active_area }}</strong>
+        </article>
+        <article class="state-cell">
+          <span>Last scan</span>
+          <strong>
+            {% if summary.last_scan %}
+              {{ summary.last_scan.finished_at or summary.last_scan.started_at }}
+            {% else %}
+              never
+            {% endif %}
+          </strong>
+        </article>
+        <article class="state-cell wide">
+          <span>Next sane action</span>
+          <strong>{{ summary.next_sane_action }}</strong>
+        </article>
+      </section>
+
+      <section class="panel main-readout">
+        <div>
+          <p class="eyebrow">Overview</p>
+          <h2>{{ summary.last_meaningful_event }}</h2>
+          {% if not summary.last_scan %}
+            <p>No scan has run yet. Run <code>console-1706 scan</code> or press manual scan.</p>
+          {% elif summary.repo_count == 0 %}
+            <p>No repos found yet.</p>
+            <p>Config path: <code>~/.config/console-1706/config.yml</code></p>
+            <p>Add <code>repo_roots</code> or <code>explicit_repos</code>, then run <code>console-1706 scan</code>.</p>
+          {% else %}
+            <p>{{ summary.repo_count }} repo{{ "" if summary.repo_count == 1 else "s" }} tracked. {{ summary.attention_count }} open attention item{{ "" if summary.attention_count == 1 else "s" }}.</p>
+          {% endif %}
+        </div>
+        <div class="readout-meta">
+          <span>DB</span>
+          <code>{{ summary.db_path }}</code>
+        </div>
+      </section>
+
+      <section class="grid two">
+        <div class="panel">
+          <div class="panel-title">
+            <p class="eyebrow">Attention</p>
+            <h2>Human attention</h2>
+          </div>
+          {% if attention %}
+            <div class="stack">
+              {% for item in attention %}
+                <article class="attention severity-{{ item.severity }}">
+                  <div>
+                    <strong>{{ item.title }}</strong>
+                    <p>{{ item.body }}</p>
+                    <p><b>Why it matters:</b> {{ item.why_it_matters }}</p>
+                    <p><b>Next:</b> {{ item.next_sane_action }}</p>
+                  </div>
+                </article>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p>No open attention items.</p>
+          {% endif %}
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">
+            <p class="eyebrow">Activity</p>
+            <h2>Meaningful events</h2>
+          </div>
+          {% if events %}
+            <ol class="event-list">
+              {% for event in events %}
+                <li class="event severity-{{ event.severity }}">
+                  <time>{{ event.time }}</time>
+                  <span>{{ event.source }}: {{ event.message }}</span>
+                </li>
+              {% endfor %}
+            </ol>
+          {% else %}
+            <p>No meaningful events found yet.</p>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title row">
+          <div>
+            <p class="eyebrow">Repos</p>
+            <h2>Repo cards</h2>
+          </div>
+          <button class="ghost-button" type="button" data-toggle-evidence>Evidence mode</button>
+        </div>
+
+        {% if repos %}
+          <div class="repo-grid">
+            {% for card in repos %}
+              {% set repo = card.repo %}
+              {% set interp = card.interpretation %}
+              {% set snapshot = card.snapshot or {} %}
+              {% set test = card.test or {} %}
+              <article class="repo-card severity-{{ interp.severity if interp else 'gray' }}">
+                <div class="repo-head">
+                  <div>
+                    <a href="/repos/{{ repo.id }}" class="repo-link">{{ repo.name }}</a>
+                    <p>{{ repo.role or "No role configured." }}</p>
+                  </div>
+                  <span class="pill">{{ interp.state if interp else "Unknown" }}</span>
+                </div>
+                {% if interp %}
+                  <p class="meaning">{{ interp.meaning }}</p>
+                  <p><b>Risk:</b> {{ interp.severity }}</p>
+                  <p><b>Next:</b> {{ interp.next_sane_action }}</p>
+                  <p class="evidence-footer">
+                    Evidence: {{ snapshot.branch or "unknown branch" }},
+                    {{ "dirty" if snapshot.is_dirty else "clean" }},
+                    test {{ test.status or "unknown" }}.
+                  </p>
+                  <details class="evidence-block">
+                    <summary>Under the hood</summary>
+                    <pre>{{ interp.evidence | tojson(indent=2) }}</pre>
+                  </details>
+                {% else %}
+                  <p>No interpretation exists yet. Run a scan.</p>
+                {% endif %}
+                <form class="handoff-form" data-repo-id="{{ repo.id }}">
+                  <label>
+                    Handoff task
+                    <textarea name="task" rows="3">Review this state and tell me what remains before it can be safely committed.</textarea>
+                  </label>
+                  <button class="small-button" type="submit">Build Codex packet</button>
+                </form>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <h3>No repos found yet.</h3>
+            <p>Config path: <code>~/.config/console-1706/config.yml</code></p>
+            <p>Add repo roots or explicit repos, then run <code>console-1706 scan</code>.</p>
+          </div>
+        {% endif %}
+      </section>
+
+      <section class="grid two">
+        <div class="panel">
+          <div class="panel-title">
+            <p class="eyebrow">Handoffs</p>
+            <h2>Generated packets</h2>
+          </div>
+          {% if handoffs %}
+            <ol class="handoff-list">
+              {% for packet in handoffs %}
+                <li>
+                  <strong>{{ packet.title }}</strong>
+                  <code>{{ packet.path }}</code>
+                </li>
+              {% endfor %}
+            </ol>
+          {% else %}
+            <p>No handoff packets generated yet.</p>
+          {% endif %}
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">
+            <p class="eyebrow">Settings</p>
+            <h2>Local safety</h2>
+          </div>
+          <ul class="plain-list">
+            <li>Server binds to <code>127.0.0.1:1706</code>.</li>
+            <li>Scans read local Git, filesystem, logs, and SQLite only.</li>
+            <li>No LLM, cloud, telemetry, GitHub API, or automatic <code>git fetch</code>.</li>
+            <li>Tests are not auto-run unless explicitly enabled in config.</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

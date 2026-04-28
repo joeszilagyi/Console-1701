@@ -1,0 +1,83 @@
+server:
+  host: "127.0.0.1"
+  port: 1706
+  browser_refresh_seconds: 60
+
+scan:
+  interval_minutes: 30
+  max_repos_per_scan: 75
+  overall_scan_timeout_seconds: 180
+  per_repo_timeout_seconds: 20
+  git_command_timeout_seconds: 5
+  log_tail_max_bytes: 262144
+  max_recent_commits: 8
+  max_changed_files_display: 80
+  dirty_stale_hours: 24
+  inactive_days_warning: 14
+  inactive_days_stale: 45
+  allow_network: false
+  allow_git_fetch: false
+
+sqlite:
+  busy_timeout_ms: 5000
+  journal_mode: "WAL"
+
+paths:
+  repo_roots:
+    - "~/projects"
+    - "~/wiki"
+  explicit_repos:
+    - "~/projects/ufo-records"
+    - "~/projects/TCL"
+    - "~/wiki"
+
+ignore:
+  paths:
+    - "**/.git/**"
+    - "**/.venv/**"
+    - "**/venv/**"
+    - "**/node_modules/**"
+    - "**/__pycache__/**"
+    - "**/.pytest_cache/**"
+    - "**/.mypy_cache/**"
+    - "**/.ruff_cache/**"
+    - "**/dist/**"
+    - "**/build/**"
+    - "**/vendor/**"
+    - "**/archive/**"
+
+logs:
+  - name: "ufo-actions"
+    path: "~/wiki/ufo-actions.log"
+    type: "ufo_actions"
+    enabled: true
+  - name: "codex"
+    path: "~/.codex"
+    type: "codex"
+    enabled: true
+
+test_policy:
+  auto_run: false
+  default_timeout_seconds: 120
+  allow_repos: []
+
+projects:
+  - name: "ufo-records"
+    path: "~/projects/ufo-records"
+    role: "Long-horizon UFO research database and tooling"
+    category: "Research machinery"
+    importance: "high"
+    test_commands:
+      - "python3 -m pytest tools/sqlite/tests"
+  - name: "TCL"
+    path: "~/projects/TCL"
+    role: "Time travel constraints library and adversarial theory project"
+    category: "Theory/library project"
+    importance: "high"
+    test_commands: []
+  - name: "wiki"
+    path: "~/wiki"
+    role: "Working area for prompts, article drafts, logs, country runs, and source machinery"
+    category: "Research workbench"
+    importance: "critical"
+    test_commands: []

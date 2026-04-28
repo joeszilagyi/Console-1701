@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ detail.repo.name }} - console-1706</title>
+    <link rel="stylesheet" href="/static/app.css">
+  </head>
+  <body>
+    <header class="hero">
+      <div class="rail"></div>
+      <div>
+        <p class="eyebrow"><a href="/">Overview</a></p>
+        <h1>{{ detail.repo.name }}</h1>
+      </div>
+    </header>
+    <main class="shell">
+      <section class="panel">
+        {% set interp = detail.interpretation %}
+        {% set snapshot = detail.snapshot or {} %}
+        {% set test = detail.test or {} %}
+        {% if interp %}
+          <p class="eyebrow">System state</p>
+          <h2>{{ interp.state }}: {{ interp.headline }}</h2>
+          <p>{{ interp.meaning }}</p>
+          <p><b>Why it matters:</b> {{ interp.why_it_matters }}</p>
+          <p><b>Next:</b> {{ interp.next_sane_action }}</p>
+        {% else %}
+          <h2>No interpretation exists yet.</h2>
+          <p>Run <code>console-1706 scan</code>.</p>
+        {% endif %}
+      </section>
+
+      <section class="grid two">
+        <div class="panel">
+          <p class="eyebrow">Evidence</p>
+          <h2>Git</h2>
+          <dl class="evidence-list">
+            <dt>Path</dt><dd><code>{{ detail.repo.path }}</code></dd>
+            <dt>Branch</dt><dd>{{ snapshot.branch or "unknown" }}</dd>
+            <dt>Dirty</dt><dd>{{ "yes" if snapshot.is_dirty else "no" }}</dd>
+            <dt>Latest commit</dt><dd>{{ snapshot.commit_subject or "unknown" }}</dd>
+            <dt>Ahead / behind</dt><dd>{{ snapshot.ahead_count }} / {{ snapshot.behind_count }}</dd>
+          </dl>
+          <h3>Changed files</h3>
+          {% if snapshot.changed_files %}
+            <ul class="plain-list">
+              {% for path in snapshot.changed_files %}
+                <li><code>{{ path }}</code></li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>No changed files.</p>
+          {% endif %}
+        </div>
+        <div class="panel">
+          <p class="eyebrow">Evidence</p>
+          <h2>Tests and attention</h2>
+          <p><b>Test status:</b> {{ test.status or "unknown" }}</p>
+          <p>{{ test.summary or "No test evidence found." }}</p>
+          {% if detail.attention %}
+            <div class="stack">
+              {% for item in detail.attention %}
+                <article class="attention severity-{{ item.severity }}">
+                  <strong>{{ item.title }}</strong>
+                  <p>{{ item.next_sane_action }}</p>
+                </article>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p>No open attention items.</p>
+          {% endif %}
+        </div>
+      </section>
+
+      {% if interp %}
+        <section class="panel">
+          <p class="eyebrow">Under the hood</p>
+          <h2>Raw interpretation evidence</h2>
+          <pre>{{ interp.evidence | tojson(indent=2) }}</pre>
+        </section>
+      {% endif %}
+    </main>
+  </body>
+</html>
