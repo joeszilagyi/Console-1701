@@ -13,6 +13,7 @@
   --status-green: #7ee787;
   --status-gray: #6e7681;
   --radius: 28px;
+  --shell-width: min(80vw, 1680px);
 }
 
 * {
@@ -56,7 +57,8 @@ pre {
   grid-template-columns: 7rem 1fr auto;
   gap: 1.25rem;
   align-items: stretch;
-  max-width: 1500px;
+  width: var(--shell-width);
+  max-width: calc(100vw - 2rem);
   margin: 0 auto;
   padding: 2rem;
 }
@@ -70,9 +72,10 @@ pre {
 
 .hero h1 {
   margin: 0;
-  font-size: clamp(3rem, 8vw, 7rem);
-  line-height: 0.9;
-  letter-spacing: -0.07em;
+  color: #c9c6d6;
+  font-size: clamp(1.5rem, 4vw, 3.5rem);
+  line-height: 0.95;
+  letter-spacing: 0.08em;
 }
 
 .eyebrow {
@@ -85,7 +88,8 @@ pre {
 }
 
 .shell {
-  max-width: 1500px;
+  width: var(--shell-width);
+  max-width: calc(100vw - 2rem);
   margin: 0 auto;
   padding: 0 2rem 4rem;
 }
@@ -124,6 +128,7 @@ pre {
   margin-top: 0.8rem;
   font-size: clamp(1.1rem, 2vw, 1.9rem);
   line-height: 1.05;
+  overflow-wrap: anywhere;
 }
 
 .panel {
@@ -151,6 +156,7 @@ pre {
   flex-direction: column;
   justify-content: end;
   gap: 0.4rem;
+  min-width: 0;
   color: var(--muted);
 }
 
@@ -197,11 +203,16 @@ pre {
   gap: 1rem;
 }
 
+.repo-head > div {
+  min-width: 0;
+}
+
 .repo-link {
   color: var(--text);
   font-size: 1.4rem;
   font-weight: 900;
   text-decoration: none;
+  overflow-wrap: anywhere;
 }
 
 .repo-head p,
@@ -209,6 +220,7 @@ pre {
 .attention p,
 .panel p {
   color: var(--muted);
+  overflow-wrap: anywhere;
 }
 
 .pill {
@@ -249,7 +261,8 @@ pre {
 
 .event {
   display: grid;
-  grid-template-columns: 13rem 1fr;
+  grid-template-columns: minmax(9rem, 13rem) minmax(0, 1fr);
+  align-items: start;
   gap: 0.8rem;
   padding: 0.8rem;
   border: 1px solid var(--line);
@@ -258,8 +271,30 @@ pre {
 }
 
 .event time {
+  display: block;
   color: var(--muted);
   font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.event-body {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.event-source {
+  color: var(--accent-amber);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.event-message {
+  color: var(--text);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .plain-list {
@@ -269,6 +304,7 @@ pre {
 
 .evidence-footer {
   font-size: 0.9rem;
+  overflow-wrap: anywhere;
 }
 
 .evidence-block {
@@ -349,6 +385,23 @@ button {
 .evidence-list dd {
   margin: 0;
   color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.readout-meta code,
+.handoff-list code {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.handoff-list li {
+  min-width: 0;
+}
+
+.handoff-list code {
+  display: block;
+  margin-top: 0.35rem;
+  white-space: pre-wrap;
 }
 
 .severity-red::before,
@@ -408,6 +461,7 @@ button {
 
   .hero {
     grid-template-columns: 1fr;
+    width: auto;
   }
 
   .rail {
@@ -419,6 +473,11 @@ button {
   .grid.two,
   .main-readout {
     grid-template-columns: 1fr;
+  }
+
+  .shell {
+    width: auto;
+    padding: 0 1rem 3rem;
   }
 
   .event {

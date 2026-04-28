@@ -38,7 +38,12 @@ DEFAULT_CONFIG: dict[str, Any] = {
     },
     "paths": {
         "repo_roots": ["~/projects", "~/wiki"],
-        "explicit_repos": ["~/projects/ufo-records", "~/projects/TCL", "~/wiki"],
+        "explicit_repos": [
+            "~/projects/console-1706/main",
+            "~/projects/ufo-records",
+            "~/projects/TCL",
+            "~/wiki",
+        ],
     },
     "ignore": {
         "paths": [
@@ -66,11 +71,19 @@ DEFAULT_CONFIG: dict[str, Any] = {
         {"name": "codex", "path": "~/.codex", "type": "codex", "enabled": True},
     ],
     "test_policy": {
-        "auto_run": False,
+        "auto_run": True,
         "default_timeout_seconds": 120,
-        "allow_repos": [],
+        "allow_repos": ["console-1706", "~/projects/console-1706/main"],
     },
     "projects": [
+        {
+            "name": "console-1706",
+            "path": "~/projects/console-1706/main",
+            "role": "Local-only repo and workflow console",
+            "category": "Operational dashboard",
+            "importance": "critical",
+            "test_commands": ["./.venv/bin/pytest"],
+        },
         {
             "name": "ufo-records",
             "path": "~/projects/ufo-records",
@@ -173,6 +186,16 @@ def normalize_config(config: dict[str, Any]) -> None:
     for log in config.get("logs", []):
         if "path" in log:
             log["path"] = str(expand_path(log["path"]))
+
+    policy = config.setdefault("test_policy", {})
+    normalized_allow: list[str] = []
+    for item in policy.get("allow_repos", []):
+        value = str(item)
+        if value.startswith("~") or value.startswith("/"):
+            normalized_allow.append(str(expand_path(value)))
+        else:
+            normalized_allow.append(value)
+    policy["allow_repos"] = normalized_allow
 
 
 def ensure_state_dirs(config: dict[str, Any] | None = None) -> None:

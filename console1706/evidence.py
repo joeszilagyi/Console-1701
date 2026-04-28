@@ -38,7 +38,18 @@ def _decode_scan(row: sqlite3.Row | None) -> dict[str, Any] | None:
 
 def get_repo_cards(conn: sqlite3.Connection) -> list[dict[str, Any]]:
     rows = conn.execute(
-        "SELECT * FROM repos WHERE enabled = 1 ORDER BY name COLLATE NOCASE"
+        """
+        SELECT * FROM repos
+        WHERE enabled = 1
+        ORDER BY
+          CASE importance
+            WHEN 'critical' THEN 3
+            WHEN 'high' THEN 2
+            WHEN 'medium' THEN 1
+            ELSE 0
+          END DESC,
+          name COLLATE NOCASE
+        """
     ).fetchall()
     cards: list[dict[str, Any]] = []
     for row in rows:

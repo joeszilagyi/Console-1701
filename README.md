@@ -22,7 +22,7 @@ sudo apt install -y python3 python3-venv python3-pip git sqlite3 ripgrep jq curl
 Install the app from the repo:
 
 ```bash
-cd ~/projects/console-1706
+cd /path/to/console-1706
 python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install --upgrade pip
@@ -51,7 +51,7 @@ xdg-open http://127.0.0.1:1706
 
 ## One-Command User Service
 
-From `~/projects/console-1706`:
+From the repo root:
 
 ```bash
 ./scripts/install_user_service.sh

@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROJECT_DIR="$HOME/projects/console-1706"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+PROJECT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
 SERVICE_DIR="$HOME/.config/systemd/user"
 CONFIG_PATH="$HOME/.config/console-1706/config.yml"
 STATE_DIR="$HOME/.local/state/console-1706"
 
-if [[ "$(pwd -P)" != "$PROJECT_DIR" ]]; then
-  echo "Warning: expected to run from $PROJECT_DIR, currently in $(pwd -P)." >&2
-fi
+cd "$PROJECT_DIR"
 
 python3 -m venv .venv
 . .venv/bin/activate
@@ -18,8 +17,10 @@ python -m pip install -e '.[dev]'
 mkdir -p "$(dirname "$CONFIG_PATH")" "$STATE_DIR" "$SERVICE_DIR"
 console-1706 init-config --config "$CONFIG_PATH"
 
-cp systemd/console-1706.service "$SERVICE_DIR/"
-cp systemd/console-1706-scan.service "$SERVICE_DIR/"
+sed "s|__PROJECT_DIR__|$PROJECT_DIR|g" \
+  systemd/console-1706.service > "$SERVICE_DIR/console-1706.service"
+sed "s|__PROJECT_DIR__|$PROJECT_DIR|g" \
+  systemd/console-1706-scan.service > "$SERVICE_DIR/console-1706-scan.service"
 cp systemd/console-1706-scan.timer "$SERVICE_DIR/"
 
 systemctl --user daemon-reload

@@ -11,7 +11,7 @@
       <div class="rail"></div>
       <div>
         <p class="eyebrow">Local-only repo and workflow console</p>
-        <h1>What is going on</h1>
+        <h1>STATUS</h1>
       </div>
       <button id="scan-button" class="action-button" type="button">Manual scan</button>
     </header>
@@ -100,7 +100,10 @@
               {% for event in events %}
                 <li class="event severity-{{ event.severity }}">
                   <time>{{ event.time }}</time>
-                  <span>{{ event.source }}: {{ event.message }}</span>
+                  <div class="event-body">
+                    <strong class="event-source">{{ event.source }}</strong>
+                    <span class="event-message">{{ event.message }}</span>
+                  </div>
                 </li>
               {% endfor %}
             </ol>

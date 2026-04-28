@@ -70,9 +70,9 @@ def build_router(config_path: str | None = None) -> APIRouter:
             events = get_recent_events(conn)
             handoffs = get_handoffs(conn)
         return templates.TemplateResponse(
+            request,
             "index.html",
             {
-                "request": request,
                 "summary": summary,
                 "repos": repos,
                 "attention": attention,
@@ -87,7 +87,7 @@ def build_router(config_path: str | None = None) -> APIRouter:
             detail = get_repo_detail(conn, repo_id)
         if not detail:
             raise HTTPException(status_code=404, detail="Repo not found")
-        return templates.TemplateResponse("repo.html", {"request": request, "detail": detail})
+        return templates.TemplateResponse(request, "repo.html", {"detail": detail})
 
     @router.get("/api/health")
     def health():
