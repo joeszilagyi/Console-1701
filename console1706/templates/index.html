@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>console-1706</title>
-    <link rel="stylesheet" href="/static/app.css?v=machine-console-10">
+    <link rel="stylesheet" href="/static/app.css?v=machine-console-12">
   </head>
   <body>
     {% set snap = host.snapshot if host else {} %}
@@ -70,6 +70,19 @@
       </div>
       <button id="scan-button" class="action-button" type="button">Manual scan</button>
     </header>
+
+    <nav class="scope-nav" aria-label="Console scope selector">
+      {% for scope in ["INTERNAL", "LOCAL", "REGIONAL", "NATIONAL", "GLOBAL", "ORBITAL", "SYSTEM"] %}
+        <a class="scope-button" href="/" data-scope-nav="{{ scope }}">
+          <span class="scope-cap" aria-hidden="true"></span>
+          <span class="scope-gap" aria-hidden="true"></span>
+          <span class="scope-face">
+            <span class="signal-dot status-{{ host_summary.state | lower }}" aria-hidden="true"></span>
+            <b>{{ scope }}</b>
+          </span>
+        </a>
+      {% endfor %}
+    </nav>
 
     <main class="console-shell">
       <section class="status-ribbon sensor-lane" aria-label="Live machine sensor lane">
@@ -770,6 +783,6 @@
     </main>
 
     <div id="toast" role="status" aria-live="polite"></div>
-    <script src="/static/app.js?v=machine-console-11"></script>
+    <script src="/static/app.js?v=machine-console-12"></script>
   </body>
 </html>

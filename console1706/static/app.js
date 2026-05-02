@@ -23,6 +23,7 @@ const scanTiming = {
 
 const SENSOR_CLASSES = ["sensor-ok", "sensor-warning", "sensor-critical", "sensor-unknown"];
 const HISTORY_WINDOW_MS = 5 * 60 * 1000;
+const SCOPE_STORAGE_KEY = "console1706.scopeNav";
 const liveHistory = {
   "system-score": [],
   "net-rx": [],
@@ -121,6 +122,31 @@ document.querySelectorAll("[data-scroll-target]").forEach((button) => {
     window.scrollTo({ top, behavior: "smooth" });
   });
 });
+
+function setSelectedScope(scope) {
+  document.querySelectorAll("[data-scope-nav]").forEach((link) => {
+    const isSelected = link.dataset.scopeNav === scope;
+    link.classList.toggle("is-selected", isSelected);
+    if (isSelected) {
+      link.setAttribute("aria-current", "page");
+    } else {
+      link.removeAttribute("aria-current");
+    }
+  });
+}
+
+function initScopeNav() {
+  const links = document.querySelectorAll("[data-scope-nav]");
+  if (!links.length) return;
+  const stored = window.localStorage.getItem(SCOPE_STORAGE_KEY) || "LOCAL";
+  setSelectedScope(stored);
+  links.forEach((link) => {
+    link.addEventListener("click", () => {
+      window.localStorage.setItem(SCOPE_STORAGE_KEY, link.dataset.scopeNav || "LOCAL");
+      setSelectedScope(link.dataset.scopeNav || "LOCAL");
+    });
+  });
+}
 
 document.querySelectorAll("[data-codex-scenario]").forEach((button) => {
   button.addEventListener("click", async () => {
@@ -662,6 +688,7 @@ async function updateLiveReadouts() {
   }
 }
 
+initScopeNav();
 updateScanTimers();
 resumeLiveActivity();
 document.addEventListener("visibilitychange", () => {
