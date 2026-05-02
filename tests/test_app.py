@@ -7,6 +7,7 @@ from starlette.requests import Request
 from console1706 import config as config_module
 from console1706.api import build_router
 from console1706.db import connect_db, init_db, utc_now
+from console1706.scanner import insert_host_snapshot
 
 
 def _write_test_config(path: Path) -> None:
@@ -61,13 +62,64 @@ def test_root_page_renders_html(tmp_path, monkeypatch):
     config_path = tmp_path / "config.yml"
     _write_test_config(config_path)
     router = build_router(str(config_path))
+    with connect_db(db_path) as conn:
+        init_db(conn)
+        insert_host_snapshot(
+            conn,
+            "2026-05-01T12:00:00-07:00",
+            {
+                "identity": {"hostname": "demo-host"},
+                "os": {"pretty_name": "Debian GNU/Linux 13"},
+                "kernel": {"release": "6.12.0", "architecture": "x86_64"},
+                "session": {"uptime_seconds": 123.0, "uptime_human": "2m"},
+                "memory": {"available_percent": 50.0, "human_total": "8.0 GiB"},
+                "storage": {"root": {"use_percent": 42.0}},
+                "filesystems": {"items": []},
+                "network": {"default_route": {"dev": "eth0"}},
+                "services": {},
+                "processes": {},
+                "dev_tools": {},
+                "logs": {},
+                "health": {
+                    "state": "OK",
+                    "score": 100,
+                    "severity": "green",
+                    "headline": "No host issues",
+                    "summary": "Host is OK.",
+                    "next_sane_action": "No action needed.",
+                    "penalties": [],
+                    "checks": {},
+                },
+                "evidence": {},
+                "probe_errors": [],
+            },
+        )
+        conn.commit()
 
     response = _route_endpoint(router, "/")(_request("/"))
+    body = response.body.decode()
 
     assert response.status_code == 200
     assert response.media_type == "text/html"
-    assert "STATUS" in response.body.decode()
-    assert str(db_path) in response.body.decode()
+    assert "Local Debian system console" in body
+    assert "Machine readout" in body
+    assert "demo-host" in body
+    assert str(db_path) in body
+    assert body.index("Machine readout") < body.index("Local work")
+
+
+def test_root_page_renders_before_first_host_scan(tmp_path, monkeypatch):
+    db_path = _use_temp_state(monkeypatch, tmp_path)
+    config_path = tmp_path / "config.yml"
+    _write_test_config(config_path)
+    router = build_router(str(config_path))
+
+    response = _route_endpoint(router, "/")(_request("/"))
+    body = response.body.decode()
+
+    assert response.status_code == 200
+    assert "No host scan has run yet." in body
+    assert str(db_path) in body
 
 
 def test_repo_page_renders_existing_repo(tmp_path, monkeypatch):
@@ -81,7 +133,9 @@ def test_repo_page_renders_existing_repo(tmp_path, monkeypatch):
         init_db(conn)
         conn.execute(
             """
-            INSERT INTO repos (name, path, role, category, importance, enabled, created_at, updated_at)
+            INSERT INTO repos (
+              name, path, role, category, importance, enabled, created_at, updated_at
+            )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (

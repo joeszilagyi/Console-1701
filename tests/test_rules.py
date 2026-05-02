@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from console1706.adapters import cluster_changed_files
 from console1706.rules import evaluate_repo
@@ -24,7 +24,7 @@ def _snapshot(changed_files=None, **overrides):
         "branch": "main",
         "commit_sha": "abc123",
         "commit_subject": "latest work",
-        "commit_time": datetime.now(timezone.utc).isoformat(),
+        "commit_time": datetime.now(UTC).isoformat(),
         "is_dirty": bool(changed_files),
         "has_untracked": False,
         "ahead_count": None,
@@ -83,7 +83,7 @@ def test_test_failure_is_broken():
 
 
 def test_inactive_repo_is_dormant_but_preserved():
-    old = (datetime.now(timezone.utc) - timedelta(days=90)).isoformat()
+    old = (datetime.now(UTC) - timedelta(days=90)).isoformat()
     state, _attention = evaluate_repo(_repo(), _snapshot(commit_time=old), None)
     assert state["state"] == "Dormant but preserved"
 

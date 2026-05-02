@@ -64,6 +64,15 @@ test_policy:
     - "console-1706"
     - "~/projects/console-1706/main"
 
+system_probe:
+  command_timeout_seconds: 3
+  allow_external_connectivity_checks: false
+  external_check_urls:
+    - "https://www.debian.org/"
+  external_check_timeout_seconds: 3
+  show_sensitive_identifiers: false
+  critical_services: []
+
 projects:
   - name: "console-1706"
     path: "~/projects/console-1706/main"

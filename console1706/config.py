@@ -4,7 +4,6 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
-
 APP_NAME = "console-1706"
 DEFAULT_CONFIG_PATH = Path.home() / ".config" / APP_NAME / "config.yml"
 DEFAULT_STATE_DIR = Path.home() / ".local" / "state" / APP_NAME
@@ -74,6 +73,14 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "auto_run": True,
         "default_timeout_seconds": 120,
         "allow_repos": ["console-1706", "~/projects/console-1706/main"],
+    },
+    "system_probe": {
+        "command_timeout_seconds": 3,
+        "allow_external_connectivity_checks": False,
+        "external_check_urls": ["https://www.debian.org/"],
+        "external_check_timeout_seconds": 3,
+        "show_sensitive_identifiers": False,
+        "critical_services": [],
     },
     "projects": [
         {

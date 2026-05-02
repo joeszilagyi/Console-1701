@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import subprocess
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -108,7 +108,7 @@ def _dirty_age_hours(repo_path: Path, changed_files: list[str]) -> float | None:
         newest_mtime = mtime if newest_mtime is None else max(newest_mtime, mtime)
     if newest_mtime is None:
         return None
-    age_seconds = datetime.now(timezone.utc).timestamp() - newest_mtime
+    age_seconds = datetime.now(UTC).timestamp() - newest_mtime
     return round(max(age_seconds, 0) / 3600, 2)
 
 

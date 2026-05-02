@@ -1668,6 +1668,8 @@ GET  /api/repos                repo cards
 GET  /api/repos/{id}           repo detail
 GET  /api/attention            attention items
 GET  /api/events               recent event stream
+GET  /api/host                 latest host/system snapshot with summary and evidence
+GET  /api/host/history         compact host snapshot history
 GET  /api/evidence/{id}        raw evidence for interpretation
 GET  /api/handoffs             handoff packet list
 POST /api/scan                 trigger safe manual scan
@@ -1688,12 +1690,12 @@ This is a core outcome, not a side feature.
 
 The packet builder reduces LLM cost by letting the local console assemble high-signal context before Codex or another LLM sees anything.
 
-Button labels:
+Current UI rule:
 
 ```text
-Build Codex packet
-Copy packet
-Open packet folder
+Do not show Codex packet buttons on the homepage.
+Keep packet generation available from the CLI and local API.
+Local work remains secondary to the machine console.
 ```
 
 The packet should include:

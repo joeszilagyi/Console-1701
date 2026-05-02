@@ -113,6 +113,21 @@ CREATE TABLE IF NOT EXISTS scan_runs (
   errors_json TEXT
 );
 
+CREATE TABLE IF NOT EXISTS host_snapshots (
+  id INTEGER PRIMARY KEY,
+  scanned_at TEXT NOT NULL,
+  hostname TEXT,
+  os_pretty_name TEXT,
+  kernel_release TEXT,
+  uptime_seconds REAL,
+  health_state TEXT NOT NULL,
+  health_score INTEGER,
+  summary_json TEXT NOT NULL,
+  snapshot_json TEXT NOT NULL,
+  evidence_json TEXT NOT NULL,
+  errors_json TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
@@ -129,3 +144,6 @@ CREATE INDEX IF NOT EXISTS idx_interpreted_states_repo_time
 
 CREATE INDEX IF NOT EXISTS idx_attention_status
   ON attention_items(status, severity);
+
+CREATE INDEX IF NOT EXISTS idx_host_snapshots_scanned_at
+  ON host_snapshots(scanned_at DESC);

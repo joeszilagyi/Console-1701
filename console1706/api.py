@@ -14,7 +14,10 @@ from console1706.db import connect_db, init_db
 from console1706.evidence import (
     get_attention_items,
     get_handoffs,
+    get_host_history,
+    get_host_summary,
     get_interpretation_evidence,
+    get_latest_host_snapshot,
     get_recent_events,
     get_repo_cards,
     get_repo_detail,
@@ -22,7 +25,6 @@ from console1706.evidence import (
 )
 from console1706.handoff import DEFAULT_TASK, create_handoff_packet
 from console1706.scanner import run_scan
-
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(PACKAGE_DIR / "templates"))
@@ -65,6 +67,9 @@ def build_router(config_path: str | None = None) -> APIRouter:
     def index(request: Request):
         with _conn(config_path) as conn:
             summary = get_system_summary(conn)
+            host = get_latest_host_snapshot(conn)
+            host_summary = get_host_summary(conn)
+            host_history = get_host_history(conn, limit=8)
             repos = get_repo_cards(conn)
             attention = get_attention_items(conn)
             events = get_recent_events(conn)
@@ -74,6 +79,9 @@ def build_router(config_path: str | None = None) -> APIRouter:
             "index.html",
             {
                 "summary": summary,
+                "host": host,
+                "host_summary": host_summary,
+                "host_history": host_history,
                 "repos": repos,
                 "attention": attention,
                 "events": events,
@@ -127,6 +135,21 @@ def build_router(config_path: str | None = None) -> APIRouter:
     def events():
         with _conn(config_path) as conn:
             return get_recent_events(conn)
+
+    @router.get("/api/host")
+    def host():
+        with _conn(config_path) as conn:
+            latest = get_latest_host_snapshot(conn)
+            return {
+                "summary": get_host_summary(conn),
+                "snapshot": latest,
+                "evidence": latest.get("evidence") if latest else {},
+            }
+
+    @router.get("/api/host/history")
+    def host_history(limit: int = 20):
+        with _conn(config_path) as conn:
+            return get_host_history(conn, limit=max(1, min(int(limit), 100)))
 
     @router.get("/api/evidence/{interpretation_id}")
     def evidence(interpretation_id: int):

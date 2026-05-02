@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from collections import Counter
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
-
 
 IGNORE_DIR_NAMES = {
     ".git",
