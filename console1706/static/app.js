@@ -138,8 +138,9 @@ function setSelectedScope(scope) {
 function initScopeNav() {
   const links = document.querySelectorAll("[data-scope-nav]");
   if (!links.length) return;
-  const stored = window.localStorage.getItem(SCOPE_STORAGE_KEY) || "LOCAL";
-  setSelectedScope(stored);
+  const activeScope = document.body.dataset.activeScope || "LOCAL";
+  window.localStorage.setItem(SCOPE_STORAGE_KEY, activeScope);
+  setSelectedScope(activeScope);
   links.forEach((link) => {
     link.addEventListener("click", () => {
       window.localStorage.setItem(SCOPE_STORAGE_KEY, link.dataset.scopeNav || "LOCAL");

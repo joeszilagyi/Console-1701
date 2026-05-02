@@ -112,20 +112,40 @@ def test_root_page_renders_html(tmp_path, monkeypatch):
 
     assert response.status_code == 200
     assert response.media_type == "text/html"
-    assert "Local Debian system console" in body
+    assert "console-1706" in body
     assert "Machine readout" in body
     assert "B2 Services / systems" in body
     assert "B3 Debian" in body
     assert "B4 Hardware" in body
-    assert "/static/app.js?v=machine-console-12" in body
-    assert "/static/app.css?v=machine-console-12" in body
+    assert "/static/app.js?v=machine-console-13" in body
+    assert "/static/app.css?v=machine-console-13" in body
+    assert 'data-active-scope="OVERVIEW"' in body
+    assert 'data-scope-nav="OVERVIEW"' in body
+    assert 'href="/"' in body
     assert 'data-scope-nav="INTERNAL"' in body
+    assert 'href="/INTERNAL"' in body
     assert 'data-scope-nav="ORBITAL"' in body
     assert 'data-sparkline="cpu"' in body
     assert 'data-live="poll-policy"' in body
     assert "demo-host" in body
     assert str(db_path) in body
     assert body.index("Machine readout") < body.index("Local work")
+
+
+def test_scoped_root_page_marks_active_scope(tmp_path, monkeypatch):
+    db_path = _use_temp_state(monkeypatch, tmp_path)
+    config_path = tmp_path / "config.yml"
+    _write_test_config(config_path)
+    router = build_router(str(config_path))
+
+    response = _route_endpoint(router, "/{scope}")(_request("/ORBITAL"), "ORBITAL")
+    body = response.body.decode()
+
+    assert response.status_code == 200
+    assert 'data-active-scope="ORBITAL"' in body
+    assert 'data-scope-nav="ORBITAL"' in body
+    assert 'aria-current="page"' in body
+    assert str(db_path) in body
 
 
 def test_root_page_renders_codex_terminal_action_for_host_penalty(tmp_path, monkeypatch):

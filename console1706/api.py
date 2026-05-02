@@ -32,6 +32,8 @@ from console1706.terminal_action import TerminalLaunchError, launch_host_alert_c
 PACKAGE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(PACKAGE_DIR / "templates"))
 _SCAN_LOCK = threading.Lock()
+SCOPE_NAMES = ("INTERNAL", "LOCAL", "REGIONAL", "NATIONAL", "GLOBAL", "ORBITAL", "SYSTEM")
+NAV_SCOPE_NAMES = ("OVERVIEW", *SCOPE_NAMES)
 
 
 class HandoffRequest(BaseModel):
@@ -74,8 +76,7 @@ def _run_scan_locked(config_path: str | None) -> None:
 def build_router(config_path: str | None = None) -> APIRouter:
     router = APIRouter()
 
-    @router.get("/", response_class=HTMLResponse)
-    def index(request: Request):
+    def render_index(request: Request, active_scope: str = "LOCAL"):
         with _conn(config_path) as conn:
             summary = get_system_summary(conn)
             host = get_latest_host_snapshot(conn)
@@ -97,8 +98,23 @@ def build_router(config_path: str | None = None) -> APIRouter:
                 "attention": attention,
                 "events": events,
                 "handoffs": handoffs,
+                "scopes": NAV_SCOPE_NAMES,
+                "active_scope": active_scope,
             },
         )
+
+    @router.get("/", response_class=HTMLResponse)
+    def index(request: Request):
+        return render_index(request, "OVERVIEW")
+
+    @router.get("/{scope}", response_class=HTMLResponse)
+    def scoped_index(request: Request, scope: str):
+        normalized = scope.upper()
+        if normalized == "OVERVIEW":
+            return render_index(request, "OVERVIEW")
+        if normalized not in SCOPE_NAMES:
+            raise HTTPException(status_code=404, detail="Scope not found")
+        return render_index(request, normalized)
 
     @router.get("/repos/{repo_id}", response_class=HTMLResponse)
     def repo_page(request: Request, repo_id: int):

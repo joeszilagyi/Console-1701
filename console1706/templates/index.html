@@ -4,9 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>console-1706</title>
-    <link rel="stylesheet" href="/static/app.css?v=machine-console-12">
+    <link rel="stylesheet" href="/static/app.css?v=machine-console-13">
   </head>
-  <body>
+  <body data-active-scope="{{ active_scope or 'LOCAL' }}">
     {% set snap = host.snapshot if host else {} %}
     {% set identity = snap.identity or {} %}
     {% set os_info = snap.os or {} %}
@@ -47,9 +47,12 @@
     <header class="command-strip">
       <div class="brand-block">
         <span class="signal-dot status-{{ host_summary.state | lower }}"></span>
-        <div>
-          <h1>console-1706</h1>
-          <p>Local Debian system console</p>
+        <div class="brand-copy">
+          <div class="brand-title-line">
+            <h1>console-1706</h1>
+            <strong>{{ active_scope or "LOCAL" }}</strong>
+          </div>
+          <p>{{ active_scope or "LOCAL" }}</p>
         </div>
       </div>
       <div class="command-readouts">
@@ -72,8 +75,13 @@
     </header>
 
     <nav class="scope-nav" aria-label="Console scope selector">
-      {% for scope in ["INTERNAL", "LOCAL", "REGIONAL", "NATIONAL", "GLOBAL", "ORBITAL", "SYSTEM"] %}
-        <a class="scope-button" href="/" data-scope-nav="{{ scope }}">
+      {% for scope in scopes %}
+        <a
+          class="scope-button{% if scope == active_scope %} is-selected{% endif %}"
+          href="{{ '/' if scope == 'OVERVIEW' else '/' ~ scope }}"
+          data-scope-nav="{{ scope }}"
+          {% if scope == active_scope %}aria-current="page"{% endif %}
+        >
           <span class="scope-cap" aria-hidden="true"></span>
           <span class="scope-gap" aria-hidden="true"></span>
           <span class="scope-face">
@@ -783,6 +791,6 @@
     </main>
 
     <div id="toast" role="status" aria-live="polite"></div>
-    <script src="/static/app.js?v=machine-console-12"></script>
+    <script src="/static/app.js?v=machine-console-13"></script>
   </body>
 </html>
