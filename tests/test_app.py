@@ -118,7 +118,7 @@ def test_root_page_renders_html(tmp_path, monkeypatch):
     assert "B3 Debian" in body
     assert "B4 Hardware" in body
     assert "/static/app.js?v=machine-console-13" in body
-    assert "/static/app.css?v=machine-console-14" in body
+    assert "/static/app.css?v=machine-console-15" in body
     assert 'data-active-scope="OVERVIEW"' in body
     assert 'data-scope-nav="OVERVIEW"' in body
     assert 'href="/"' in body

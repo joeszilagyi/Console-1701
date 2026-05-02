@@ -213,7 +213,7 @@ summary {
 
 .scope-button.is-selected .scope-cap {
   opacity: 1;
-  animation: scope-cap-cycle 2s steps(18, end) infinite;
+  animation: scope-cap-cycle 700ms steps(18, end) infinite;
 }
 
 .brand-block,
