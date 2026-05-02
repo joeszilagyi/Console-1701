@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>console-1706</title>
-    <link rel="stylesheet" href="/static/app.css?v=machine-console-4">
+    <link rel="stylesheet" href="/static/app.css?v=machine-console-5">
   </head>
   <body>
     {% set snap = host.snapshot if host else {} %}
@@ -139,6 +139,13 @@
           {% if host_summary.penalties %}
             <ul class="alert-list">
               {% for penalty in host_summary.penalties %}
+                {% set codex_action = {
+                  "section": penalty.section,
+                  "message": penalty.message,
+                  "why": penalty.why or "This crossed a deterministic host-health threshold.",
+                  "next_action": penalty.next or "Open the section evidence and inspect the collected local facts.",
+                  "evidence": penalty.evidence
+                } %}
                 <li class="status-line status-{{ penalty.severity }}{% if penalty.severity == 'red' or 'failed' in (penalty.message | lower) %} status-fail{% endif %}">
                   <span></span>
                   <div class="alert-copy">
@@ -147,6 +154,16 @@
                     <small><b>Why:</b> {{ penalty.why or "This crossed a deterministic host-health threshold." }}</small>
                     <small><b>Next:</b> {{ penalty.next or "Open the section evidence and inspect the collected local facts." }}</small>
                   </div>
+                  <button
+                    class="delta-action"
+                    type="button"
+                    title="Open a new terminal with this alert loaded into interactive Codex"
+                    aria-label="Open Codex terminal for {{ penalty.message }}"
+                    data-codex-scenario="{{ codex_action | tojson | forceescape }}"
+                  >
+                    <span class="delta-glyph" aria-hidden="true"></span>
+                    <span class="delta-label">Codex</span>
+                  </button>
                 </li>
               {% endfor %}
             </ul>
@@ -161,6 +178,58 @@
               {% endfor %}
             </ul>
           </details>
+        </article>
+
+        <article class="module placeholder-bay">
+          <div class="module-head">
+            <div>
+              <p class="module-kicker">Reserved</p>
+              <h2>Sensor bay 01</h2>
+            </div>
+            <span class="module-code">WAIT</span>
+          </div>
+          <div class="empty-bay">
+            <span>Awaiting real local signal</span>
+          </div>
+        </article>
+
+        <article class="module placeholder-bay">
+          <div class="module-head">
+            <div>
+              <p class="module-kicker">Reserved</p>
+              <h2>Sensor bay 02</h2>
+            </div>
+            <span class="module-code">WAIT</span>
+          </div>
+          <div class="empty-bay">
+            <span>Awaiting real local signal</span>
+          </div>
+        </article>
+
+        <article class="module placeholder-bay">
+          <div class="module-head">
+            <div>
+              <p class="module-kicker">Reserved</p>
+              <h2>Sensor bay 03</h2>
+            </div>
+            <span class="module-code">WAIT</span>
+          </div>
+          <div class="empty-bay">
+            <span>Awaiting real local signal</span>
+          </div>
+        </article>
+
+        <article class="module placeholder-bay">
+          <div class="module-head">
+            <div>
+              <p class="module-kicker">Reserved</p>
+              <h2>Sensor bay 04</h2>
+            </div>
+            <span class="module-code">WAIT</span>
+          </div>
+          <div class="empty-bay">
+            <span>Awaiting real local signal</span>
+          </div>
         </article>
 
         <article class="module identity-module">

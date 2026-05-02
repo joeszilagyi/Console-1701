@@ -25,6 +25,7 @@ from console1706.evidence import (
 )
 from console1706.handoff import DEFAULT_TASK, create_handoff_packet
 from console1706.scanner import run_scan
+from console1706.terminal_action import TerminalLaunchError, launch_host_alert_codex_terminal
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(PACKAGE_DIR / "templates"))
@@ -35,6 +36,14 @@ class HandoffRequest(BaseModel):
     repo_id: int
     task: str = DEFAULT_TASK
     title: str | None = None
+
+
+class HostCodexActionRequest(BaseModel):
+    section: str = "host"
+    message: str
+    why: str | None = None
+    next_action: str | None = None
+    evidence: Any | None = None
 
 
 def _config(config_path: str | None) -> dict[str, Any]:
@@ -150,6 +159,14 @@ def build_router(config_path: str | None = None) -> APIRouter:
     def host_history(limit: int = 20):
         with _conn(config_path) as conn:
             return get_host_history(conn, limit=max(1, min(int(limit), 100)))
+
+    @router.post("/api/host/actions/codex")
+    def host_codex_action(payload: HostCodexActionRequest):
+        config = _config(config_path)
+        try:
+            return launch_host_alert_codex_terminal(config, payload.model_dump())
+        except TerminalLaunchError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     @router.get("/api/evidence/{interpretation_id}")
     def evidence(interpretation_id: int):

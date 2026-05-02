@@ -1670,6 +1670,7 @@ GET  /api/attention            attention items
 GET  /api/events               recent event stream
 GET  /api/host                 latest host/system snapshot with summary and evidence
 GET  /api/host/history         compact host snapshot history
+POST /api/host/actions/codex   launch a user-clicked host-alert Codex terminal
 GET  /api/evidence/{id}        raw evidence for interpretation
 GET  /api/handoffs             handoff packet list
 POST /api/scan                 trigger safe manual scan

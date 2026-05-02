@@ -186,6 +186,11 @@ Missing commands fail soft and are recorded as unavailable in evidence.
 
 Failed service alerts name the failed unit whenever `systemctl --failed` exposes it. The probe also records bounded `systemctl show` diagnostics and a limited recent `journalctl -u ...` sample when readable, so the alert can explain the local state, result, exit status, description, and most recent log hint without requiring sudo.
 
+Host alert rows include an explicit Codex terminal action. Clicking it writes a bounded prompt file
+under console-1706 state and asks the local desktop terminal emulator to start an interactive
+`codex` session with that scenario. The web process does not run Codex hidden in the background; it
+only attempts the terminal launch after the user clicks the action.
+
 External reachability checks are off by default:
 
 ```yaml
@@ -317,6 +322,7 @@ GET  /api/attention            attention items
 GET  /api/events               recent event stream
 GET  /api/host                 latest host/system snapshot with summary and evidence
 GET  /api/host/history         compact host snapshot history
+POST /api/host/actions/codex   launch a user-clicked host-alert Codex terminal
 GET  /api/evidence/{id}        raw interpretation evidence
 GET  /api/handoffs             handoff packet list
 POST /api/scan                 trigger safe manual scan
