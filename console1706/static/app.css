@@ -114,7 +114,7 @@ summary {
 
 .scope-button {
   display: grid;
-  grid-template-rows: 4px 2px minmax(2.15rem, auto);
+  grid-template-rows: 5px 2px minmax(2.15rem, auto);
   min-width: 0;
   color: var(--text);
   text-align: center;
@@ -123,7 +123,7 @@ summary {
 
 .scope-cap {
   width: calc(100% - 4px);
-  height: 4px;
+  height: 5px;
   justify-self: center;
   border-radius: 999px;
   background: var(--red);
@@ -213,6 +213,7 @@ summary {
 
 .scope-button.is-selected .scope-cap {
   opacity: 1;
+  animation: scope-cap-cycle 2s steps(18, end) infinite;
 }
 
 .brand-block,
@@ -1339,6 +1340,111 @@ textarea:focus-visible {
 
   50% {
     filter: brightness(2.2);
+  }
+}
+
+@keyframes scope-cap-cycle {
+  0%,
+  100% {
+    background: var(--red);
+  }
+
+  6% {
+    background: linear-gradient(
+      90deg,
+      var(--red) 0 calc(50% - 1px),
+      transparent calc(50% - 1px) calc(50% + 1px),
+      var(--red) calc(50% + 1px) 100%
+    );
+  }
+
+  14% {
+    background: linear-gradient(
+      90deg,
+      var(--red) 0 46%,
+      transparent 46% 54%,
+      var(--red) 54% 100%
+    );
+  }
+
+  24% {
+    background: linear-gradient(
+      90deg,
+      var(--red) 0 38%,
+      transparent 38% 62%,
+      var(--red) 62% 100%
+    );
+  }
+
+  34% {
+    background: linear-gradient(
+      90deg,
+      var(--red) 0 27%,
+      transparent 27% 73%,
+      var(--red) 73% 100%
+    );
+  }
+
+  44% {
+    background: linear-gradient(
+      90deg,
+      var(--red) 0 12%,
+      transparent 12% 88%,
+      var(--red) 88% 100%
+    );
+  }
+
+  50% {
+    background: linear-gradient(
+      90deg,
+      var(--red) 0 2px,
+      transparent 2px calc(100% - 2px),
+      var(--red) calc(100% - 2px) 100%
+    );
+  }
+
+  56% {
+    background: linear-gradient(
+      90deg,
+      var(--red) 0 2px,
+      transparent 2px calc(50% - 1px),
+      var(--red) calc(50% - 1px) calc(50% + 1px),
+      transparent calc(50% + 1px) calc(100% - 2px),
+      var(--red) calc(100% - 2px) 100%
+    );
+  }
+
+  66% {
+    background: linear-gradient(
+      90deg,
+      var(--red) 0 2px,
+      transparent 2px 36%,
+      var(--red) 36% 64%,
+      transparent 64% calc(100% - 2px),
+      var(--red) calc(100% - 2px) 100%
+    );
+  }
+
+  78% {
+    background: linear-gradient(
+      90deg,
+      var(--red) 0 2px,
+      transparent 2px 22%,
+      var(--red) 22% 78%,
+      transparent 78% calc(100% - 2px),
+      var(--red) calc(100% - 2px) 100%
+    );
+  }
+
+  90% {
+    background: linear-gradient(
+      90deg,
+      var(--red) 0 2px,
+      transparent 2px 7%,
+      var(--red) 7% 93%,
+      transparent 93% calc(100% - 2px),
+      var(--red) calc(100% - 2px) 100%
+    );
   }
 }
 
