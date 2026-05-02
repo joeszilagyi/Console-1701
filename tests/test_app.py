@@ -223,6 +223,42 @@ def test_host_codex_action_endpoint_uses_terminal_launcher(tmp_path, monkeypatch
     assert captured["scenario"]["evidence"]["unit"] == "x11vnc.service"
 
 
+def test_live_endpoint_adds_scan_timing_without_hardware_assumptions(tmp_path, monkeypatch):
+    _use_temp_state(monkeypatch, tmp_path)
+    config_path = tmp_path / "config.yml"
+    config_path.write_text(
+        """
+scan:
+  interval_minutes: 15
+paths:
+  repo_roots: []
+  explicit_repos: []
+logs: []
+projects: []
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    router = build_router(str(config_path))
+
+    monkeypatch.setattr(
+        api_module,
+        "read_live_snapshot",
+        lambda: {
+            "cpu": {"times": {"total": 1, "idle": 1}},
+            "memory": {},
+            "network": {},
+            "filesystems": {},
+        },
+    )
+
+    response = _route_endpoint(router, "/api/live")()
+
+    assert response["cpu"]["times"]["total"] == 1
+    assert response["scan_timing"]["interval_seconds"] == 900
+    assert response["scan_timing"]["state"] == "UNKNOWN"
+
+
 def test_repo_page_renders_existing_repo(tmp_path, monkeypatch):
     db_path = _use_temp_state(monkeypatch, tmp_path)
     config_path = tmp_path / "config.yml"

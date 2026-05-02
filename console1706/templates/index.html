@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>console-1706</title>
-    <link rel="stylesheet" href="/static/app.css?v=machine-console-7">
+    <link rel="stylesheet" href="/static/app.css?v=machine-console-9">
   </head>
   <body>
     {% set snap = host.snapshot if host else {} %}
@@ -55,43 +55,67 @@
       <div class="command-readouts">
         <div><span>Host</span><strong>{{ identity.hostname or host_summary.hostname or "unknown" }}</strong></div>
         <div><span>State</span><strong class="state-text status-text-{{ host_summary.state | lower }}">{{ host_summary.state }}</strong></div>
-        <div><span>Last scan</span><strong>{{ host_summary.last_scan_display or "never" }}</strong></div>
+        <div class="timer-readout">
+          <span>Last updated</span>
+          <strong data-live="last-updated-age" data-last-scan="{{ host_summary.last_scan or '' }}">{{ host_summary.last_scan_display or "never" }}</strong>
+          <em data-live="last-updated-clock">--:--:--</em>
+        </div>
+        <div class="timer-readout">
+          <span>Next update</span>
+          <strong data-live="next-update-countdown" data-scan-interval-seconds="1800">--:--:--</strong>
+          <em data-live="next-update-clock">--:--:--</em>
+        </div>
         <div><span>Uptime</span><strong>{{ session.uptime_human or "unknown" }}</strong></div>
         <div><span>Kernel</span><strong>{{ kernel.release or "unknown" }}</strong></div>
-        <div><span>Alerts</span><strong>{{ host_summary.penalties | length }}</strong></div>
       </div>
       <button id="scan-button" class="action-button" type="button">Manual scan</button>
     </header>
 
     <main class="console-shell">
-      <section class="status-ribbon" aria-label="Core machine status">
-        <div class="ribbon-cell status-{{ host_summary.state | lower }}">
-          <span>System</span>
-          <strong>{{ host_summary.state }}</strong>
-          <small>{{ primary_penalty.message if primary_penalty else "No host-level issue crossed current thresholds." }}</small>
+      <section class="status-ribbon sensor-lane" aria-label="Live machine sensor lane">
+        <button class="ribbon-cell ribbon-button sensor-cell status-{{ host_summary.state | lower }}" type="button" data-sensor-cell="system" data-scroll-target="#attention-stack">
+          <span class="sensor-title"><span>System</span><i class="sensor-lamp" data-live-lamp="system" aria-hidden="true"></i></span>
+          <strong><b data-live="system-state">{{ host_summary.state }}</b> · <b data-live="system-alerts">{{ host_summary.penalties | length }}</b> alert{{ "" if (host_summary.penalties | length) == 1 else "s" }}</strong>
+          <small data-live="system-health">{{ primary_penalty.message if primary_penalty else "No host-level issue crossed current thresholds." }}</small>
           {% if primary_penalty and primary_penalty.why %}
             <small><b>Why:</b> {{ primary_penalty.why }}</small>
           {% endif %}
+          <span class="sensor-bars" aria-hidden="true">
+            <span class="sensor-row"><span>Health</span><i><b data-live-bar="system" style="width: {{ host_summary.score or 0 }}%"></b></i><em data-live="system-score">{{ host_summary.score if host_summary.score is not none else "--" }}</em></span>
+          </span>
+        </button>
+        <div class="ribbon-cell sensor-cell ribbon-network" data-sensor-cell="network">
+          <span class="sensor-title"><span>Network</span><i class="sensor-lamp" data-live-lamp="network" aria-hidden="true"></i></span>
+          <strong>LAN <b data-live="lan-ip">{{ network.primary_address or "not detected" }}</b> · GW <b data-live="gateway">{{ network.gateway or "not detected" }}</b></strong>
+          <small>WAN: <b data-live="wan-ip">{{ network.public_ip or "not tested" }}</b></small>
+          <small data-live="network-health">{{ "Route present; external reachability not tested." if default_route else "No default route in latest scan." }}</small>
+          <div class="sensor-bars">
+            <div class="sensor-row"><span>IN</span><i><b data-live-bar="net-rx"></b></i><em data-live="net-rx-rate">0 B/s</em></div>
+            <div class="sensor-row"><span>OUT</span><i><b data-live-bar="net-tx"></b></i><em data-live="net-tx-rate">0 B/s</em></div>
+            <div class="sensor-row"><span>ERR</span><i><b data-live-bar="net-errors"></b></i><em data-live="net-errors">0</em></div>
+          </div>
         </div>
-        <div class="ribbon-cell">
-          <span>Network</span>
-          <strong>{{ "default route" if default_route else "route missing" }}</strong>
+        <div class="ribbon-cell sensor-cell ribbon-cpu-ram" data-sensor-cell="cpu-ram">
+          <span class="sensor-title"><span>CPU/RAM</span><i class="sensor-lamp" data-live-lamp="cpu-ram" aria-hidden="true"></i></span>
+          <strong>CPU <b data-live="cpu-percent">--%</b> · RAM <b data-live="mem-used">{{ "%.1f"|format(memory_used_percent) ~ "%" if memory_used_percent is not none else "unknown" }}</b></strong>
+          <small>Load <b data-live="load-one">{{ load_one if load_one is not none else "?" }}</b> · Avail <b data-live="mem-avail">{{ memory.human_available or "unknown" }}</b></small>
+          <small data-live="cpu-ram-health">Waiting for live CPU delta; RAM uses MemAvailable pressure.</small>
+          <div class="sensor-bars">
+            <div class="sensor-row"><span>CPU</span><i><b data-live-bar="cpu"></b></i><em data-live="cpu-percent-inline">--%</em></div>
+            <div class="sensor-row"><span>RAM</span><i><b data-live-bar="memory" style="width: {{ memory_used_percent or 0 }}%"></b></i><em data-live="mem-used-inline">{{ "%.1f"|format(memory_used_percent) ~ "%" if memory_used_percent is not none else "--" }}</em></div>
+            <div class="sensor-row"><span>LOAD</span><i><b data-live-bar="load"></b></i><em data-live="load-ratio">--</em></div>
+          </div>
         </div>
-        <div class="ribbon-cell">
-          <span>Root FS</span>
-          <strong>{{ "%.1f"|format(root_use_percent) ~ "%" if root_use_percent is not none else "unknown" }}</strong>
-        </div>
-        <div class="ribbon-cell">
-          <span>Memory avail</span>
-          <strong>{{ "%.1f"|format(memory_available_percent) ~ "%" if memory_available_percent is not none else "unknown" }}</strong>
-        </div>
-        <div class="ribbon-cell">
-          <span>Services failed</span>
-          <strong>{{ failed_system_count + failed_user_count }}</strong>
-        </div>
-        <div class="ribbon-cell">
-          <span>Journal warnings</span>
-          <strong>{{ journal_warning_count }}</strong>
+        <div class="ribbon-cell sensor-cell ribbon-filesystem" data-sensor-cell="filesystem">
+          <span class="sensor-title"><span>Filesystem</span><i class="sensor-lamp" data-live-lamp="filesystem" aria-hidden="true"></i></span>
+          <strong>Root <b data-live="fs-root-used">{{ "%.1f"|format(root_use_percent) ~ "%" if root_use_percent is not none else "unknown" }}</b></strong>
+          <small>Free <b data-live="fs-root-free">{{ root_fs.human_available if root_fs else "unknown" }}</b> · Home <b data-live="fs-home-used">{{ "%.1f"|format(home_use_percent) ~ "%" if home_use_percent is not none else "same/unknown" }}</b></small>
+          <small data-live="filesystem-health">Warning at 85% used; critical at 95% used.</small>
+          <div class="sensor-bars">
+            <div class="sensor-row"><span>ROOT</span><i><b data-live-bar="fs-root" style="width: {{ root_use_percent or 0 }}%"></b></i><em data-live="fs-root-used-inline">{{ "%.1f"|format(root_use_percent) ~ "%" if root_use_percent is not none else "--" }}</em></div>
+            <div class="sensor-row"><span>HOME</span><i><b data-live-bar="fs-home" style="width: {{ home_use_percent or 0 }}%"></b></i><em data-live="fs-home-used-inline">{{ "%.1f"|format(home_use_percent) ~ "%" if home_use_percent is not none else "--" }}</em></div>
+            <div class="sensor-row"><span>I/O</span><i><b data-live-bar="io-pressure"></b></i><em data-live="io-pressure">--</em></div>
+          </div>
         </div>
       </section>
 
@@ -129,7 +153,7 @@
           </details>
         </article>
 
-        <article class="module alerts-module">
+        <article id="attention-stack" class="module alerts-module">
           <div class="module-head">
             <div>
               <p class="module-kicker">Alerts</p>

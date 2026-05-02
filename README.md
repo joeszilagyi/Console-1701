@@ -195,6 +195,23 @@ B4 Hardware: DMI model, CPU, memory, storage pressure, power, thermal, and prima
 
 Each bay uses click-open evidence drawers instead of invented charts.
 
+The live sensor lane is updated in-place from `/api/live`. It uses only local kernel and filesystem
+surfaces, including `/proc/stat`, `/proc/loadavg`, `/proc/meminfo`, `/proc/net/dev`,
+`/proc/net/route`, `/proc/pressure/*`, `/sys/class/net`, `/sys/class/thermal`, and
+`shutil.disk_usage()`.
+
+Sensor colors are intentionally simple and transparent:
+
+```text
+System: latest scan state OK / CAUTION / BROKEN / UNKNOWN.
+Network: green when a local interface, LAN address, and gateway are present; yellow for missing route/address, carrier down, or interface errors/drops; red when no usable non-loopback local path is visible.
+CPU/RAM: yellow at CPU >=75%, load/core >=1, MemAvailable <15%, memory PSI avg10 >=10%, or CPU PSI avg10 >=20%; red at CPU >=90%, load/core >=1.5, MemAvailable <5%, or memory PSI avg10 >=30%.
+Filesystem: yellow at root >=85%, home >=90%, or I/O PSI avg10 >=10%; red at root/home >=95% or I/O PSI avg10 >=30%.
+```
+
+Network throughput bars are live activity meters, not health thresholds, because console-1706 does
+not know WAN circuit capacity and does not perform external probes by default.
+
 Failed service alerts name the failed unit whenever `systemctl --failed` exposes it. The probe also records bounded `systemctl show` diagnostics and a limited recent `journalctl -u ...` sample when readable, so the alert can explain the local state, result, exit status, description, and most recent log hint without requiring sudo.
 
 Host alert rows include an explicit Codex terminal action. Clicking it writes a bounded prompt file
@@ -333,6 +350,7 @@ GET  /api/attention            attention items
 GET  /api/events               recent event stream
 GET  /api/host                 latest host/system snapshot with summary and evidence
 GET  /api/host/history         compact host snapshot history
+GET  /api/live                 local live sensor snapshot and scan timing
 POST /api/host/actions/codex   launch a user-clicked host-alert Codex terminal
 GET  /api/evidence/{id}        raw interpretation evidence
 GET  /api/handoffs             handoff packet list

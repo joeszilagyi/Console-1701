@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import threading
+import time
 from pathlib import Path
 from typing import Any
 
@@ -24,6 +25,7 @@ from console1706.evidence import (
     get_system_summary,
 )
 from console1706.handoff import DEFAULT_TASK, create_handoff_packet
+from console1706.live_probe import read_live_snapshot
 from console1706.scanner import run_scan
 from console1706.terminal_action import TerminalLaunchError, launch_host_alert_codex_terminal
 
@@ -159,6 +161,26 @@ def build_router(config_path: str | None = None) -> APIRouter:
     def host_history(limit: int = 20):
         with _conn(config_path) as conn:
             return get_host_history(conn, limit=max(1, min(int(limit), 100)))
+
+    @router.get("/api/live")
+    def live():
+        config = _config(config_path)
+        scan_cfg = config.get("scan", {})
+        interval_minutes = float(scan_cfg.get("interval_minutes", 30) or 30)
+        payload = read_live_snapshot()
+        with _conn(config_path) as conn:
+            host_summary = get_host_summary(conn)
+        payload["scan_timing"] = {
+            "server_epoch_seconds": time.time(),
+            "last_scan": host_summary.get("last_scan"),
+            "last_scan_display": host_summary.get("last_scan_display"),
+            "interval_seconds": max(1, int(interval_minutes * 60)),
+            "state": host_summary.get("state"),
+            "severity": host_summary.get("severity"),
+            "score": host_summary.get("score"),
+            "penalty_count": len(host_summary.get("penalties") or []),
+        }
+        return payload
 
     @router.post("/api/host/actions/codex")
     def host_codex_action(payload: HostCodexActionRequest):
