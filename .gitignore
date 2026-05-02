@@ -11,3 +11,8 @@ build/
 htmlcov/
 *.sqlite
 *.sqlite-*
+
+# Local generated handoff/artifact files.
+Codex-while-cycles.sh
+console-1706-complete.bundle
+web-gpt-bundle.md
