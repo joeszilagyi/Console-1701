@@ -378,6 +378,45 @@ summary {
   padding: 0.45rem 0.45rem 1.2rem;
 }
 
+.scope-placeholder-shell {
+  min-height: calc(100vh - 8rem);
+}
+
+.scope-placeholder-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.42rem;
+  align-items: stretch;
+}
+
+.scope-placeholder-panel {
+  min-height: 600px;
+  height: auto;
+}
+
+.scope-placeholder-body {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  place-items: center;
+  border: 1px dashed rgba(79, 220, 255, 0.24);
+  background:
+    linear-gradient(rgba(79, 220, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79, 220, 255, 0.035) 1px, transparent 1px),
+    rgba(3, 10, 18, 0.34);
+  background-size: 18px 18px;
+}
+
+.scope-placeholder-body span {
+  color: rgba(127, 151, 173, 0.7);
+  font-family: "Cascadia Mono", "Fira Code", ui-monospace, monospace;
+  font-size: 0.88rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
 .status-ribbon {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1537,7 +1576,8 @@ textarea:focus-visible {
   }
 
   .command-readouts,
-  .status-ribbon {
+  .status-ribbon,
+  .scope-placeholder-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1579,6 +1619,7 @@ textarea:focus-visible {
   .command-readouts,
   .status-ribbon,
   .scope-nav,
+  .scope-placeholder-grid,
   .summary-grid,
   .readout-grid,
   .readout-grid.six {

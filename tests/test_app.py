@@ -113,23 +113,32 @@ def test_root_page_renders_html(tmp_path, monkeypatch):
     assert response.status_code == 200
     assert response.media_type == "text/html"
     assert "console-1706" in body
-    assert "Machine readout" in body
-    assert "B2 Services / systems" in body
-    assert "B3 Debian" in body
-    assert "B4 Hardware" in body
     assert "/static/app.js?v=machine-console-13" in body
-    assert "/static/app.css?v=machine-console-16" in body
+    assert "/static/app.css?v=machine-console-17" in body
     assert 'data-active-scope="OVERVIEW"' in body
     assert 'data-scope-nav="OVERVIEW"' in body
     assert 'href="/"' in body
     assert 'data-scope-nav="INTERNAL"' in body
     assert 'href="/INTERNAL"' in body
     assert 'data-scope-nav="ORBITAL"' in body
-    assert 'data-sparkline="cpu"' in body
-    assert 'data-live="poll-policy"' in body
+    assert "Placeholder 1" in body
+    assert "Placeholder 4" in body
+    assert "Reserved for overview console content." in body
+    assert "Machine readout" not in body
     assert "demo-host" in body
     assert str(db_path) in body
-    assert body.index("Machine readout") < body.index("Local work")
+
+    internal_response = _route_endpoint(router, "/{scope}")(_request("/INTERNAL"), "INTERNAL")
+    internal_body = internal_response.body.decode()
+
+    assert internal_response.status_code == 200
+    assert "Machine readout" in internal_body
+    assert "B2 Services / systems" in internal_body
+    assert "B3 Debian" in internal_body
+    assert "B4 Hardware" in internal_body
+    assert 'data-sparkline="cpu"' in internal_body
+    assert 'data-live="poll-policy"' in internal_body
+    assert internal_body.index("Machine readout") < internal_body.index("Local work")
 
 
 def test_scoped_root_page_marks_active_scope(tmp_path, monkeypatch):
@@ -145,6 +154,9 @@ def test_scoped_root_page_marks_active_scope(tmp_path, monkeypatch):
     assert 'data-active-scope="ORBITAL"' in body
     assert 'data-scope-nav="ORBITAL"' in body
     assert 'aria-current="page"' in body
+    assert "Placeholder 1" in body
+    assert "Reserved for orbital console content." in body
+    assert "Machine readout" not in body
     assert str(db_path) in body
 
 
@@ -196,7 +208,7 @@ def test_root_page_renders_codex_terminal_action_for_host_penalty(tmp_path, monk
         )
         conn.commit()
 
-    response = _route_endpoint(router, "/")(_request("/"))
+    response = _route_endpoint(router, "/{scope}")(_request("/INTERNAL"), "INTERNAL")
     body = response.body.decode()
 
     assert response.status_code == 200
@@ -207,13 +219,13 @@ def test_root_page_renders_codex_terminal_action_for_host_penalty(tmp_path, monk
     assert "Open a new terminal with this alert loaded into interactive Codex" in body
 
 
-def test_root_page_renders_before_first_host_scan(tmp_path, monkeypatch):
+def test_internal_page_renders_before_first_host_scan(tmp_path, monkeypatch):
     db_path = _use_temp_state(monkeypatch, tmp_path)
     config_path = tmp_path / "config.yml"
     _write_test_config(config_path)
     router = build_router(str(config_path))
 
-    response = _route_endpoint(router, "/")(_request("/"))
+    response = _route_endpoint(router, "/{scope}")(_request("/INTERNAL"), "INTERNAL")
     body = response.body.decode()
 
     assert response.status_code == 200

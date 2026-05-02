@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>console-1706</title>
-    <link rel="stylesheet" href="/static/app.css?v=machine-console-16">
+    <link rel="stylesheet" href="/static/app.css?v=machine-console-17">
   </head>
   <body data-active-scope="{{ active_scope or 'LOCAL' }}">
     {% set snap = host.snapshot if host else {} %}
@@ -92,7 +92,8 @@
       {% endfor %}
     </nav>
 
-    <main class="console-shell">
+    <main class="console-shell{% if active_scope != 'INTERNAL' %} scope-placeholder-shell{% endif %}">
+      {% if active_scope == "INTERNAL" %}
       <section class="status-ribbon sensor-lane" aria-label="Live machine sensor lane">
         <button class="ribbon-cell ribbon-button sensor-cell status-{{ host_summary.state | lower }}" type="button" data-sensor-cell="system" data-scroll-target="#attention-delta-area">
           <span class="sensor-title"><span>System</span><i class="sensor-lamp" data-live-lamp="system" aria-hidden="true"></i></span>
@@ -778,6 +779,24 @@
           </div>
         </details>
       </section>
+      {% else %}
+        <section class="scope-placeholder-grid" aria-label="{{ active_scope }} placeholder modules">
+          {% for number in range(1, 5) %}
+            <article class="module scope-placeholder-panel">
+              <div class="module-head">
+                <div>
+                  <p class="module-kicker">{{ active_scope }}</p>
+                  <h2>Placeholder {{ number }}</h2>
+                </div>
+                <span class="module-code">BAY-{{ number }}</span>
+              </div>
+              <div class="scope-placeholder-body">
+                <span>Reserved for {{ active_scope | lower }} console content.</span>
+              </div>
+            </article>
+          {% endfor %}
+        </section>
+      {% endif %}
 
       <section class="safety-strip">
         <span>127.0.0.1:1706</span>
