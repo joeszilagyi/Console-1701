@@ -31,9 +31,9 @@ not persisted and are lost on page reload.
 Polling policy:
 
 - External power + foreground tab: every 3 seconds.
-- External power + background tab: every 10 seconds.
 - Battery + foreground tab: every 5 seconds.
-- Battery + background tab: idle until the page returns to foreground.
+- Not foreground, screen locked, screen off, hidden tab, frozen page, or blurred window: live
+  polling and header clock updates are paused until foreground resumes.
 
 Follow-up options:
 

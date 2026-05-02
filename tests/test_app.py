@@ -117,7 +117,7 @@ def test_root_page_renders_html(tmp_path, monkeypatch):
     assert "B2 Services / systems" in body
     assert "B3 Debian" in body
     assert "B4 Hardware" in body
-    assert "/static/app.js?v=machine-console-10" in body
+    assert "/static/app.js?v=machine-console-11" in body
     assert 'data-sparkline="cpu"' in body
     assert 'data-live="poll-policy"' in body
     assert "demo-host" in body

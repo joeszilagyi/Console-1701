@@ -1,7 +1,10 @@
 const toast = document.querySelector("#toast");
 let previousLive = null;
 let scanMonitor = null;
+let scanMonitorPreviousLastScan = null;
+let scanMonitorDeadline = null;
 let livePollTimer = null;
+let scanClockTimer = null;
 let liveReadoutInFlight = null;
 const livePower = {
   onBattery: false,
@@ -47,27 +50,43 @@ function setScanButtonBusy(isBusy) {
   button.classList.toggle("is-busy", isBusy);
 }
 
+function pageIsForeground() {
+  return document.visibilityState === "visible" && document.hasFocus();
+}
+
 function monitorManualScan(previousLastScan) {
   if (scanMonitor) {
-    window.clearInterval(scanMonitor);
+    window.clearTimeout(scanMonitor);
   }
-  const deadline = Date.now() + 120000;
+  scanMonitorPreviousLastScan = previousLastScan;
+  scanMonitorDeadline = scanMonitorDeadline || Date.now() + 120000;
   setScanButtonBusy(true);
-  scanMonitor = window.setInterval(async () => {
+  if (!pageIsForeground()) {
+    setLiveText("poll-policy", "Not foreground: live polling and scan watching paused.");
+    scanMonitor = null;
+    return;
+  }
+  scanMonitor = window.setTimeout(async () => {
     await updateLiveReadouts();
     if (scanTiming.lastScan && scanTiming.lastScan !== previousLastScan) {
-      window.clearInterval(scanMonitor);
+      window.clearTimeout(scanMonitor);
       scanMonitor = null;
+      scanMonitorPreviousLastScan = null;
+      scanMonitorDeadline = null;
       setScanButtonBusy(false);
       showToast("Scan complete. Host readouts updated.");
       return;
     }
-    if (Date.now() > deadline) {
-      window.clearInterval(scanMonitor);
+    if (Date.now() > scanMonitorDeadline) {
+      window.clearTimeout(scanMonitor);
       scanMonitor = null;
+      scanMonitorPreviousLastScan = null;
+      scanMonitorDeadline = null;
       setScanButtonBusy(false);
       showToast("Scan did not report a new host snapshot within two minutes.");
+      return;
     }
+    monitorManualScan(previousLastScan);
   }, 2000);
 }
 
@@ -79,9 +98,11 @@ document.querySelector("#scan-button")?.addEventListener("click", async () => {
     const payload = await response.json();
     if (payload.status === "started") {
       showToast("Scan started. Waiting for fresh host snapshot.");
+      scanMonitorDeadline = Date.now() + 120000;
       monitorManualScan(previousLastScan);
     } else {
       showToast("Scan is already running. Watching for fresh host snapshot.");
+      scanMonitorDeadline = Date.now() + 120000;
       monitorManualScan(previousLastScan);
     }
   } catch (error) {
@@ -285,10 +306,8 @@ function updatePowerPolicy(power) {
   const onBattery = Boolean(power?.on_battery);
   livePower.onBattery = onBattery;
   livePower.source = power?.source || "unknown";
-  if (document.hidden && onBattery) {
-    setLiveText("poll-policy", "Battery + background: live polling idle until foreground.");
-  } else if (document.hidden) {
-    setLiveText("poll-policy", "External power + background: live polling every 10s.");
+  if (!pageIsForeground()) {
+    setLiveText("poll-policy", "Not foreground: live polling paused until this page is active.");
   } else if (onBattery) {
     setLiveText("poll-policy", "Battery + foreground: live polling every 5s.");
   } else {
@@ -297,8 +316,7 @@ function updatePowerPolicy(power) {
 }
 
 function livePollDelay() {
-  if (document.hidden && livePower.onBattery) return null;
-  if (document.hidden) return 10000;
+  if (!pageIsForeground()) return null;
   return livePower.onBattery ? 5000 : 3000;
 }
 
@@ -313,9 +331,55 @@ function scheduleLiveReadout(delayOverride = undefined) {
     return;
   }
   livePollTimer = window.setTimeout(async () => {
+    if (!pageIsForeground()) {
+      scheduleLiveReadout();
+      return;
+    }
     await updateLiveReadouts();
     scheduleLiveReadout();
   }, delay);
+}
+
+function scheduleScanClock() {
+  if (scanClockTimer) {
+    window.clearTimeout(scanClockTimer);
+    scanClockTimer = null;
+  }
+  if (!pageIsForeground()) return;
+  scanClockTimer = window.setTimeout(() => {
+    updateScanTimers();
+    scheduleScanClock();
+  }, 1000);
+}
+
+function pauseLiveActivity() {
+  if (livePollTimer) {
+    window.clearTimeout(livePollTimer);
+    livePollTimer = null;
+  }
+  if (scanClockTimer) {
+    window.clearTimeout(scanClockTimer);
+    scanClockTimer = null;
+  }
+  if (scanMonitor) {
+    window.clearTimeout(scanMonitor);
+    scanMonitor = null;
+  }
+  updatePowerPolicy({ on_battery: livePower.onBattery, source: livePower.source });
+}
+
+function resumeLiveActivity() {
+  if (!pageIsForeground()) {
+    pauseLiveActivity();
+    return;
+  }
+  updateLiveReadouts().finally(() => {
+    scheduleScanClock();
+    scheduleLiveReadout();
+    if (scanMonitorPreviousLastScan !== null && scanMonitorDeadline !== null) {
+      monitorManualScan(scanMonitorPreviousLastScan);
+    }
+  });
 }
 
 function updateScanTimers() {
@@ -533,6 +597,7 @@ function updateLiveHistory(live, cpu, rates) {
 }
 
 async function updateLiveReadouts() {
+  if (!pageIsForeground()) return null;
   if (liveReadoutInFlight) return liveReadoutInFlight;
   liveReadoutInFlight = (async () => {
     const response = await fetch("/api/live", { cache: "no-store" });
@@ -598,12 +663,17 @@ async function updateLiveReadouts() {
 }
 
 updateScanTimers();
-updateLiveReadouts().finally(() => scheduleLiveReadout());
-window.setInterval(updateScanTimers, 1000);
+resumeLiveActivity();
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) {
-    updateLiveReadouts().finally(() => scheduleLiveReadout(3000));
+  if (pageIsForeground()) {
+    resumeLiveActivity();
   } else {
-    scheduleLiveReadout();
+    pauseLiveActivity();
   }
 });
+window.addEventListener("focus", resumeLiveActivity);
+window.addEventListener("blur", pauseLiveActivity);
+window.addEventListener("pagehide", pauseLiveActivity);
+window.addEventListener("pageshow", resumeLiveActivity);
+document.addEventListener("freeze", pauseLiveActivity);
+document.addEventListener("resume", resumeLiveActivity);
