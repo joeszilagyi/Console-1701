@@ -185,10 +185,20 @@ summary {
 }
 
 .scope-button:hover .scope-face,
-.scope-button:focus-visible .scope-face,
-.scope-button.is-selected .scope-face {
+.scope-button:focus-visible .scope-face {
   border-color: var(--cyan);
   background-color: rgba(16, 33, 51, 0.96);
+  box-shadow:
+    inset 0 0 18px rgba(79, 220, 255, 0.08),
+    0 0 18px rgba(79, 220, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.scope-button.is-selected .scope-face {
+  border-color: var(--cyan);
+  background:
+    linear-gradient(135deg, rgba(79, 220, 255, 0.09), transparent 34%),
+    rgba(21, 43, 66, 0.96);
   box-shadow:
     inset 0 0 18px rgba(79, 220, 255, 0.08),
     0 0 18px rgba(79, 220, 255, 0.12);
@@ -203,10 +213,6 @@ summary {
 
 .scope-button.is-selected .scope-cap {
   opacity: 1;
-}
-
-.scope-button.is-selected b {
-  color: var(--red);
 }
 
 .brand-block,
@@ -260,7 +266,7 @@ summary {
 
 .brand-title-line strong {
   flex: 0 0 auto;
-  color: var(--red);
+  color: var(--text);
   font-family: "Cascadia Mono", "Fira Code", ui-monospace, monospace;
   font-size: 0.78rem;
   font-weight: 900;
