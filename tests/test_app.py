@@ -73,6 +73,16 @@ def test_root_page_renders_html(tmp_path, monkeypatch):
                 "os": {"pretty_name": "Debian GNU/Linux 13"},
                 "kernel": {"release": "6.12.0", "architecture": "x86_64"},
                 "session": {"uptime_seconds": 123.0, "uptime_human": "2m"},
+                "debian": {
+                    "debian_version": "13.0",
+                    "dpkg": {"installed_packages": 100, "audit_issue_count": 0},
+                    "apt": {
+                        "held_package_count": 0,
+                        "history": {"last_command": "apt upgrade"},
+                        "source_files": [],
+                    },
+                    "reboot": {"required": False},
+                },
                 "memory": {"available_percent": 50.0, "human_total": "8.0 GiB"},
                 "storage": {"root": {"use_percent": 42.0}},
                 "filesystems": {"items": []},
@@ -104,7 +114,9 @@ def test_root_page_renders_html(tmp_path, monkeypatch):
     assert response.media_type == "text/html"
     assert "Local Debian system console" in body
     assert "Machine readout" in body
-    assert "Sensor bay 01" in body
+    assert "B2 Services / systems" in body
+    assert "B3 Debian" in body
+    assert "B4 Hardware" in body
     assert "demo-host" in body
     assert str(db_path) in body
     assert body.index("Machine readout") < body.index("Local work")

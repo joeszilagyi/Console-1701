@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>console-1706</title>
-    <link rel="stylesheet" href="/static/app.css?v=machine-console-6">
+    <link rel="stylesheet" href="/static/app.css?v=machine-console-7">
   </head>
   <body>
     {% set snap = host.snapshot if host else {} %}
@@ -12,6 +12,7 @@
     {% set os_info = snap.os or {} %}
     {% set kernel = snap.kernel or {} %}
     {% set session = snap.session or {} %}
+    {% set debian = snap.debian or {} %}
     {% set cpu = snap.cpu or {} %}
     {% set memory = snap.memory or {} %}
     {% set storage = snap.storage or {} %}
@@ -161,8 +162,13 @@
                     aria-label="Open Codex terminal for {{ penalty.message }}"
                     data-codex-scenario="{{ codex_action | tojson | forceescape }}"
                   >
-                    <span class="delta-glyph" aria-hidden="true"></span>
-                    <span class="delta-label">Codex</span>
+                    <img
+                      src="/static/codex-alert-delta.png"
+                      width="860"
+                      height="727"
+                      alt=""
+                      aria-hidden="true"
+                    >
                   </button>
                 </li>
               {% endfor %}
@@ -180,50 +186,99 @@
           </details>
         </article>
 
-        <article class="module placeholder-bay">
+        <article id="b2-services" class="module placeholder-bay">
           <div class="module-head">
             <div>
-              <p class="module-kicker">Reserved</p>
-              <h2>Sensor bay 01</h2>
+              <p class="module-kicker">B2 Services / systems</p>
+              <h2>systemd control plane</h2>
             </div>
-            <span class="module-code">WAIT</span>
+            <span class="module-code">{{ failed_system_count + failed_user_count }} failed</span>
           </div>
-          <div class="empty-bay">
-            <span>Awaiting real local signal</span>
+          <div class="readout-grid">
+            <div><span>System state</span><strong>{{ (services.get("system_state") or {}).get("state") or "unknown" }}</strong></div>
+            <div><span>Failed system</span><strong>{{ failed_system_count }}</strong></div>
+            <div><span>Failed user</span><strong>{{ failed_user_count }}</strong></div>
+            <div><span>Critical failed</span><strong>{{ services.critical_failed | length if services.critical_failed else 0 }}</strong></div>
           </div>
+          {% if services.failed_system or services.failed_user %}
+            <ul class="compact-list bay-list">
+              {% for unit in (services.failed_system or [])[:5] %}
+                <li><code>{{ unit.unit }}</code> {{ unit.description or unit.sub }}</li>
+              {% endfor %}
+              {% for unit in (services.failed_user or [])[:5] %}
+                <li><code>{{ unit.unit }}</code> {{ unit.description or unit.sub }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="muted">No failed system or user units in the latest snapshot.</p>
+          {% endif %}
+          <details>
+            <summary>Open B2 service evidence</summary>
+            <pre>{{ {"services": services, "service_alerts": host_summary.penalties | selectattr("section", "equalto", "services") | list} | tojson(indent=2) }}</pre>
+          </details>
+        </article>
+
+        <article id="b3-debian" class="module placeholder-bay">
+          <div class="module-head">
+            <div>
+              <p class="module-kicker">B3 Debian</p>
+              <h2>OS / packages / logs</h2>
+            </div>
+            <span class="module-code">{{ debian.debian_version or os_info.version_id or "OS" }}</span>
+          </div>
+          <div class="readout-grid">
+            <div><span>Release</span><strong>{{ os_info.pretty_name or "unknown" }}</strong></div>
+            <div><span>Packages</span><strong>{{ debian.dpkg.installed_packages if debian.dpkg else "unknown" }}</strong></div>
+            <div><span>Held</span><strong>{{ debian.apt.held_package_count if debian.apt else "unknown" }}</strong></div>
+            <div><span>Reboot req</span><strong>{{ "yes" if debian.reboot and debian.reboot.required else "no" }}</strong></div>
+          </div>
+          <table class="dense-table bay-table">
+            <tbody>
+              <tr><th>Kernel</th><td><code>{{ kernel.release or "unknown" }}</code></td></tr>
+              <tr><th>dpkg audit</th><td>{{ (debian.dpkg.audit_issue_count if debian.dpkg else 0) or 0 }} issue{{ "" if (debian.dpkg.audit_issue_count if debian.dpkg else 0) == 1 else "s" }}</td></tr>
+              <tr><th>Last apt</th><td>{{ debian.apt.history.last_command if debian.apt and debian.apt.history else "not found" }}</td></tr>
+              <tr><th>Sources</th><td>{{ debian.apt.source_files | length if debian.apt and debian.apt.source_files else 0 }} source file{{ "" if debian.apt and debian.apt.source_files and (debian.apt.source_files | length) == 1 else "s" }}</td></tr>
+            </tbody>
+          </table>
+          <details>
+            <summary>Open B3 Debian evidence</summary>
+            <pre>{{ {"debian": debian, "os": os_info, "kernel": kernel, "logs": logs} | tojson(indent=2) }}</pre>
+          </details>
+        </article>
+
+        <article id="b4-hardware" class="module placeholder-bay">
+          <div class="module-head">
+            <div>
+              <p class="module-kicker">B4 Hardware</p>
+              <h2>board / sensors / links</h2>
+            </div>
+            <span class="module-code">{{ identity.dmi_vendor or "HW" }}</span>
+          </div>
+          <div class="readout-grid">
+            <div><span>Board</span><strong>{{ identity.dmi_product or "unknown" }}</strong></div>
+            <div><span>CPU</span><strong>{{ cpu.threads or "?" }} threads</strong></div>
+            <div><span>Memory</span><strong>{{ memory.human_total or "unknown" }}</strong></div>
+            <div><span>Thermal</span><strong>{{ thermal.max_celsius if thermal.max_celsius is not none else "not detected" }}</strong></div>
+          </div>
+          <table class="dense-table bay-table">
+            <tbody>
+              <tr><th>Root FS</th><td>{{ "%.1f"|format(root_use_percent) ~ "%" if root_use_percent is not none else "unknown" }}</td></tr>
+              <tr><th>Battery</th><td>{{ power.battery_percent if power.battery_percent is not none else "not detected" }}</td></tr>
+              <tr><th>AC</th><td>{{ power.ac_online if power.ac_online is not none else "unknown" }}</td></tr>
+              <tr><th>Primary link</th><td>{{ primary_iface.ifname if primary_iface else "unknown" }} / {{ primary_iface.carrier if primary_iface else "?" }}</td></tr>
+            </tbody>
+          </table>
+          <details>
+            <summary>Open B4 hardware evidence</summary>
+            <pre>{{ {"identity": identity, "cpu": cpu, "memory": memory, "storage": storage, "network": network, "power": power, "thermal": thermal} | tojson(indent=2) }}</pre>
+          </details>
         </article>
 
         <article class="module placeholder-bay">
           <div class="module-head">
             <div>
               <p class="module-kicker">Reserved</p>
-              <h2>Sensor bay 02</h2>
-            </div>
-            <span class="module-code">WAIT</span>
-          </div>
-          <div class="empty-bay">
-            <span>Awaiting real local signal</span>
-          </div>
-        </article>
-
-        <article class="module placeholder-bay">
-          <div class="module-head">
-            <div>
-              <p class="module-kicker">Reserved</p>
-              <h2>Sensor bay 03</h2>
-            </div>
-            <span class="module-code">WAIT</span>
-          </div>
-          <div class="empty-bay">
-            <span>Awaiting real local signal</span>
-          </div>
-        </article>
-
-        <article class="module placeholder-bay">
-          <div class="module-head">
-            <div>
-              <p class="module-kicker">Reserved</p>
-              <h2>Sensor bay 04</h2>
+              <h2>B5 next bay</h2>
             </div>
             <span class="module-code">WAIT</span>
           </div>

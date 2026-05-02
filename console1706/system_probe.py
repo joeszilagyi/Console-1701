@@ -76,6 +76,10 @@ def _trim_inline(value: str | None, max_chars: int = 240) -> str:
     return f"{text[:max_chars]}..."
 
 
+def _tail_lines(value: str | None, limit: int = 20) -> list[str]:
+    return [line for line in (value or "").splitlines() if line.strip()][-limit:]
+
+
 def _read_text(
     path: str | Path,
     errors: list[dict[str, str]],
@@ -1308,6 +1312,12 @@ def _collect_services(
     evidence: dict[str, Any],
     timeout: int,
 ) -> dict[str, Any]:
+    system_state = _run_command(
+        "systemctl_is_system_running",
+        ["systemctl", "is-system-running"],
+        timeout=timeout,
+        evidence=evidence,
+    )
     system = _run_command(
         "systemctl_failed",
         ["systemctl", "--failed", "--no-legend", "--plain", "--all"],
@@ -1341,6 +1351,11 @@ def _collect_services(
         unit for unit in [*failed_system, *failed_user] if unit.get("unit") in critical
     ]
     return {
+        "system_state": {
+            "state": _trim_inline(system_state.get("stdout") or "") or None,
+            "returncode": system_state.get("returncode"),
+            "available": bool(system_state.get("available")),
+        },
         "failed_system": failed_system,
         "failed_user": failed_user,
         "failed_system_count": len(failed_system),
@@ -1464,6 +1479,136 @@ def _collect_logs(*, evidence: dict[str, Any], timeout: int) -> dict[str, Any]:
         "system_warnings": system_lines[-10:],
         "user_warnings": user_lines[-10:],
         "journalctl_available": bool(system.get("available") or user.get("available")),
+    }
+
+
+def parse_dpkg_status(text: str | None) -> dict[str, Any]:
+    packages = 0
+    installed = 0
+    priorities: dict[str, int] = {}
+    sections: dict[str, int] = {}
+    for block in (text or "").split("\n\n"):
+        if not block.strip():
+            continue
+        packages += 1
+        fields = {}
+        for line in block.splitlines():
+            if ": " in line:
+                key, value = line.split(": ", 1)
+                fields[key] = value
+        status = fields.get("Status", "")
+        if status == "install ok installed":
+            installed += 1
+        priority = fields.get("Priority")
+        if priority:
+            priorities[priority] = priorities.get(priority, 0) + 1
+        section = fields.get("Section")
+        if section:
+            sections[section] = sections.get(section, 0) + 1
+    return {
+        "package_records": packages,
+        "installed_packages": installed,
+        "priorities": dict(sorted(priorities.items())),
+        "top_sections": dict(sorted(sections.items(), key=lambda item: item[1], reverse=True)[:12]),
+    }
+
+
+def _parse_apt_history_summary(text: str | None) -> dict[str, Any]:
+    lines = _tail_lines(text, 80)
+    starts = [line for line in lines if line.startswith("Start-Date:")]
+    commands = [line for line in lines if line.startswith("Commandline:")]
+    installs = [line for line in lines if line.startswith("Install:")]
+    upgrades = [line for line in lines if line.startswith("Upgrade:")]
+    removes = [line for line in lines if line.startswith(("Remove:", "Purge:"))]
+    return {
+        "last_start": starts[-1].split(":", 1)[1].strip() if starts else None,
+        "last_command": commands[-1].split(":", 1)[1].strip() if commands else None,
+        "recent_install_events": len(installs),
+        "recent_upgrade_events": len(upgrades),
+        "recent_remove_events": len(removes),
+        "tail": lines[-20:],
+    }
+
+
+def _collect_apt_source_files() -> list[dict[str, Any]]:
+    paths = [Path("/etc/apt/sources.list")]
+    source_dir = Path("/etc/apt/sources.list.d")
+    if source_dir.exists():
+        paths.extend(sorted(source_dir.glob("*.list")))
+        paths.extend(sorted(source_dir.glob("*.sources")))
+    files = []
+    for path in paths:
+        if not path.exists():
+            continue
+        text = _read_optional_text(path, max_chars=32768) or ""
+        active_lines = [
+            _trim_inline(line, 220)
+            for line in text.splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        ]
+        files.append(
+            {
+                "path": str(path),
+                "active_line_count": len(active_lines),
+                "active_preview": active_lines[:8],
+            }
+        )
+    return files
+
+
+def _collect_debian(*, evidence: dict[str, Any], timeout: int) -> dict[str, Any]:
+    debian_version = (_read_optional_text("/etc/debian_version", max_chars=512) or "").strip()
+    dpkg_status_text = _read_optional_text("/var/lib/dpkg/status", max_chars=10_000_000)
+    apt_history_text = _read_optional_text("/var/log/apt/history.log", max_chars=262144)
+    dpkg_log_text = _read_optional_text("/var/log/dpkg.log", max_chars=262144)
+    reboot_required_path = Path("/var/run/reboot-required")
+    reboot_packages_path = Path("/var/run/reboot-required.pkgs")
+    dpkg_audit = _run_command("dpkg_audit", ["dpkg", "--audit"], timeout=timeout, evidence=evidence)
+    apt_hold = _run_command(
+        "apt_mark_showhold",
+        ["apt-mark", "showhold"],
+        timeout=timeout,
+        evidence=evidence,
+    )
+
+    apt_history = _parse_apt_history_summary(apt_history_text)
+    dpkg_status = parse_dpkg_status(dpkg_status_text)
+    held_packages = (
+        [line for line in (apt_hold.get("stdout") or "").splitlines() if line.strip()]
+        if apt_hold.get("returncode") == 0
+        else []
+    )
+    audit_lines = (
+        [line for line in (dpkg_audit.get("stdout") or "").splitlines() if line.strip()]
+        if dpkg_audit.get("returncode") == 0
+        else []
+    )
+    reboot_packages = _tail_lines(_read_optional_text(reboot_packages_path, max_chars=8192), 50)
+
+    evidence.setdefault("files", {}).update(
+        {
+            "/etc/debian_version": _trim(debian_version, 512),
+            "/var/log/apt/history.log.tail": "\n".join(apt_history.get("tail") or []),
+            "/var/log/dpkg.log.tail": "\n".join(_tail_lines(dpkg_log_text, 30)),
+        }
+    )
+    return {
+        "debian_version": debian_version or None,
+        "dpkg": {
+            **dpkg_status,
+            "audit_issue_count": len(audit_lines),
+            "audit_lines": audit_lines[:20],
+        },
+        "apt": {
+            "history": apt_history,
+            "held_package_count": len(held_packages),
+            "held_packages": held_packages[:50],
+            "source_files": _collect_apt_source_files(),
+        },
+        "reboot": {
+            "required": reboot_required_path.exists(),
+            "packages": reboot_packages,
+        },
     }
 
 
@@ -1729,6 +1874,7 @@ def _unavailable_snapshot(message: str) -> dict[str, Any]:
         "os": {},
         "kernel": {},
         "session": {},
+        "debian": {},
         "cpu": {},
         "memory": {},
         "storage": {},
@@ -1823,6 +1969,7 @@ def probe_system(config: dict[str, Any]) -> dict[str, Any]:
             "os": os_info,
             "kernel": kernel,
             "session": _collect_session(uptime_text, evidence=evidence, timeout=timeout),
+            "debian": _collect_debian(evidence=evidence, timeout=timeout),
             "cpu": _collect_cpu(
                 cpuinfo_text,
                 loadavg_text,

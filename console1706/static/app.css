@@ -364,6 +364,14 @@ summary {
   text-transform: uppercase;
 }
 
+.bay-list {
+  margin-top: 0.55rem;
+}
+
+.bay-table {
+  margin-top: 0.55rem;
+}
+
 .module-kicker {
   margin: 0 0 0.12rem;
   color: var(--cyan);
@@ -434,10 +442,9 @@ summary {
 
 .status-line {
   display: grid;
-  grid-template-columns: 0.52rem minmax(0, 1fr) 60px;
+  grid-template-columns: 0.52rem minmax(0, 1fr) max-content;
   gap: 0.4rem;
   align-items: center;
-  min-height: 75px;
 }
 
 .status-line > span {
@@ -480,58 +487,16 @@ summary {
   display: block;
   align-self: center;
   justify-self: center;
-  width: 60px;
-  height: 60px;
   padding: 0;
   border: 0;
-  color: var(--cyan);
   background: transparent;
   cursor: pointer;
-  justify-self: end;
 }
 
-.delta-action::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border: 1px solid rgba(79, 220, 255, 0.78);
-  background:
-    linear-gradient(135deg, rgba(79, 220, 255, 0.16), transparent 52%),
-    rgba(3, 10, 18, 0.76);
-  clip-path: polygon(50% -1px, 98% 100%, 50% 74%, 2% 100%);
-  filter: drop-shadow(0 0 10px rgba(79, 220, 255, 0.45));
-}
-
-.delta-action::after {
-  content: "";
-  position: absolute;
-  inset: 10px 13px 11px;
-  border: 1px solid rgba(7, 16, 25, 0.94);
-  background: rgba(7, 16, 25, 0.92);
-  clip-path: polygon(50% 0, 96% 100%, 50% 70%, 4% 100%);
-}
-
-.delta-glyph {
-  position: absolute;
-  inset: 5px;
-  background: linear-gradient(180deg, #dff9ff, var(--cyan) 45%, var(--blue));
-  clip-path: polygon(50% -1px, 98% 100%, 50% 74%, 2% 100%);
-}
-
-.delta-label {
-  position: absolute;
-  right: 0;
-  bottom: 6px;
-  left: 0;
-  z-index: 2;
-  color: #03111b;
-  font-family: "Cascadia Mono", "Fira Code", ui-monospace, monospace;
-  font-size: 0.52rem;
-  font-weight: 1000;
-  letter-spacing: 0.08em;
-  line-height: 1;
-  text-align: center;
-  text-transform: uppercase;
+.delta-action img {
+  display: block;
+  width: 125px;
+  height: auto;
 }
 
 .delta-action:hover,

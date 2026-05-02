@@ -1699,6 +1699,14 @@ Keep packet generation available from the CLI and local API.
 Local work remains secondary to the machine console.
 ```
 
+Current host bay order:
+
+```text
+B2 Services / systems
+B3 Debian
+B4 Hardware
+```
+
 The packet should include:
 
 ```text

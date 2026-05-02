@@ -126,6 +126,7 @@ identity
 os
 kernel
 session
+debian
 cpu
 memory
 storage
@@ -183,6 +184,16 @@ rg --version
 ```
 
 Missing commands fail soft and are recorded as unavailable in evidence.
+
+The first diagnostic bay row is standards-aligned and evidence-first:
+
+```text
+B2 Services / systems: systemd state, failed units, critical units, and unit evidence.
+B3 Debian: release, dpkg package count, held packages, apt history, sources, and reboot flag.
+B4 Hardware: DMI model, CPU, memory, storage pressure, power, thermal, and primary link facts.
+```
+
+Each bay uses click-open evidence drawers instead of invented charts.
 
 Failed service alerts name the failed unit whenever `systemctl --failed` exposes it. The probe also records bounded `systemctl show` diagnostics and a limited recent `journalctl -u ...` sample when readable, so the alert can explain the local state, result, exit status, description, and most recent log hint without requiring sudo.
 

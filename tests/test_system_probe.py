@@ -9,6 +9,7 @@ from console1706.system_probe import (
     _run_command,
     interpret_filesystem_health,
     parse_cpuinfo,
+    parse_dpkg_status,
     parse_ip_addr_json,
     parse_lsblk_json,
     parse_meminfo,
@@ -47,6 +48,27 @@ SwapFree:       1500000 kB
     assert memory["used_kb"] == 3000000
     assert memory["available_percent"] == 62.5
     assert memory["swap_used_kb"] == 500000
+
+
+def test_parse_dpkg_status_counts_installed_packages():
+    parsed = parse_dpkg_status(
+        """
+Package: base-files
+Status: install ok installed
+Priority: required
+Section: admin
+
+Package: example
+Status: deinstall ok config-files
+Priority: optional
+Section: misc
+""".strip()
+    )
+
+    assert parsed["package_records"] == 2
+    assert parsed["installed_packages"] == 1
+    assert parsed["priorities"]["required"] == 1
+    assert parsed["top_sections"]["admin"] == 1
 
 
 def test_parse_cpuinfo_returns_sane_partial_info():
