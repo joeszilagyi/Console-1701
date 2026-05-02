@@ -61,11 +61,11 @@ requires privilege or mutation, stop and ask the human before taking that action
     return prompt
 
 
-def _write_executable_script(path: Path, prompt_path: Path, cwd: Path) -> None:
+def _write_executable_script(path: Path, prompt_path: Path, cwd: Path, title: str) -> None:
     script = f"""#!/bin/sh
 set -eu
 cd {json.dumps(str(cwd))}
-printf '\\033]0;console-1706 host alert -> Codex\\007'
+printf '\\033]0;{title}\\007'
 echo 'console-1706 host alert -> interactive Codex'
 echo 'Prompt file: {prompt_path}'
 echo
@@ -100,46 +100,104 @@ def prepare_host_alert_terminal_action(
     section = str(scenario.get("section") or "host")
     timestamp = datetime.now(UTC).astimezone().strftime("%Y%m%d-%H%M%S")
     stem = f"{timestamp}-{_slug(section)}"
+    title = f"console-1706 Codex {stem}"
     prompt_path = action_dir / f"{stem}.prompt.md"
     script_path = action_dir / f"{stem}.sh"
     cwd = Path.home()
 
     prompt_path.write_text(build_host_alert_prompt(scenario), encoding="utf-8")
-    _write_executable_script(script_path, prompt_path, cwd)
+    _write_executable_script(script_path, prompt_path, cwd, title)
 
     return {
         "status": "prepared",
         "prompt_path": str(prompt_path),
         "script_path": str(script_path),
         "cwd": str(cwd),
+        "title": title,
     }
 
 
-def _terminal_candidates(script_path: str) -> list[tuple[str, list[str]]]:
+def _terminal_candidates(
+    script_path: str,
+    title: str = "console-1706 Codex",
+) -> list[tuple[str, list[str]]]:
     candidates: list[tuple[str, list[str]]] = []
-    if shutil.which("xdg-terminal-exec"):
-        candidates.append(("xdg-terminal-exec", ["xdg-terminal-exec", script_path]))
-    if shutil.which("x-terminal-emulator"):
-        candidates.append(("x-terminal-emulator", ["x-terminal-emulator", "-e", script_path]))
-    if shutil.which("gnome-terminal"):
-        candidates.append(("gnome-terminal", ["gnome-terminal", "--", script_path]))
-    if shutil.which("konsole"):
-        candidates.append(("konsole", ["konsole", "-e", script_path]))
     if shutil.which("xfce4-terminal"):
-        candidates.append(("xfce4-terminal", ["xfce4-terminal", "--command", script_path]))
+        candidates.append(
+            (
+                "xfce4-terminal",
+                [
+                    "xfce4-terminal",
+                    "--disable-server",
+                    "--maximize",
+                    "--initial-title",
+                    title,
+                    "--title",
+                    title,
+                    "--command",
+                    script_path,
+                ],
+            )
+        )
+    if shutil.which("gnome-terminal"):
+        candidates.append(
+            (
+                "gnome-terminal",
+                ["gnome-terminal", "--maximize", "--title", title, "--", script_path],
+            )
+        )
+    if shutil.which("konsole"):
+        candidates.append(
+            ("konsole", ["konsole", "--fullscreen", "--title", title, "-e", script_path])
+        )
     if shutil.which("mate-terminal"):
-        candidates.append(("mate-terminal", ["mate-terminal", "--command", script_path]))
-    if shutil.which("lxterminal"):
-        candidates.append(("lxterminal", ["lxterminal", "-e", script_path]))
+        candidates.append(
+            (
+                "mate-terminal",
+                ["mate-terminal", "--maximize", "--title", title, "--command", script_path],
+            )
+        )
     if shutil.which("tilix"):
-        candidates.append(("tilix", ["tilix", "-e", script_path]))
+        candidates.append(("tilix", ["tilix", "--maximize", "-e", script_path]))
     if shutil.which("alacritty"):
-        candidates.append(("alacritty", ["alacritty", "-e", script_path]))
+        candidates.append(
+            (
+                "alacritty",
+                ["alacritty", "--option", "window.startup_mode=Maximized", "-e", script_path],
+            )
+        )
     if shutil.which("kitty"):
-        candidates.append(("kitty", ["kitty", script_path]))
+        candidates.append(
+            ("kitty", ["kitty", "--start-as=maximized", "--title", title, script_path])
+        )
     if shutil.which("wezterm"):
         candidates.append(("wezterm", ["wezterm", "start", "--", script_path]))
+    if shutil.which("x-terminal-emulator"):
+        candidates.append(
+            (
+                "x-terminal-emulator",
+                ["x-terminal-emulator", "--maximize", "-T", title, "-e", script_path],
+            )
+        )
+        candidates.append(("x-terminal-emulator", ["x-terminal-emulator", "-e", script_path]))
+    if shutil.which("xdg-terminal-exec"):
+        candidates.append(("xdg-terminal-exec", ["xdg-terminal-exec", script_path]))
+    if shutil.which("lxterminal"):
+        candidates.append(("lxterminal", ["lxterminal", "-e", script_path]))
     return candidates
+
+
+def _terminal_error_allows_fallback(detail: str) -> bool:
+    lowered = detail.lower()
+    return any(
+        marker in lowered
+        for marker in (
+            "unknown option",
+            "unrecognized option",
+            "failed to parse arguments",
+            "invalid option",
+        )
+    )
 
 
 def launch_host_alert_codex_terminal(
@@ -148,7 +206,10 @@ def launch_host_alert_codex_terminal(
 ) -> dict[str, Any]:
     prepared = prepare_host_alert_terminal_action(config, scenario)
     script_path = prepared["script_path"]
-    candidates = _terminal_candidates(script_path)
+    candidates = _terminal_candidates(
+        script_path,
+        str(prepared.get("title") or "console-1706 Codex"),
+    )
     if not candidates:
         raise TerminalLaunchError(
             "No supported terminal emulator was found. Tried xdg-terminal-exec, "
@@ -170,8 +231,15 @@ def launch_host_alert_codex_terminal(
                 env=os.environ.copy(),
             )
         except subprocess.TimeoutExpired:
-            errors.append(f"{terminal_name}: launch command timed out")
-            continue
+            prepared.update(
+                {
+                    "status": "launch_requested",
+                    "terminal": terminal_name,
+                    "command": terminal_args,
+                    "note": "launch command timed out after terminal request; no fallback tried",
+                }
+            )
+            return prepared
         except OSError as exc:
             errors.append(f"{terminal_name}: {exc}")
             continue
@@ -188,5 +256,10 @@ def launch_host_alert_codex_terminal(
 
         detail = (result.stderr or result.stdout or "").strip()
         errors.append(f"{terminal_name}: exit {result.returncode} {detail}".strip())
+        if not _terminal_error_allows_fallback(detail):
+            raise TerminalLaunchError(
+                "Terminal launch failed after attempting one terminal command. "
+                + errors[-1]
+            )
 
     raise TerminalLaunchError("Terminal launch failed. " + " | ".join(errors))

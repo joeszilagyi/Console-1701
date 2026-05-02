@@ -1,5 +1,12 @@
 const toast = document.querySelector("#toast");
 let previousLive = null;
+let scanMonitor = null;
+let livePollTimer = null;
+let liveReadoutInFlight = null;
+const livePower = {
+  onBattery: false,
+  source: "unknown",
+};
 const scanTiming = {
   lastScan: document.querySelector("[data-last-scan]")?.dataset.lastScan || null,
   intervalSeconds: Number(
@@ -12,6 +19,18 @@ const scanTiming = {
 };
 
 const SENSOR_CLASSES = ["sensor-ok", "sensor-warning", "sensor-critical", "sensor-unknown"];
+const HISTORY_WINDOW_MS = 5 * 60 * 1000;
+const liveHistory = {
+  "system-score": [],
+  "net-rx": [],
+  "net-tx": [],
+  cpu: [],
+  memory: [],
+  "memory-pressure": [],
+  "fs-root": [],
+  "io-pressure": [],
+  thermal: [],
+};
 
 function showToast(message) {
   if (!toast) return;
@@ -20,12 +39,53 @@ function showToast(message) {
   window.setTimeout(() => toast.classList.remove("visible"), 4500);
 }
 
+function setScanButtonBusy(isBusy) {
+  const button = document.querySelector("#scan-button");
+  if (!button) return;
+  button.disabled = isBusy;
+  button.textContent = isBusy ? "Scanning..." : "Manual scan";
+  button.classList.toggle("is-busy", isBusy);
+}
+
+function monitorManualScan(previousLastScan) {
+  if (scanMonitor) {
+    window.clearInterval(scanMonitor);
+  }
+  const deadline = Date.now() + 120000;
+  setScanButtonBusy(true);
+  scanMonitor = window.setInterval(async () => {
+    await updateLiveReadouts();
+    if (scanTiming.lastScan && scanTiming.lastScan !== previousLastScan) {
+      window.clearInterval(scanMonitor);
+      scanMonitor = null;
+      setScanButtonBusy(false);
+      showToast("Scan complete. Host readouts updated.");
+      return;
+    }
+    if (Date.now() > deadline) {
+      window.clearInterval(scanMonitor);
+      scanMonitor = null;
+      setScanButtonBusy(false);
+      showToast("Scan did not report a new host snapshot within two minutes.");
+    }
+  }, 2000);
+}
+
 document.querySelector("#scan-button")?.addEventListener("click", async () => {
+  const previousLastScan = scanTiming.lastScan;
+  setScanButtonBusy(true);
   try {
     const response = await fetch("/api/scan", { method: "POST" });
     const payload = await response.json();
-    showToast(payload.status === "started" ? "Scan started." : "Scan is already running.");
+    if (payload.status === "started") {
+      showToast("Scan started. Waiting for fresh host snapshot.");
+      monitorManualScan(previousLastScan);
+    } else {
+      showToast("Scan is already running. Watching for fresh host snapshot.");
+      monitorManualScan(previousLastScan);
+    }
   } catch (error) {
+    setScanButtonBusy(false);
     showToast(`Scan request failed: ${error}`);
   }
 });
@@ -43,7 +103,9 @@ document.querySelectorAll("[data-scroll-target]").forEach((button) => {
 
 document.querySelectorAll("[data-codex-scenario]").forEach((button) => {
   button.addEventListener("click", async () => {
+    if (button.dataset.launching === "1") return;
     const originalTitle = button.getAttribute("title") || "Open Codex terminal";
+    button.dataset.launching = "1";
     button.disabled = true;
     button.setAttribute("title", "Launching terminal...");
     try {
@@ -61,6 +123,7 @@ document.querySelectorAll("[data-codex-scenario]").forEach((button) => {
     } catch (error) {
       showToast(`Codex terminal launch failed: ${error}`);
     } finally {
+      delete button.dataset.launching;
       button.disabled = false;
       button.setAttribute("title", originalTitle);
     }
@@ -78,6 +141,72 @@ function setLiveBar(name, percent) {
   document.querySelectorAll(`[data-live-bar="${name}"]`).forEach((node) => {
     node.style.width = `${width}%`;
   });
+}
+
+function setTrendState(name, value) {
+  document.querySelectorAll(`[data-trend-state="${name}"]`).forEach((node) => {
+    node.textContent = value;
+  });
+}
+
+function pushHistory(name, value) {
+  if (
+    !Object.prototype.hasOwnProperty.call(liveHistory, name) ||
+    value === null ||
+    value === undefined
+  ) {
+    return;
+  }
+  const number = Number(value);
+  if (!Number.isFinite(number)) return;
+  const now = Date.now();
+  liveHistory[name].push({ t: now, value: number });
+  while (liveHistory[name].length && now - liveHistory[name][0].t > HISTORY_WINDOW_MS) {
+    liveHistory[name].shift();
+  }
+}
+
+function sparklineDomain(values, scale) {
+  if (scale === "percent") return { min: 0, max: 100 };
+  if (scale === "celsius") return { min: 0, max: Math.max(100, ...values) };
+  const max = Math.max(...values, 1);
+  return { min: 0, max };
+}
+
+function renderSparkline(name) {
+  const samples = liveHistory[name] || [];
+  const svgNodes = document.querySelectorAll(`[data-sparkline="${name}"]`);
+  if (!svgNodes.length) return;
+  if (samples.length < 2) {
+    const stateNode = document.querySelector(`[data-trend-state="${name}"]`);
+    const emptyLabel = stateNode?.dataset.emptyLabel || "collecting";
+    setTrendState(name, samples.length ? `collecting ${samples.length}/2` : emptyLabel);
+    svgNodes.forEach((svg) => {
+      svg.classList.add("is-empty");
+      svg.querySelector("polyline")?.setAttribute("points", "");
+    });
+    return;
+  }
+
+  const values = samples.map((sample) => sample.value);
+  svgNodes.forEach((svg) => {
+    const { min, max } = sparklineDomain(values, svg.dataset.scale || "dynamic");
+    const span = max - min || 1;
+    const points = values
+      .map((value, index) => {
+        const x = (index / (values.length - 1)) * 100;
+        const y = 25 - ((Math.max(min, Math.min(max, value)) - min) / span) * 24;
+        return `${x.toFixed(2)},${y.toFixed(2)}`;
+      })
+      .join(" ");
+    svg.classList.remove("is-empty");
+    svg.querySelector("polyline")?.setAttribute("points", points);
+  });
+  setTrendState(name, `${samples.length} samples`);
+}
+
+function renderAllSparklines() {
+  Object.keys(liveHistory).forEach(renderSparkline);
 }
 
 function setSensorState(name, state, message) {
@@ -150,6 +279,43 @@ function parsedScanDate() {
 
 function currentServerDate() {
   return new Date(Date.now() + scanTiming.serverOffsetMs);
+}
+
+function updatePowerPolicy(power) {
+  const onBattery = Boolean(power?.on_battery);
+  livePower.onBattery = onBattery;
+  livePower.source = power?.source || "unknown";
+  if (document.hidden && onBattery) {
+    setLiveText("poll-policy", "Battery + background: live polling idle until foreground.");
+  } else if (document.hidden) {
+    setLiveText("poll-policy", "External power + background: live polling every 10s.");
+  } else if (onBattery) {
+    setLiveText("poll-policy", "Battery + foreground: live polling every 5s.");
+  } else {
+    setLiveText("poll-policy", "External power + foreground: live polling every 3s.");
+  }
+}
+
+function livePollDelay() {
+  if (document.hidden && livePower.onBattery) return null;
+  if (document.hidden) return 10000;
+  return livePower.onBattery ? 5000 : 3000;
+}
+
+function scheduleLiveReadout(delayOverride = undefined) {
+  if (livePollTimer) {
+    window.clearTimeout(livePollTimer);
+    livePollTimer = null;
+  }
+  const delay = delayOverride ?? livePollDelay();
+  if (delay === null) {
+    updatePowerPolicy({ on_battery: livePower.onBattery, source: livePower.source });
+    return;
+  }
+  livePollTimer = window.setTimeout(async () => {
+    await updateLiveReadouts();
+    scheduleLiveReadout();
+  }, delay);
 }
 
 function updateScanTimers() {
@@ -345,11 +511,34 @@ function updateFilesystemSensor(live) {
   setSensorState("filesystem", critical ? "critical" : warning ? "warning" : "ok", message);
 }
 
+function thermalMax(live) {
+  const value = live.thermal?.max_celsius;
+  return value === null || value === undefined ? null : Number(value);
+}
+
+function updateLiveHistory(live, cpu, rates) {
+  const score = live.scan_timing?.score ?? scanTiming.score;
+  const memoryPressure = pressureAvg10(live.pressure?.memory);
+  const ioPressure = pressureAvg10(live.pressure?.io);
+  pushHistory("system-score", score);
+  pushHistory("net-rx", rates.rx);
+  pushHistory("net-tx", rates.tx);
+  pushHistory("cpu", cpu);
+  pushHistory("memory", live.memory?.used_percent);
+  pushHistory("memory-pressure", memoryPressure);
+  pushHistory("fs-root", live.filesystems?.root?.used_percent);
+  pushHistory("io-pressure", ioPressure);
+  pushHistory("thermal", thermalMax(live));
+  renderAllSparklines();
+}
+
 async function updateLiveReadouts() {
-  try {
+  if (liveReadoutInFlight) return liveReadoutInFlight;
+  liveReadoutInFlight = (async () => {
     const response = await fetch("/api/live", { cache: "no-store" });
     if (!response.ok) throw new Error(response.statusText);
     const live = await response.json();
+    updatePowerPolicy(live.power);
     if (live.scan_timing) {
       scanTiming.lastScan = live.scan_timing.last_scan || scanTiming.lastScan;
       scanTiming.intervalSeconds = live.scan_timing.interval_seconds || scanTiming.intervalSeconds;
@@ -391,15 +580,30 @@ async function updateLiveReadouts() {
     updateNetworkSensor(live, rates);
     updateCpuRamSensor(live, cpu);
     updateFilesystemSensor(live);
+    updateLiveHistory(live, cpu, rates);
     updateScanTimers();
     previousLive = live;
+    return live;
+  })();
+
+  try {
+    return await liveReadoutInFlight;
   } catch (error) {
     setLiveText("net-rx-rate", "live off");
     setLiveText("net-tx-rate", "live off");
+    return null;
+  } finally {
+    liveReadoutInFlight = null;
   }
 }
 
 updateScanTimers();
-updateLiveReadouts();
+updateLiveReadouts().finally(() => scheduleLiveReadout());
 window.setInterval(updateScanTimers, 1000);
-window.setInterval(updateLiveReadouts, 2000);
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    updateLiveReadouts().finally(() => scheduleLiveReadout(3000));
+  } else {
+    scheduleLiveReadout();
+  }
+});

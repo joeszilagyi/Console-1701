@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>console-1706</title>
-    <link rel="stylesheet" href="/static/app.css?v=machine-console-9">
+    <link rel="stylesheet" href="/static/app.css?v=machine-console-10">
   </head>
   <body>
     {% set snap = host.snapshot if host else {} %}
@@ -73,16 +73,29 @@
 
     <main class="console-shell">
       <section class="status-ribbon sensor-lane" aria-label="Live machine sensor lane">
-        <button class="ribbon-cell ribbon-button sensor-cell status-{{ host_summary.state | lower }}" type="button" data-sensor-cell="system" data-scroll-target="#attention-stack">
+        <button class="ribbon-cell ribbon-button sensor-cell status-{{ host_summary.state | lower }}" type="button" data-sensor-cell="system" data-scroll-target="#attention-delta-area">
           <span class="sensor-title"><span>System</span><i class="sensor-lamp" data-live-lamp="system" aria-hidden="true"></i></span>
           <strong><b data-live="system-state">{{ host_summary.state }}</b> · <b data-live="system-alerts">{{ host_summary.penalties | length }}</b> alert{{ "" if (host_summary.penalties | length) == 1 else "s" }}</strong>
           <small data-live="system-health">{{ primary_penalty.message if primary_penalty else "No host-level issue crossed current thresholds." }}</small>
           {% if primary_penalty and primary_penalty.why %}
             <small><b>Why:</b> {{ primary_penalty.why }}</small>
           {% endif %}
+          <small data-live="poll-policy">Live polling adapts to power and tab visibility.</small>
           <span class="sensor-bars" aria-hidden="true">
             <span class="sensor-row"><span>Health</span><i><b data-live-bar="system" style="width: {{ host_summary.score or 0 }}%"></b></i><em data-live="system-score">{{ host_summary.score if host_summary.score is not none else "--" }}</em></span>
           </span>
+          <div class="trend-grid two" aria-label="System session trends">
+            <div class="trend-card">
+              <span>Health trace</span>
+              <svg data-sparkline="system-score" data-scale="percent" viewBox="0 0 100 26" preserveAspectRatio="none" role="img" aria-label="Session health score trend"><polyline></polyline></svg>
+              <em data-trend-state="system-score">collecting</em>
+            </div>
+            <div class="trend-card">
+              <span>Thermal trace</span>
+              <svg data-sparkline="thermal" data-scale="celsius" viewBox="0 0 100 26" preserveAspectRatio="none" role="img" aria-label="Session thermal trend"><polyline></polyline></svg>
+              <em data-trend-state="thermal" data-empty-label="not detected">not detected</em>
+            </div>
+          </div>
         </button>
         <div class="ribbon-cell sensor-cell ribbon-network" data-sensor-cell="network">
           <span class="sensor-title"><span>Network</span><i class="sensor-lamp" data-live-lamp="network" aria-hidden="true"></i></span>
@@ -93,6 +106,18 @@
             <div class="sensor-row"><span>IN</span><i><b data-live-bar="net-rx"></b></i><em data-live="net-rx-rate">0 B/s</em></div>
             <div class="sensor-row"><span>OUT</span><i><b data-live-bar="net-tx"></b></i><em data-live="net-tx-rate">0 B/s</em></div>
             <div class="sensor-row"><span>ERR</span><i><b data-live-bar="net-errors"></b></i><em data-live="net-errors">0</em></div>
+          </div>
+          <div class="trend-grid two" aria-label="Network session trends">
+            <div class="trend-card">
+              <span>RX trace</span>
+              <svg data-sparkline="net-rx" data-scale="dynamic" viewBox="0 0 100 26" preserveAspectRatio="none" role="img" aria-label="Session network receive trend"><polyline></polyline></svg>
+              <em data-trend-state="net-rx">collecting</em>
+            </div>
+            <div class="trend-card">
+              <span>TX trace</span>
+              <svg data-sparkline="net-tx" data-scale="dynamic" viewBox="0 0 100 26" preserveAspectRatio="none" role="img" aria-label="Session network transmit trend"><polyline></polyline></svg>
+              <em data-trend-state="net-tx">collecting</em>
+            </div>
           </div>
         </div>
         <div class="ribbon-cell sensor-cell ribbon-cpu-ram" data-sensor-cell="cpu-ram">
@@ -105,6 +130,23 @@
             <div class="sensor-row"><span>RAM</span><i><b data-live-bar="memory" style="width: {{ memory_used_percent or 0 }}%"></b></i><em data-live="mem-used-inline">{{ "%.1f"|format(memory_used_percent) ~ "%" if memory_used_percent is not none else "--" }}</em></div>
             <div class="sensor-row"><span>LOAD</span><i><b data-live-bar="load"></b></i><em data-live="load-ratio">--</em></div>
           </div>
+          <div class="trend-grid three" aria-label="CPU and RAM session trends">
+            <div class="trend-card">
+              <span>CPU trace</span>
+              <svg data-sparkline="cpu" data-scale="percent" viewBox="0 0 100 26" preserveAspectRatio="none" role="img" aria-label="Session CPU trend"><polyline></polyline></svg>
+              <em data-trend-state="cpu">collecting</em>
+            </div>
+            <div class="trend-card">
+              <span>RAM trace</span>
+              <svg data-sparkline="memory" data-scale="percent" viewBox="0 0 100 26" preserveAspectRatio="none" role="img" aria-label="Session memory trend"><polyline></polyline></svg>
+              <em data-trend-state="memory">collecting</em>
+            </div>
+            <div class="trend-card">
+              <span>PSI trace</span>
+              <svg data-sparkline="memory-pressure" data-scale="percent" viewBox="0 0 100 26" preserveAspectRatio="none" role="img" aria-label="Session memory pressure trend"><polyline></polyline></svg>
+              <em data-trend-state="memory-pressure" data-empty-label="not detected">not detected</em>
+            </div>
+          </div>
         </div>
         <div class="ribbon-cell sensor-cell ribbon-filesystem" data-sensor-cell="filesystem">
           <span class="sensor-title"><span>Filesystem</span><i class="sensor-lamp" data-live-lamp="filesystem" aria-hidden="true"></i></span>
@@ -115,6 +157,18 @@
             <div class="sensor-row"><span>ROOT</span><i><b data-live-bar="fs-root" style="width: {{ root_use_percent or 0 }}%"></b></i><em data-live="fs-root-used-inline">{{ "%.1f"|format(root_use_percent) ~ "%" if root_use_percent is not none else "--" }}</em></div>
             <div class="sensor-row"><span>HOME</span><i><b data-live-bar="fs-home" style="width: {{ home_use_percent or 0 }}%"></b></i><em data-live="fs-home-used-inline">{{ "%.1f"|format(home_use_percent) ~ "%" if home_use_percent is not none else "--" }}</em></div>
             <div class="sensor-row"><span>I/O</span><i><b data-live-bar="io-pressure"></b></i><em data-live="io-pressure">--</em></div>
+          </div>
+          <div class="trend-grid two" aria-label="Filesystem session trends">
+            <div class="trend-card">
+              <span>Root trace</span>
+              <svg data-sparkline="fs-root" data-scale="percent" viewBox="0 0 100 26" preserveAspectRatio="none" role="img" aria-label="Session root filesystem usage trend"><polyline></polyline></svg>
+              <em data-trend-state="fs-root">collecting</em>
+            </div>
+            <div class="trend-card">
+              <span>I/O trace</span>
+              <svg data-sparkline="io-pressure" data-scale="percent" viewBox="0 0 100 26" preserveAspectRatio="none" role="img" aria-label="Session I/O pressure trend"><polyline></polyline></svg>
+              <em data-trend-state="io-pressure" data-empty-label="not detected">not detected</em>
+            </div>
           </div>
         </div>
       </section>
@@ -162,7 +216,7 @@
             <span class="module-code">{{ host_summary.penalties | length }} active</span>
           </div>
           {% if host_summary.penalties %}
-            <ul class="alert-list">
+            <ul id="attention-delta-area" class="alert-list">
               {% for penalty in host_summary.penalties %}
                 {% set codex_action = {
                   "section": penalty.section,
@@ -198,7 +252,7 @@
               {% endfor %}
             </ul>
           {% else %}
-            <p class="muted">No host-level issue crossed current thresholds.</p>
+            <p id="attention-delta-area" class="muted">No host-level issue crossed current thresholds.</p>
           {% endif %}
           <details>
             <summary>Changes since previous host scan</summary>
@@ -716,6 +770,6 @@
     </main>
 
     <div id="toast" role="status" aria-live="polite"></div>
-    <script src="/static/app.js"></script>
+    <script src="/static/app.js?v=machine-console-10"></script>
   </body>
 </html>

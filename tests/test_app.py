@@ -117,6 +117,9 @@ def test_root_page_renders_html(tmp_path, monkeypatch):
     assert "B2 Services / systems" in body
     assert "B3 Debian" in body
     assert "B4 Hardware" in body
+    assert "/static/app.js?v=machine-console-10" in body
+    assert 'data-sparkline="cpu"' in body
+    assert 'data-live="poll-policy"' in body
     assert "demo-host" in body
     assert str(db_path) in body
     assert body.index("Machine readout") < body.index("Local work")
@@ -175,6 +178,8 @@ def test_root_page_renders_codex_terminal_action_for_host_penalty(tmp_path, monk
 
     assert response.status_code == 200
     assert "delta-action" in body
+    assert "attention-delta-area" in body
+    assert 'data-scroll-target="#attention-delta-area"' in body
     assert "data-codex-scenario" in body
     assert "Open a new terminal with this alert loaded into interactive Codex" in body
 
@@ -249,12 +254,14 @@ projects: []
             "memory": {},
             "network": {},
             "filesystems": {},
+            "power": {"on_battery": False, "source": "external"},
         },
     )
 
     response = _route_endpoint(router, "/api/live")()
 
     assert response["cpu"]["times"]["total"] == 1
+    assert response["power"]["source"] == "external"
     assert response["scan_timing"]["interval_seconds"] == 900
     assert response["scan_timing"]["state"] == "UNKNOWN"
 

@@ -221,6 +221,12 @@ summary {
   text-transform: uppercase;
 }
 
+.action-button.is-busy,
+.action-button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
 .console-shell {
   width: var(--shell-width);
   margin: 0 auto;
@@ -411,6 +417,96 @@ summary {
 .sensor-critical small,
 .sensor-critical .sensor-row em {
   color: var(--red);
+}
+
+.trend-grid {
+  display: grid;
+  gap: 0.24rem;
+  margin-top: 0.24rem;
+}
+
+.trend-grid.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.trend-grid.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.trend-card {
+  min-width: 0;
+  padding: 0.22rem;
+  border: 1px solid rgba(45, 88, 124, 0.62);
+  background:
+    linear-gradient(rgba(79, 220, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79, 220, 255, 0.04) 1px, transparent 1px),
+    rgba(2, 9, 16, 0.56);
+  background-size: 9px 9px;
+}
+
+.trend-card span,
+.trend-card em {
+  display: block;
+  overflow: hidden;
+  color: var(--muted);
+  font-family: "Cascadia Mono", "Fira Code", ui-monospace, monospace;
+  font-size: 0.62rem;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.trend-card em {
+  margin-top: 0.12rem;
+  color: #b7c9db;
+  font-size: 0.58rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.trend-card svg {
+  display: block;
+  width: 100%;
+  height: 1.8rem;
+  margin-top: 0.18rem;
+  overflow: visible;
+}
+
+.trend-card polyline {
+  fill: none;
+  stroke: var(--cyan);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+  filter: drop-shadow(0 0 4px rgba(79, 220, 255, 0.5));
+}
+
+.trend-card svg.is-empty {
+  opacity: 0.38;
+}
+
+.ribbon-network .trend-card polyline {
+  stroke: var(--blue);
+}
+
+.ribbon-cpu-ram .trend-card polyline {
+  stroke: var(--green);
+}
+
+.ribbon-filesystem .trend-card polyline {
+  stroke: var(--amber);
+}
+
+.sensor-warning .trend-card polyline {
+  stroke: var(--amber);
+}
+
+.sensor-critical .trend-card polyline {
+  stroke: var(--red);
 }
 
 .telemetry-grid {
@@ -1187,7 +1283,7 @@ textarea:focus-visible {
 
   .command-readouts,
   .status-ribbon {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .telemetry-grid {
@@ -1234,7 +1330,9 @@ textarea:focus-visible {
   }
 
   .repo-line,
-  .event-list li {
+  .event-list li,
+  .trend-grid.two,
+  .trend-grid.three {
     grid-template-columns: 1fr;
   }
 }

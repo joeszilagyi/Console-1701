@@ -12,7 +12,8 @@ whenever new ideas come up and are not completed immediately.
 - `/api/host` and `/api/host/history` expose persisted host state.
 - `/api/live` exposes local live sensor state for the top lane without external network calls.
 - The top sensor lane currently covers System, Network, CPU/RAM, and Filesystem with live bars,
-  local health colors, and inline explanations.
+  five-minute page-session trend traces, local health colors, adaptive polling, and inline
+  explanations.
 - Alert rows can launch a user-clicked local terminal with an interactive Codex scenario.
 - The local delta image is displayed from `console1706/static/codex-alert-delta.png`.
 
@@ -20,17 +21,34 @@ whenever new ideas come up and are not completed immediately.
 
 ### Historical Live Sensor Graphs
 
-Status: not implemented.
+Status: implemented.
 
-Add short in-browser history buffers for CPU, RAM, network RX/TX, root usage, PSI, and possibly
-temperature. Render real mini sparklines only from collected live samples. Do not invent data and
-do not persist high-frequency live samples until a storage policy exists.
+The top sensor lane keeps five minutes of in-browser buffers for scan health, CPU, RAM, memory PSI,
+network RX/TX, root filesystem usage, I/O PSI, and thermal maximum when available. It renders
+compact SVG sparklines only after real `/api/live` samples arrive. High-frequency live samples are
+not persisted and are lost on page reload.
 
-Acceptance shape:
+Polling policy:
 
-- First-screen bars remain, with compact trend traces added where useful.
-- Trends survive normal polling within the page session.
-- Empty/history-not-ready states are explicit.
+- External power + foreground tab: every 3 seconds.
+- External power + background tab: every 10 seconds.
+- Battery + foreground tab: every 5 seconds.
+- Battery + background tab: idle until the page returns to foreground.
+
+Follow-up options:
+
+- Tune visual density after watching it under real load for a few sessions.
+- Add browser-level tests if a UI smoke-test runner is introduced.
+- Consider persisted low-resolution history only after a storage policy exists.
+
+### Broken Action Interactions
+
+Status: implemented.
+
+The top System/Caution box now targets the alert action list (`attention-delta-area`) instead of
+the top of the alert module. Static JS is cache-busted with the page version, manual scan shows a
+busy state and watches for a fresh host snapshot, and terminal candidates prefer maximized terminal
+launch flags where supported.
 
 ### WebSocket Or SSE Live Stream
 
@@ -124,6 +142,23 @@ Future work:
   no package installation.
 - GPU detection only from naturally available local read-only sources.
 - USB/PCI inventory only if privacy and noise are handled.
+
+### Local Weather Bay
+
+Status: blocked by local-only contract.
+
+Requested: show local weather for the next 7 days in a bay. A real forecast requires an external
+weather provider or a pre-existing local weather data source. Under current constraints,
+console-1706 must not make cloud calls or hidden network requests by default.
+
+Safe implementation shape if explicitly approved later:
+
+- Add config such as `weather.enabled: false`, `weather.provider`, and `weather.location`.
+- Keep disabled by default.
+- Show "not configured" in the UI unless explicitly enabled.
+- Use short timeouts, no telemetry, no scraping beyond the selected forecast payload, and clear
+  evidence showing provider, location, request time, and failure mode.
+- Never infer or transmit precise location without explicit config.
 
 ## Medium Priority
 

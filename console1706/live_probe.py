@@ -261,6 +261,80 @@ def _thermal() -> dict[str, Any]:
     }
 
 
+def _power() -> dict[str, Any]:
+    supplies = []
+    power_dir = Path("/sys/class/power_supply")
+    if not power_dir.exists():
+        return {
+            "supplies": [],
+            "battery_present": False,
+            "ac_online": None,
+            "battery_percent": None,
+            "battery_status": None,
+            "on_battery": False,
+            "source": "not_detected",
+        }
+
+    for supply_dir in sorted(power_dir.iterdir()):
+        if not supply_dir.is_dir():
+            continue
+        supply = {
+            "name": supply_dir.name,
+            "type": _read_text(supply_dir / "type", 64).strip() or None,
+            "status": _read_text(supply_dir / "status", 64).strip() or None,
+            "capacity": _read_text(supply_dir / "capacity", 64).strip() or None,
+            "online": _read_text(supply_dir / "online", 64).strip() or None,
+        }
+        try:
+            supply["capacity_percent"] = (
+                int(supply["capacity"]) if supply["capacity"] is not None else None
+            )
+        except ValueError:
+            supply["capacity_percent"] = None
+        supplies.append(supply)
+
+    batteries = [supply for supply in supplies if supply.get("type") == "Battery"]
+    ac_supplies = [
+        supply
+        for supply in supplies
+        if supply.get("type") in {"Mains", "USB", "USB_C", "USB_PD"}
+    ]
+    ac_online = any(supply.get("online") == "1" for supply in ac_supplies) if ac_supplies else None
+    battery_percent = next(
+        (
+            battery.get("capacity_percent")
+            for battery in batteries
+            if battery.get("capacity_percent") is not None
+        ),
+        None,
+    )
+    battery_status = next(
+        (battery.get("status") for battery in batteries if battery.get("status")),
+        None,
+    )
+    battery_present = bool(batteries)
+    on_battery = battery_present and (
+        ac_online is False or str(battery_status).lower() == "discharging"
+    )
+    if on_battery:
+        source = "battery"
+    elif ac_online is True:
+        source = "external"
+    elif battery_present:
+        source = "battery_state_unknown"
+    else:
+        source = "no_battery_detected"
+    return {
+        "supplies": supplies,
+        "battery_present": battery_present,
+        "ac_online": ac_online,
+        "battery_percent": battery_percent,
+        "battery_status": battery_status,
+        "on_battery": on_battery,
+        "source": source,
+    }
+
+
 def read_live_snapshot() -> dict[str, Any]:
     home = str(Path.home())
     filesystems = {"root": _filesystem("/"), "home": _filesystem(home)}
@@ -284,4 +358,5 @@ def read_live_snapshot() -> dict[str, Any]:
             "io": _parse_pressure("io"),
         },
         "thermal": _thermal(),
+        "power": _power(),
     }
