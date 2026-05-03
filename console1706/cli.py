@@ -2,11 +2,26 @@ from __future__ import annotations
 
 import argparse
 import sys
+from importlib.metadata import PackageNotFoundError, version
 
 from console1706.config import DEFAULT_CONFIG_PATH, init_config, load_config
 from console1706.db import connect_db, init_db
 from console1706.handoff import DEFAULT_TASK, create_handoff_packet
 from console1706.scanner import run_scan
+
+CLI_DESCRIPTION = """Local-only Debian machine console.
+
+Commands read local config and write only console-1706 state/config paths unless
+the named command explicitly says otherwise. The web server always binds to
+127.0.0.1, even if a wider host is requested.
+"""
+
+CLI_EPILOG = """Examples:
+  console-1706 init-config
+  console-1706 scan
+  console-1706 serve
+  console-1706 handoff --repo-id 1 --task "Review this local repo state."
+"""
 
 
 def _add_config_arg(parser: argparse.ArgumentParser) -> None:
@@ -17,23 +32,55 @@ def _add_config_arg(parser: argparse.ArgumentParser) -> None:
     )
 
 
+def _package_version() -> str:
+    try:
+        return version("console-1706")
+    except PackageNotFoundError:
+        return "unknown"
+
+
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="console-1706")
+    parser = argparse.ArgumentParser(
+        prog="console-1706",
+        description=CLI_DESCRIPTION,
+        epilog=CLI_EPILOG,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("--version", action="version", version=f"%(prog)s {_package_version()}")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    init_parser = subparsers.add_parser("init-config", help="Create config.yml if missing")
+    init_parser = subparsers.add_parser(
+        "init-config",
+        help="Create the local config.yml if missing",
+        description="Create the console-1706 YAML config without scanning or serving.",
+    )
     _add_config_arg(init_parser)
     init_parser.add_argument("--overwrite", action="store_true", help="Overwrite existing config")
 
-    scan_parser = subparsers.add_parser("scan", help="Scan configured and discovered local repos")
+    scan_parser = subparsers.add_parser(
+        "scan",
+        help="Probe the local host, configured repos, and logs once",
+        description=(
+            "Run one safe local scan. The scan reads local host/repo/log facts and writes the "
+            "configured console-1706 SQLite state."
+        ),
+    )
     _add_config_arg(scan_parser)
 
-    serve_parser = subparsers.add_parser("serve", help="Run the local web UI")
+    serve_parser = subparsers.add_parser(
+        "serve",
+        help="Run the local-only web UI on 127.0.0.1",
+        description="Serve the console locally. Binding outside 127.0.0.1 is refused.",
+    )
     _add_config_arg(serve_parser)
     serve_parser.add_argument("--host", default=None, help="Bind host. Forced to 127.0.0.1.")
     serve_parser.add_argument("--port", type=int, default=None, help="Bind port. Default: 1706.")
 
-    handoff_parser = subparsers.add_parser("handoff", help="Create a Markdown handoff packet")
+    handoff_parser = subparsers.add_parser(
+        "handoff",
+        help="Create a local Markdown handoff packet",
+        description="Write a bounded Markdown handoff packet under console-1706 state.",
+    )
     _add_config_arg(handoff_parser)
     handoff_parser.add_argument("--repo-id", type=int, required=True)
     handoff_parser.add_argument("--task", default=DEFAULT_TASK)
