@@ -4,207 +4,812 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>console-1706</title>
-    <link rel="stylesheet" href="/static/app.css">
+    <link rel="stylesheet" href="/static/app.css?v=machine-console-17">
   </head>
-  <body>
-    <header class="hero">
-      <div class="rail"></div>
-      <div>
-        <p class="eyebrow">Local-only repo and workflow console</p>
-        <h1>What is going on</h1>
+  <body data-active-scope="{{ active_scope or 'LOCAL' }}">
+    {% set snap = host.snapshot if host else {} %}
+    {% set identity = snap.identity or {} %}
+    {% set os_info = snap.os or {} %}
+    {% set kernel = snap.kernel or {} %}
+    {% set session = snap.session or {} %}
+    {% set debian = snap.debian or {} %}
+    {% set cpu = snap.cpu or {} %}
+    {% set memory = snap.memory or {} %}
+    {% set storage = snap.storage or {} %}
+    {% set filesystems = snap.filesystems or {} %}
+    {% set network = snap.network or {} %}
+    {% set services = snap.services or {} %}
+    {% set processes = snap.processes or {} %}
+    {% set power = snap.power or {} %}
+    {% set thermal = snap.thermal or {} %}
+    {% set dev_tools = snap.dev_tools or {} %}
+    {% set logs = snap.logs or {} %}
+    {% set filesystem_items = filesystems.get("items", []) if filesystems else [] %}
+    {% set root_fs = storage.get("root") if storage else none %}
+    {% set home_fs = storage.get("home") if storage else none %}
+    {% set root_use_percent = root_fs.get("use_percent") if root_fs else none %}
+    {% set home_use_percent = home_fs.get("use_percent") if home_fs else none %}
+    {% set memory_available_percent = memory.get("available_percent") if memory else none %}
+    {% set memory_used_percent = memory.get("used_percent") if memory else none %}
+    {% set swap_total = memory.get("swap_total_kb") if memory else none %}
+    {% set swap_used = memory.get("swap_used_kb") if memory else none %}
+    {% set load = cpu.get("load_average") or {} %}
+    {% set load_one = load.get("one") %}
+    {% set primary_iface = network.get("primary_interface") if network else none %}
+    {% set default_route = network.get("default_route") if network else none %}
+    {% set dns = network.get("dns") or {} if network else {} %}
+    {% set nm = network.get("network_manager") or {} if network else {} %}
+    {% set failed_system_count = services.get("failed_system_count") or 0 %}
+    {% set failed_user_count = services.get("failed_user_count") or 0 %}
+    {% set journal_warning_count = (logs.get("system_warning_count") or 0) + (logs.get("user_warning_count") or 0) %}
+    {% set primary_penalty = host_summary.penalties[0] if host_summary.penalties else none %}
+
+    <header class="command-strip">
+      <div class="brand-block">
+        <span class="signal-dot status-{{ host_summary.state | lower }}"></span>
+        <div class="brand-copy">
+          <div class="brand-title-line">
+            <h1>console-1706</h1>
+            <strong>{{ active_scope or "LOCAL" }}</strong>
+          </div>
+          <p>{{ active_scope or "LOCAL" }}</p>
+        </div>
+      </div>
+      <div class="command-readouts">
+        <div><span>Host</span><strong>{{ identity.hostname or host_summary.hostname or "unknown" }}</strong></div>
+        <div><span>State</span><strong class="state-text status-text-{{ host_summary.state | lower }}">{{ host_summary.state }}</strong></div>
+        <div class="timer-readout">
+          <span>Last updated</span>
+          <strong data-live="last-updated-age" data-last-scan="{{ host_summary.last_scan or '' }}">{{ host_summary.last_scan_display or "never" }}</strong>
+          <em data-live="last-updated-clock">--:--:--</em>
+        </div>
+        <div class="timer-readout">
+          <span>Next update</span>
+          <strong data-live="next-update-countdown" data-scan-interval-seconds="1800">--:--:--</strong>
+          <em data-live="next-update-clock">--:--:--</em>
+        </div>
+        <div><span>Uptime</span><strong>{{ session.uptime_human or "unknown" }}</strong></div>
+        <div><span>Kernel</span><strong>{{ kernel.release or "unknown" }}</strong></div>
       </div>
       <button id="scan-button" class="action-button" type="button">Manual scan</button>
     </header>
 
-    <main class="shell">
-      <section class="state-strip" aria-label="System state">
-        <article class="state-cell severity-{{ summary.system_state | lower }}">
-          <span>System state</span>
-          <strong>{{ summary.system_state }}</strong>
-        </article>
-        <article class="state-cell">
-          <span>Human attention</span>
-          <strong>{{ "YES" if summary.human_attention else "NO" }}</strong>
-        </article>
-        <article class="state-cell">
-          <span>Active area</span>
-          <strong>{{ summary.active_area }}</strong>
-        </article>
-        <article class="state-cell">
-          <span>Last scan</span>
-          <strong>
-            {% if summary.last_scan %}
-              {{ summary.last_scan.finished_at or summary.last_scan.started_at }}
-            {% else %}
-              never
-            {% endif %}
-          </strong>
-        </article>
-        <article class="state-cell wide">
-          <span>Next sane action</span>
-          <strong>{{ summary.next_sane_action }}</strong>
-        </article>
-      </section>
+    <nav class="scope-nav" aria-label="Console scope selector">
+      {% for scope in scopes %}
+        <a
+          class="scope-button{% if scope == active_scope %} is-selected{% endif %}"
+          href="{{ '/' if scope == 'OVERVIEW' else '/' ~ scope }}"
+          data-scope-nav="{{ scope }}"
+          {% if scope == active_scope %}aria-current="page"{% endif %}
+        >
+          <span class="scope-cap" aria-hidden="true"></span>
+          <span class="scope-gap" aria-hidden="true"></span>
+          <span class="scope-face">
+            <span class="signal-dot status-{{ host_summary.state | lower }}" aria-hidden="true"></span>
+            <b>{{ scope }}</b>
+          </span>
+        </a>
+      {% endfor %}
+    </nav>
 
-      <section class="panel main-readout">
-        <div>
-          <p class="eyebrow">Overview</p>
-          <h2>{{ summary.last_meaningful_event }}</h2>
-          {% if not summary.last_scan %}
-            <p>No scan has run yet. Run <code>console-1706 scan</code> or press manual scan.</p>
-          {% elif summary.repo_count == 0 %}
-            <p>No repos found yet.</p>
-            <p>Config path: <code>~/.config/console-1706/config.yml</code></p>
-            <p>Add <code>repo_roots</code> or <code>explicit_repos</code>, then run <code>console-1706 scan</code>.</p>
-          {% else %}
-            <p>{{ summary.repo_count }} repo{{ "" if summary.repo_count == 1 else "s" }} tracked. {{ summary.attention_count }} open attention item{{ "" if summary.attention_count == 1 else "s" }}.</p>
+    <main class="console-shell{% if active_scope != 'INTERNAL' %} scope-placeholder-shell{% endif %}">
+      {% if active_scope == "INTERNAL" %}
+      <section class="status-ribbon sensor-lane" aria-label="Live machine sensor lane">
+        <button class="ribbon-cell ribbon-button sensor-cell status-{{ host_summary.state | lower }}" type="button" data-sensor-cell="system" data-scroll-target="#attention-delta-area">
+          <span class="sensor-title"><span>System</span><i class="sensor-lamp" data-live-lamp="system" aria-hidden="true"></i></span>
+          <strong><b data-live="system-state">{{ host_summary.state }}</b> · <b data-live="system-alerts">{{ host_summary.penalties | length }}</b> alert{{ "" if (host_summary.penalties | length) == 1 else "s" }}</strong>
+          <small data-live="system-health">{{ primary_penalty.message if primary_penalty else "No host-level issue crossed current thresholds." }}</small>
+          {% if primary_penalty and primary_penalty.why %}
+            <small><b>Why:</b> {{ primary_penalty.why }}</small>
           {% endif %}
+          <small data-live="poll-policy">Live polling adapts to power and tab visibility.</small>
+          <span class="sensor-bars" aria-hidden="true">
+            <span class="sensor-row"><span>Health</span><i><b data-live-bar="system" style="width: {{ host_summary.score or 0 }}%"></b></i><em data-live="system-score">{{ host_summary.score if host_summary.score is not none else "--" }}</em></span>
+          </span>
+          <div class="trend-grid two" aria-label="System session trends">
+            <div class="trend-card">
+              <span>Health trace</span>
+              <svg data-sparkline="system-score" data-scale="percent" viewBox="0 0 100 26" preserveAspectRatio="none" role="img" aria-label="Session health score trend"><polyline></polyline></svg>
+              <em data-trend-state="system-score">collecting</em>
+            </div>
+            <div class="trend-card">
+              <span>Thermal trace</span>
+              <svg data-sparkline="thermal" data-scale="celsius" viewBox="0 0 100 26" preserveAspectRatio="none" role="img" aria-label="Session thermal trend"><polyline></polyline></svg>
+              <em data-trend-state="thermal" data-empty-label="not detected">not detected</em>
+            </div>
+          </div>
+        </button>
+        <div class="ribbon-cell sensor-cell ribbon-network" data-sensor-cell="network">
+          <span class="sensor-title"><span>Network</span><i class="sensor-lamp" data-live-lamp="network" aria-hidden="true"></i></span>
+          <strong>LAN <b data-live="lan-ip">{{ network.primary_address or "not detected" }}</b> · GW <b data-live="gateway">{{ network.gateway or "not detected" }}</b></strong>
+          <small>WAN: <b data-live="wan-ip">{{ network.public_ip or "not tested" }}</b></small>
+          <small data-live="network-health">{{ "Route present; external reachability not tested." if default_route else "No default route in latest scan." }}</small>
+          <div class="sensor-bars">
+            <div class="sensor-row"><span>IN</span><i><b data-live-bar="net-rx"></b></i><em data-live="net-rx-rate">0 B/s</em></div>
+            <div class="sensor-row"><span>OUT</span><i><b data-live-bar="net-tx"></b></i><em data-live="net-tx-rate">0 B/s</em></div>
+            <div class="sensor-row"><span>ERR</span><i><b data-live-bar="net-errors"></b></i><em data-live="net-errors">0</em></div>
+          </div>
+          <div class="trend-grid two" aria-label="Network session trends">
+            <div class="trend-card">
+              <span>RX trace</span>
+              <svg data-sparkline="net-rx" data-scale="dynamic" viewBox="0 0 100 26" preserveAspectRatio="none" role="img" aria-label="Session network receive trend"><polyline></polyline></svg>
+              <em data-trend-state="net-rx">collecting</em>
+            </div>
+            <div class="trend-card">
+              <span>TX trace</span>
+              <svg data-sparkline="net-tx" data-scale="dynamic" viewBox="0 0 100 26" preserveAspectRatio="none" role="img" aria-label="Session network transmit trend"><polyline></polyline></svg>
+              <em data-trend-state="net-tx">collecting</em>
+            </div>
+          </div>
         </div>
-        <div class="readout-meta">
-          <span>DB</span>
-          <code>{{ summary.db_path }}</code>
+        <div class="ribbon-cell sensor-cell ribbon-cpu-ram" data-sensor-cell="cpu-ram">
+          <span class="sensor-title"><span>CPU/RAM</span><i class="sensor-lamp" data-live-lamp="cpu-ram" aria-hidden="true"></i></span>
+          <strong>CPU <b data-live="cpu-percent">--%</b> · RAM <b data-live="mem-used">{{ "%.1f"|format(memory_used_percent) ~ "%" if memory_used_percent is not none else "unknown" }}</b></strong>
+          <small>Load <b data-live="load-one">{{ load_one if load_one is not none else "?" }}</b> · Avail <b data-live="mem-avail">{{ memory.human_available or "unknown" }}</b></small>
+          <small data-live="cpu-ram-health">Waiting for live CPU delta; RAM uses MemAvailable pressure.</small>
+          <div class="sensor-bars">
+            <div class="sensor-row"><span>CPU</span><i><b data-live-bar="cpu"></b></i><em data-live="cpu-percent-inline">--%</em></div>
+            <div class="sensor-row"><span>RAM</span><i><b data-live-bar="memory" style="width: {{ memory_used_percent or 0 }}%"></b></i><em data-live="mem-used-inline">{{ "%.1f"|format(memory_used_percent) ~ "%" if memory_used_percent is not none else "--" }}</em></div>
+            <div class="sensor-row"><span>LOAD</span><i><b data-live-bar="load"></b></i><em data-live="load-ratio">--</em></div>
+          </div>
+          <div class="trend-grid three" aria-label="CPU and RAM session trends">
+            <div class="trend-card">
+              <span>CPU trace</span>
+              <svg data-sparkline="cpu" data-scale="percent" viewBox="0 0 100 26" preserveAspectRatio="none" role="img" aria-label="Session CPU trend"><polyline></polyline></svg>
+              <em data-trend-state="cpu">collecting</em>
+            </div>
+            <div class="trend-card">
+              <span>RAM trace</span>
+              <svg data-sparkline="memory" data-scale="percent" viewBox="0 0 100 26" preserveAspectRatio="none" role="img" aria-label="Session memory trend"><polyline></polyline></svg>
+              <em data-trend-state="memory">collecting</em>
+            </div>
+            <div class="trend-card">
+              <span>PSI trace</span>
+              <svg data-sparkline="memory-pressure" data-scale="percent" viewBox="0 0 100 26" preserveAspectRatio="none" role="img" aria-label="Session memory pressure trend"><polyline></polyline></svg>
+              <em data-trend-state="memory-pressure" data-empty-label="not detected">not detected</em>
+            </div>
+          </div>
+        </div>
+        <div class="ribbon-cell sensor-cell ribbon-filesystem" data-sensor-cell="filesystem">
+          <span class="sensor-title"><span>Filesystem</span><i class="sensor-lamp" data-live-lamp="filesystem" aria-hidden="true"></i></span>
+          <strong>Root <b data-live="fs-root-used">{{ "%.1f"|format(root_use_percent) ~ "%" if root_use_percent is not none else "unknown" }}</b></strong>
+          <small>Free <b data-live="fs-root-free">{{ root_fs.human_available if root_fs else "unknown" }}</b> · Home <b data-live="fs-home-used">{{ "%.1f"|format(home_use_percent) ~ "%" if home_use_percent is not none else "same/unknown" }}</b></small>
+          <small data-live="filesystem-health">Warning at 85% used; critical at 95% used.</small>
+          <div class="sensor-bars">
+            <div class="sensor-row"><span>ROOT</span><i><b data-live-bar="fs-root" style="width: {{ root_use_percent or 0 }}%"></b></i><em data-live="fs-root-used-inline">{{ "%.1f"|format(root_use_percent) ~ "%" if root_use_percent is not none else "--" }}</em></div>
+            <div class="sensor-row"><span>HOME</span><i><b data-live-bar="fs-home" style="width: {{ home_use_percent or 0 }}%"></b></i><em data-live="fs-home-used-inline">{{ "%.1f"|format(home_use_percent) ~ "%" if home_use_percent is not none else "--" }}</em></div>
+            <div class="sensor-row"><span>I/O</span><i><b data-live-bar="io-pressure"></b></i><em data-live="io-pressure">--</em></div>
+          </div>
+          <div class="trend-grid two" aria-label="Filesystem session trends">
+            <div class="trend-card">
+              <span>Root trace</span>
+              <svg data-sparkline="fs-root" data-scale="percent" viewBox="0 0 100 26" preserveAspectRatio="none" role="img" aria-label="Session root filesystem usage trend"><polyline></polyline></svg>
+              <em data-trend-state="fs-root">collecting</em>
+            </div>
+            <div class="trend-card">
+              <span>I/O trace</span>
+              <svg data-sparkline="io-pressure" data-scale="percent" viewBox="0 0 100 26" preserveAspectRatio="none" role="img" aria-label="Session I/O pressure trend"><polyline></polyline></svg>
+              <em data-trend-state="io-pressure" data-empty-label="not detected">not detected</em>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section class="grid two">
-        <div class="panel">
-          <div class="panel-title">
-            <p class="eyebrow">Attention</p>
-            <h2>Human attention</h2>
+      <section class="telemetry-grid">
+        <article class="module module-wide machine-summary">
+          <div class="module-head">
+            <div>
+              <p class="module-kicker">Machine readout</p>
+              <h2>{{ host_summary.headline }}</h2>
+            </div>
+            <span class="module-code">HOST-CORE</span>
           </div>
-          {% if attention %}
-            <div class="stack">
-              {% for item in attention %}
-                <article class="attention severity-{{ item.severity }}">
-                  <div>
-                    <strong>{{ item.title }}</strong>
-                    <p>{{ item.body }}</p>
-                    <p><b>Why it matters:</b> {{ item.why_it_matters }}</p>
-                    <p><b>Next:</b> {{ item.next_sane_action }}</p>
+          <p class="summary-text">{{ host_summary.summary }}</p>
+          <div class="summary-grid">
+            <div>
+              <span>OS</span>
+              <strong>{{ os_info.pretty_name or "unknown" }}</strong>
+            </div>
+            <div>
+              <span>Architecture</span>
+              <strong>{{ kernel.architecture or kernel.machine or "unknown" }}</strong>
+            </div>
+            <div>
+              <span>Default route</span>
+              <strong>{{ default_route.dev if default_route else "missing" }}</strong>
+            </div>
+            <div>
+              <span>Next action</span>
+              <strong>{{ host_summary.next_sane_action }}</strong>
+            </div>
+          </div>
+          <details>
+            <summary>Machine summary evidence</summary>
+            <pre>{{ {"summary": host_summary, "identity": identity, "os": os_info, "kernel": kernel} | tojson(indent=2) }}</pre>
+          </details>
+        </article>
+
+        <article id="attention-stack" class="module alerts-module">
+          <div class="module-head">
+            <div>
+              <p class="module-kicker">Alerts</p>
+              <h2>Attention stack</h2>
+            </div>
+            <span class="module-code">{{ host_summary.penalties | length }} active</span>
+          </div>
+          {% if host_summary.penalties %}
+            <ul id="attention-delta-area" class="alert-list">
+              {% for penalty in host_summary.penalties %}
+                {% set codex_action = {
+                  "section": penalty.section,
+                  "message": penalty.message,
+                  "why": penalty.why or "This crossed a deterministic host-health threshold.",
+                  "next_action": penalty.next or "Open the section evidence and inspect the collected local facts.",
+                  "evidence": penalty.evidence
+                } %}
+                <li class="status-line status-{{ penalty.severity }}{% if penalty.severity == 'red' or 'failed' in (penalty.message | lower) %} status-fail{% endif %}">
+                  <span></span>
+                  <div class="alert-copy">
+                    <b>{{ penalty.section }}</b>
+                    <em>{{ penalty.message }}</em>
+                    <small><b>Why:</b> {{ penalty.why or "This crossed a deterministic host-health threshold." }}</small>
+                    <small><b>Next:</b> {{ penalty.next or "Open the section evidence and inspect the collected local facts." }}</small>
                   </div>
+                  <button
+                    class="delta-action"
+                    type="button"
+                    title="Open a new terminal with this alert loaded into interactive Codex"
+                    aria-label="Open Codex terminal for {{ penalty.message }}"
+                    data-codex-scenario="{{ codex_action | tojson | forceescape }}"
+                  >
+                    <img
+                      src="/static/codex-alert-delta.png"
+                      width="860"
+                      height="727"
+                      alt=""
+                      aria-hidden="true"
+                    >
+                  </button>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p id="attention-delta-area" class="muted">No host-level issue crossed current thresholds.</p>
+          {% endif %}
+          <details>
+            <summary>Changes since previous host scan</summary>
+            <ul class="compact-list">
+              {% for change in host_summary.changes %}
+                <li>{{ change }}</li>
+              {% endfor %}
+            </ul>
+          </details>
+        </article>
+
+        <article id="b2-services" class="module placeholder-bay">
+          <div class="module-head">
+            <div>
+              <p class="module-kicker">B2 Services / systems</p>
+              <h2>systemd control plane</h2>
+            </div>
+            <span class="module-code">{{ failed_system_count + failed_user_count }} failed</span>
+          </div>
+          <div class="readout-grid">
+            <div><span>System state</span><strong>{{ (services.get("system_state") or {}).get("state") or "unknown" }}</strong></div>
+            <div><span>Failed system</span><strong>{{ failed_system_count }}</strong></div>
+            <div><span>Failed user</span><strong>{{ failed_user_count }}</strong></div>
+            <div><span>Critical failed</span><strong>{{ services.critical_failed | length if services.critical_failed else 0 }}</strong></div>
+          </div>
+          {% if services.failed_system or services.failed_user %}
+            <ul class="compact-list bay-list">
+              {% for unit in (services.failed_system or [])[:5] %}
+                <li><code>{{ unit.unit }}</code> {{ unit.description or unit.sub }}</li>
+              {% endfor %}
+              {% for unit in (services.failed_user or [])[:5] %}
+                <li><code>{{ unit.unit }}</code> {{ unit.description or unit.sub }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="muted">No failed system or user units in the latest snapshot.</p>
+          {% endif %}
+          <details>
+            <summary>Open B2 service evidence</summary>
+            <pre>{{ {"services": services, "service_alerts": host_summary.penalties | selectattr("section", "equalto", "services") | list} | tojson(indent=2) }}</pre>
+          </details>
+        </article>
+
+        <article id="b3-debian" class="module placeholder-bay">
+          <div class="module-head">
+            <div>
+              <p class="module-kicker">B3 Debian</p>
+              <h2>OS / packages / logs</h2>
+            </div>
+            <span class="module-code">{{ debian.debian_version or os_info.version_id or "OS" }}</span>
+          </div>
+          <div class="readout-grid">
+            <div><span>Release</span><strong>{{ os_info.pretty_name or "unknown" }}</strong></div>
+            <div><span>Packages</span><strong>{{ debian.dpkg.installed_packages if debian.dpkg else "unknown" }}</strong></div>
+            <div><span>Held</span><strong>{{ debian.apt.held_package_count if debian.apt else "unknown" }}</strong></div>
+            <div><span>Reboot req</span><strong>{{ "yes" if debian.reboot and debian.reboot.required else "no" }}</strong></div>
+          </div>
+          <table class="dense-table bay-table">
+            <tbody>
+              <tr><th>Kernel</th><td><code>{{ kernel.release or "unknown" }}</code></td></tr>
+              <tr><th>dpkg audit</th><td>{{ (debian.dpkg.audit_issue_count if debian.dpkg else 0) or 0 }} issue{{ "" if (debian.dpkg.audit_issue_count if debian.dpkg else 0) == 1 else "s" }}</td></tr>
+              <tr><th>Last apt</th><td>{{ debian.apt.history.last_command if debian.apt and debian.apt.history else "not found" }}</td></tr>
+              <tr><th>Sources</th><td>{{ debian.apt.source_files | length if debian.apt and debian.apt.source_files else 0 }} source file{{ "" if debian.apt and debian.apt.source_files and (debian.apt.source_files | length) == 1 else "s" }}</td></tr>
+            </tbody>
+          </table>
+          <details>
+            <summary>Open B3 Debian evidence</summary>
+            <pre>{{ {"debian": debian, "os": os_info, "kernel": kernel, "logs": logs} | tojson(indent=2) }}</pre>
+          </details>
+        </article>
+
+        <article id="b4-hardware" class="module placeholder-bay">
+          <div class="module-head">
+            <div>
+              <p class="module-kicker">B4 Hardware</p>
+              <h2>board / sensors / links</h2>
+            </div>
+            <span class="module-code">{{ identity.dmi_vendor or "HW" }}</span>
+          </div>
+          <div class="readout-grid">
+            <div><span>Board</span><strong>{{ identity.dmi_product or "unknown" }}</strong></div>
+            <div><span>CPU</span><strong>{{ cpu.threads or "?" }} threads</strong></div>
+            <div><span>Memory</span><strong>{{ memory.human_total or "unknown" }}</strong></div>
+            <div><span>Thermal</span><strong>{{ thermal.max_celsius if thermal.max_celsius is not none else "not detected" }}</strong></div>
+          </div>
+          <table class="dense-table bay-table">
+            <tbody>
+              <tr><th>Root FS</th><td>{{ "%.1f"|format(root_use_percent) ~ "%" if root_use_percent is not none else "unknown" }}</td></tr>
+              <tr><th>Battery</th><td>{{ power.battery_percent if power.battery_percent is not none else "not detected" }}</td></tr>
+              <tr><th>AC</th><td>{{ power.ac_online if power.ac_online is not none else "unknown" }}</td></tr>
+              <tr><th>Primary link</th><td>{{ primary_iface.ifname if primary_iface else "unknown" }} / {{ primary_iface.carrier if primary_iface else "?" }}</td></tr>
+            </tbody>
+          </table>
+          <details>
+            <summary>Open B4 hardware evidence</summary>
+            <pre>{{ {"identity": identity, "cpu": cpu, "memory": memory, "storage": storage, "network": network, "power": power, "thermal": thermal} | tojson(indent=2) }}</pre>
+          </details>
+        </article>
+
+        <article class="module placeholder-bay">
+          <div class="module-head">
+            <div>
+              <p class="module-kicker">Reserved</p>
+              <h2>B5 next bay</h2>
+            </div>
+            <span class="module-code">WAIT</span>
+          </div>
+          <div class="empty-bay">
+            <span>Awaiting real local signal</span>
+          </div>
+        </article>
+
+        <article class="module identity-module">
+          <div class="module-head">
+            <div>
+              <p class="module-kicker">Identity</p>
+              <h2>Install / kernel</h2>
+            </div>
+            <span class="module-code">ID</span>
+          </div>
+          <table class="fact-table">
+            <tbody>
+              <tr><th>Hostname</th><td><code>{{ identity.hostname or "unknown" }}</code></td></tr>
+              <tr><th>OS</th><td>{{ os_info.pretty_name or "unknown" }}</td></tr>
+              <tr><th>Kernel</th><td><code>{{ kernel.release or "unknown" }}</code></td></tr>
+              <tr><th>Arch</th><td><code>{{ kernel.architecture or kernel.machine or "unknown" }}</code></td></tr>
+              <tr><th>Timezone</th><td>{{ session.timezone or "unknown" }}</td></tr>
+              <tr><th>Session</th><td>{{ session.session_type or "unknown" }} / {{ session.desktop or "not detected" }}</td></tr>
+            </tbody>
+          </table>
+          <details>
+            <summary>Identity evidence</summary>
+            <pre>{{ {"identity": identity, "os": os_info, "kernel": kernel, "session": session} | tojson(indent=2) }}</pre>
+          </details>
+        </article>
+
+        <article class="module hardware-module">
+          <div class="module-head">
+            <div>
+              <p class="module-kicker">Hardware</p>
+              <h2>Board / CPU</h2>
+            </div>
+            <span class="module-code">HW</span>
+          </div>
+          <table class="fact-table">
+            <tbody>
+              <tr><th>Vendor</th><td>{{ identity.dmi_vendor or "not detected" }}</td></tr>
+              <tr><th>Model</th><td>{{ identity.dmi_product or "not detected" }}</td></tr>
+              <tr><th>CPU</th><td>{{ cpu.model or "unknown" }}</td></tr>
+              <tr><th>Cores</th><td><code>{{ cpu.cores or "unknown" }}</code></td></tr>
+              <tr><th>Threads</th><td><code>{{ cpu.threads or "unknown" }}</code></td></tr>
+              <tr><th>Memory</th><td><code>{{ memory.human_total or "unknown" }}</code></td></tr>
+            </tbody>
+          </table>
+          <details>
+            <summary>Hardware evidence</summary>
+            <pre>{{ {"identity": identity, "cpu": cpu, "memory": memory} | tojson(indent=2) }}</pre>
+          </details>
+        </article>
+
+        <article class="module cpu-memory module-tall">
+          <div class="module-head">
+            <div>
+              <p class="module-kicker">CPU / Memory</p>
+              <h2>Pressure</h2>
+            </div>
+            <span class="module-code">LOAD</span>
+          </div>
+          <div class="meter-stack">
+            <div class="meter-row">
+              <div><span>Load 1m</span><strong>{{ load_one if load_one is not none else "unknown" }}</strong></div>
+              <div class="meter"><i style="width: {{ [((cpu.load_per_thread or 0) * 50), 100] | min }}%"></i></div>
+            </div>
+            <div class="meter-row">
+              <div><span>Memory used</span><strong>{{ "%.1f"|format(memory_used_percent) ~ "%" if memory_used_percent is not none else "unknown" }}</strong></div>
+              <div class="meter"><i style="width: {{ memory_used_percent or 0 }}%"></i></div>
+            </div>
+            <div class="meter-row">
+              <div><span>Memory avail</span><strong>{{ memory.human_available or "unknown" }}</strong></div>
+              <div class="meter meter-green"><i style="width: {{ memory_available_percent or 0 }}%"></i></div>
+            </div>
+            {% if swap_total %}
+              <div class="meter-row">
+                <div><span>Swap used</span><strong>{{ swap_used or 0 }} KiB</strong></div>
+                <div class="meter meter-amber"><i style="width: {{ ((swap_used or 0) / swap_total * 100) if swap_total else 0 }}%"></i></div>
+              </div>
+            {% endif %}
+          </div>
+          <table class="dense-table">
+            <tbody>
+              <tr><th>Load avg</th><td><code>{{ load.one if load.one is not none else "?" }} / {{ load.five if load.five is not none else "?" }} / {{ load.fifteen if load.fifteen is not none else "?" }}</code></td></tr>
+              <tr><th>Processes</th><td><code>{{ load.processes or "unknown" }}</code></td></tr>
+              <tr><th>Threads</th><td><code>{{ cpu.threads or "unknown" }}</code></td></tr>
+            </tbody>
+          </table>
+          <details>
+            <summary>CPU and memory evidence</summary>
+            <pre>{{ {"cpu": cpu, "memory": memory} | tojson(indent=2) }}</pre>
+          </details>
+        </article>
+
+        <article class="module storage-module module-wide">
+          <div class="module-head">
+            <div>
+              <p class="module-kicker">Storage</p>
+              <h2>Filesystems</h2>
+            </div>
+            <span class="module-code">{{ storage.block_device_count or 0 }} block roots</span>
+          </div>
+          <div class="dual-meters">
+            <div class="big-meter">
+              <span>Root filesystem</span>
+              <strong>{{ "%.1f"|format(root_use_percent) ~ "%" if root_use_percent is not none else "unknown" }}</strong>
+              <div class="meter"><i style="width: {{ root_use_percent or 0 }}%"></i></div>
+              <em>{{ root_fs.human_used if root_fs else "unknown" }} / {{ root_fs.human_total if root_fs else "unknown" }}</em>
+            </div>
+            <div class="big-meter">
+              <span>Home filesystem</span>
+              <strong>{{ "%.1f"|format(home_use_percent) ~ "%" if home_use_percent is not none else "same or unknown" }}</strong>
+              <div class="meter"><i style="width: {{ home_use_percent or 0 }}%"></i></div>
+              <em>{{ home_fs.human_used if home_fs else "not separate" }} / {{ home_fs.human_total if home_fs else "not separate" }}</em>
+            </div>
+          </div>
+          <table class="dense-table">
+            <thead><tr><th>Mount</th><th>Type</th><th>Used</th><th>Total</th><th>Avail</th></tr></thead>
+            <tbody>
+              {% for fs in filesystem_items[:8] %}
+                {% if not fs.virtual or fs.mountpoint in ["/", "/home", "/boot", "/var"] %}
+                  <tr>
+                    <td><code>{{ fs.mountpoint }}</code></td>
+                    <td>{{ fs.fstype }}</td>
+                    <td>{{ "%.1f"|format(fs.use_percent) if fs.use_percent is not none else "?" }}%</td>
+                    <td>{{ fs.human_total or "unknown" }}</td>
+                    <td>{{ fs.human_available or "unknown" }}</td>
+                  </tr>
+                {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+          <details>
+            <summary>Filesystem, block device, and mount evidence</summary>
+            <pre>{{ {"storage": storage, "filesystems": filesystems} | tojson(indent=2) }}</pre>
+          </details>
+        </article>
+
+        <article class="module network-module module-wide">
+          <div class="module-head">
+            <div>
+              <p class="module-kicker">Network</p>
+              <h2>Interfaces / route / DNS</h2>
+            </div>
+            <span class="module-code">{{ network.up_non_loopback_count or 0 }} active links</span>
+          </div>
+          <div class="readout-grid six">
+            <div><span>Primary</span><strong>{{ primary_iface.ifname if primary_iface else "unknown" }}</strong></div>
+            <div><span>Carrier</span><strong>{{ primary_iface.carrier if primary_iface else "?" }}</strong></div>
+            <div><span>Address</span><strong>{{ network.primary_address or "not detected" }}</strong></div>
+            <div><span>Gateway</span><strong>{{ network.gateway or "not detected" }}</strong></div>
+            <div><span>DNS</span><strong>{{ "detected" if dns.detected else "not detected" }}</strong></div>
+            <div><span>Wi-Fi</span><strong>{{ network.wifi_ssid or "not detected" }}</strong></div>
+          </div>
+          <p class="muted">
+            {% if network.external_reachability and network.external_reachability.tested %}
+              External reachability checks are enabled and were run.
+            {% else %}
+              External reachability not tested. Local route and DNS were detected if shown above.
+            {% endif %}
+          </p>
+          <details>
+            <summary>Interfaces, routes, DNS, NetworkManager, and command evidence</summary>
+            <pre>{{ network | tojson(indent=2) }}</pre>
+          </details>
+        </article>
+
+        <article class="module services-module">
+          <div class="module-head">
+            <div>
+              <p class="module-kicker">Services</p>
+              <h2>systemd failures</h2>
+            </div>
+            <span class="module-code">{{ failed_system_count + failed_user_count }} failed</span>
+          </div>
+          <div class="readout-grid">
+            <div><span>System</span><strong>{{ failed_system_count }}</strong></div>
+            <div><span>User</span><strong>{{ failed_user_count }}</strong></div>
+            <div><span>Critical</span><strong>{{ services.critical_failed | length if services.critical_failed else 0 }}</strong></div>
+            <div><span>systemctl</span><strong>{{ "yes" if services.systemctl_available else "no" }}</strong></div>
+          </div>
+          {% if services.failed_system or services.failed_user %}
+            <ul class="compact-list">
+              {% for unit in (services.failed_system or [])[:4] %}
+                <li><code>{{ unit.unit }}</code> {{ unit.description }}</li>
+              {% endfor %}
+              {% for unit in (services.failed_user or [])[:4] %}
+                <li><code>{{ unit.unit }}</code> {{ unit.description }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="muted">No failed system or user units detected.</p>
+          {% endif %}
+          <details>
+            <summary>Failed unit evidence</summary>
+            <pre>{{ services | tojson(indent=2) }}</pre>
+          </details>
+        </article>
+
+        <article class="module processes-module module-wide">
+          <div class="module-head">
+            <div>
+              <p class="module-kicker">Processes</p>
+              <h2>Top samples</h2>
+            </div>
+            <span class="module-code">ps sample</span>
+          </div>
+          <div class="split-tables">
+            <div>
+              <h3>Top CPU</h3>
+              <table class="dense-table">
+                <thead><tr><th>PID</th><th>Command</th><th>CPU</th><th>RSS</th></tr></thead>
+                <tbody>
+                  {% for proc in processes.top_cpu or [] %}
+                    <tr><td><code>{{ proc.pid }}</code></td><td>{{ proc.command }}</td><td>{{ proc.cpu_percent }}%</td><td>{{ proc.rss_human }}</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <div>
+              <h3>Top memory</h3>
+              <table class="dense-table">
+                <thead><tr><th>PID</th><th>Command</th><th>Mem</th><th>RSS</th></tr></thead>
+                <tbody>
+                  {% for proc in processes.top_memory or [] %}
+                    <tr><td><code>{{ proc.pid }}</code></td><td>{{ proc.command }}</td><td>{{ proc.memory_percent }}%</td><td>{{ proc.rss_human }}</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <details>
+            <summary>Process sample evidence</summary>
+            <pre>{{ processes | tojson(indent=2) }}</pre>
+          </details>
+        </article>
+
+        {% if power.supplies or thermal.zones %}
+          <article class="module power-thermal-module">
+            <div class="module-head">
+              <div>
+                <p class="module-kicker">Power / Thermal</p>
+                <h2>sysfs sensors</h2>
+              </div>
+              <span class="module-code">{{ thermal.zones | length if thermal.zones else 0 }} zones</span>
+            </div>
+            <div class="readout-grid">
+              <div><span>AC</span><strong>{{ power.ac_online if power.ac_online is not none else "unknown" }}</strong></div>
+              <div><span>Battery</span><strong>{{ power.battery_percent if power.battery_percent is not none else "none" }}</strong></div>
+              <div><span>Status</span><strong>{{ power.battery_status or "not detected" }}</strong></div>
+              <div><span>Max C</span><strong>{{ thermal.max_celsius if thermal.max_celsius is not none else "none" }}</strong></div>
+            </div>
+            <details>
+              <summary>Power and thermal evidence</summary>
+              <pre>{{ {"power": power, "thermal": thermal} | tojson(indent=2) }}</pre>
+            </details>
+          </article>
+        {% endif %}
+
+        <article class="module devtools-module">
+          <div class="module-head">
+            <div>
+              <p class="module-kicker">Developer tools</p>
+              <h2>Local binaries</h2>
+            </div>
+            <span class="module-code">PATH</span>
+          </div>
+          <table class="dense-table">
+            <thead><tr><th>Tool</th><th>State</th><th>Version</th></tr></thead>
+            <tbody>
+              {% for tool in dev_tools.tools or [] %}
+                <tr>
+                  <td><code>{{ tool.command }}</code></td>
+                  <td>{{ "present" if tool.available else "missing" }}</td>
+                  <td>{{ tool.version or "-" }}</td>
+                </tr>
+              {% endfor %}
+              {% if dev_tools.codex_marker %}
+                <tr>
+                  <td><code>codex</code></td>
+                  <td>{{ "marker present" if dev_tools.codex_marker.cli_available or dev_tools.codex_marker.config_dir_present else "not detected" }}</td>
+                  <td>not called</td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+          <details>
+            <summary>Developer tool evidence</summary>
+            <pre>{{ dev_tools | tojson(indent=2) }}</pre>
+          </details>
+        </article>
+
+        <article class="module logs-module">
+          <div class="module-head">
+            <div>
+              <p class="module-kicker">Logs</p>
+              <h2>Warnings</h2>
+            </div>
+            <span class="module-code">{{ journal_warning_count }} lines</span>
+          </div>
+          <ul class="log-lines">
+            {% for line in (logs.system_warnings or [])[:5] %}
+              <li>{{ line }}</li>
+            {% endfor %}
+            {% for line in (logs.user_warnings or [])[:5] %}
+              <li>{{ line }}</li>
+            {% endfor %}
+          </ul>
+          {% if not logs.system_warnings and not logs.user_warnings %}
+            <p class="muted">No warning lines returned by the limited journal sample.</p>
+          {% endif %}
+          <details>
+            <summary>Journal sample evidence</summary>
+            <pre>{{ logs | tojson(indent=2) }}</pre>
+          </details>
+        </article>
+      </section>
+
+      <section class="lower-grid">
+        <article class="module evidence-module">
+          <div class="module-head">
+            <div>
+              <p class="module-kicker">Evidence</p>
+              <h2>Raw host snapshot</h2>
+            </div>
+            <span class="module-code">JSON</span>
+          </div>
+          <details>
+            <summary>Open raw JSON snapshot and recent host history</summary>
+            <pre>{{ {"host": host, "host_history": host_history} | tojson(indent=2) }}</pre>
+          </details>
+        </article>
+
+        <details class="module local-work">
+          <summary>
+            <span>
+              <b>Local work</b>
+              {{ summary.repo_count }} repo{{ "" if summary.repo_count == 1 else "s" }},
+              {{ summary.attention_count }} attention item{{ "" if summary.attention_count == 1 else "s" }}
+            </span>
+          </summary>
+          <div class="repo-toolbar">
+            <p class="muted">Repo/workflow evidence remains available below the machine console.</p>
+          </div>
+          {% if repos %}
+            <div class="repo-grid">
+              {% for card in repos %}
+                {% set repo = card.repo %}
+                {% set interp = card.interpretation %}
+                {% set snapshot = card.snapshot or {} %}
+                {% set test = card.test or {} %}
+                <article class="repo-card status-{{ interp.severity if interp else 'gray' }}">
+                  <div class="repo-line">
+                    <a href="/repos/{{ repo.id }}">{{ repo.name }}</a>
+                    <span>{{ interp.state if interp else "Unknown" }}</span>
+                    <em>{{ interp.headline if interp else "No interpretation exists yet." }}</em>
+                  </div>
+                  <p><b>Next:</b> {{ interp.next_sane_action if interp else "Run a scan." }}</p>
+                  <details class="evidence-block">
+                    <summary>Repo evidence</summary>
+                    <pre>{{ {"repo": repo, "snapshot": snapshot, "test": test, "interpretation": interp} | tojson(indent=2) }}</pre>
+                  </details>
                 </article>
               {% endfor %}
             </div>
           {% else %}
-            <p>No open attention items.</p>
+            <p>No repos found yet. Add repo roots or explicit repos, then run <code>console-1706 scan</code>.</p>
           {% endif %}
-        </div>
 
-        <div class="panel">
-          <div class="panel-title">
-            <p class="eyebrow">Activity</p>
-            <h2>Meaningful events</h2>
+          <div class="local-work-grid">
+            <div>
+              <h3>Repo attention</h3>
+              {% if attention %}
+                <ul class="compact-list">
+                  {% for item in attention %}
+                    <li><b>{{ item.title }}</b>: {{ item.next_sane_action }}</li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <p class="muted">No open repo attention items.</p>
+              {% endif %}
+            </div>
+            <div>
+              <h3>Meaningful events</h3>
+              {% if events %}
+                <ol class="event-list">
+                  {% for event in events %}
+                    <li><time>{{ event.time }}</time><b>{{ event.source }}</b><span>{{ event.message }}</span></li>
+                  {% endfor %}
+                </ol>
+              {% else %}
+                <p class="muted">No meaningful events found yet.</p>
+              {% endif %}
+            </div>
           </div>
-          {% if events %}
-            <ol class="event-list">
-              {% for event in events %}
-                <li class="event severity-{{ event.severity }}">
-                  <time>{{ event.time }}</time>
-                  <span>{{ event.source }}: {{ event.message }}</span>
-                </li>
-              {% endfor %}
-            </ol>
-          {% else %}
-            <p>No meaningful events found yet.</p>
-          {% endif %}
-        </div>
+        </details>
       </section>
-
-      <section class="panel">
-        <div class="panel-title row">
-          <div>
-            <p class="eyebrow">Repos</p>
-            <h2>Repo cards</h2>
-          </div>
-          <button class="ghost-button" type="button" data-toggle-evidence>Evidence mode</button>
-        </div>
-
-        {% if repos %}
-          <div class="repo-grid">
-            {% for card in repos %}
-              {% set repo = card.repo %}
-              {% set interp = card.interpretation %}
-              {% set snapshot = card.snapshot or {} %}
-              {% set test = card.test or {} %}
-              <article class="repo-card severity-{{ interp.severity if interp else 'gray' }}">
-                <div class="repo-head">
-                  <div>
-                    <a href="/repos/{{ repo.id }}" class="repo-link">{{ repo.name }}</a>
-                    <p>{{ repo.role or "No role configured." }}</p>
-                  </div>
-                  <span class="pill">{{ interp.state if interp else "Unknown" }}</span>
+      {% else %}
+        <section class="scope-placeholder-grid" aria-label="{{ active_scope }} placeholder modules">
+          {% for number in range(1, 5) %}
+            <article class="module scope-placeholder-panel">
+              <div class="module-head">
+                <div>
+                  <p class="module-kicker">{{ active_scope }}</p>
+                  <h2>Placeholder {{ number }}</h2>
                 </div>
-                {% if interp %}
-                  <p class="meaning">{{ interp.meaning }}</p>
-                  <p><b>Risk:</b> {{ interp.severity }}</p>
-                  <p><b>Next:</b> {{ interp.next_sane_action }}</p>
-                  <p class="evidence-footer">
-                    Evidence: {{ snapshot.branch or "unknown branch" }},
-                    {{ "dirty" if snapshot.is_dirty else "clean" }},
-                    test {{ test.status or "unknown" }}.
-                  </p>
-                  <details class="evidence-block">
-                    <summary>Under the hood</summary>
-                    <pre>{{ interp.evidence | tojson(indent=2) }}</pre>
-                  </details>
-                {% else %}
-                  <p>No interpretation exists yet. Run a scan.</p>
-                {% endif %}
-                <form class="handoff-form" data-repo-id="{{ repo.id }}">
-                  <label>
-                    Handoff task
-                    <textarea name="task" rows="3">Review this state and tell me what remains before it can be safely committed.</textarea>
-                  </label>
-                  <button class="small-button" type="submit">Build Codex packet</button>
-                </form>
-              </article>
-            {% endfor %}
-          </div>
-        {% else %}
-          <div class="empty-state">
-            <h3>No repos found yet.</h3>
-            <p>Config path: <code>~/.config/console-1706/config.yml</code></p>
-            <p>Add repo roots or explicit repos, then run <code>console-1706 scan</code>.</p>
-          </div>
-        {% endif %}
-      </section>
+                <span class="module-code">BAY-{{ number }}</span>
+              </div>
+              <div class="scope-placeholder-body">
+                <span>Reserved for {{ active_scope | lower }} console content.</span>
+              </div>
+            </article>
+          {% endfor %}
+        </section>
+      {% endif %}
 
-      <section class="grid two">
-        <div class="panel">
-          <div class="panel-title">
-            <p class="eyebrow">Handoffs</p>
-            <h2>Generated packets</h2>
-          </div>
-          {% if handoffs %}
-            <ol class="handoff-list">
-              {% for packet in handoffs %}
-                <li>
-                  <strong>{{ packet.title }}</strong>
-                  <code>{{ packet.path }}</code>
-                </li>
-              {% endfor %}
-            </ol>
-          {% else %}
-            <p>No handoff packets generated yet.</p>
-          {% endif %}
-        </div>
-
-        <div class="panel">
-          <div class="panel-title">
-            <p class="eyebrow">Settings</p>
-            <h2>Local safety</h2>
-          </div>
-          <ul class="plain-list">
-            <li>Server binds to <code>127.0.0.1:1706</code>.</li>
-            <li>Scans read local Git, filesystem, logs, and SQLite only.</li>
-            <li>No LLM, cloud, telemetry, GitHub API, or automatic <code>git fetch</code>.</li>
-            <li>Tests are not auto-run unless explicitly enabled in config.</li>
-          </ul>
-        </div>
+      <section class="safety-strip">
+        <span>127.0.0.1:1706</span>
+        <span>No cloud calls</span>
+        <span>No telemetry</span>
+        <span>No hidden LLM calls</span>
+        <span>No sudo</span>
+        <span>No destructive Git actions</span>
+        <span>DB <code>{{ summary.db_path }}</code></span>
       </section>
     </main>
 
     <div id="toast" role="status" aria-live="polite"></div>
-    <script src="/static/app.js"></script>
+    <script src="/static/app.js?v=machine-console-13"></script>
   </body>
 </html>

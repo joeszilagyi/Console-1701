@@ -12,6 +12,7 @@ from console1706.db import connect_db, init_db, json_dumps, utc_now
 from console1706.git_probe import probe_repo
 from console1706.interpreter import interpret_all_repos
 from console1706.log_probe import probe_configured_logs
+from console1706.system_probe import probe_system
 from console1706.test_probe import build_test_snapshot
 
 
@@ -197,6 +198,41 @@ def insert_log_events(conn: sqlite3.Connection, events: list[dict[str, Any]]) ->
         )
 
 
+def insert_host_snapshot(
+    conn: sqlite3.Connection,
+    scanned_at: str,
+    snapshot: dict[str, Any],
+) -> None:
+    summary = snapshot.get("health") or {}
+    identity = snapshot.get("identity") or {}
+    os_info = snapshot.get("os") or {}
+    kernel = snapshot.get("kernel") or {}
+    session = snapshot.get("session") or {}
+    score = summary.get("score")
+    conn.execute(
+        """
+        INSERT INTO host_snapshots (
+          scanned_at, hostname, os_pretty_name, kernel_release, uptime_seconds,
+          health_state, health_score, summary_json, snapshot_json, evidence_json, errors_json
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            scanned_at,
+            identity.get("hostname"),
+            os_info.get("pretty_name"),
+            kernel.get("release"),
+            session.get("uptime_seconds"),
+            summary.get("state") or "UNKNOWN",
+            int(score) if score is not None else None,
+            json_dumps(summary),
+            json_dumps(snapshot),
+            json_dumps(snapshot.get("evidence") or {}),
+            json_dumps(snapshot.get("probe_errors") or []),
+        ),
+    )
+
+
 def run_scan(config_path: str | Path | None = None) -> dict[str, Any]:
     config = load_config(config_path)
     ensure_state_dirs(config)
@@ -223,6 +259,30 @@ def run_scan(config_path: str | Path | None = None) -> dict[str, Any]:
     status = "complete"
 
     try:
+        try:
+            host_snapshot = probe_system(config)
+        except Exception as exc:
+            host_snapshot = {
+                "identity": {},
+                "os": {},
+                "kernel": {},
+                "session": {},
+                "health": {
+                    "state": "UNKNOWN",
+                    "score": None,
+                    "severity": "gray",
+                    "headline": f"Host probe failed: {exc}",
+                    "summary": "The host probe failed before collecting enough evidence.",
+                    "next_sane_action": "Open probe errors and fix the local read/probe problem.",
+                    "penalties": [],
+                    "checks": {},
+                },
+                "evidence": {},
+                "probe_errors": [{"section": "probe", "message": str(exc)}],
+            }
+        insert_host_snapshot(conn, utc_now(), host_snapshot)
+        conn.commit()
+
         candidates, discovery_notes = discover_repos(config)
         errors.extend(discovery_notes)
         repos_seen = len(candidates)

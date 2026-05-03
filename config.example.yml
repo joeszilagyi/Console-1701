@@ -27,6 +27,7 @@ paths:
     - "~/projects"
     - "~/wiki"
   explicit_repos:
+    - "~/projects/console-1706/main"
     - "~/projects/ufo-records"
     - "~/projects/TCL"
     - "~/wiki"
@@ -57,11 +58,29 @@ logs:
     enabled: true
 
 test_policy:
-  auto_run: false
+  auto_run: true
   default_timeout_seconds: 120
-  allow_repos: []
+  allow_repos:
+    - "console-1706"
+    - "~/projects/console-1706/main"
+
+system_probe:
+  command_timeout_seconds: 3
+  allow_external_connectivity_checks: false
+  external_check_urls:
+    - "https://www.debian.org/"
+  external_check_timeout_seconds: 3
+  show_sensitive_identifiers: false
+  critical_services: []
 
 projects:
+  - name: "console-1706"
+    path: "~/projects/console-1706/main"
+    role: "Local-only repo and workflow console"
+    category: "Operational dashboard"
+    importance: "critical"
+    test_commands:
+      - "./.venv/bin/pytest"
   - name: "ufo-records"
     path: "~/projects/ufo-records"
     role: "Long-horizon UFO research database and tooling"

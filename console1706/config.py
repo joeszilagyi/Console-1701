@@ -4,7 +4,6 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
-
 APP_NAME = "console-1706"
 DEFAULT_CONFIG_PATH = Path.home() / ".config" / APP_NAME / "config.yml"
 DEFAULT_STATE_DIR = Path.home() / ".local" / "state" / APP_NAME
@@ -38,7 +37,12 @@ DEFAULT_CONFIG: dict[str, Any] = {
     },
     "paths": {
         "repo_roots": ["~/projects", "~/wiki"],
-        "explicit_repos": ["~/projects/ufo-records", "~/projects/TCL", "~/wiki"],
+        "explicit_repos": [
+            "~/projects/console-1706/main",
+            "~/projects/ufo-records",
+            "~/projects/TCL",
+            "~/wiki",
+        ],
     },
     "ignore": {
         "paths": [
@@ -66,11 +70,27 @@ DEFAULT_CONFIG: dict[str, Any] = {
         {"name": "codex", "path": "~/.codex", "type": "codex", "enabled": True},
     ],
     "test_policy": {
-        "auto_run": False,
+        "auto_run": True,
         "default_timeout_seconds": 120,
-        "allow_repos": [],
+        "allow_repos": ["console-1706", "~/projects/console-1706/main"],
+    },
+    "system_probe": {
+        "command_timeout_seconds": 3,
+        "allow_external_connectivity_checks": False,
+        "external_check_urls": ["https://www.debian.org/"],
+        "external_check_timeout_seconds": 3,
+        "show_sensitive_identifiers": False,
+        "critical_services": [],
     },
     "projects": [
+        {
+            "name": "console-1706",
+            "path": "~/projects/console-1706/main",
+            "role": "Local-only repo and workflow console",
+            "category": "Operational dashboard",
+            "importance": "critical",
+            "test_commands": ["./.venv/bin/pytest"],
+        },
         {
             "name": "ufo-records",
             "path": "~/projects/ufo-records",
@@ -173,6 +193,16 @@ def normalize_config(config: dict[str, Any]) -> None:
     for log in config.get("logs", []):
         if "path" in log:
             log["path"] = str(expand_path(log["path"]))
+
+    policy = config.setdefault("test_policy", {})
+    normalized_allow: list[str] = []
+    for item in policy.get("allow_repos", []):
+        value = str(item)
+        if value.startswith("~") or value.startswith("/"):
+            normalized_allow.append(str(expand_path(value)))
+        else:
+            normalized_allow.append(value)
+    policy["allow_repos"] = normalized_allow
 
 
 def ensure_state_dirs(config: dict[str, Any] | None = None) -> None:

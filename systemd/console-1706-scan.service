@@ -3,6 +3,6 @@ Description=console-1706 scanner
 
 [Service]
 Type=oneshot
-WorkingDirectory=%h/projects/console-1706
-ExecStart=%h/projects/console-1706/.venv/bin/console-1706 scan --config %h/.config/console-1706/config.yml
+WorkingDirectory=__PROJECT_DIR__
+ExecStart=__PROJECT_DIR__/.venv/bin/console-1706 scan --config %h/.config/console-1706/config.yml
 Environment=PYTHONUNBUFFERED=1

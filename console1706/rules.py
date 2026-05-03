@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from console1706.adapters import is_code_file, is_structural_file, is_test_file
-
 
 SEVERITY_RANK = {
     "green": 0,
@@ -39,7 +38,7 @@ def age_days(value: str | None) -> float | None:
     parsed = parse_time(value)
     if not parsed:
         return None
-    now = datetime.now(timezone.utc).astimezone(parsed.tzinfo)
+    now = datetime.now(UTC).astimezone(parsed.tzinfo)
     return max((now - parsed).total_seconds(), 0) / 86400
 
 

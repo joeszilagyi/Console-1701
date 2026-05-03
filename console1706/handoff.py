@@ -9,7 +9,6 @@ from console1706.config import DEFAULT_HANDOFF_DIR
 from console1706.db import json_dumps, utc_now
 from console1706.evidence import get_attention_items, get_repo_detail
 
-
 DEFAULT_TASK = "Review this local evidence and tell me what needs human attention next."
 
 

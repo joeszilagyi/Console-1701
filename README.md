@@ -1,14 +1,14 @@
 # console-1706
 
-`console-1706` is a local-only homepage for a Debian laptop. It scans configured local repos, selected logs, and durable SQLite history, then turns those facts into plain-English operational readouts with evidence underneath.
+`console-1706` is a local-only homepage for a Debian laptop. It scans the physical host first, then configured local repos, selected logs, and durable SQLite history. It turns those facts into plain-English operational readouts with evidence underneath.
 
 Main goal:
 
 ```text
-Tell me what the hell is going on across my local repos, logs, workflows, and Codex-assisted work, in human language, with evidence underneath.
+Tell me what the hell is going on with this Debian machine, plus my local repos, logs, workflows, and Codex-assisted work, in human language, with evidence underneath.
 ```
 
-It is not a Scrum dashboard, Jira clone, productivity score, GitHub dashboard, raw git status dump, or fake real-time wallboard. It does not use themed product labels. The UI has a dark, geometric console feel, but the language stays plain.
+It is not a Scrum dashboard, Jira clone, productivity score, GitHub dashboard, raw git status dump, fake real-time wallboard, telemetry agent, or cloud monitor. It does not use themed product labels. The UI is a dense full-screen local machine console with dark technical paneling, compact telemetry modules, and collapsed click-open evidence drawers.
 
 ## Install on Debian 13
 
@@ -22,7 +22,7 @@ sudo apt install -y python3 python3-venv python3-pip git sqlite3 ripgrep jq curl
 Install the app from the repo:
 
 ```bash
-cd ~/projects/console-1706
+cd /path/to/console-1706
 python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install --upgrade pip
@@ -51,7 +51,7 @@ xdg-open http://127.0.0.1:1706
 
 ## One-Command User Service
 
-From `~/projects/console-1706`:
+From the repo root:
 
 ```bash
 ./scripts/install_user_service.sh
@@ -106,14 +106,130 @@ Scan sequence:
 1. Load config.
 2. Create state directories if missing.
 3. Open SQLite with WAL and busy timeout.
-4. Discover repos from `explicit_repos` and `repo_roots`.
-5. Probe each repo with safe local Git commands and timeouts.
-6. Probe configured logs.
-7. Detect tests, but do not run them unless explicitly allowed.
-8. Store snapshots.
-9. Run deterministic interpretation rules.
-10. Upsert attention items with fingerprint dedupe.
-11. Mark absent attention items resolved.
+4. Probe the local host with safe procfs/sysfs reads and timeout-protected read-only commands.
+5. Store a host snapshot.
+6. Discover repos from `explicit_repos` and `repo_roots`.
+7. Probe each repo with safe local Git commands and timeouts.
+8. Probe configured logs.
+9. Detect tests, but do not run them unless explicitly allowed.
+10. Store repo/log/test snapshots.
+11. Run deterministic interpretation rules.
+12. Upsert attention items with fingerprint dedupe.
+13. Mark absent attention items resolved.
+
+## Host/System Probe
+
+The first screen is now about the Debian machine, not Git. A normal scan records one host snapshot with:
+
+```text
+identity
+os
+kernel
+session
+debian
+cpu
+memory
+storage
+filesystems
+network
+power
+thermal
+services
+processes
+dev_tools
+logs
+health
+evidence
+probe_errors
+```
+
+Safe local sources include:
+
+```text
+/etc/os-release
+/proc/uptime
+/proc/meminfo
+/proc/cpuinfo
+/proc/loadavg
+/proc/mounts
+/sys/class/dmi/id
+/sys/class/net
+/sys/class/power_supply
+/sys/class/thermal
+```
+
+Optional commands are used only if present and every command has a timeout:
+
+```text
+uname
+hostnamectl
+timedatectl
+lscpu
+lsblk -J
+df -PT
+ip -j addr
+ip -j route
+resolvectl status
+nmcli
+systemctl --failed
+systemctl --user --failed
+ps
+journalctl
+git --version
+python3 --version
+node --version
+npm --version
+sqlite3 --version
+rg --version
+```
+
+Missing commands fail soft and are recorded as unavailable in evidence.
+
+The first diagnostic bay row is standards-aligned and evidence-first:
+
+```text
+B2 Services / systems: systemd state, failed units, critical units, and unit evidence.
+B3 Debian: release, dpkg package count, held packages, apt history, sources, and reboot flag.
+B4 Hardware: DMI model, CPU, memory, storage pressure, power, thermal, and primary link facts.
+```
+
+Each bay uses click-open evidence drawers instead of invented charts.
+
+The live sensor lane is updated in-place from `/api/live`. It uses only local kernel and filesystem
+surfaces, including `/proc/stat`, `/proc/loadavg`, `/proc/meminfo`, `/proc/net/dev`,
+`/proc/net/route`, `/proc/pressure/*`, `/sys/class/net`, `/sys/class/thermal`, and
+`shutil.disk_usage()`.
+
+Sensor colors are intentionally simple and transparent:
+
+```text
+System: latest scan state OK / CAUTION / BROKEN / UNKNOWN.
+Network: green when a local interface, LAN address, and gateway are present; yellow for missing route/address, carrier down, or interface errors/drops; red when no usable non-loopback local path is visible.
+CPU/RAM: yellow at CPU >=75%, load/core >=1, MemAvailable <15%, memory PSI avg10 >=10%, or CPU PSI avg10 >=20%; red at CPU >=90%, load/core >=1.5, MemAvailable <5%, or memory PSI avg10 >=30%.
+Filesystem: yellow at root >=85%, home >=90%, or I/O PSI avg10 >=10%; red at root/home >=95% or I/O PSI avg10 >=30%.
+```
+
+Network throughput bars are live activity meters, not health thresholds, because console-1706 does
+not know WAN circuit capacity and does not perform external probes by default.
+
+Failed service alerts name the failed unit whenever `systemctl --failed` exposes it. The probe also records bounded `systemctl show` diagnostics and a limited recent `journalctl -u ...` sample when readable, so the alert can explain the local state, result, exit status, description, and most recent log hint without requiring sudo.
+
+Host alert rows include an explicit Codex terminal action. Clicking it writes a bounded prompt file
+under console-1706 state and asks the local desktop terminal emulator to start an interactive
+`codex` session with that scenario. The web process does not run Codex hidden in the background; it
+only attempts the terminal launch after the user clicks the action.
+
+External reachability checks are off by default:
+
+```yaml
+system_probe:
+  allow_external_connectivity_checks: false
+  external_check_urls:
+    - "https://www.debian.org/"
+  show_sensitive_identifiers: false
+```
+
+When external checks are disabled, the UI reports local route and DNS state only. MAC addresses, DMI serials, machine IDs, UUIDs, and disk serials are not shown in the default UI.
 
 Page loads read SQLite only. They do not scan repos.
 
@@ -131,6 +247,8 @@ No GitHub API calls
 No automatic git fetch
 No destructive Git actions
 No mutation inside watched repos
+No sudo
+No package installation
 No fake demo data
 ```
 
@@ -202,7 +320,7 @@ Then add or adjust tests in `tests/test_rules.py`.
 
 The handoff builder writes Markdown locally. It does not send the packet anywhere.
 
-From the UI, use `Build Codex packet` on a repo card.
+The homepage no longer shows Codex packet buttons. Local work is secondary to the machine console, while packet generation remains available from the CLI and API.
 
 From the CLI:
 
@@ -230,6 +348,10 @@ GET  /api/repos                repo cards
 GET  /api/repos/{id}           repo detail
 GET  /api/attention            attention items
 GET  /api/events               recent event stream
+GET  /api/host                 latest host/system snapshot with summary and evidence
+GET  /api/host/history         compact host snapshot history
+GET  /api/live                 local live sensor snapshot and scan timing
+POST /api/host/actions/codex   launch a user-clicked host-alert Codex terminal
 GET  /api/evidence/{id}        raw interpretation evidence
 GET  /api/handoffs             handoff packet list
 POST /api/scan                 trigger safe manual scan
