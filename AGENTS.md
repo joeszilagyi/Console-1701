@@ -21,3 +21,13 @@ Backlog maintenance rule:
   leaving stale work listed as pending.
 - Keep backlog entries concrete enough that the next agent can implement them without recovering
   context from chat history.
+
+Caretaking/history rule:
+
+- When running caretaking or review prompts, preserve the outcome in tracked Git history. Use a
+  detailed commit body and PR body that state the selected file, findings, changes, rationale,
+  verification, and final status.
+- For non-trivial caretaking changes, append a concise entry to `CARETAKING.md` before committing
+  so future humans and LLM agents can understand what happened without the chat transcript.
+- Avoid vague summaries like "bulk cleanup" or "serviceability fixes" unless concrete details are
+  included nearby.
