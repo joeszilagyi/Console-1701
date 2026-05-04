@@ -1,3 +1,11 @@
+# Human explanation
+
+I wanted to make a really cool looking home page that ran on pointlessly cool and thorough backend infrastructure, pulling in all sorts of data feeds and parsing them ultimately with as little LLM (ideally none) as possible. Basically, to see what I can make with Codex for the sake of doing it, and maybe get a neat tool and some learning out of it.
+
+Named in honor of LCARs and good old 1701. Yes, I stupidly fat-fingered this to be 1706 at first. I left the shame of that in the history.
+
+LLM etc after this.
+
 # console-1701
 
 `console-1701` is a local-only homepage for a Debian laptop. It scans the physical host first, then configured local repos, selected logs, and durable SQLite history. It turns those facts into plain-English operational readouts with evidence underneath.
