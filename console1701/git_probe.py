@@ -13,6 +13,14 @@ class GitProbeError(RuntimeError):
     """Raised when a repo cannot be probed."""
 
 
+def _output_text(value: str | bytes | None) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    return str(value)
+
+
 def _run_git(repo_path: str | Path, args: list[str], timeout: int) -> tuple[int, str, str]:
     cmd = ["git", "-C", str(repo_path), *args]
     try:
@@ -24,7 +32,13 @@ def _run_git(repo_path: str | Path, args: list[str], timeout: int) -> tuple[int,
             check=False,
         )
     except subprocess.TimeoutExpired as exc:
-        return 124, exc.stdout or "", f"Git command timed out after {timeout} seconds."
+        stderr = _output_text(exc.stderr)
+        timeout_message = f"Git command timed out after {timeout} seconds."
+        return (
+            124,
+            _output_text(exc.stdout),
+            "\n".join(part for part in [stderr, timeout_message] if part),
+        )
     except OSError as exc:
         return 127, "", str(exc)
     return completed.returncode, completed.stdout.rstrip("\n"), completed.stderr.strip()

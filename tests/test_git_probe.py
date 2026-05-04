@@ -5,7 +5,7 @@ import subprocess
 
 import pytest
 
-from console1701.git_probe import probe_repo
+from console1701.git_probe import _run_git, probe_repo
 
 pytestmark = pytest.mark.skipif(shutil.which("git") is None, reason="git is not installed")
 
@@ -44,3 +44,25 @@ def test_git_probe_reads_dirty_repo_without_upstream(tmp_path):
     assert result["ahead_count"] is None
     assert result["behind_count"] is None
     assert result["changed_files"] == ["README.md"]
+
+
+def test_run_git_timeout_preserves_captured_byte_output(tmp_path, monkeypatch):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+
+    def fake_run(*_args, **_kwargs):
+        raise subprocess.TimeoutExpired(
+            cmd=["git"],
+            timeout=1,
+            output=b"partial stdout",
+            stderr=b"partial stderr",
+        )
+
+    monkeypatch.setattr("console1701.git_probe.subprocess.run", fake_run)
+
+    code, stdout, stderr = _run_git(repo, ["status"], timeout=1)
+
+    assert code == 124
+    assert stdout == "partial stdout"
+    assert "partial stderr" in stderr
+    assert "timed out after 1 seconds" in stderr

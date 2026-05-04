@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import subprocess
+
 from console1701.db import connect_db, init_db
 from console1701.evidence import get_host_summary, get_latest_host_snapshot
 from console1701.scanner import insert_host_snapshot
@@ -164,7 +166,42 @@ def test_missing_optional_command_is_recorded_without_crash():
     )
 
     assert result["available"] is False
+    assert result["returncode"] == 127
+    assert result["stderr"] == "Command executable was not found."
+    assert result["timed_out"] is False
     assert evidence["commands"]["missing"]["available"] is False
+
+
+def test_empty_command_is_recorded_without_crash():
+    evidence = {}
+    result = _run_command("empty", [], timeout=1, evidence=evidence)
+
+    assert result["available"] is False
+    assert result["returncode"] == 127
+    assert result["stderr"] == "No command executable was provided."
+    assert evidence["commands"]["empty"] == result
+
+
+def test_timeout_preserves_captured_byte_output(monkeypatch):
+    def fake_run(*_args, **_kwargs):
+        raise subprocess.TimeoutExpired(
+            cmd=["fake"],
+            timeout=1,
+            output=b"partial stdout",
+            stderr=b"partial stderr",
+        )
+
+    monkeypatch.setattr("console1701.system_probe.shutil.which", lambda _name: "/bin/fake")
+    monkeypatch.setattr("console1701.system_probe.subprocess.run", fake_run)
+
+    evidence = {}
+    result = _run_command("timeout", ["fake"], timeout=1, evidence=evidence)
+
+    assert result["returncode"] == 124
+    assert result["timed_out"] is True
+    assert result["stdout"] == "partial stdout"
+    assert result["stderr"] == "partial stderr"
+    assert evidence["commands"]["timeout"] == result
 
 
 def test_failed_unit_description_names_unit_and_reason():

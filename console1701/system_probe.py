@@ -1,3 +1,10 @@
+"""Local-only host probe for the Console 1701 machine view.
+
+This module reads local system files and runs bounded local commands to build a
+best-effort health snapshot. It must never require network access unless the
+operator explicitly enables external reachability checks in config.
+"""
+
 from __future__ import annotations
 
 import json
@@ -74,6 +81,14 @@ def _trim_inline(value: str | None, max_chars: int = 240) -> str:
     if len(text) <= max_chars:
         return text
     return f"{text[:max_chars]}..."
+
+
+def _output_text(value: str | bytes | None) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    return str(value)
 
 
 def _tail_lines(value: str | None, limit: int = 20) -> list[str]:
@@ -615,9 +630,29 @@ def _run_command(
     evidence: dict[str, Any],
 ) -> dict[str, Any]:
     commands = evidence.setdefault("commands", {})
+    if not args or not args[0]:
+        result = {
+            "available": False,
+            "command": args,
+            "returncode": 127,
+            "duration_seconds": 0.0,
+            "stdout": "",
+            "stderr": "No command executable was provided.",
+            "timed_out": False,
+        }
+        commands[label] = result
+        return result
     executable = shutil.which(args[0])
     if not executable:
-        result = {"available": False, "command": args}
+        result = {
+            "available": False,
+            "command": args,
+            "returncode": 127,
+            "duration_seconds": 0.0,
+            "stdout": "",
+            "stderr": "Command executable was not found.",
+            "timed_out": False,
+        }
         commands[label] = result
         return result
 
@@ -645,8 +680,8 @@ def _run_command(
             "command": args,
             "returncode": 124,
             "duration_seconds": round(time.monotonic() - started, 3),
-            "stdout": _trim(exc.stdout if isinstance(exc.stdout, str) else ""),
-            "stderr": _trim(exc.stderr if isinstance(exc.stderr, str) else ""),
+            "stdout": _trim(_output_text(exc.stdout)),
+            "stderr": _trim(_output_text(exc.stderr)),
             "timed_out": True,
         }
     except OSError as exc:

@@ -1,3 +1,9 @@
+"""Deterministic project adapters for classifying local repo activity.
+
+The console uses these helpers to turn changed-file paths into coarse project
+types, work phases, and risk clusters without calling external services.
+"""
+
 from __future__ import annotations
 
 from collections import Counter
@@ -37,6 +43,7 @@ CODE_EXTENSIONS = {
     ".sh",
 }
 
+DOC_EXTENSIONS = frozenset({".md", ".rst", ".txt"})
 TEST_MARKERS = ("/tests/", "test_", "_test.", ".test.", ".spec.")
 STRUCTURAL_MARKERS = (
     "schema",
@@ -48,57 +55,70 @@ STRUCTURAL_MARKERS = (
 )
 
 
+def _normalize_path(path: str | Path) -> str:
+    return str(path).lower().replace("\\", "/")
+
+
 def safe_repo_name(path: str | Path) -> str:
     return Path(path).expanduser().resolve().name
 
 
 def path_parts(path: str) -> list[str]:
-    return [part for part in Path(path).parts if part not in ("", ".")]
+    return [part for part in _normalize_path(path).split("/") if part not in ("", ".")]
+
+
+def _has_path_part(path: str, part: str) -> bool:
+    return part in path_parts(path)
 
 
 def infer_adapter(repo_name: str, repo_path: str, changed_files: Iterable[str]) -> str:
     name = repo_name.lower()
-    path = str(repo_path).lower()
-    changed = "\n".join(changed_files).lower()
+    path = _normalize_path(repo_path)
+    changed = "\n".join(_normalize_path(file_path) for file_path in changed_files)
+    repo_parts = path_parts(path)
     if (
         name == "wiki"
-        or path.endswith("/wiki")
+        or (repo_parts and repo_parts[-1] == "wiki")
         or "places/" in changed
         or "ufo-actions.log" in changed
     ):
         return "wiki"
     if name == "ufo-records" or "tools/sqlite" in changed or "schema_profiles.json" in changed:
         return "ufo-records"
-    if name == "tcl" or "/tcl" in path:
+    if name == "tcl" or "tcl" in repo_parts:
         return "TCL"
     return "generic"
 
 
 def infer_phase(adapter: str, changed_files: Iterable[str]) -> str:
-    lowered = [path.lower() for path in changed_files]
+    lowered = [_normalize_path(path) for path in changed_files]
     joined = "\n".join(lowered)
     if not lowered:
         return "idle"
 
     if adapter == "wiki":
-        if "/prompts/" in joined or "/places/" in joined and "/runs/" in joined:
+        if any(
+            _has_path_part(path, "prompts")
+            or (_has_path_part(path, "places") and _has_path_part(path, "runs"))
+            for path in lowered
+        ):
             return "gather"
-        if "/state/" in joined or ".jsonl" in joined:
+        if any(_has_path_part(path, "state") for path in lowered) or ".jsonl" in joined:
             return "verify"
         if "export" in joined:
             return "export"
         return "review"
 
     if adapter == "ufo-records":
+        if any(_is_test_file(path) for path in lowered):
+            return "test"
         if "schema" in joined:
             return "schema"
         if "import" in joined:
             return "import"
         if "export" in joined or "bibliography" in joined:
             return "export"
-        if any(_is_test_file(path) for path in lowered):
-            return "test"
-        if any(path.endswith((".md", ".rst", ".txt")) for path in lowered):
+        if any(Path(path).suffix.lower() in DOC_EXTENSIONS for path in lowered):
             return "docs"
         return "review"
 
@@ -107,19 +127,19 @@ def infer_phase(adapter: str, changed_files: Iterable[str]) -> str:
             return "constraints"
         if any(_is_test_file(path) for path in lowered):
             return "tests"
-        if any(path.endswith((".md", ".rst", ".txt")) for path in lowered):
+        if any(Path(path).suffix.lower() in DOC_EXTENSIONS for path in lowered):
             return "docs"
         return "concept"
 
     if any(_is_test_file(path) for path in lowered):
         return "test"
-    if any(path.endswith((".md", ".rst", ".txt")) for path in lowered):
+    if any(Path(path).suffix.lower() in DOC_EXTENSIONS for path in lowered):
         return "docs"
     return "review"
 
 
 def _known_area(path: str) -> str:
-    lowered = path.lower()
+    lowered = _normalize_path(path)
     if "tools/sqlite/exporters" in lowered or "bibliography" in lowered:
         return "tools/sqlite/exporters"
     if "tools/sqlite/tests" in lowered:
@@ -134,13 +154,13 @@ def _known_area(path: str) -> str:
         return "migrations"
     if "schema" in lowered:
         return "schema"
-    if "places/" in lowered and "/runs/" in lowered:
+    parts = path_parts(lowered)
+    if "places" in parts and "runs" in parts:
         return "Places/runs"
-    if "places/" in lowered and "/state/" in lowered:
+    if "places" in parts and "state" in parts:
         return "Places/state"
-    if "prompts/" in lowered:
+    if "prompts" in parts:
         return "prompts"
-    parts = path_parts(path)
     if len(parts) >= 2:
         return "/".join(parts[:2])
     if parts:

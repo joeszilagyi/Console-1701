@@ -1,3 +1,9 @@
+"""Fast local live sensor probe for `/api/live`.
+
+This module samples local kernel and sysfs surfaces only. It intentionally does
+not perform external network lookups, package operations, or writes.
+"""
+
 from __future__ import annotations
 
 import fcntl
@@ -10,8 +16,15 @@ import time
 from pathlib import Path
 from typing import Any
 
+DEFAULT_READ_MAX_CHARS = 262_144
+CPU_STAT_MAX_CHARS = 8_192
+LOADAVG_MAX_CHARS = 256
+SYSFS_VALUE_MAX_CHARS = 64
+IFNAMSIZ = 16
+SIOCGIFADDR = 0x8915
 
-def _read_text(path: str | Path, max_chars: int = 262144) -> str:
+
+def _read_text(path: str | Path, max_chars: int = DEFAULT_READ_MAX_CHARS) -> str:
     try:
         return Path(path).read_text(encoding="utf-8", errors="replace")[:max_chars]
     except OSError:
@@ -35,9 +48,31 @@ def _percent(used: int | float, total: int | float) -> float | None:
     return round(float(used) / float(total) * 100, 1)
 
 
+def _safe_float(value: str | None) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except ValueError:
+        return None
+
+
+def _safe_int(value: str | None, default: int = 0) -> int:
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        return default
+
+
 def _parse_cpu() -> dict[str, Any]:
     line = next(
-        (item for item in _read_text("/proc/stat", 8192).splitlines() if item.startswith("cpu ")),
+        (
+            item
+            for item in _read_text("/proc/stat", CPU_STAT_MAX_CHARS).splitlines()
+            if item.startswith("cpu ")
+        ),
         "",
     )
     parts = line.split()[1:]
@@ -48,11 +83,11 @@ def _parse_cpu() -> dict[str, Any]:
 
 
 def _parse_loadavg() -> dict[str, Any]:
-    parts = _read_text("/proc/loadavg", 256).split()
+    parts = _read_text("/proc/loadavg", LOADAVG_MAX_CHARS).split()
     return {
-        "one": float(parts[0]) if len(parts) > 0 else None,
-        "five": float(parts[1]) if len(parts) > 1 else None,
-        "fifteen": float(parts[2]) if len(parts) > 2 else None,
+        "one": _safe_float(parts[0] if len(parts) > 0 else None),
+        "five": _safe_float(parts[1] if len(parts) > 1 else None),
+        "fifteen": _safe_float(parts[2] if len(parts) > 2 else None),
         "processes": parts[3] if len(parts) > 3 else None,
     }
 
@@ -134,8 +169,8 @@ def _interface_ipv4(iface: str | None) -> str | None:
         return None
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-            packed = struct.pack("256s", iface[:15].encode("utf-8"))
-            result = fcntl.ioctl(sock.fileno(), 0x8915, packed)
+            packed = struct.pack("256s", iface[: IFNAMSIZ - 1].encode("utf-8"))
+            result = fcntl.ioctl(sock.fileno(), SIOCGIFADDR, packed)
             return socket.inet_ntoa(result[20:24])
     except OSError:
         return None
@@ -164,17 +199,23 @@ def _net_dev() -> dict[str, Any]:
         interfaces.append(
             {
                 "name": iface_name,
-                "rx_bytes": int(fields[0]),
-                "rx_packets": int(fields[1]),
-                "rx_errors": int(fields[2]),
-                "rx_dropped": int(fields[3]),
-                "tx_bytes": int(fields[8]),
-                "tx_packets": int(fields[9]),
-                "tx_errors": int(fields[10]),
-                "tx_dropped": int(fields[11]),
-                "operstate": _read_text(f"/sys/class/net/{iface_name}/operstate", 64).strip()
+                "rx_bytes": _safe_int(fields[0]),
+                "rx_packets": _safe_int(fields[1]),
+                "rx_errors": _safe_int(fields[2]),
+                "rx_dropped": _safe_int(fields[3]),
+                "tx_bytes": _safe_int(fields[8]),
+                "tx_packets": _safe_int(fields[9]),
+                "tx_errors": _safe_int(fields[10]),
+                "tx_dropped": _safe_int(fields[11]),
+                "operstate": _read_text(
+                    f"/sys/class/net/{iface_name}/operstate",
+                    SYSFS_VALUE_MAX_CHARS,
+                ).strip()
                 or None,
-                "carrier": _read_text(f"/sys/class/net/{iface_name}/carrier", 64).strip()
+                "carrier": _read_text(
+                    f"/sys/class/net/{iface_name}/carrier",
+                    SYSFS_VALUE_MAX_CHARS,
+                ).strip()
                 or None,
             }
         )

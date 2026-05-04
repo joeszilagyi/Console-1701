@@ -53,12 +53,29 @@ def _tail(text: str, max_chars: int = 4000) -> str:
     return text[-max_chars:]
 
 
+def _output_text(value: str | bytes | None) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, bytes):
+        return value.decode("utf-8", "replace")
+    return value
+
+
+def _combined_output(*parts: str | bytes | None) -> str:
+    return _tail("\n".join(text for text in (_output_text(part) for part in parts) if text))
+
+
 def _fingerprint(command: str | None, repo_fingerprint: str | None, status: str, tail: str) -> str:
     material = "\x1f".join([command or "", repo_fingerprint or "", status, tail[-500:]])
     return hashlib.sha256(material.encode("utf-8", "replace")).hexdigest()
 
 
 def run_test_command(command: str, repo_path: str | Path, timeout: int) -> dict[str, Any]:
+    """Run one trusted local test command and capture bounded output.
+
+    Test commands are operator-configured shell snippets, so shell execution is
+    intentional here rather than a place to pass untrusted input.
+    """
     started = time.monotonic()
     try:
         completed = subprocess.run(
@@ -71,7 +88,7 @@ def run_test_command(command: str, repo_path: str | Path, timeout: int) -> dict[
             check=False,
         )
         duration = time.monotonic() - started
-        output = _tail("\n".join(part for part in [completed.stdout, completed.stderr] if part))
+        output = _combined_output(completed.stdout, completed.stderr)
         status = "pass" if completed.returncode == 0 else "fail"
         summary = "Tests passed." if status == "pass" else "Tests failed."
         return {
@@ -84,7 +101,7 @@ def run_test_command(command: str, repo_path: str | Path, timeout: int) -> dict[
         }
     except subprocess.TimeoutExpired as exc:
         duration = time.monotonic() - started
-        output = _tail("\n".join(part for part in [exc.stdout or "", exc.stderr or ""] if part))
+        output = _combined_output(exc.stdout, exc.stderr)
         return {
             "detected": True,
             "command": command,

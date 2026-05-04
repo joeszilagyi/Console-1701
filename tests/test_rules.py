@@ -63,6 +63,9 @@ def test_dirty_clustered_exporter_changes_with_test_pass_need_review():
     state, attention = evaluate_repo(_repo(), _snapshot(changed), _test("pass"))
     assert state["state"] == "Needs review"
     assert "dirty_clustered_recent_test_pass" in state["rule_ids"]
+    assert state["evidence"]["codex_activity_hint"] == (
+        "This looks like a coherent agent pass. This is a detected pattern, not proof."
+    )
     assert any(item["rule_id"] == "structural_code_changed" for item in attention)
 
 

@@ -4,12 +4,14 @@ import re
 import sqlite3
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 from console1701.config import DEFAULT_HANDOFF_DIR
 from console1701.db import json_dumps, utc_now
 from console1701.evidence import get_attention_items, get_repo_detail
 
 DEFAULT_TASK = "Review this local evidence and tell me what needs human attention next."
+HANDOFF_FILENAME_ATTEMPTS = 10
 
 
 def _slug(value: str) -> str:
@@ -21,6 +23,30 @@ def _bullet_list(values: list[str]) -> str:
     if not values:
         return "- None found."
     return "\n".join(f"- {value}" for value in values)
+
+
+def _handoff_filename(created_at: str, repo_name: str, packet_title: str) -> str:
+    title_slug = _slug(packet_title)[:40]
+    return f"{created_at[:10]}_{_slug(repo_name)}_{title_slug}_{uuid4().hex[:8]}.md"
+
+
+def _write_unique_handoff_file(
+    handoff_dir: Path,
+    *,
+    created_at: str,
+    repo_name: str,
+    packet_title: str,
+    markdown: str,
+) -> Path:
+    for _ in range(HANDOFF_FILENAME_ATTEMPTS):
+        path = handoff_dir / _handoff_filename(created_at, repo_name, packet_title)
+        try:
+            with path.open("x", encoding="utf-8") as handle:
+                handle.write(markdown)
+        except FileExistsError:
+            continue
+        return path
+    raise FileExistsError(f"Could not reserve a unique handoff packet path in {handoff_dir}")
 
 
 def build_handoff_markdown(
@@ -138,10 +164,14 @@ def create_handoff_packet(
     now = utc_now()
     repo_name = detail["repo"]["name"]
     packet_title = title or f"{repo_name} handoff"
-    filename = f"{now[:10]}_{_slug(repo_name)}_{_slug(packet_title)[:40]}.md"
-    path = handoff_dir / filename
     markdown = build_handoff_markdown(detail, task=task, generated_at=now)
-    path.write_text(markdown, encoding="utf-8")
+    path = _write_unique_handoff_file(
+        handoff_dir,
+        created_at=now,
+        repo_name=repo_name,
+        packet_title=packet_title,
+        markdown=markdown,
+    )
 
     evidence = {
         "repo": detail["repo"],

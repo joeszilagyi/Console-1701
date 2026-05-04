@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from console1701.adapters import is_code_file, is_structural_file, is_test_file
+from console1701.codex_probe import codex_activity_hint
 
 SEVERITY_RANK = {
     "green": 0,
@@ -137,6 +138,7 @@ def evaluate_repo(
         "test": test_snapshot,
         "scan_error": scan_error,
         "diff_fingerprint": snapshot.get("diff_fingerprint"),
+        "codex_activity_hint": codex_activity_hint(snapshot),
     }
 
     attention: list[dict[str, Any]] = []
