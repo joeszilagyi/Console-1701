@@ -55,9 +55,9 @@ Additional untracked files observed but not part of the intended 001 commit:
 
 ## Required Initial Verification
 
-- `pwd`: `/home/joe/projects/console-1706/main`
-- `git rev-parse --show-toplevel`: `/home/joe/projects/console-1706/main`
-- Virtualenv executable: `/home/joe/projects/console-1706/main/.venv/bin/python`
+- `pwd`: `/home/joe/projects/console-1701/main`
+- `git rev-parse --show-toplevel`: `/home/joe/projects/console-1701/main`
+- Virtualenv executable: `/home/joe/projects/console-1701/main/.venv/bin/python`
 - `starlette`: `1.0.0`
 - Prompt file check: `found build_order/001_local.md`
 
@@ -66,7 +66,7 @@ Additional untracked files observed but not part of the intended 001 commit:
 - The existing LOCAL design document was inspected and completed without duplicating sections.
 - Seed URL coverage check found no missing external seed URLs from `build_order/001_local.md` in the
   LOCAL design document. The only prompt URL not present in the design document was the local product
-  URL `http://127.0.0.1:1706/`.
+  URL `http://127.0.0.1:1701/`.
 - One documentation correction was made so the LOCAL design document's verification note uses
   `.venv/bin/python -m pytest -q` instead of bare `pytest -q`.
 

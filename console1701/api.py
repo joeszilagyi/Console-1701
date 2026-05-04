@@ -10,9 +10,9 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
-from console1706.config import load_config
-from console1706.db import connect_db, init_db
-from console1706.evidence import (
+from console1701.config import load_config
+from console1701.db import connect_db, init_db
+from console1701.evidence import (
     get_attention_items,
     get_handoffs,
     get_host_history,
@@ -24,10 +24,10 @@ from console1706.evidence import (
     get_repo_detail,
     get_system_summary,
 )
-from console1706.handoff import DEFAULT_TASK, create_handoff_packet
-from console1706.live_probe import read_live_snapshot
-from console1706.scanner import run_scan
-from console1706.terminal_action import TerminalLaunchError, launch_host_alert_codex_terminal
+from console1701.handoff import DEFAULT_TASK, create_handoff_packet
+from console1701.live_probe import read_live_snapshot
+from console1701.scanner import run_scan
+from console1701.terminal_action import TerminalLaunchError, launch_host_alert_codex_terminal
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(PACKAGE_DIR / "templates"))
@@ -129,7 +129,7 @@ def build_router(config_path: str | None = None) -> APIRouter:
         config = _config(config_path)
         return {
             "status": "ok",
-            "service": "console-1706",
+            "service": "console-1701",
             "host": config["server"]["host"],
             "port": config["server"]["port"],
             "db_path": config["_db_path"],

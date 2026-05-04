@@ -5,9 +5,9 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
-from console1706.config import DEFAULT_HANDOFF_DIR
-from console1706.db import json_dumps, utc_now
-from console1706.evidence import get_attention_items, get_repo_detail
+from console1701.config import DEFAULT_HANDOFF_DIR
+from console1701.db import json_dumps, utc_now
+from console1701.evidence import get_attention_items, get_repo_detail
 
 DEFAULT_TASK = "Review this local evidence and tell me what needs human attention next."
 
@@ -47,7 +47,7 @@ def build_handoff_markdown(
         for commit in recent_commits
     ) or "- None found."
 
-    return f"""# console-1706 handoff: {repo['name']}
+    return f"""# console-1701 handoff: {repo['name']}
 
 Generated: {generated}
 Repo: {repo['name']}
@@ -57,7 +57,7 @@ Path: {repo['path']}
 
 ### Current interpretation
 
-{interpretation.get('meaning') or 'No interpretation exists yet. Run console-1706 scan first.'}
+{interpretation.get('meaning') or 'No interpretation exists yet. Run console-1701 scan first.'}
 
 Headline: {interpretation.get('headline') or 'No headline available.'}
 State: {interpretation.get('state') or 'Unknown'}

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
-from console1706.adapters import cluster_changed_files
-from console1706.rules import evaluate_repo
+from console1701.adapters import cluster_changed_files
+from console1701.rules import evaluate_repo
 
 
 def _repo(**overrides):

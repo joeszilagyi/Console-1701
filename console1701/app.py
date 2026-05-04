@@ -5,9 +5,9 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from console1706.api import PACKAGE_DIR, build_router
-from console1706.config import ensure_state_dirs, load_config
-from console1706.db import connect_db, init_db
+from console1701.api import PACKAGE_DIR, build_router
+from console1701.config import ensure_state_dirs, load_config
+from console1701.db import connect_db, init_db
 
 
 def create_app(config_path: str | None = None) -> FastAPI:
@@ -21,7 +21,7 @@ def create_app(config_path: str | None = None) -> FastAPI:
     ) as conn:
         init_db(conn)
 
-    app = FastAPI(title="console-1706", version="0.1.0")
+    app = FastAPI(title="console-1701", version="0.1.0")
     app.mount(
         "/static",
         StaticFiles(directory=str(Path(PACKAGE_DIR) / "static")),

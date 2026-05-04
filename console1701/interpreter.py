@@ -3,8 +3,8 @@ from __future__ import annotations
 import sqlite3
 from typing import Any
 
-from console1706.db import json_dumps, latest_repo_snapshot, latest_test_snapshot, utc_now
-from console1706.rules import evaluate_repo
+from console1701.db import json_dumps, latest_repo_snapshot, latest_test_snapshot, utc_now
+from console1701.rules import evaluate_repo
 
 
 def insert_interpretation(conn: sqlite3.Connection, state: dict[str, Any]) -> int:

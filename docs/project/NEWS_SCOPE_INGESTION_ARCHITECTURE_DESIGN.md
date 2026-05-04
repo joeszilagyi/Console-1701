@@ -2,7 +2,7 @@
 
 ## SECTION 1: Purpose
 
-console-1706 is currently a local Debian machine console. It should remain that. The INTERNAL scope
+console-1701 is currently a local Debian machine console. It should remain that. The INTERNAL scope
 is the primary machine instrumentation surface for this physical host: OS, kernel, session,
 hardware, storage, network, services, processes, logs, power, thermal, evidence, and local work.
 
@@ -46,7 +46,7 @@ The current project already has most of the shape needed for this work:
 | `/INTERNAL` | Already the real local machine telemetry dashboard. It should remain host-focused. |
 | `/` | Currently routes to the OVERVIEW scope. This should become a cross-scope synthesis layer. |
 | Scope tabs | The header already supports OVERVIEW, INTERNAL, LOCAL, REGIONAL, NATIONAL, GLOBAL, ORBITAL, and SYSTEM. |
-| Non-INTERNAL placeholder bays | `console1706/templates/index.html` currently renders Placeholder 1 through Placeholder 4 for non-INTERNAL scopes. Those are the natural insertion points for future signal panels. |
+| Non-INTERNAL placeholder bays | `console1701/templates/index.html` currently renders Placeholder 1 through Placeholder 4 for non-INTERNAL scopes. Those are the natural insertion points for future signal panels. |
 | SQLite schema pattern | Existing tables are simple, durable, and JSON-friendly. Extend that pattern instead of replacing it. |
 | Scanner pattern | Current scans are explicit command-path work, not page-load work. News ingest should follow that pattern. |
 | Safety strip | The visible local-only safety strip must remain truthful after news features exist. |
@@ -56,8 +56,8 @@ NATIONAL, GLOBAL, ORBITAL, and SYSTEM recent signals and only refer to INTERNAL 
 health needs attention.
 
 The existing scanner should not silently become an external fetcher. The safer initial approach is a
-separate `console-1706 news-scan` command and a separate disabled systemd user timer. If later
-desired, `console-1706 scan` can optionally call news ingest only when `news.enabled` is true and the
+separate `console-1701 news-scan` command and a separate disabled systemd user timer. If later
+desired, `console-1701 scan` can optionally call news ingest only when `news.enabled` is true and the
 behavior is documented.
 
 ## SECTION 3: Scope model
@@ -74,7 +74,7 @@ primary scope and may have secondary tags.
 | NATIONAL | United States level. | "What national signals matter?" |
 | GLOBAL | World level. | "What global signals matter?" |
 | ORBITAL | Space, sky, NASA, launches, astronomy, satellites, space weather, NEO, and related public signals. | "What is happening above the atmosphere and in space operations?" |
-| SYSTEM | console-1706 app health and ingest health. | "Is the dashboard itself honest, fresh, and configured correctly?" |
+| SYSTEM | console-1701 app health and ingest health. | "Is the dashboard itself honest, fresh, and configured correctly?" |
 
 ### OVERVIEW
 
@@ -135,7 +135,7 @@ primary scope and may have secondary tags.
 
 ### SYSTEM
 
-- console-1706 application health.
+- console-1701 application health.
 - Source ingest status.
 - Source stale state.
 - Last successful fetch by scope and source.
@@ -276,7 +276,7 @@ received validator evidence in `news_fetch_runs`.
 11. Honest user agent.
 
 Future HTTP fetches should use an explicit local user agent string such as
-`console-1706 local recent-signal monitor`. If the user wants a contact note, it should be configured
+`console-1701 local recent-signal monitor`. If the user wants a contact note, it should be configured
 explicitly. Do not impersonate browsers.
 
 12. No content laundering.
@@ -375,7 +375,7 @@ news:
     default_interval_minutes: 30
     default_backoff_minutes: 120
     max_response_bytes: 1048576
-    user_agent: "console-1706 local recent-signal monitor"
+    user_agent: "console-1701 local recent-signal monitor"
     page_load_external_fetches: false
     respect_robots_txt: true
     allow_homepage_extractors: false
@@ -654,7 +654,7 @@ Do not implement these modules now. This layout keeps news ingestion separate fr
 web rendering.
 
 ```text
-console1706/news/
+console1701/news/
   __init__.py
   models.py
   config.py
@@ -687,7 +687,7 @@ console1706/news/
 
 Do not implement commands now.
 
-### `console-1706 news-scan`
+### `console-1701 news-scan`
 
 - Runs configured enabled news sources once.
 - Reads config.
@@ -698,7 +698,7 @@ Do not implement commands now.
 - Exits nonzero only for systemic failure such as unreadable config or unavailable DB.
 - One broken source should create a failed source health row, not fail the whole command.
 
-### `console-1706 news-sources`
+### `console-1701 news-sources`
 
 - Validates configured sources.
 - Prints enabled/disabled state.
@@ -706,7 +706,7 @@ Do not implement commands now.
 - Prints next eligible fetch time.
 - Prints last success, last failure, stale state, and parser status.
 
-### `console-1706 scan`
+### `console-1701 scan`
 
 - Existing host/repo scan must remain intact.
 - Prefer keeping news ingest separate at first to reduce risk.
@@ -715,9 +715,9 @@ Do not implement commands now.
 
 ### systemd user timers
 
-- Existing `console-1706-scan.timer` should not silently start external fetching.
+- Existing `console-1701-scan.timer` should not silently start external fetching.
 - If a future news timer exists, it should be separate and disabled unless `news.enabled` is true.
-- Proposed name: `console-1706-news-scan.timer`.
+- Proposed name: `console-1701-news-scan.timer`.
 - It must be user-level systemd only, not root.
 - README and config examples must make the external-fetch behavior obvious before enablement.
 
@@ -928,7 +928,7 @@ Safeguards:
 - Fail soft per source.
 - One broken source should not break the dashboard.
 - Page loads must read local SQLite and config state only.
-- Bind behavior remains `127.0.0.1:1706`.
+- Bind behavior remains `127.0.0.1:1701`.
 
 Location rules:
 

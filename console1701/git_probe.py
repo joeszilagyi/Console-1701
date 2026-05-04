@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from console1706.adapters import cluster_changed_files, infer_adapter
+from console1701.adapters import cluster_changed_files, infer_adapter
 
 
 class GitProbeError(RuntimeError):

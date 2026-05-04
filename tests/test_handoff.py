@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from console1706.handoff import build_handoff_markdown
+from console1701.handoff import build_handoff_markdown
 
 
 def test_handoff_packet_contains_controlled_sections():

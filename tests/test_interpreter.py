@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from console1706.db import connect_db, init_db
-from console1706.interpreter import upsert_attention_item
+from console1701.db import connect_db, init_db
+from console1701.interpreter import upsert_attention_item
 
 
 def test_same_attention_issue_is_deduped(tmp_path):

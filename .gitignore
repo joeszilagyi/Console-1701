@@ -4,6 +4,7 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+.codex-tmp/
 dist/
 build/
 *.egg-info/
@@ -13,8 +14,11 @@ htmlcov/
 *.sqlite-*
 
 # Local generated handoff/artifact files.
+Codex-while-cycles.log
 Codex-while-cycles.sh
-console-1706-complete.bundle
+docs/scripts/
+runtime/
+console-*.bundle
 web-gpt-bundle.md
 caretaking_22_items.md
 git_hard_clean.md

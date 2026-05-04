@@ -20,7 +20,7 @@ Raw source URLs for that anchor set:
 [https://www.minorplanetcenter.net/mpcops/documentation/](https://www.minorplanetcenter.net/mpcops/documentation/)
 
 ```text
-You are working in the console-1706 repository.
+You are working in the console-1701 repository.
 
 This task assumes the prior scoped recent-signal architecture prompt, LOCAL Seattle design prompt, REGIONAL Pacific Northwest design prompt, NATIONAL United States design prompt, and GLOBAL World design prompt have either already been run, or will be pasted above this prompt.
 
@@ -61,7 +61,7 @@ Do not duplicate BACKLOG sections already added by previous tasks. Extend the re
 
 The user intent:
 
-console-1706 is a local-only home dashboard running at http://127.0.0.1:1706/.
+console-1701 is a local-only home dashboard running at http://127.0.0.1:1701/.
 
 The ORBITAL tab should eventually answer:
 
@@ -113,7 +113,7 @@ Hard project constraints:
 - No package installation.
 - No destructive commands.
 - Preserve FastAPI, Jinja2, SQLite, vanilla CSS, vanilla JS, pytest.
-- Bind only to 127.0.0.1 on port 1706.
+- Bind only to 127.0.0.1 on port 1701.
 - Treat AGENTS.md as binding project law.
 - If anything is not completed or remains uncertain, update BACKLOG.md.
 
@@ -135,22 +135,22 @@ Inspect these files first:
 - README.md
 - BACKLOG.md
 - config.example.yml
-- console-1706-codex-plan-01.md
+- console-1701-codex-plan-01.md
 - docs/project/NEWS_SCOPE_INGESTION_ARCHITECTURE_DESIGN.md, if it exists
 - docs/project/LOCAL_SEATTLE_RECENT_SIGNAL_SOURCE_TARGETS_DESIGN.md, if it exists
 - docs/project/REGIONAL_PNW_RECENT_SIGNAL_SOURCE_TARGETS_DESIGN.md, if it exists
 - docs/project/NATIONAL_US_RECENT_SIGNAL_SOURCE_TARGETS_DESIGN.md, if it exists
 - docs/project/GLOBAL_WORLD_RECENT_SIGNAL_SOURCE_TARGETS_DESIGN.md, if it exists
-- console1706/schema.sql
-- console1706/config.py
-- console1706/db.py
-- console1706/scanner.py
-- console1706/api.py
-- console1706/templates/index.html
-- console1706/static/app.css
-- console1706/static/app.js
-- console1706/evidence.py
-- console1706/system_probe.py
+- console1701/schema.sql
+- console1701/config.py
+- console1701/db.py
+- console1701/scanner.py
+- console1701/api.py
+- console1701/templates/index.html
+- console1701/static/app.css
+- console1701/static/app.js
+- console1701/evidence.py
+- console1701/system_probe.py
 - tests/
 
 Deliverables:
@@ -198,7 +198,7 @@ It is:
 - A local, short-retention metadata dashboard.
 - A deterministic cross-source event detector for orbital, space weather, near-Earth object, launch, mission, satellite, and sky signals.
 - A source-health aware recent-signal system.
-- An ORBITAL tab in console-1706 that can surface official space weather alerts, aurora chances, solar storms, NEO close approaches, fireballs, launch events, spacecraft anomalies, ISS and crewed-flight updates, orbital debris and reentry notices, official agency news, mission milestones, and spaceflight news.
+- An ORBITAL tab in console-1701 that can surface official space weather alerts, aurora chances, solar storms, NEO close approaches, fireballs, launch events, spacecraft anomalies, ISS and crewed-flight updates, orbital debris and reentry notices, official agency news, mission milestones, and spaceflight news.
 - A way to rank items by independent source convergence, official severity, public impact, operational relevance, local or global effect, freshness, and user-configured source priority.
 
 Make clear that "orbital" means useful public, configured, lawful, recent signals that the user chooses to enable. It does not mean unbounded space data harvesting, restricted satellite tracking, private operator monitoring, or automated space intelligence.

@@ -4,23 +4,23 @@ import argparse
 import sys
 from importlib.metadata import PackageNotFoundError, version
 
-from console1706.config import DEFAULT_CONFIG_PATH, init_config, load_config
-from console1706.db import connect_db, init_db
-from console1706.handoff import DEFAULT_TASK, create_handoff_packet
-from console1706.scanner import run_scan
+from console1701.config import DEFAULT_CONFIG_PATH, init_config, load_config
+from console1701.db import connect_db, init_db
+from console1701.handoff import DEFAULT_TASK, create_handoff_packet
+from console1701.scanner import run_scan
 
 CLI_DESCRIPTION = """Local-only Debian machine console.
 
-Commands read local config and write only console-1706 state/config paths unless
+Commands read local config and write only console-1701 state/config paths unless
 the named command explicitly says otherwise. The web server always binds to
 127.0.0.1, even if a wider host is requested.
 """
 
 CLI_EPILOG = """Examples:
-  console-1706 init-config
-  console-1706 scan
-  console-1706 serve
-  console-1706 handoff --repo-id 1 --task "Review this local repo state."
+  console-1701 init-config
+  console-1701 scan
+  console-1701 serve
+  console-1701 handoff --repo-id 1 --task "Review this local repo state."
 """
 
 
@@ -34,14 +34,14 @@ def _add_config_arg(parser: argparse.ArgumentParser) -> None:
 
 def _package_version() -> str:
     try:
-        return version("console-1706")
+        return version("console-1701")
     except PackageNotFoundError:
         return "unknown"
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="console-1706",
+        prog="console-1701",
         description=CLI_DESCRIPTION,
         epilog=CLI_EPILOG,
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -52,7 +52,7 @@ def build_parser() -> argparse.ArgumentParser:
     init_parser = subparsers.add_parser(
         "init-config",
         help="Create the local config.yml if missing",
-        description="Create the console-1706 YAML config without scanning or serving.",
+        description="Create the console-1701 YAML config without scanning or serving.",
     )
     _add_config_arg(init_parser)
     init_parser.add_argument("--overwrite", action="store_true", help="Overwrite existing config")
@@ -62,7 +62,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Probe the local host, configured repos, and logs once",
         description=(
             "Run one safe local scan. The scan reads local host/repo/log facts and writes the "
-            "configured console-1706 SQLite state."
+            "configured console-1701 SQLite state."
         ),
     )
     _add_config_arg(scan_parser)
@@ -74,12 +74,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_config_arg(serve_parser)
     serve_parser.add_argument("--host", default=None, help="Bind host. Forced to 127.0.0.1.")
-    serve_parser.add_argument("--port", type=int, default=None, help="Bind port. Default: 1706.")
+    serve_parser.add_argument("--port", type=int, default=None, help="Bind port. Default: 1701.")
 
     handoff_parser = subparsers.add_parser(
         "handoff",
         help="Create a local Markdown handoff packet",
-        description="Write a bounded Markdown handoff packet under console-1706 state.",
+        description="Write a bounded Markdown handoff packet under console-1701 state.",
     )
     _add_config_arg(handoff_parser)
     handoff_parser.add_argument("--repo-id", type=int, required=True)
@@ -113,7 +113,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "serve":
         import uvicorn
 
-        from console1706.app import create_app
+        from console1701.app import create_app
 
         config = load_config(args.config)
         host = args.host or config["server"]["host"]

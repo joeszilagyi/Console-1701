@@ -1,10 +1,10 @@
 [Unit]
-Description=console-1706 local web UI
+Description=console-1701 local web UI
 After=network.target
 
 [Service]
 WorkingDirectory=__PROJECT_DIR__
-ExecStart=__PROJECT_DIR__/.venv/bin/console-1706 serve --config %h/.config/console-1706/config.yml
+ExecStart=__PROJECT_DIR__/.venv/bin/console-1701 serve --config %h/.config/console-1701/config.yml
 Restart=on-failure
 RestartSec=5
 Environment=PYTHONUNBUFFERED=1

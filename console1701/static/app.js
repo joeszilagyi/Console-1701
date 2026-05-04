@@ -23,7 +23,7 @@ const scanTiming = {
 
 const SENSOR_CLASSES = ["sensor-ok", "sensor-warning", "sensor-critical", "sensor-unknown"];
 const HISTORY_WINDOW_MS = 5 * 60 * 1000;
-const SCOPE_STORAGE_KEY = "console1706.scopeNav";
+const SCOPE_STORAGE_KEY = "console1701.scopeNav";
 const liveHistory = {
   "system-score": [],
   "net-rx": [],

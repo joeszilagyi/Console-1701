@@ -15,7 +15,7 @@ whenever new ideas come up and are not completed immediately.
   five-minute page-session trend traces, local health colors, adaptive polling, and inline
   explanations.
 - Alert rows can launch a user-clicked local terminal with an interactive Codex scenario.
-- The local delta image is displayed from `console1706/static/codex-alert-delta.png`.
+- The local delta image is displayed from `console1701/static/codex-alert-delta.png`.
 
 ## Scoped Recent Signal / News Ingestion
 
@@ -149,8 +149,8 @@ retention, source policy, and how to audit source health.
 
 Status: not implemented.
 
-If scheduled news ingest is added, create a separate user-level `console-1706-news-scan.timer`.
-Existing `console-1706-scan.timer` must not silently start external fetching. The news timer should
+If scheduled news ingest is added, create a separate user-level `console-1701-news-scan.timer`.
+Existing `console-1701-scan.timer` must not silently start external fetching. The news timer should
 be disabled unless news ingest is explicitly configured and enabled.
 
 ## LOCAL Seattle Recent Signal Layer
@@ -1909,7 +1909,7 @@ Status: not implemented.
 
 Add literature metadata only after ADS/API policy review, auth handling, fixture tests, retention
 rules, and user opt-in. Store metadata only, do not download papers, do not bypass paywalls, and do
-not turn console-1706 into a literature review engine.
+not turn console-1701 into a literature review engine.
 
 ### Social Source Policy Review, Disabled By Default
 
@@ -2105,7 +2105,7 @@ Status: blocked by local-only contract.
 
 Requested: show local weather for the next 7 days in a bay. A real forecast requires an external
 weather provider or a pre-existing local weather data source. Under current constraints,
-console-1706 must not make cloud calls or hidden network requests by default.
+console-1701 must not make cloud calls or hidden network requests by default.
 
 Safe implementation shape if explicitly approved later:
 

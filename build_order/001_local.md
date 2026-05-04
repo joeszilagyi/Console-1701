@@ -1,4 +1,4 @@
-You are working in the console-1706 repository.
+You are working in the console-1701 repository.
 
 This task assumes the previous architecture prompt for scoped recent-signal/news ingestion has either already been run or will be pasted above this prompt. Treat that architecture as context, but do not assume it is already implemented.
 
@@ -20,7 +20,7 @@ Your job is to design the LOCAL Seattle recent-signal layer in enough detail tha
 
 The user’s intent:
 
-The root page at http://127.0.0.1:1706/ will eventually become a local command surface. The LOCAL scope should answer, at a glance, what is happening in Seattle and the immediate area right now.
+The root page at http://127.0.0.1:1701/ will eventually become a local command surface. The LOCAL scope should answer, at a glance, what is happening in Seattle and the immediate area right now.
 
 The LOCAL scope should eventually combine recent signals from:
 
@@ -67,7 +67,7 @@ Hard project constraints:
 - No package installation.
 - No destructive commands.
 - Preserve FastAPI, Jinja2, SQLite, vanilla CSS, vanilla JS, pytest.
-- Bind only to 127.0.0.1 on port 1706.
+- Bind only to 127.0.0.1 on port 1701.
 - Treat AGENTS.md as binding project law.
 - If anything is not completed or remains uncertain, update BACKLOG.md.
 
@@ -89,18 +89,18 @@ Inspect these files first:
 - README.md
 - BACKLOG.md
 - config.example.yml
-- console-1706-codex-plan-01.md
+- console-1701-codex-plan-01.md
 - docs/project/NEWS_SCOPE_INGESTION_ARCHITECTURE_DESIGN.md, if it exists
-- console1706/schema.sql
-- console1706/config.py
-- console1706/db.py
-- console1706/scanner.py
-- console1706/api.py
-- console1706/templates/index.html
-- console1706/static/app.css
-- console1706/static/app.js
-- console1706/evidence.py
-- console1706/system_probe.py
+- console1701/schema.sql
+- console1701/config.py
+- console1701/db.py
+- console1701/scanner.py
+- console1701/api.py
+- console1701/templates/index.html
+- console1701/static/app.css
+- console1701/static/app.js
+- console1701/evidence.py
+- console1701/system_probe.py
 - tests/
 
 Deliverables:
@@ -146,7 +146,7 @@ It is:
 - A local, short-retention metadata dashboard.
 - A deterministic cross-source event detector.
 - A source-health aware recent-signal system.
-- A LOCAL tab in console-1706 that can surface official alerts, incidents, travel disruptions, outages, hazards, airport/port operations, local news, and compliant community signals.
+- A LOCAL tab in console-1701 that can surface official alerts, incidents, travel disruptions, outages, hazards, airport/port operations, local news, and compliant community signals.
 - A way to rank items by independent source convergence, official severity, local impact, freshness, and user-configured source priority.
 
 Make clear that "all there is to know about Seattle" means all useful public, configured, lawful, recent signals that the user chooses to enable. It does not mean unbounded crawling or private data collection.

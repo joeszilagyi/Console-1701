@@ -4,7 +4,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
-APP_NAME = "console-1706"
+APP_NAME = "console-1701"
 DEFAULT_CONFIG_PATH = Path.home() / ".config" / APP_NAME / "config.yml"
 DEFAULT_STATE_DIR = Path.home() / ".local" / "state" / APP_NAME
 DEFAULT_DB_PATH = DEFAULT_STATE_DIR / "console.sqlite"
@@ -13,7 +13,7 @@ DEFAULT_HANDOFF_DIR = DEFAULT_STATE_DIR / "handoffs"
 DEFAULT_CONFIG: dict[str, Any] = {
     "server": {
         "host": "127.0.0.1",
-        "port": 1706,
+        "port": 1701,
         "browser_refresh_seconds": 60,
     },
     "scan": {
@@ -38,7 +38,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "paths": {
         "repo_roots": ["~/projects", "~/wiki"],
         "explicit_repos": [
-            "~/projects/console-1706/main",
+            "~/projects/console-1701/main",
             "~/projects/ufo-records",
             "~/projects/TCL",
             "~/wiki",
@@ -72,7 +72,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "test_policy": {
         "auto_run": True,
         "default_timeout_seconds": 120,
-        "allow_repos": ["console-1706", "~/projects/console-1706/main"],
+        "allow_repos": ["console-1701", "~/projects/console-1701/main"],
     },
     "system_probe": {
         "command_timeout_seconds": 3,
@@ -84,8 +84,8 @@ DEFAULT_CONFIG: dict[str, Any] = {
     },
     "projects": [
         {
-            "name": "console-1706",
-            "path": "~/projects/console-1706/main",
+            "name": "console-1701",
+            "path": "~/projects/console-1701/main",
             "role": "Local-only repo and workflow console",
             "category": "Operational dashboard",
             "importance": "critical",
@@ -180,7 +180,7 @@ def normalize_config(config: dict[str, Any]) -> None:
     server = config.setdefault("server", {})
     if server.get("host") != "127.0.0.1":
         server["host"] = "127.0.0.1"
-    server["port"] = int(server.get("port", 1706))
+    server["port"] = int(server.get("port", 1701))
 
     paths = config.setdefault("paths", {})
     paths["repo_roots"] = [str(expand_path(path)) for path in paths.get("repo_roots", [])]

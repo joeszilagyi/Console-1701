@@ -25,7 +25,7 @@ def _slug(value: str) -> str:
 def _trim(value: str, max_chars: int = MAX_SCENARIO_CHARS) -> str:
     if len(value) <= max_chars:
         return value
-    return f"{value[:max_chars]}\n...[truncated by console-1706]"
+    return f"{value[:max_chars]}\n...[truncated by console-1701]"
 
 
 def build_host_alert_prompt(scenario: dict[str, Any]) -> str:
@@ -37,7 +37,7 @@ def build_host_alert_prompt(scenario: dict[str, Any]) -> str:
     evidence_json = json.dumps(evidence, indent=2, sort_keys=True, ensure_ascii=False)
 
     prompt = f"""
-You are in an interactive Codex session launched by console-1706 from a local host alert.
+You are in an interactive Codex session launched by console-1701 from a local host alert.
 
 Task:
 Address this local Debian machine alert. Start by explaining what failed, what evidence says, and
@@ -66,12 +66,12 @@ def _write_executable_script(path: Path, prompt_path: Path, cwd: Path, title: st
 set -eu
 cd {json.dumps(str(cwd))}
 printf '\\033]0;{title}\\007'
-echo 'console-1706 host alert -> interactive Codex'
+echo 'console-1701 host alert -> interactive Codex'
 echo 'Prompt file: {prompt_path}'
 echo
 if ! command -v codex >/dev/null 2>&1; then
   echo 'codex CLI was not found on PATH.'
-  echo 'Install or expose codex, then retry from console-1706.'
+  echo 'Install or expose codex, then retry from console-1701.'
   echo
   printf 'Press Enter to close... '
   read _answer
@@ -100,7 +100,7 @@ def prepare_host_alert_terminal_action(
     section = str(scenario.get("section") or "host")
     timestamp = datetime.now(UTC).astimezone().strftime("%Y%m%d-%H%M%S")
     stem = f"{timestamp}-{_slug(section)}"
-    title = f"console-1706 Codex {stem}"
+    title = f"console-1701 Codex {stem}"
     prompt_path = action_dir / f"{stem}.prompt.md"
     script_path = action_dir / f"{stem}.sh"
     cwd = Path.home()
@@ -119,7 +119,7 @@ def prepare_host_alert_terminal_action(
 
 def _terminal_candidates(
     script_path: str,
-    title: str = "console-1706 Codex",
+    title: str = "console-1701 Codex",
 ) -> list[tuple[str, list[str]]]:
     candidates: list[tuple[str, list[str]]] = []
     if shutil.which("xfce4-terminal"):
@@ -208,7 +208,7 @@ def launch_host_alert_codex_terminal(
     script_path = prepared["script_path"]
     candidates = _terminal_candidates(
         script_path,
-        str(prepared.get("title") or "console-1706 Codex"),
+        str(prepared.get("title") or "console-1701 Codex"),
     )
     if not candidates:
         raise TerminalLaunchError(

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from console1706.db import connect_db, init_db, utc_now
-from console1706.evidence import get_recent_events, get_repo_cards, get_system_summary
+from console1701.db import connect_db, init_db, utc_now
+from console1701.evidence import get_recent_events, get_repo_cards, get_system_summary
 
 
 def test_repo_cards_prioritize_configured_importance(tmp_path):
@@ -12,7 +12,7 @@ def test_repo_cards_prioritize_configured_importance(tmp_path):
     rows = [
         ("bug-worktree", "/tmp/bug-worktree", None),
         ("wiki", "/tmp/wiki", "critical"),
-        ("console-1706", "/tmp/console-1706", "critical"),
+        ("console-1701", "/tmp/console-1701", "critical"),
         ("ufo-records", "/tmp/ufo-records", "high"),
     ]
     repo_ids: dict[str, int] = {}
@@ -30,7 +30,7 @@ def test_repo_cards_prioritize_configured_importance(tmp_path):
         ).fetchone()["id"]
     snapshots = [
         (repo_ids["wiki"], "2026-04-28T12:00:00-07:00"),
-        (repo_ids["console-1706"], "2026-04-28T10:00:00-07:00"),
+        (repo_ids["console-1701"], "2026-04-28T10:00:00-07:00"),
         (repo_ids["ufo-records"], "2026-04-27T10:00:00-07:00"),
         (repo_ids["bug-worktree"], "2026-04-26T10:00:00-07:00"),
     ]
@@ -59,7 +59,7 @@ def test_repo_cards_prioritize_configured_importance(tmp_path):
 
     assert [card["repo"]["name"] for card in cards] == [
         "wiki",
-        "console-1706",
+        "console-1701",
         "ufo-records",
         "bug-worktree",
     ]

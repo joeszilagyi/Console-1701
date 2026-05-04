@@ -2,7 +2,7 @@
 
 ## SECTION 1: Purpose
 
-The NATIONAL scope is the United States recent-signal layer for console-1706. It should tell the
+The NATIONAL scope is the United States recent-signal layer for console-1701. It should tell the
 user what is happening at national scale, with source provenance, observed time, source kind,
 ranking reason, freshness, and evidence. It is a deterministic metadata surface for public-impact
 signals, not a crawler, not a cloud service, and not a runtime LLM summarizer.
@@ -27,7 +27,7 @@ The NATIONAL scope is:
 - A local, short-retention metadata dashboard.
 - A deterministic cross-source event detector for U.S. public-impact signals.
 - A source-health aware recent-signal system.
-- A NATIONAL tab in console-1706 that can surface federal alerts, major hazards, transportation
+- A NATIONAL tab in console-1701 that can surface federal alerts, major hazards, transportation
   disruption, aviation disruption, recalls, public-health warnings, cybersecurity advisories,
   national emergency declarations, national news, economic releases, and compliant community echoes.
 - A way to rank items by independent source convergence, official severity, public impact,
@@ -1429,7 +1429,7 @@ Config validation rules for later:
 ## SECTION 13: NATIONAL UI architecture
 
 Do not implement the UI in this task. The eventual NATIONAL page should use the existing
-console-1706 style and template conventions, but it should show honest source-backed states rather
+console-1701 style and template conventions, but it should show honest source-backed states rather
 than placeholders or fake headlines.
 
 Proposed bays:

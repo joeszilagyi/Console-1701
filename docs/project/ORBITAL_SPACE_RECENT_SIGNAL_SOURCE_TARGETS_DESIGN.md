@@ -3,7 +3,7 @@
 ## SECTION 1: Purpose
 
 The ORBITAL scope is the space, sky, and near-Earth environment recent-signal layer for
-console-1706. It should eventually tell the user what is happening above Earth and in nearby space,
+console-1701. It should eventually tell the user what is happening above Earth and in nearby space,
 with source provenance, observed time, source kind, ranking reason, freshness, and evidence.
 
 ORBITAL is not:
@@ -28,7 +28,7 @@ ORBITAL is:
 - A deterministic cross-source event detector for orbital, space weather, near-Earth object, launch,
   mission, satellite, and sky signals.
 - A source-health aware recent-signal system.
-- An ORBITAL tab in console-1706 that can surface official space weather alerts, aurora chances,
+- An ORBITAL tab in console-1701 that can surface official space weather alerts, aurora chances,
   solar storms, NEO close approaches, fireballs, launch events, spacecraft anomalies, ISS and
   crewed-flight updates, orbital debris and reentry notices, official agency news, mission
   milestones, and spaceflight news.

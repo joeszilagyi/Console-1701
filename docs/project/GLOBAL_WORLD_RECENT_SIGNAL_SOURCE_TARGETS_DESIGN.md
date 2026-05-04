@@ -2,7 +2,7 @@
 
 ## SECTION 1: Purpose
 
-The GLOBAL scope is the world recent-signal layer for console-1706. It should tell the user what is
+The GLOBAL scope is the world recent-signal layer for console-1701. It should tell the user what is
 happening globally, with source provenance, observed time, source kind, ranking reason, freshness,
 and evidence. It is a local, deterministic metadata surface for public-impact world signals, not a
 crawler, not a runtime LLM summarizer, and not a geopolitical analysis product.
@@ -29,7 +29,7 @@ The GLOBAL scope is:
 - A local, short-retention metadata dashboard.
 - A deterministic cross-source event detector for global public-impact signals.
 - A source-health aware recent-signal system.
-- A GLOBAL tab in console-1706 that can surface disasters, humanitarian crises, disease outbreaks,
+- A GLOBAL tab in console-1701 that can surface disasters, humanitarian crises, disease outbreaks,
   severe weather, tropical cyclones, earthquakes, volcanoes, air quality, international
   public-health alerts, geopolitical crises, supply-chain disruption, global cyber risk,
   international institutional actions, and global news.
@@ -1454,7 +1454,7 @@ Config validation rules for later:
 
 ## SECTION 13: GLOBAL UI architecture
 
-Do not implement the UI in this task. The eventual GLOBAL page should use the existing console-1706
+Do not implement the UI in this task. The eventual GLOBAL page should use the existing console-1701
 style and template conventions, but it should show honest source-backed states rather than
 placeholders or fake headlines.
 

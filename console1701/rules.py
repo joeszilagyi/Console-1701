@@ -4,7 +4,7 @@ import hashlib
 from datetime import UTC, datetime
 from typing import Any
 
-from console1706.adapters import is_code_file, is_structural_file, is_test_file
+from console1701.adapters import is_code_file, is_structural_file, is_test_file
 
 SEVERITY_RANK = {
     "green": 0,

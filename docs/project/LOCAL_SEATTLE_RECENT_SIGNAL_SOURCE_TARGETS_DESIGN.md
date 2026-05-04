@@ -2,7 +2,7 @@
 
 ## SECTION 1: Purpose
 
-The LOCAL scope is the Seattle recent-signal layer for console-1706. It should tell the user what is
+The LOCAL scope is the Seattle recent-signal layer for console-1701. It should tell the user what is
 happening locally with source provenance, observed time, source kind, ranking reason, and evidence.
 The target is a short-retention, deterministic, local metadata dashboard that can answer "what is
 going on near Seattle right now?" without turning the app into a crawler, archive, scanner clone,
@@ -27,7 +27,7 @@ The LOCAL scope is:
 - A local, short-retention metadata dashboard.
 - A deterministic cross-source event detector.
 - A source-health aware recent-signal system.
-- A LOCAL tab in console-1706 that can surface official alerts, incidents, travel disruptions,
+- A LOCAL tab in console-1701 that can surface official alerts, incidents, travel disruptions,
   outages, hazards, airport/port operations, local news, and compliant community signals.
 - A way to rank items by independent source convergence, official severity, local impact,
   freshness, and user-configured source priority.

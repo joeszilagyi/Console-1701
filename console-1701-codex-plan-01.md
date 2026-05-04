@@ -1,4 +1,4 @@
-# console-1706: local repo and workflow console
+# console-1701: local repo and workflow console
 
 ## 0. Codex instruction
 
@@ -11,13 +11,13 @@ The visual vibe may be LCARS-inspired, but the product language must stay plain 
 Use this project name and install target:
 
 ```text
-Project directory: ~/projects/console-1706
-Service name: console-1706
-Local URL: http://127.0.0.1:1706
-Config path: ~/.config/console-1706/config.yml
-State path: ~/.local/state/console-1706/
-Database path: ~/.local/state/console-1706/console.sqlite
-Handoff path: ~/.local/state/console-1706/handoffs/
+Project directory: ~/projects/console-1701
+Service name: console-1701
+Local URL: http://127.0.0.1:1701
+Config path: ~/.config/console-1701/config.yml
+State path: ~/.local/state/console-1701/
+Database path: ~/.local/state/console-1701/console.sqlite
+Handoff path: ~/.local/state/console-1701/handoffs/
 ```
 
 Main goal:
@@ -40,7 +40,7 @@ Only create an LLM/Codex handoff packet when explicitly requested.
 
 ## 1. What this is
 
-`console-1706` is a local-only homepage for Firefox that shows a plain-English operational readout of local repos and workflows.
+`console-1701` is a local-only homepage for Firefox that shows a plain-English operational readout of local repos and workflows.
 
 It should answer:
 
@@ -162,7 +162,7 @@ The app should generate Markdown handoff packets that wrap evidence and task ins
 Template:
 
 ```md
-# console-1706 handoff packet
+# console-1701 handoff packet
 
 Generated: {{timestamp}}
 Repo: {{repo_name}}
@@ -247,13 +247,13 @@ Avoid React/Vite for MVP unless absolutely necessary. The first version should b
 Use a Python package name that works with imports:
 
 ```text
-console1706
+console1701
 ```
 
 Use a command name that matches the product:
 
 ```text
-console-1706
+console-1701
 ```
 
 ## 6. Debian 13 bootstrap target
@@ -267,28 +267,28 @@ sudo apt install -y python3 python3-venv python3-pip git sqlite3 ripgrep jq curl
 mkdir -p ~/projects
 cd ~/projects
 # Codex creates or updates this repo here:
-cd ~/projects/console-1706
+cd ~/projects/console-1701
 
 python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -e '.[dev]'
 
-console-1706 init-config
-console-1706 scan
-console-1706 serve
+console-1701 init-config
+console-1701 scan
+console-1701 serve
 ```
 
 Expected local URL:
 
 ```text
-http://127.0.0.1:1706
+http://127.0.0.1:1701
 ```
 
 Manual open command:
 
 ```bash
-xdg-open http://127.0.0.1:1706
+xdg-open http://127.0.0.1:1701
 ```
 
 ## 7. One-command user service install
@@ -302,26 +302,26 @@ Codex must provide:
 After running it, these commands should work:
 
 ```bash
-systemctl --user status console-1706.service
-systemctl --user status console-1706-scan.timer
-curl -fsS http://127.0.0.1:1706/api/health
-xdg-open http://127.0.0.1:1706
+systemctl --user status console-1701.service
+systemctl --user status console-1701-scan.timer
+curl -fsS http://127.0.0.1:1701/api/health
+xdg-open http://127.0.0.1:1701
 ```
 
 The install script should:
 
 ```text
-1. Verify it is running from ~/projects/console-1706 or print a clear warning.
+1. Verify it is running from ~/projects/console-1701 or print a clear warning.
 2. Create .venv if missing.
 3. Install the package into .venv.
-4. Create ~/.config/console-1706/config.yml if missing.
-5. Create ~/.local/state/console-1706/.
+4. Create ~/.config/console-1701/config.yml if missing.
+5. Create ~/.local/state/console-1701/.
 6. Copy systemd user units into ~/.config/systemd/user/.
 7. Run systemctl --user daemon-reload.
-8. Enable and start console-1706.service.
-9. Enable and start console-1706-scan.timer.
+8. Enable and start console-1701.service.
+9. Enable and start console-1701-scan.timer.
 10. Run one initial scan.
-11. Print http://127.0.0.1:1706.
+11. Print http://127.0.0.1:1701.
 ```
 
 Do not modify Firefox profiles automatically. The README can tell the user to set the homepage manually.
@@ -331,11 +331,11 @@ Do not modify Firefox profiles automatically. The README can tell the user to se
 Implement this structure:
 
 ```text
-console-1706/
+console-1701/
   README.md
   pyproject.toml
   config.example.yml
-  console1706/
+  console1701/
     __init__.py
     cli.py
     app.py
@@ -364,9 +364,9 @@ console-1706/
     dev_server.sh
     scan_once.sh
   systemd/
-    console-1706.service
-    console-1706-scan.service
-    console-1706-scan.timer
+    console-1701.service
+    console-1701-scan.service
+    console-1701-scan.timer
   tests/
     test_git_probe.py
     test_rules.py
@@ -382,7 +382,7 @@ Use `argparse`, not a heavy CLI dependency, unless there is a strong reason.
 
 ```toml
 [project]
-name = "console-1706"
+name = "console-1701"
 version = "0.1.0"
 description = "Local repo and workflow console"
 requires-python = ">=3.11"
@@ -401,7 +401,7 @@ dev = [
 ]
 
 [project.scripts]
-console-1706 = "console1706.cli:main"
+console-1701 = "console1701.cli:main"
 ```
 
 ## 10. Configuration
@@ -409,7 +409,7 @@ console-1706 = "console1706.cli:main"
 Create this file if missing:
 
 ```text
-~/.config/console-1706/config.yml
+~/.config/console-1701/config.yml
 ```
 
 Default config:
@@ -417,7 +417,7 @@ Default config:
 ```yaml
 server:
   host: "127.0.0.1"
-  port: 1706
+  port: 1701
   browser_refresh_seconds: 60
 
 scan:
@@ -518,10 +518,10 @@ If no repos are configured or discovered, show an empty state:
 No repos found yet.
 
 Config path:
-~/.config/console-1706/config.yml
+~/.config/console-1701/config.yml
 
 Add repo_roots or explicit_repos, then run:
-console-1706 scan
+console-1701 scan
 ```
 
 Do not create demo repos.
@@ -534,7 +534,7 @@ Hard requirements:
 
 ```text
 Bind only to 127.0.0.1.
-Use port 1706.
+Use port 1701.
 Do not expose on 0.0.0.0.
 Do not call cloud APIs.
 Do not send telemetry.
@@ -583,16 +583,16 @@ The UI may show suggested commands and provide copy buttons.
 
 Create these files.
 
-`systemd/console-1706.service`:
+`systemd/console-1701.service`:
 
 ```ini
 [Unit]
-Description=console-1706 local web UI
+Description=console-1701 local web UI
 After=network.target
 
 [Service]
-WorkingDirectory=%h/projects/console-1706
-ExecStart=%h/projects/console-1706/.venv/bin/console-1706 serve --config %h/.config/console-1706/config.yml
+WorkingDirectory=%h/projects/console-1701
+ExecStart=%h/projects/console-1701/.venv/bin/console-1701 serve --config %h/.config/console-1701/config.yml
 Restart=on-failure
 RestartSec=5
 Environment=PYTHONUNBUFFERED=1
@@ -601,30 +601,30 @@ Environment=PYTHONUNBUFFERED=1
 WantedBy=default.target
 ```
 
-`systemd/console-1706-scan.service`:
+`systemd/console-1701-scan.service`:
 
 ```ini
 [Unit]
-Description=console-1706 scanner
+Description=console-1701 scanner
 
 [Service]
 Type=oneshot
-WorkingDirectory=%h/projects/console-1706
-ExecStart=%h/projects/console-1706/.venv/bin/console-1706 scan --config %h/.config/console-1706/config.yml
+WorkingDirectory=%h/projects/console-1701
+ExecStart=%h/projects/console-1701/.venv/bin/console-1701 scan --config %h/.config/console-1701/config.yml
 Environment=PYTHONUNBUFFERED=1
 ```
 
-`systemd/console-1706-scan.timer`:
+`systemd/console-1701-scan.timer`:
 
 ```ini
 [Unit]
-Description=Run console-1706 scanner every 30 minutes
+Description=Run console-1701 scanner every 30 minutes
 
 [Timer]
 OnBootSec=2min
 OnUnitActiveSec=30min
 Persistent=true
-Unit=console-1706-scan.service
+Unit=console-1701-scan.service
 
 [Install]
 WantedBy=timers.target
@@ -633,7 +633,7 @@ WantedBy=timers.target
 Manual scan must also work:
 
 ```bash
-console-1706 scan
+console-1701 scan
 ```
 
 Manual browser refresh must not trigger expensive scanning unless the user presses a specific refresh button.
@@ -783,7 +783,7 @@ The scanner is separate from the web app.
 Command:
 
 ```bash
-console-1706 scan
+console-1701 scan
 ```
 
 Scanner sequence:
@@ -1725,13 +1725,13 @@ output contract
 Example output file:
 
 ```text
-~/.local/state/console-1706/handoffs/2026-04-28_ufo-records_review.md
+~/.local/state/console-1701/handoffs/2026-04-28_ufo-records_review.md
 ```
 
 ## 40. Handoff packet example
 
 ```md
-# console-1706 handoff: ufo-records
+# console-1701 handoff: ufo-records
 
 Generated: 2026-04-28T12:00:00-07:00
 Repo: ufo-records
@@ -1838,7 +1838,7 @@ If the scanner has never run:
 
 ```text
 No scan has run yet.
-Run: console-1706 scan
+Run: console-1701 scan
 ```
 
 If last scan is old:
@@ -1851,7 +1851,7 @@ If the systemd timer is inactive:
 
 ```text
 The scheduled scanner does not appear active.
-Check: systemctl --user status console-1706-scan.timer
+Check: systemctl --user status console-1701-scan.timer
 ```
 
 ## 43. README requirements
@@ -1931,7 +1931,7 @@ Get real local data flowing first.
 The first working version is acceptable if:
 
 ```text
-I can open http://127.0.0.1:1706 in Firefox.
+I can open http://127.0.0.1:1701 in Firefox.
 It binds only to 127.0.0.1.
 It shows configured/discovered repos.
 It never shows fake data.
@@ -1953,27 +1953,27 @@ Add a troubleshooting panel or README section for:
 
 ```text
 Port already in use:
-  ss -ltnp | grep 1706
+  ss -ltnp | grep 1701
 
 Service logs:
-  journalctl --user -u console-1706.service -n 100 --no-pager
+  journalctl --user -u console-1701.service -n 100 --no-pager
 
 Scan logs:
-  journalctl --user -u console-1706-scan.service -n 100 --no-pager
+  journalctl --user -u console-1701-scan.service -n 100 --no-pager
 
 Timer status:
-  systemctl --user status console-1706-scan.timer
+  systemctl --user status console-1701-scan.timer
 
 Manual scan:
-  ~/.local/bin/console-1706 scan
+  ~/.local/bin/console-1701 scan
   or
-  ~/projects/console-1706/.venv/bin/console-1706 scan
+  ~/projects/console-1701/.venv/bin/console-1701 scan
 
 Config:
-  ~/.config/console-1706/config.yml
+  ~/.config/console-1701/config.yml
 
 Database:
-  ~/.local/state/console-1706/console.sqlite
+  ~/.local/state/console-1701/console.sqlite
 ```
 
 ## 48. Visual and language guardrails

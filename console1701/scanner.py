@@ -6,14 +6,14 @@ import time
 from pathlib import Path
 from typing import Any
 
-from console1706.adapters import IGNORE_DIR_NAMES, safe_repo_name
-from console1706.config import ensure_state_dirs, load_config, project_for_path
-from console1706.db import connect_db, init_db, json_dumps, utc_now
-from console1706.git_probe import probe_repo
-from console1706.interpreter import interpret_all_repos
-from console1706.log_probe import probe_configured_logs
-from console1706.system_probe import probe_system
-from console1706.test_probe import build_test_snapshot
+from console1701.adapters import IGNORE_DIR_NAMES, safe_repo_name
+from console1701.config import ensure_state_dirs, load_config, project_for_path
+from console1701.db import connect_db, init_db, json_dumps, utc_now
+from console1701.git_probe import probe_repo
+from console1701.interpreter import interpret_all_repos
+from console1701.log_probe import probe_configured_logs
+from console1701.system_probe import probe_system
+from console1701.test_probe import build_test_snapshot
 
 
 def _is_git_repo(path: Path) -> bool:

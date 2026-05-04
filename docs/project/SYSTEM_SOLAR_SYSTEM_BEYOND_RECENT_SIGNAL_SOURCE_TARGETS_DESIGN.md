@@ -3,7 +3,7 @@
 ## SECTION 1: Purpose
 
 The Solar System and Beyond layer is the deep-space, planetary-science, astronomy,
-astrophysics, and cosmic-events recent-signal layer for console-1706. It should eventually tell the
+astrophysics, and cosmic-events recent-signal layer for console-1701. It should eventually tell the
 user what is happening beyond near-Earth operations, with source provenance, observed time, source
 kind, ranking reason, freshness, and evidence. This document uses `SYSTEM_SOLAR` as a working
 design label only. The final UI label remains a user decision.
@@ -30,7 +30,7 @@ The layer is:
 - A deterministic cross-source event detector for solar-system, exoplanet, transient, telescope,
   mission, and astrophysics signals.
 - A source-health aware recent-signal system.
-- A possible future scope in console-1706 that can surface official mission updates, planetary
+- A possible future scope in console-1701 that can surface official mission updates, planetary
   events, exoplanet discoveries, transient alerts, gravitational-wave alerts, gamma-ray bursts,
   supernovae, major telescope releases, agency news, astronomy news, and credible public science
   signals.
@@ -39,7 +39,7 @@ The layer is:
 
 "Solar system and beyond" means useful public, configured, lawful, recent signals that the user
 chooses to enable. It does not mean unbounded astronomy catalog ingestion, downloading huge archive
-products, scraping paper databases, or turning console-1706 into a research data warehouse.
+products, scraping paper databases, or turning console-1701 into a research data warehouse.
 
 The daily runtime goal is no LLM usage. LLMs may help during development to design adapters, inspect
 fixtures, write tests, or analyze source options, but the application itself must not require LLM
@@ -48,7 +48,7 @@ calls for normal operation.
 ## SECTION 2: Scope naming collision
 
 This task is named `006_system.md`, but its content is "solar system and beyond." Earlier
-architecture already reserves `SYSTEM` for console-1706 app health, source health, ingest health,
+architecture already reserves `SYSTEM` for console-1701 app health, source health, ingest health,
 stale-source warnings, configuration warnings, retention state, database health, and evidence that
 page loads are not secretly fetching external sources.
 
@@ -162,7 +162,7 @@ Out of scope by default:
 - ADS full-paper mining.
 - Bulk SIMBAD, VizieR, Gaia, MAST, HEASARC, PDS, or exoplanet archive ingestion.
 - Data-intensive telescope queries without strict allowlists.
-- Anything that turns console-1706 into an astronomy research platform rather than a recent-signal
+- Anything that turns console-1701 into an astronomy research platform rather than a recent-signal
   dashboard.
 
 Future disabled-by-default config escape hatch:
@@ -705,8 +705,8 @@ Rules:
 - Do not treat social claims as verified fact.
 - Do not invent scientific meaning.
 - Do not interpret papers beyond metadata.
-- Do not turn console-1706 into a literature review engine.
-- Do not turn console-1706 into an observatory archive mirror.
+- Do not turn console-1701 into a literature review engine.
+- Do not turn console-1701 into an observatory archive mirror.
 - Do not amplify alien-life or UFO claims without strict source framing.
 - Do not use "life found" unless an official or peer-reviewed source says it directly.
 - Prefer official agency, observatory, mission, and recognized alert-network source labels.
@@ -1095,7 +1095,7 @@ describes a future candidate page only.
 
 Candidate page goals:
 
-- Use the same console-1706 dense local dashboard style.
+- Use the same console-1701 dense local dashboard style.
 - Show honest disabled/not-configured states.
 - Preserve app-health SYSTEM until a naming decision is made.
 - Never show fake headlines.

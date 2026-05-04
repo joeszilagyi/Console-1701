@@ -5,7 +5,7 @@ I kept it design-only like `001_local.md`: source architecture, target inventory
 For GLOBAL, I biased the source set toward official or documented global feeds/APIs first: GDACS feeds/API for global disasters, ReliefWeb API for humanitarian reports and disasters, WHO Disease Outbreak News API, HDX HAPI, WMO severe weather CAP warning sources, NASA FIRMS fire APIs, USGS global earthquake feeds, NHC RSS, ECDC RSS, World Bank Indicators API, and ACLED/GDELT only as policy-sensitive or heavy-source candidates. ([GDACS][1])
 
 ```text
-You are working in the console-1706 repository.
+You are working in the console-1701 repository.
 
 This task assumes the prior scoped recent-signal architecture prompt, LOCAL Seattle design prompt, REGIONAL Pacific Northwest design prompt, and NATIONAL United States design prompt have either already been run, or will be pasted above this prompt.
 
@@ -45,7 +45,7 @@ Do not duplicate BACKLOG sections already added by previous tasks. Extend the re
 
 The user intent:
 
-console-1706 is a local-only home dashboard running at http://127.0.0.1:1706/.
+console-1701 is a local-only home dashboard running at http://127.0.0.1:1701/.
 
 The GLOBAL tab should eventually answer:
 
@@ -98,7 +98,7 @@ Hard project constraints:
 - No package installation.
 - No destructive commands.
 - Preserve FastAPI, Jinja2, SQLite, vanilla CSS, vanilla JS, pytest.
-- Bind only to 127.0.0.1 on port 1706.
+- Bind only to 127.0.0.1 on port 1701.
 - Treat AGENTS.md as binding project law.
 - If anything is not completed or remains uncertain, update BACKLOG.md.
 
@@ -120,21 +120,21 @@ Inspect these files first:
 - README.md
 - BACKLOG.md
 - config.example.yml
-- console-1706-codex-plan-01.md
+- console-1701-codex-plan-01.md
 - docs/project/NEWS_SCOPE_INGESTION_ARCHITECTURE_DESIGN.md, if it exists
 - docs/project/LOCAL_SEATTLE_RECENT_SIGNAL_SOURCE_TARGETS_DESIGN.md, if it exists
 - docs/project/REGIONAL_PNW_RECENT_SIGNAL_SOURCE_TARGETS_DESIGN.md, if it exists
 - docs/project/NATIONAL_US_RECENT_SIGNAL_SOURCE_TARGETS_DESIGN.md, if it exists
-- console1706/schema.sql
-- console1706/config.py
-- console1706/db.py
-- console1706/scanner.py
-- console1706/api.py
-- console1706/templates/index.html
-- console1706/static/app.css
-- console1706/static/app.js
-- console1706/evidence.py
-- console1706/system_probe.py
+- console1701/schema.sql
+- console1701/config.py
+- console1701/db.py
+- console1701/scanner.py
+- console1701/api.py
+- console1701/templates/index.html
+- console1701/static/app.css
+- console1701/static/app.js
+- console1701/evidence.py
+- console1701/system_probe.py
 - tests/
 
 Deliverables:
@@ -183,7 +183,7 @@ It is:
 - A local, short-retention metadata dashboard.
 - A deterministic cross-source event detector for global public-impact signals.
 - A source-health aware recent-signal system.
-- A GLOBAL tab in console-1706 that can surface disasters, humanitarian crises, disease outbreaks, severe weather, tropical cyclones, earthquakes, volcanoes, air quality, international public-health alerts, geopolitical crises, supply-chain disruption, global cyber risk, international institutional actions, and global news.
+- A GLOBAL tab in console-1701 that can surface disasters, humanitarian crises, disease outbreaks, severe weather, tropical cyclones, earthquakes, volcanoes, air quality, international public-health alerts, geopolitical crises, supply-chain disruption, global cyber risk, international institutional actions, and global news.
 - A way to rank items by independent source convergence, official severity, global reach, U.S. or local relevance, freshness, and user-configured source priority.
 
 Make clear that "global" means useful public, configured, lawful, recent signals that the user chooses to enable. It does not mean unbounded crawling, private data collection, global social surveillance, or automated geopolitical analysis.

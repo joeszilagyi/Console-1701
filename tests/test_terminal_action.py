@@ -3,7 +3,7 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-from console1706.terminal_action import (
+from console1701.terminal_action import (
     _terminal_candidates,
     build_host_alert_prompt,
     launch_host_alert_codex_terminal,
@@ -55,11 +55,11 @@ def test_terminal_candidates_prefer_maximized_terminal(monkeypatch):
     available = {"gnome-terminal": "/usr/bin/gnome-terminal"}
 
     monkeypatch.setattr(
-        "console1706.terminal_action.shutil.which",
+        "console1701.terminal_action.shutil.which",
         lambda command: available.get(command),
     )
 
-    candidates = _terminal_candidates("/tmp/console-1706-alert.sh")
+    candidates = _terminal_candidates("/tmp/console-1701-alert.sh")
 
     assert candidates == [
         (
@@ -68,9 +68,9 @@ def test_terminal_candidates_prefer_maximized_terminal(monkeypatch):
                 "gnome-terminal",
                 "--maximize",
                 "--title",
-                "console-1706 Codex",
+                "console-1701 Codex",
                 "--",
-                "/tmp/console-1706-alert.sh",
+                "/tmp/console-1701-alert.sh",
             ],
         )
     ]
@@ -80,14 +80,14 @@ def test_terminal_launch_timeout_assumes_request_and_does_not_fallback(tmp_path,
     calls = []
 
     monkeypatch.setattr(
-        "console1706.terminal_action._terminal_candidates",
-        lambda script_path, title="console-1706 Codex": [
+        "console1701.terminal_action._terminal_candidates",
+        lambda script_path, title="console-1701 Codex": [
             ("xfce4-terminal", ["xfce4-terminal", "--maximize", "--command", script_path]),
             ("gnome-terminal", ["gnome-terminal", "--maximize", "--", script_path]),
         ],
     )
     monkeypatch.setattr(
-        "console1706.terminal_action.shutil.which",
+        "console1701.terminal_action.shutil.which",
         lambda command: "/usr/bin/setsid" if command == "setsid" else None,
     )
 
@@ -95,7 +95,7 @@ def test_terminal_launch_timeout_assumes_request_and_does_not_fallback(tmp_path,
         calls.append(command)
         raise subprocess.TimeoutExpired(command, timeout=3)
 
-    monkeypatch.setattr("console1706.terminal_action.subprocess.run", fake_run)
+    monkeypatch.setattr("console1701.terminal_action.subprocess.run", fake_run)
 
     result = launch_host_alert_codex_terminal(
         {"_state_dir": str(tmp_path)},

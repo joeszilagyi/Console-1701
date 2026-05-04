@@ -1,6 +1,6 @@
 Use this as `build_order/006_system.md`.
 
-I am interpreting your `006_system.md` as **Solar System and Beyond**, not console app-health. The earlier architecture prompt reserved `SYSTEM` for console-1706 app/source health, so this prompt makes Codex document that naming collision instead of silently wrecking the existing scope model.
+I am interpreting your `006_system.md` as **Solar System and Beyond**, not console app-health. The earlier architecture prompt reserved `SYSTEM` for console-1701 app/source health, so this prompt makes Codex document that naming collision instead of silently wrecking the existing scope model.
 
 The source anchors here are real target families: NASA Exoplanet Archive API, MAST API, NASA GCN machine-readable notices, TNS as the IAU mechanism for astronomical transients, LIGO/Virgo/KAGRA public alerts through GraceDB, ESA RSS feeds, SIMBAD/TAP, VizieR TAP, ESA Gaia programmatic access, NASA PDS API, and NASA ADS API. ([NASA Exoplanet Archive][1])
 
@@ -19,7 +19,7 @@ Raw anchor URLs:
 [https://ui.adsabs.harvard.edu/help/api/](https://ui.adsabs.harvard.edu/help/api/)
 
 ```text id="h4s1qf"
-You are working in the console-1706 repository.
+You are working in the console-1701 repository.
 
 This task assumes the prior scoped recent-signal architecture prompt, LOCAL Seattle design prompt, REGIONAL Pacific Northwest design prompt, NATIONAL United States design prompt, GLOBAL World design prompt, and ORBITAL Space design prompt have either already been run, or will be pasted above this prompt.
 
@@ -33,7 +33,7 @@ Important naming note:
 
 The user currently wants the last design prompt to cover "solar system and beyond if found."
 
-Earlier architecture may define SYSTEM as console-1706 application health, source health, ingest health, stale-source warnings, and configuration state.
+Earlier architecture may define SYSTEM as console-1701 application health, source health, ingest health, stale-source warnings, and configuration state.
 
 Do not silently overwrite that meaning.
 
@@ -111,7 +111,7 @@ Do not duplicate BACKLOG sections already added by previous tasks. Extend the re
 
 The user intent:
 
-console-1706 is a local-only home dashboard running at http://127.0.0.1:1706/.
+console-1701 is a local-only home dashboard running at http://127.0.0.1:1701/.
 
 The Solar System and Beyond layer should eventually answer:
 
@@ -183,7 +183,7 @@ Hard project constraints:
 - No package installation.
 - No destructive commands.
 - Preserve FastAPI, Jinja2, SQLite, vanilla CSS, vanilla JS, pytest.
-- Bind only to 127.0.0.1 on port 1706.
+- Bind only to 127.0.0.1 on port 1701.
 - Treat AGENTS.md as binding project law.
 - If anything is not completed or remains uncertain, update BACKLOG.md.
 
@@ -205,23 +205,23 @@ Inspect these files first:
 - README.md
 - BACKLOG.md
 - config.example.yml
-- console-1706-codex-plan-01.md
+- console-1701-codex-plan-01.md
 - docs/project/NEWS_SCOPE_INGESTION_ARCHITECTURE_DESIGN.md, if it exists
 - docs/project/LOCAL_SEATTLE_RECENT_SIGNAL_SOURCE_TARGETS_DESIGN.md, if it exists
 - docs/project/REGIONAL_PNW_RECENT_SIGNAL_SOURCE_TARGETS_DESIGN.md, if it exists
 - docs/project/NATIONAL_US_RECENT_SIGNAL_SOURCE_TARGETS_DESIGN.md, if it exists
 - docs/project/GLOBAL_WORLD_RECENT_SIGNAL_SOURCE_TARGETS_DESIGN.md, if it exists
 - docs/project/ORBITAL_SPACE_RECENT_SIGNAL_SOURCE_TARGETS_DESIGN.md, if it exists
-- console1706/schema.sql
-- console1706/config.py
-- console1706/db.py
-- console1706/scanner.py
-- console1706/api.py
-- console1706/templates/index.html
-- console1706/static/app.css
-- console1706/static/app.js
-- console1706/evidence.py
-- console1706/system_probe.py
+- console1701/schema.sql
+- console1701/config.py
+- console1701/db.py
+- console1701/scanner.py
+- console1701/api.py
+- console1701/templates/index.html
+- console1701/static/app.css
+- console1701/static/app.js
+- console1701/evidence.py
+- console1701/system_probe.py
 - tests/
 
 Deliverables:
@@ -269,7 +269,7 @@ It is:
 - A local, short-retention metadata dashboard.
 - A deterministic cross-source event detector for solar-system, exoplanet, transient, telescope, mission, and astrophysics signals.
 - A source-health aware recent-signal system.
-- A possible future scope in console-1706 that can surface official mission updates, planetary events, exoplanet discoveries, transient alerts, gravitational-wave alerts, gamma-ray bursts, supernovae, major telescope releases, agency news, astronomy news, and credible public science signals.
+- A possible future scope in console-1701 that can surface official mission updates, planetary events, exoplanet discoveries, transient alerts, gravitational-wave alerts, gamma-ray bursts, supernovae, major telescope releases, agency news, astronomy news, and credible public science signals.
 - A way to rank items by independent source convergence, official/scientific provenance, event rarity, public interest, scientific significance, freshness, and user-configured source priority.
 
 Make clear that "solar system and beyond" means useful public, configured, lawful, recent signals that the user chooses to enable. It does not mean unbounded astronomy catalog ingestion, downloading huge archive products, scraping paper databases, or turning the app into a research data warehouse.
@@ -286,7 +286,7 @@ The design must not pretend this is already resolved.
 
 Explain:
 
-- SYSTEM as app-health is already useful for console-1706 source health, ingest health, stale-source warnings, config warnings, and database health.
+- SYSTEM as app-health is already useful for console-1701 source health, ingest health, stale-source warnings, config warnings, and database health.
 - Solar System and Beyond is semantically unrelated to app-health.
 - Using SYSTEM for both would confuse future code, docs, tests, UI labels, and source-health screens.
 - This task should design the deep-space layer without implementing a tab change.
@@ -385,7 +385,7 @@ Out of scope by default:
 - ADS full-paper mining.
 - Bulk SIMBAD, VizieR, Gaia, MAST, HEASARC, PDS, or exoplanet archive ingestion.
 - Data-intensive telescope queries without strict allowlists.
-- Anything that turns console-1706 into an astronomy research platform rather than a recent-signal dashboard.
+- Anything that turns console-1701 into an astronomy research platform rather than a recent-signal dashboard.
 
 Design a later config escape hatch:
 
@@ -1251,7 +1251,7 @@ Rules:
 - Do not treat social claims as verified fact.
 - Do not invent scientific meaning.
 - Do not interpret papers beyond metadata.
-- Do not turn console-1706 into a literature review engine.
+- Do not turn console-1701 into a literature review engine.
 - Do not turn it into an observatory archive mirror.
 - Do not amplify alien-life or UFO claims without strict source framing.
 - Do not use "life found" unless an official or peer-reviewed source says it directly.

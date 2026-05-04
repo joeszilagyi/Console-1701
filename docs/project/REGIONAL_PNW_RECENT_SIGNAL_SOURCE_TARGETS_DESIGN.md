@@ -3,12 +3,12 @@
 ## SECTION 1: Purpose
 
 The REGIONAL scope is the Washington, Puget Sound, Pacific Northwest, and nearby Cascadia
-recent-signal layer for console-1706. It should tell the user what is happening regionally with
+recent-signal layer for console-1701. It should tell the user what is happening regionally with
 source provenance, observed time, source kind, ranking reason, geographic basis, public-impact
 basis, source health, and evidence.
 
 The target is a short-retention, deterministic, local metadata dashboard that can answer "what is
-happening around Washington and the PNW that may matter to me?" without turning console-1706 into a
+happening around Washington and the PNW that may matter to me?" without turning console-1701 into a
 crawler, archive, social monitor, cloud service, or general news product.
 
 The REGIONAL scope is not:
@@ -30,7 +30,7 @@ The REGIONAL scope is:
 - A local, short-retention metadata dashboard.
 - A deterministic cross-source event detector for regional public-impact signals.
 - A source-health aware recent-signal system.
-- A REGIONAL tab in console-1706 that can surface official alerts, hazards, transportation
+- A REGIONAL tab in console-1701 that can surface official alerts, hazards, transportation
   disruption, wildfire, smoke, weather, seismic activity, ferry and pass problems, public-health
   alerts, major regional civic news, local journalism, and compliant community echoes.
 - A way to rank items by independent source convergence, official severity, geographic relevance,
@@ -1955,7 +1955,7 @@ Config validation rules for later:
 ## SECTION 13: REGIONAL UI architecture
 
 Do not implement the UI in this task. The eventual REGIONAL page should use the existing
-console-1706 style and template conventions, but it should show honest source-backed states rather
+console-1701 style and template conventions, but it should show honest source-backed states rather
 than placeholders or fake headlines.
 
 Proposed bays:

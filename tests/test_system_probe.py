@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from console1706.db import connect_db, init_db
-from console1706.evidence import get_host_summary, get_latest_host_snapshot
-from console1706.scanner import insert_host_snapshot
-from console1706.system_probe import (
+from console1701.db import connect_db, init_db
+from console1701.evidence import get_host_summary, get_latest_host_snapshot
+from console1701.scanner import insert_host_snapshot
+from console1701.system_probe import (
     _describe_failed_units,
     _redact_sensitive_identifiers,
     _run_command,
@@ -158,7 +158,7 @@ def test_missing_optional_command_is_recorded_without_crash():
     evidence = {}
     result = _run_command(
         "missing",
-        ["definitely-not-a-console1706-command"],
+        ["definitely-not-a-console1701-command"],
         timeout=1,
         evidence=evidence,
     )

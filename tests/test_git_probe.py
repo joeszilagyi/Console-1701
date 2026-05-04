@@ -5,7 +5,7 @@ import subprocess
 
 import pytest
 
-from console1706.git_probe import probe_repo
+from console1701.git_probe import probe_repo
 
 pytestmark = pytest.mark.skipif(shutil.which("git") is None, reason="git is not installed")
 

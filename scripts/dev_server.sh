@@ -2,11 +2,11 @@
 set -euo pipefail
 
 # Start a local development server from any working directory.
-# Side effects: creates/updates the repo-local .venv and default console-1706 config as needed.
+# Side effects: creates/updates the repo-local .venv and default console-1701 config as needed.
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 PROJECT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
 VENV_DIR="$PROJECT_DIR/.venv"
-CONSOLE_CLI="$VENV_DIR/bin/console-1706"
+CONSOLE_CLI="$VENV_DIR/bin/console-1701"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 
 usage() {
@@ -14,13 +14,13 @@ usage() {
 Usage: scripts/dev_server.sh [--check] [--help] [-- SERVE_ARGS...]
 
 Bootstrap the repo-local .venv if needed, initialize the default config, then
-run `console-1706 serve`. The application itself enforces 127.0.0.1 binding.
+run `console-1701 serve`. The application itself enforces 127.0.0.1 binding.
 
 Options:
   --check  Show resolved paths and prerequisites without creating .venv or serving.
   --help   Show this help.
 
-Arguments after -- are forwarded to `console-1706 serve`.
+Arguments after -- are forwarded to `console-1701 serve`.
 EOF
 }
 
@@ -82,5 +82,5 @@ else
   . "$VENV_DIR/bin/activate"
 fi
 
-console-1706 init-config
-exec console-1706 serve "${serve_args[@]}"
+console-1701 init-config
+exec console-1701 serve "${serve_args[@]}"

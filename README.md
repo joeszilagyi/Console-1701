@@ -1,6 +1,6 @@
-# console-1706
+# console-1701
 
-`console-1706` is a local-only homepage for a Debian laptop. It scans the physical host first, then configured local repos, selected logs, and durable SQLite history. It turns those facts into plain-English operational readouts with evidence underneath.
+`console-1701` is a local-only homepage for a Debian laptop. It scans the physical host first, then configured local repos, selected logs, and durable SQLite history. It turns those facts into plain-English operational readouts with evidence underneath.
 
 Main goal:
 
@@ -22,7 +22,7 @@ sudo apt install -y python3 python3-venv python3-pip git sqlite3 ripgrep jq curl
 Install the app from the repo:
 
 ```bash
-cd /path/to/console-1706
+cd /path/to/console-1701
 python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install --upgrade pip
@@ -32,21 +32,21 @@ python -m pip install -e '.[dev]'
 Initialize config, scan once, and run the server:
 
 ```bash
-console-1706 init-config
-console-1706 scan
-console-1706 serve
+console-1701 init-config
+console-1701 scan
+console-1701 serve
 ```
 
 Open:
 
 ```text
-http://127.0.0.1:1706
+http://127.0.0.1:1701
 ```
 
 Manual browser command:
 
 ```bash
-xdg-open http://127.0.0.1:1706
+xdg-open http://127.0.0.1:1701
 ```
 
 ## One-Command User Service
@@ -62,9 +62,9 @@ The script creates `.venv`, installs the package, creates config/state paths, in
 Check service state:
 
 ```bash
-systemctl --user status console-1706.service
-systemctl --user status console-1706-scan.timer
-curl -fsS http://127.0.0.1:1706/api/health
+systemctl --user status console-1701.service
+systemctl --user status console-1701-scan.timer
+curl -fsS http://127.0.0.1:1701/api/health
 ```
 
 ## Paths
@@ -72,25 +72,25 @@ curl -fsS http://127.0.0.1:1706/api/health
 Config:
 
 ```text
-~/.config/console-1706/config.yml
+~/.config/console-1701/config.yml
 ```
 
 State:
 
 ```text
-~/.local/state/console-1706/
+~/.local/state/console-1701/
 ```
 
 Database:
 
 ```text
-~/.local/state/console-1706/console.sqlite
+~/.local/state/console-1701/console.sqlite
 ```
 
 Handoff packets:
 
 ```text
-~/.local/state/console-1706/handoffs/
+~/.local/state/console-1701/handoffs/
 ```
 
 ## How Scans Work
@@ -98,7 +98,7 @@ Handoff packets:
 The scanner is separate from the web app:
 
 ```bash
-console-1706 scan
+console-1701 scan
 ```
 
 Scan sequence:
@@ -209,13 +209,13 @@ CPU/RAM: yellow at CPU >=75%, load/core >=1, MemAvailable <15%, memory PSI avg10
 Filesystem: yellow at root >=85%, home >=90%, or I/O PSI avg10 >=10%; red at root/home >=95% or I/O PSI avg10 >=30%.
 ```
 
-Network throughput bars are live activity meters, not health thresholds, because console-1706 does
+Network throughput bars are live activity meters, not health thresholds, because console-1701 does
 not know WAN circuit capacity and does not perform external probes by default.
 
 Failed service alerts name the failed unit whenever `systemctl --failed` exposes it. The probe also records bounded `systemctl show` diagnostics and a limited recent `journalctl -u ...` sample when readable, so the alert can explain the local state, result, exit status, description, and most recent log hint without requiring sudo.
 
 Host alert rows include an explicit Codex terminal action. Clicking it writes a bounded prompt file
-under console-1706 state and asks the local desktop terminal emulator to start an interactive
+under console-1701 state and asks the local desktop terminal emulator to start an interactive
 `codex` session with that scenario. The web process does not run Codex hidden in the background; it
 only attempts the terminal launch after the user clicks the action.
 
@@ -239,7 +239,7 @@ Hard defaults:
 
 ```text
 Bind only to 127.0.0.1
-Use port 1706
+Use port 1701
 No cloud calls
 No telemetry
 No OpenAI or LLM API calls
@@ -297,7 +297,7 @@ Raw counts and Git details are kept under Evidence/Under the hood instead of lea
 
 ## Project Adapters
 
-Adapters are deterministic pattern packs in `console1706/adapters.py`. They currently recognize broad patterns for:
+Adapters are deterministic pattern packs in `console1701/adapters.py`. They currently recognize broad patterns for:
 
 ```text
 wiki
@@ -325,13 +325,13 @@ The homepage no longer shows Codex packet buttons. Local work is secondary to th
 From the CLI:
 
 ```bash
-console-1706 handoff --repo-id 1 --task "Review this state and tell me what remains before commit."
+console-1701 handoff --repo-id 1 --task "Review this state and tell me what remains before commit."
 ```
 
 Packets are written under:
 
 ```text
-~/.local/state/console-1706/handoffs/
+~/.local/state/console-1701/handoffs/
 ```
 
 Each packet includes controlled context, local evidence, constraints, the requested task, and an output contract.
@@ -369,49 +369,49 @@ If a scan is already running, `POST /api/scan` returns:
 Port already in use:
 
 ```bash
-ss -ltnp | grep 1706
+ss -ltnp | grep 1701
 ```
 
 Service logs:
 
 ```bash
-journalctl --user -u console-1706.service -n 100 --no-pager
+journalctl --user -u console-1701.service -n 100 --no-pager
 ```
 
 Scan logs:
 
 ```bash
-journalctl --user -u console-1706-scan.service -n 100 --no-pager
+journalctl --user -u console-1701-scan.service -n 100 --no-pager
 ```
 
 Timer status:
 
 ```bash
-systemctl --user status console-1706-scan.timer
+systemctl --user status console-1701-scan.timer
 ```
 
 Manual scan:
 
 ```bash
-~/.local/bin/console-1706 scan
+~/.local/bin/console-1701 scan
 ```
 
 or:
 
 ```bash
-~/projects/console-1706/.venv/bin/console-1706 scan
+~/projects/console-1701/.venv/bin/console-1701 scan
 ```
 
 Config:
 
 ```text
-~/.config/console-1706/config.yml
+~/.config/console-1701/config.yml
 ```
 
 Database:
 
 ```text
-~/.local/state/console-1706/console.sqlite
+~/.local/state/console-1701/console.sqlite
 ```
 
 ## Official References

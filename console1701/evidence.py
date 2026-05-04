@@ -6,14 +6,14 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from console1706.db import (
+from console1701.db import (
     json_loads,
     latest_interpretation,
     latest_repo_snapshot,
     latest_test_snapshot,
     row_to_dict,
 )
-from console1706.rules import SEVERITY_RANK, worst_severity
+from console1701.rules import SEVERITY_RANK, worst_severity
 
 _TIMESTAMP_PREFIX = re.compile(
     r"^\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2}))\s+(.*)$"
@@ -257,7 +257,7 @@ def get_host_summary(conn: sqlite3.Connection) -> dict[str, Any]:
             "severity": "gray",
             "headline": "No host scan has run yet.",
             "summary": "Run a scan to collect local Debian host evidence.",
-            "next_sane_action": "Run: console-1706 scan",
+            "next_sane_action": "Run: console-1701 scan",
             "penalties": [],
             "checks": {},
             "changes": ["No host snapshot has been recorded yet."],
@@ -524,7 +524,7 @@ def get_system_summary(conn: sqlite3.Connection) -> dict[str, Any]:
     else:
         last_event = "No scan has run yet." if not latest_scan else "No meaningful events found."
         next_action = (
-            "Run: console-1706 scan" if not latest_scan else "Add repos to config if needed."
+            "Run: console-1701 scan" if not latest_scan else "Add repos to config if needed."
         )
 
     return {

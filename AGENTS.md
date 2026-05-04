@@ -6,9 +6,9 @@ with a frontend framework or external service dependency.
 
 Keep the local-only safety envelope intact:
 
-- Bind only to `127.0.0.1` on port `1706`.
+- Bind only to `127.0.0.1` on port `1701`.
 - Do not add cloud calls, telemetry, hidden LLM calls, GitHub API calls, automatic git fetches,
-  destructive commands, sudo, package installation, or writes outside console-1706 state/config
+  destructive commands, sudo, package installation, or writes outside console-1701 state/config
   paths.
 - Treat host probes as read-only and timeout-protected.
 - Preserve existing repo scan behavior while keeping the Debian machine as the homepage focus.

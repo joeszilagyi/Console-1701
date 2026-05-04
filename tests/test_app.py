@@ -4,11 +4,11 @@ from pathlib import Path
 
 from starlette.requests import Request
 
-from console1706 import api as api_module
-from console1706 import config as config_module
-from console1706.api import build_router
-from console1706.db import connect_db, init_db, utc_now
-from console1706.scanner import insert_host_snapshot
+from console1701 import api as api_module
+from console1701 import config as config_module
+from console1701.api import build_router
+from console1701.db import connect_db, init_db, utc_now
+from console1701.scanner import insert_host_snapshot
 
 
 def _write_test_config(path: Path) -> None:
@@ -112,7 +112,7 @@ def test_root_page_renders_html(tmp_path, monkeypatch):
 
     assert response.status_code == 200
     assert response.media_type == "text/html"
-    assert "console-1706" in body
+    assert "console-1701" in body
     assert "/static/app.js?v=machine-console-13" in body
     assert "/static/app.css?v=machine-console-17" in body
     assert 'data-active-scope="OVERVIEW"' in body

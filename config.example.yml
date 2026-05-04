@@ -1,6 +1,6 @@
 server:
   host: "127.0.0.1"
-  port: 1706
+  port: 1701
   browser_refresh_seconds: 60
 
 scan:
@@ -27,7 +27,7 @@ paths:
     - "~/projects"
     - "~/wiki"
   explicit_repos:
-    - "~/projects/console-1706/main"
+    - "~/projects/console-1701/main"
     - "~/projects/ufo-records"
     - "~/projects/TCL"
     - "~/wiki"
@@ -61,8 +61,8 @@ test_policy:
   auto_run: true
   default_timeout_seconds: 120
   allow_repos:
-    - "console-1706"
-    - "~/projects/console-1706/main"
+    - "console-1701"
+    - "~/projects/console-1701/main"
 
 system_probe:
   command_timeout_seconds: 3
@@ -74,8 +74,8 @@ system_probe:
   critical_services: []
 
 projects:
-  - name: "console-1706"
-    path: "~/projects/console-1706/main"
+  - name: "console-1701"
+    path: "~/projects/console-1701/main"
     role: "Local-only repo and workflow console"
     category: "Operational dashboard"
     importance: "critical"

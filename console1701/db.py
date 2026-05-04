@@ -7,7 +7,7 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Any
 
-from console1706.config import DEFAULT_DB_PATH
+from console1701.config import DEFAULT_DB_PATH
 
 
 def utc_now() -> str:
@@ -31,7 +31,7 @@ def connect_db(
 
 
 def init_db(conn: sqlite3.Connection) -> None:
-    schema = files("console1706").joinpath("schema.sql").read_text(encoding="utf-8")
+    schema = files("console1701").joinpath("schema.sql").read_text(encoding="utf-8")
     conn.executescript(schema)
     conn.commit()
 
