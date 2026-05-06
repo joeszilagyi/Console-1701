@@ -16,6 +16,9 @@ whenever new ideas come up and are not completed immediately.
   explanations.
 - Alert rows can launch a user-clicked local terminal with an interactive Codex scenario.
 - The local delta image is displayed from `console1701/static/codex-alert-delta.png`.
+- Recent-signal/news scaffolding is present but inert: `news:` config defaults disabled, source
+  validation rejects unsafe shapes, SQLite metadata tables exist, and storage helpers expose
+  disabled/not-configured states without fetching external sources.
 
 ## Scoped Recent Signal / News Ingestion
 
@@ -25,7 +28,7 @@ Architecture reference:
 
 ### Disabled-By-Default News Config
 
-Status: not implemented.
+Status: implemented.
 
 Add a `news:` config tree that defaults to fully disabled. Include retention, fetch policy, scope,
 and source definitions. Reject page-load external fetching, unknown scopes, unknown source kinds,
@@ -34,7 +37,7 @@ sources only and no live source enabled by default.
 
 ### News SQLite Schema
 
-Status: not implemented.
+Status: implemented.
 
 Add JSON-heavy SQLite tables for recent signal state:
 
