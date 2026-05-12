@@ -1,0 +1,11 @@
+[Unit]
+Description=Run console-1701 recent-signal ingest every 30 minutes when explicitly enabled
+
+[Timer]
+OnBootSec=4min
+OnUnitActiveSec=30min
+Persistent=true
+Unit=console-1701-news-scan.service
+
+[Install]
+WantedBy=timers.target

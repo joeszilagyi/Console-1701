@@ -175,7 +175,7 @@ and future live-ingest operational notes are still pending.
 
 ### Separate Disabled Systemd News Timer
 
-Status: not implemented.
+Status: implemented.
 
 If scheduled news ingest is added, create a separate user-level `console-1701-news-scan.timer`.
 Existing `console-1701-scan.timer` must not silently start external fetching. The news timer should

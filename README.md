@@ -67,6 +67,8 @@ From the repo root:
 ```
 
 The script creates `.venv`, installs the package, creates config/state paths, installs systemd user units, starts the web service, enables the 30-minute scan timer, runs one initial scan, and prints the local URL.
+It also installs `console-1701-news-scan.service` and `console-1701-news-scan.timer`, but leaves the
+news timer disabled by default.
 
 Check service state:
 
@@ -74,6 +76,13 @@ Check service state:
 systemctl --user status console-1701.service
 systemctl --user status console-1701-scan.timer
 curl -fsS http://127.0.0.1:1701/api/health
+```
+
+Optional explicit news timer enablement:
+
+```bash
+systemctl --user enable --now console-1701-news-scan.timer
+systemctl --user status console-1701-news-scan.timer
 ```
 
 ## Paths
@@ -434,6 +443,12 @@ Timer status:
 
 ```bash
 systemctl --user status console-1701-scan.timer
+```
+
+Optional news timer status:
+
+```bash
+systemctl --user status console-1701-news-scan.timer
 ```
 
 Manual scan:

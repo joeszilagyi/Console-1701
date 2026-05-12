@@ -1,5 +1,13 @@
 # Caretaking Log
 
+## 2026-05-11 20:02 PDT - separate disabled news timer install path
+
+- Added `systemd/console-1701-news-scan.service` and `systemd/console-1701-news-scan.timer` so recent-signal ingest can be scheduled separately from the host scan timer.
+- Updated `scripts/install_user_service.sh` to install the news units but leave the news timer disabled by default, preserving the explicit opt-in boundary for recurring ingest.
+- Updated README and BACKLOG to document the separate timer and the manual enable path.
+- Added unit/install script tests covering the new files and the “installed but not enabled” behavior.
+- Verified with `bash -n scripts/install_user_service.sh`, `.venv/bin/ruff check .`, and `.venv/bin/python -m pytest -q` (`89 passed`).
+
 ## 2026-05-11 19:50 PDT - recent-signal config warnings and system readiness
 
 - Added derived recent-signal config warnings so SYSTEM can surface enabled-but-blocked fixture-phase sources, enabled scopes with no sources, disabled parent scopes, and missing auth material.
