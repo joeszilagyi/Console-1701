@@ -1,5 +1,19 @@
 # Caretaking Log
 
+## 2026-05-12 06:53 PDT - recent-signal evidence drawers on the website
+
+- Extended the shared recent-signal panel partial so stored items, clusters, and source rows expose
+  click-open evidence drawers instead of stopping at headlines and terse status lines.
+- Surfaced ranking reasons, policy notes, retention expiry, fetch-run ids, raw fetch status, and
+  source-health audit details directly in the LOCAL/REGIONAL/NATIONAL/GLOBAL/ORBITAL and SYSTEM
+  panels.
+- Added CSS for compact evidence grids/lists that fit the existing console styling and updated app
+  coverage so the rendered scope page asserts drawer content.
+- Updated README and BACKLOG to reflect that recent-signal evidence is now visible in the website,
+  not only via API payloads.
+- Verified with `./.venv/bin/ruff check console1701 tests` and `./.venv/bin/python -m pytest -q`
+  (`91 passed`).
+
 ## 2026-05-12 06:43 PDT - recent-signal source-state contract and item evidence
 
 - Normalized recent-signal source status into a derived contract across API, UI, and CLI so sources

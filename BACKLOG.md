@@ -361,8 +361,9 @@ retention expiration, matching tokens, geographic basis, event confidence, and p
 
 Current state: `/api/news/items/{id}` now returns source metadata, latest fetch/health state,
 policy notes, ranking evidence, fetch run id, retention expiration, canonical URL/storage fields,
-and explicit privacy/body-storage flags for stored item rows. Event correlation, geography basis,
-and scope-specific matching contracts are still pending.
+and explicit privacy/body-storage flags for stored item rows, and scope/source/cluster panels now
+surface click-open evidence drawers for that audit data in the website. Event correlation, geography
+basis, and scope-specific matching contracts are still pending.
 
 ### LOCAL Official-Source Live Ingest Phase
 

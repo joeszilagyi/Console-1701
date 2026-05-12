@@ -202,6 +202,10 @@ news:
     assert "Seattle ferry delay at Colman Dock" in scope_body
     assert "Source health" in scope_body
     assert "Local fixture" in scope_body
+    assert "Audit trail" in scope_body
+    assert "Retention expiry" in scope_body
+    assert "Fetch run" in scope_body
+    assert "Policy" in scope_body
 
     summary = _route_endpoint(router, "/api/news/summary")()
     scope_payload = _route_endpoint(router, "/api/news/scopes/{scope}")("LOCAL", 8)

@@ -10,6 +10,13 @@
   {% if items %}
     <ul class="news-item-list">
       {% for item in items %}
+        {% set evidence = item.evidence or {} %}
+        {% set source = evidence.source or {} %}
+        {% set ingest = evidence.ingest or {} %}
+        {% set policy = evidence.policy or {} %}
+        {% set retention = evidence.retention or {} %}
+        {% set ranking = evidence.ranking or {} %}
+        {% set source_health = evidence.source_health or {} %}
         <li class="news-item">
           <div class="news-item-head">
             <a href="{{ item.url }}" target="_blank" rel="noreferrer">{{ item.title }}</a>
@@ -22,6 +29,31 @@
             {% endfor %}
             <em>rank {{ item.rank_score }}</em>
           </div>
+          <details class="news-evidence-drawer">
+            <summary>Evidence</summary>
+            <div class="news-evidence-grid">
+              <div><span>Source</span><strong>{{ source.source_name or source.source_key or "unknown" }}</strong></div>
+              <div><span>Health</span><strong>{{ source_health.state or ingest.source_health_state_at_ingest or "unknown" }}</strong></div>
+              <div><span>Fetch run</span><strong>{{ ingest.fetch_run_id or "unknown" }}</strong></div>
+              <div><span>Seen</span><strong>{{ ingest.seen_at or item.last_seen_at }}</strong></div>
+              <div><span>Policy</span><strong>{{ policy.policy_state or "unknown" }}</strong></div>
+              <div><span>Retention expiry</span><strong>{{ retention.expires_at or item.expires_at }}</strong></div>
+            </div>
+            {% if ranking.reasons %}
+              <ul class="news-evidence-list">
+                {% for reason in ranking.reasons %}
+                  <li><b>Rank</b><span>{{ reason }}</span></li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+            {% if policy.notes %}
+              <ul class="news-evidence-list">
+                {% for note in policy.notes %}
+                  <li><b>Policy</b><span>{{ note }}</span></li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </details>
         </li>
       {% endfor %}
     </ul>
@@ -50,6 +82,34 @@
             last failure {{ source.last_failure_at or "never" }} ·
             next eligible {{ source.next_eligible_at or "n/a" }}
           </small>
+          <details class="news-evidence-drawer">
+            <summary>Audit trail</summary>
+            <div class="news-evidence-grid">
+              <div><span>Scope</span><strong>{{ source.scope }}</strong></div>
+              <div><span>Policy</span><strong>{{ policy.policy_state or "unknown" }}</strong></div>
+              <div><span>Raw health</span><strong>{{ source.raw_health_state or "none" }}</strong></div>
+              <div><span>Fetch status</span><strong>{{ (source.latest_fetch_run or {}).get("status") or "never" }}</strong></div>
+              <div><span>Error class</span><strong>{{ (source.latest_fetch_run or {}).get("error_class") or "none" }}</strong></div>
+              <div><span>Items</span><strong>{{ source.item_count or 0 }}</strong></div>
+            </div>
+            {% if source.health_message %}
+              <ul class="news-evidence-list">
+                <li><b>Status</b><span>{{ source.health_message }}</span></li>
+              </ul>
+            {% endif %}
+            {% if policy.notes %}
+              <ul class="news-evidence-list">
+                {% for note in policy.notes %}
+                  <li><b>Policy</b><span>{{ note }}</span></li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+            {% if (source.latest_fetch_run or {}).get("error_message") %}
+              <ul class="news-evidence-list">
+                <li><b>Failure</b><span>{{ (source.latest_fetch_run or {}).get("error_message") }}</span></li>
+              </ul>
+            {% endif %}
+          </details>
         </li>
       {% endfor %}
     </ul>
@@ -114,9 +174,31 @@
       {% if view['clusters'] %}
         <ul class="news-cluster-list">
           {% for cluster in view['clusters'] %}
+            {% set cluster_evidence = cluster.evidence or {} %}
             <li>
               <b>{{ cluster.title }}</b>
               <span>{{ cluster.item_count }} item{{ "" if cluster.item_count == 1 else "s" }} · score {{ cluster.score }}</span>
+              <details class="news-evidence-drawer">
+                <summary>Evidence</summary>
+                <div class="news-evidence-grid">
+                  <div><span>Representative item</span><strong>{{ cluster.representative_item_id or "unknown" }}</strong></div>
+                  <div><span>First seen</span><strong>{{ cluster.first_seen_at }}</strong></div>
+                  <div><span>Last seen</span><strong>{{ cluster.last_seen_at }}</strong></div>
+                  <div><span>Cluster key</span><strong>{{ cluster.cluster_key }}</strong></div>
+                </div>
+                {% if cluster.tags %}
+                  <div class="news-tag-row">
+                    {% for tag in cluster.tags[:6] %}
+                      <code>{{ tag }}</code>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+                {% if cluster_evidence %}
+                  <ul class="news-evidence-list">
+                    <li><b>Storage</b><span>{{ cluster_evidence | tojson }}</span></li>
+                  </ul>
+                {% endif %}
+              </details>
             </li>
           {% endfor %}
         </ul>

@@ -976,6 +976,79 @@ summary {
   margin: 0.28rem 0 0;
 }
 
+.news-evidence-drawer {
+  margin-top: 0.42rem;
+  padding-top: 0.32rem;
+  border-top: 1px solid rgba(45, 88, 124, 0.38);
+}
+
+.news-evidence-drawer > summary {
+  color: var(--cyan);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.news-evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.38rem;
+  margin-top: 0.38rem;
+}
+
+.news-evidence-grid > div {
+  min-width: 0;
+  padding: 0.3rem 0.34rem;
+  border: 1px solid rgba(45, 88, 124, 0.38);
+  background: rgba(3, 10, 18, 0.72);
+}
+
+.news-evidence-grid span {
+  display: block;
+  color: var(--muted);
+  font-family: "Cascadia Mono", "Fira Code", ui-monospace, monospace;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+.news-evidence-grid strong {
+  display: block;
+  margin-top: 0.14rem;
+  color: var(--text);
+  font-size: 0.76rem;
+  overflow-wrap: anywhere;
+}
+
+.news-evidence-list {
+  display: grid;
+  gap: 0.22rem;
+  margin: 0.42rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.news-evidence-list li {
+  display: grid;
+  gap: 0.14rem;
+  padding: 0.3rem 0.34rem;
+  border: 1px solid rgba(45, 88, 124, 0.26);
+  background: rgba(3, 10, 18, 0.48);
+}
+
+.news-evidence-list b {
+  color: var(--cyan);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.news-evidence-list span {
+  color: var(--muted);
+  font-family: "Cascadia Mono", "Fira Code", ui-monospace, monospace;
+  font-size: 0.72rem;
+  overflow-wrap: anywhere;
+}
+
 .news-tag-row {
   display: flex;
   flex-wrap: wrap;
