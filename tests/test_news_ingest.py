@@ -405,5 +405,8 @@ def test_run_news_scan_records_last_purge_and_last_result(tmp_path):
         "fetch_runs": 0,
         "source_health": 0,
     }
+    assert settings["news.last_purge"]["before_counts"]["news_items"] == 2
+    assert settings["news.last_purge"]["after_counts"]["news_items"] == 2
+    assert settings["news.last_purge"]["cutoffs"]["items_before"]
     assert settings["news.last_scan_result"]["status"] == "complete"
     assert settings["news.last_scan_result"]["item_count"] == 2

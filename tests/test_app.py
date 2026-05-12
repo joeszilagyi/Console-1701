@@ -216,6 +216,7 @@ news:
     assert summary["enabled"] is True
     assert summary["active_item_count"] == 2
     assert summary["last_scan_result"]["status"] == "complete"
+    assert summary["last_purge"]["before_counts"]["news_items"] == 2
     assert scope_payload["state"]["state"] == "healthy"
     assert len(scope_payload["items"]) == 2
     assert sources[0]["policy"]["basis"] == "local_fixture_only"

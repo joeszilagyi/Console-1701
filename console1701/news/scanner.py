@@ -68,13 +68,19 @@ def run_news_scan(config_path: str | Path | None = None) -> dict[str, Any]:
                 healthy_sources += 1
             except NewsIngestError as exc:
                 errors.append(f"{source['id']}: {exc}")
-        purge_summary = purge_news_retention(conn, config)
+        purge_now = utc_now()
+        before_counts = _news_table_counts(conn)
+        purge_summary = purge_news_retention(conn, config, now=purge_now)
+        after_counts = _news_table_counts(conn)
         _record_news_runtime_state(
             conn,
             "news.last_purge",
             {
-                "observed_at": utc_now(),
+                "observed_at": purge_now,
                 "summary": purge_summary,
+                "before_counts": before_counts,
+                "after_counts": after_counts,
+                "cutoffs": _retention_cutoffs(config, purge_now),
                 "retention": (config.get("news") or {}).get("retention") or {},
             },
         )
@@ -110,6 +116,35 @@ def _record_news_runtime_state(
         """,
         (key, json_dumps(value)),
     )
+
+
+def _news_table_counts(conn: sqlite3.Connection) -> dict[str, int]:
+    return {
+        "news_sources": _count_rows(conn, "news_sources"),
+        "news_fetch_runs": _count_rows(conn, "news_fetch_runs"),
+        "news_items": _count_rows(conn, "news_items"),
+        "news_clusters": _count_rows(conn, "news_clusters"),
+        "news_source_health": _count_rows(conn, "news_source_health"),
+    }
+
+
+def _count_rows(conn: sqlite3.Connection, table: str) -> int:
+    row = conn.execute(f"SELECT COUNT(*) AS count FROM {table}").fetchone()
+    return int(row["count"] if row else 0)
+
+
+def _retention_cutoffs(config: dict[str, Any], now: str) -> dict[str, str]:
+    current = datetime.fromisoformat(now).astimezone(UTC)
+    retention = ((config.get("news") or {}).get("retention") or {})
+    return {
+        "items_before": current.isoformat(timespec="seconds"),
+        "fetch_runs_before": (
+            current - timedelta(days=int(retention.get("fetch_runs_days", 14)))
+        ).isoformat(timespec="seconds"),
+        "source_health_before": (
+            current - timedelta(days=int(retention.get("source_health_days", 30)))
+        ).isoformat(timespec="seconds"),
+    }
 
 
 def _source_is_enabled(config: dict[str, Any], source: dict[str, Any]) -> bool:
@@ -676,27 +711,20 @@ def purge_news_retention(
     *,
     now: str | None = None,
 ) -> dict[str, int]:
-    current = datetime.fromisoformat(now or utc_now()).astimezone(UTC)
-    retention = ((config.get("news") or {}).get("retention") or {})
-    item_cutoff = current.isoformat(timespec="seconds")
-    fetch_cutoff = (
-        current - timedelta(days=int(retention.get("fetch_runs_days", 14)))
-    ).isoformat(timespec="seconds")
-    health_cutoff = (
-        current - timedelta(days=int(retention.get("source_health_days", 30)))
-    ).isoformat(timespec="seconds")
+    cutoff_now = now or utc_now()
+    cutoffs = _retention_cutoffs(config, cutoff_now)
 
     deleted_items = conn.execute(
         "DELETE FROM news_items WHERE expires_at < ?",
-        (item_cutoff,),
+        (cutoffs["items_before"],),
     ).rowcount
     deleted_fetch_runs = conn.execute(
         "DELETE FROM news_fetch_runs WHERE started_at < ?",
-        (fetch_cutoff,),
+        (cutoffs["fetch_runs_before"],),
     ).rowcount
     deleted_health = conn.execute(
         "DELETE FROM news_source_health WHERE observed_at < ?",
-        (health_cutoff,),
+        (cutoffs["source_health_before"],),
     ).rowcount
     return {
         "items": int(deleted_items or 0),

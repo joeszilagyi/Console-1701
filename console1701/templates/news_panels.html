@@ -277,6 +277,8 @@
         <li><b>Fixtures</b><span>Current ingest accepts only enabled <code>file://</code> sources.</span></li>
         <li><b>Retention</b><span>Items, fetch runs, and source health are purged during explicit ingest.</span></li>
         <li><b>Last purge</b><span>{{ (summary.last_purge or {}).get("observed_at") or "never" }}</span></li>
+        <li><b>Purge before</b><span>{{ ((summary.last_purge or {}).get("before_counts") or {}).get("news_items", "unknown") }} items / {{ ((summary.last_purge or {}).get("before_counts") or {}).get("news_fetch_runs", "unknown") }} fetch runs / {{ ((summary.last_purge or {}).get("before_counts") or {}).get("news_source_health", "unknown") }} health rows</span></li>
+        <li><b>Purge after</b><span>{{ ((summary.last_purge or {}).get("after_counts") or {}).get("news_items", "unknown") }} items / {{ ((summary.last_purge or {}).get("after_counts") or {}).get("news_fetch_runs", "unknown") }} fetch runs / {{ ((summary.last_purge or {}).get("after_counts") or {}).get("news_source_health", "unknown") }} health rows</span></li>
         <li><b>DB size</b><span>{{ summary.db_size_bytes if summary.db_size_bytes is not none else "unknown" }} bytes</span></li>
         <li><b>Homepage policy</b><span>Homepage extraction stays config-gated and local-fixture only in this phase.</span></li>
       </ul>

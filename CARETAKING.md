@@ -1,5 +1,12 @@
 # Caretaking Log
 
+## 2026-05-11 20:40 PDT - richer recent-signal purge audit evidence
+
+- Expanded persisted `news.last_purge` runtime state to include before/after table counts and the cutoff timestamps used for item, fetch-run, and source-health retention.
+- Surfaced the richer purge evidence in the SYSTEM recent-signal panel instead of only showing the purge timestamp.
+- Extended app/news tests to verify persisted purge counts and summary exposure.
+- Verified with `.venv/bin/ruff check .` and `.venv/bin/python -m pytest -q` (`89 passed`).
+
 ## 2026-05-11 20:31 PDT - recent-signal last scan result visibility
 
 - Extended the recent-signal summary payload to expose the persisted `news.last_scan_result` runtime state alongside purge data.

@@ -97,7 +97,8 @@ future raw-payload debug rows. Default intent: recent awareness, not archive. Ex
 and last purge evidence in SYSTEM.
 
 Current state: SQLite purge runs during `console-1701 news-scan` for items, fetch runs, and source
-health. SYSTEM now shows last purge evidence and retention state basics; richer purge audit detail is
+health. SYSTEM now shows last purge evidence, retention state basics, before/after row counts, and
+cutoff timing. Any future raw-payload debug retention and deeper historical purge audit views are
 still pending.
 
 ### Deterministic Ranking
