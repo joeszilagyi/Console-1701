@@ -1,5 +1,17 @@
 # Caretaking Log
 
+## 2026-05-12 07:41 PDT - recent-signal source transition history
+
+- Extended recent-signal source status payloads so each source now carries short recent fetch-run
+  and source-health histories rather than only the latest rows.
+- Surfaced those recent transitions in the shared source audit drawers so scope and SYSTEM panels
+  show how a source reached its current state.
+- Added ingest/app coverage to assert that recent fetch/health history is present in the API payload
+  and rendered page output.
+- Updated README and BACKLOG to reflect that source audit evidence now includes recent transitions.
+- Verified with `./.venv/bin/ruff check console1701 tests` and `./.venv/bin/python -m pytest -q`
+  (`92 passed`).
+
 ## 2026-05-12 06:53 PDT - recent-signal evidence drawers on the website
 
 - Extended the shared recent-signal panel partial so stored items, clusters, and source rows expose

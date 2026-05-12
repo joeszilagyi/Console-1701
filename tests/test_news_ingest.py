@@ -369,6 +369,45 @@ def test_cli_news_sources_command_reports_policy_and_health(tmp_path, capsys):
     assert "next_eligible=" in captured.out
 
 
+def test_news_sources_status_includes_recent_fetch_and_health_history(tmp_path):
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        news:
+          enabled: true
+          scopes:
+            LOCAL:
+              enabled: true
+              sources:
+                - id: good_json
+                  name: Good JSON
+                  kind: local_file_json
+                  enabled: true
+                  url: "{_file_url(FIXTURE_DIR / 'local_items.json')}"
+                - id: bad_rss
+                  name: Bad RSS
+                  kind: local_file_rss
+                  enabled: true
+                  url: "{_file_url(FIXTURE_DIR / 'malformed.rss')}"
+        """,
+    )
+
+    run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        init_db(conn)
+        statuses = {
+            row["source_key"]: row
+            for row in get_news_sources_status(conn, config)
+        }
+
+    assert statuses["good_json"]["recent_fetch_runs"][0]["status"] == "success"
+    assert statuses["good_json"]["recent_health_rows"][0]["state"] == "healthy"
+    assert statuses["bad_rss"]["recent_fetch_runs"][0]["status"] == "parser_failed"
+    assert statuses["bad_rss"]["recent_health_rows"][0]["state"] == "parser_failed"
+
+
 def test_run_news_scan_records_last_purge_and_last_result(tmp_path):
     config_path = _write_config(
         tmp_path / "config.yml",

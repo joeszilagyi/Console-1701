@@ -280,6 +280,9 @@ LOCAL / REGIONAL / NATIONAL / GLOBAL / ORBITAL: state, latest stored items, clus
 SYSTEM: source ingest status, source-state counts, scope readiness, source policy, and page-load safety evidence
 ```
 
+Source audit drawers now include short recent fetch-run and source-health histories so operators can
+see transitions like `healthy -> parser_failed` without querying SQLite manually.
+
 Recent-signal items, clusters, and source rows now use click-open drawers for ranking, policy,
 retention, fetch-run, and source-health audit details instead of hiding that evidence behind the API
 only.

@@ -109,6 +109,26 @@
                 <li><b>Failure</b><span>{{ (source.latest_fetch_run or {}).get("error_message") }}</span></li>
               </ul>
             {% endif %}
+            {% if source.recent_fetch_runs %}
+              <ul class="news-evidence-list">
+                {% for run in source.recent_fetch_runs %}
+                  <li>
+                    <b>Fetch {{ loop.index }}</b>
+                    <span>{{ run.status }} · {{ run.finished_at or run.started_at or "unknown time" }} · items {{ run.item_count or 0 }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+            {% if source.recent_health_rows %}
+              <ul class="news-evidence-list">
+                {% for row in source.recent_health_rows %}
+                  <li>
+                    <b>Health {{ loop.index }}</b>
+                    <span>{{ row.state }} · {{ row.observed_at }}{% if row.message %} · {{ row.message }}{% endif %}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
           </details>
         </li>
       {% endfor %}

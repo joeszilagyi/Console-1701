@@ -167,6 +167,30 @@ def _latest_fetch_runs_by_source(conn: sqlite3.Connection) -> dict[int, dict[str
     return latest
 
 
+def _recent_fetch_runs_by_source(
+    conn: sqlite3.Connection,
+    *,
+    limit_per_source: int = 3,
+) -> dict[int, list[dict[str, Any]]]:
+    rows = conn.execute(
+        """
+        SELECT *
+        FROM news_fetch_runs
+        ORDER BY source_id, id DESC
+        """
+    ).fetchall()
+    history: dict[int, list[dict[str, Any]]] = {}
+    for row in rows:
+        source_id = int(row["source_id"])
+        bucket = history.setdefault(source_id, [])
+        if len(bucket) >= limit_per_source:
+            continue
+        item = dict(row)
+        item["evidence"] = json_loads(item.pop("evidence_json"), {})
+        bucket.append(item)
+    return history
+
+
 def _latest_health_by_source(conn: sqlite3.Connection) -> dict[int, dict[str, Any]]:
     rows = conn.execute(
         """
@@ -183,6 +207,28 @@ def _latest_health_by_source(conn: sqlite3.Connection) -> dict[int, dict[str, An
         int(row["source_id"]): _decode_news_health_row(row)
         for row in rows
     }
+
+
+def _recent_health_by_source(
+    conn: sqlite3.Connection,
+    *,
+    limit_per_source: int = 3,
+) -> dict[int, list[dict[str, Any]]]:
+    rows = conn.execute(
+        """
+        SELECT *
+        FROM news_source_health
+        ORDER BY source_id, id DESC
+        """
+    ).fetchall()
+    history: dict[int, list[dict[str, Any]]] = {}
+    for row in rows:
+        source_id = int(row["source_id"])
+        bucket = history.setdefault(source_id, [])
+        if len(bucket) >= limit_per_source:
+            continue
+        bucket.append(_decode_news_health_row(row))
+    return history
 
 
 def _is_stale_health(health: dict[str, Any] | None) -> bool:
@@ -381,7 +427,9 @@ def get_news_sources_status(
 ) -> list[dict[str, Any]]:
     stored_by_key = {source["source_key"]: source for source in list_news_sources(conn)}
     latest_fetch = _latest_fetch_runs_by_source(conn)
+    recent_fetch = _recent_fetch_runs_by_source(conn)
     latest_health = _latest_health_by_source(conn)
+    recent_health = _recent_health_by_source(conn)
     statuses: list[dict[str, Any]] = []
 
     for source in iter_news_sources(config):
@@ -413,7 +461,13 @@ def get_news_sources_status(
                 "policy": policy,
                 "stored": stored,
                 "latest_fetch_run": fetch,
+                "recent_fetch_runs": (
+                    recent_fetch.get(stored_id, []) if stored_id is not None else []
+                ),
                 "latest_health": health,
+                "recent_health_rows": (
+                    recent_health.get(stored_id, []) if stored_id is not None else []
+                ),
                 "health_state": health_state,
                 "health_message": health_message,
                 "raw_health_state": health.get("state") if health else None,

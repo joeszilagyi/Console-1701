@@ -206,6 +206,8 @@ news:
     assert "Retention expiry" in scope_body
     assert "Fetch run" in scope_body
     assert "Policy" in scope_body
+    assert "Fetch 1" in scope_body
+    assert "Health 1" in scope_body
 
     summary = _route_endpoint(router, "/api/news/summary")()
     scope_payload = _route_endpoint(router, "/api/news/scopes/{scope}")("LOCAL", 8)
@@ -227,6 +229,8 @@ news:
     assert len(scope_payload["items"]) == 2
     assert sources[0]["policy"]["basis"] == "local_fixture_only"
     assert sources[0]["health_state"] == "healthy"
+    assert sources[0]["recent_fetch_runs"][0]["status"] == "success"
+    assert sources[0]["recent_health_rows"][0]["state"] == "healthy"
     assert item["title"] == "Seattle ferry delay at Colman Dock"
     assert item["source"]["source_key"] == "local_fixture"
     assert item["evidence"]["source"]["source_key"] == "local_fixture"

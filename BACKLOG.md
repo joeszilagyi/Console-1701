@@ -139,8 +139,9 @@ successful fetch by source/scope, retention state, DB size, source table counts,
 warnings, and evidence that page loads do not perform external fetches.
 
 Current state: SYSTEM now shows source ingest status, derived source-state counts, scope readiness,
-source policy/health rows, table counts, last finished/successful ingest timestamps, purge
-evidence, page-load safety evidence, DB size, and derived config warnings.
+source policy/health rows, short fetch/health transition history, table counts, last
+finished/successful ingest timestamps, purge evidence, page-load safety evidence, DB size, and
+derived config warnings.
 
 ### Official API/RSS First Live Ingest
 
@@ -362,8 +363,9 @@ retention expiration, matching tokens, geographic basis, event confidence, and p
 Current state: `/api/news/items/{id}` now returns source metadata, latest fetch/health state,
 policy notes, ranking evidence, fetch run id, retention expiration, canonical URL/storage fields,
 and explicit privacy/body-storage flags for stored item rows, and scope/source/cluster panels now
-surface click-open evidence drawers for that audit data in the website. Event correlation, geography
-basis, and scope-specific matching contracts are still pending.
+surface click-open evidence drawers plus short source fetch/health histories for that audit data in
+the website. Event correlation, geography basis, and scope-specific matching contracts are still
+pending.
 
 ### LOCAL Official-Source Live Ingest Phase
 
