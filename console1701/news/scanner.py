@@ -247,6 +247,7 @@ def _ingest_source(
     )
 
     try:
+        policy = _policy_for_source(config, source)
         text, path = load_fixture_text(
             source,
             config_dir=config_dir,
@@ -264,8 +265,10 @@ def _ingest_source(
                 source_id,
                 source,
                 item,
+                fetch_run_id=run_id,
                 seen_at=now,
                 default_retention_days=default_retention_days,
+                policy=policy,
             )
             stored_count += 1
         _rebuild_scope_clusters(conn, str(source["scope"]))
@@ -295,7 +298,7 @@ def _ingest_source(
             run_id,
             source_id,
             source,
-            status="blocked_policy",
+            status="policy_blocked",
             error_class=type(exc).__name__,
             error_message=str(exc),
             message="Source is outside the fixture-only ingest policy.",
@@ -526,8 +529,10 @@ def _upsert_item(
     source: dict[str, Any],
     item: dict[str, Any],
     *,
+    fetch_run_id: int,
     seen_at: str,
     default_retention_days: int,
+    policy: dict[str, Any],
 ) -> None:
     combined_tags = list(dict.fromkeys([*(source.get("tags") or []), *(item.get("tags") or [])]))
     hashed_url = url_hash(str(item["canonical_url"] or item["url"]))
@@ -561,6 +566,39 @@ def _upsert_item(
     evidence = dict(item.get("evidence") or {})
     evidence["cluster_key"] = cluster
     evidence["ranking"] = ranking
+    evidence["source"] = {
+        "source_key": source["id"],
+        "source_name": source["name"],
+        "scope": source["scope"],
+        "kind": source["kind"],
+        "priority": int(source.get("priority", 50)),
+        "tags": source.get("tags") or [],
+    }
+    evidence["ingest"] = {
+        "fetch_run_id": fetch_run_id,
+        "seen_at": seen_at,
+        "fixture_only": True,
+        "source_health_state_at_ingest": latest_health_state or "unknown",
+    }
+    evidence["policy"] = {
+        "policy_state": policy.get("policy_state"),
+        "basis": policy.get("basis"),
+        "robots_state": policy.get("robots_state"),
+        "notes": policy.get("notes") or [],
+    }
+    evidence["retention"] = {
+        "expires_at": expire_at,
+        "retention_days": retention_days,
+    }
+    evidence["privacy"] = {
+        "article_body_stored": False,
+        "redaction_applied": False,
+    }
+    evidence["storage"] = {
+        "canonical_url": item.get("canonical_url"),
+        "url": item["url"],
+        "status": "active",
+    }
     item_rank = int(ranking["score"])
     if existing is None:
         conn.execute(

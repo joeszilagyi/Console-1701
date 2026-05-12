@@ -132,15 +132,15 @@ urgent items should not be buried under broad distant headlines.
 
 ### SYSTEM Source Health Bay
 
-Status: partially implemented.
+Status: implemented.
 
 Add SYSTEM panels for source ingest status, stale sources, failed parsers, disabled sources, last
 successful fetch by source/scope, retention state, DB size, source table counts, config validation
 warnings, and evidence that page loads do not perform external fetches.
 
-Current state: SYSTEM now shows source ingest status, scope readiness, source policy/health rows,
-table counts, last finished/successful ingest timestamps, page-load safety evidence, DB size, and
-derived config warnings. Richer retention evidence is still pending.
+Current state: SYSTEM now shows source ingest status, derived source-state counts, scope readiness,
+source policy/health rows, table counts, last finished/successful ingest timestamps, purge
+evidence, page-load safety evidence, DB size, and derived config warnings.
 
 ### Official API/RSS First Live Ingest
 
@@ -337,21 +337,32 @@ disabled, and homepage extraction disabled. Do not show fake headlines.
 
 ### LOCAL Source Health States
 
-Status: not implemented.
+Status: partially implemented.
 
 Implement source health states for LOCAL: `disabled`, `not_configured`, `configured_never_run`,
 `healthy`, `stale`, `failing`, `parser_failed`, `policy_blocked`, `robots_blocked`,
 `auth_required`, `rate_limited`, `unsupported`, and `manual_review_only`. Surface these states in
 SYSTEM later and summarize them on LOCAL.
 
+Current state: API/UI/CLI source summaries now derive `disabled`, `configured_never_run`,
+`healthy`, `stale`, `failing`, `parser_failed`, `policy_blocked`, and `auth_required` from config,
+policy, fetch runs, and latest health rows. Live-fetch-only states such as `robots_blocked`,
+`rate_limited`, and richer unsupported/manual-review variants remain pending until HTTP ingest
+exists.
+
 ### LOCAL Evidence Drawer Contract
 
-Status: not implemented.
+Status: partially implemented.
 
 Define and test evidence payloads for LOCAL items and events. Include source ids, source names,
 families, classes, item URLs, canonical URLs, official flags, source published times, first/last
 seen, fetch run ids, parser names, source health, ranking features, privacy redaction decision,
 retention expiration, matching tokens, geographic basis, event confidence, and policy notes.
+
+Current state: `/api/news/items/{id}` now returns source metadata, latest fetch/health state,
+policy notes, ranking evidence, fetch run id, retention expiration, canonical URL/storage fields,
+and explicit privacy/body-storage flags for stored item rows. Event correlation, geography basis,
+and scope-specific matching contracts are still pending.
 
 ### LOCAL Official-Source Live Ingest Phase
 

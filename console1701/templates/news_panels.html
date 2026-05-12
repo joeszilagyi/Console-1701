@@ -44,7 +44,7 @@
             <span>{{ source_state }}</span>
           </div>
           <p><code>{{ source.kind }}</code> · {{ policy.policy_state or policy.basis or "policy pending" }}</p>
-          <small>{{ health.message or (policy.notes[0] if policy.notes else "No recent health note recorded.") }}</small>
+          <small>{{ source.health_message or health.message or (policy.notes[0] if policy.notes else "No recent health note recorded.") }}</small>
           <small>
             last success {{ source.last_success_at or "never" }} ·
             last failure {{ source.last_failure_at or "never" }} ·
@@ -74,6 +74,10 @@
       <div><span>Enabled</span><strong>{{ state.enabled_source_count }}</strong></div>
       <div><span>Stored sources</span><strong>{{ state.stored_source_count }}</strong></div>
       <div><span>Active items</span><strong>{{ state.active_item_count }}</strong></div>
+      <div><span>Healthy</span><strong>{{ (state.source_state_counts or {}).get("healthy", 0) }}</strong></div>
+      <div><span>Blocked</span><strong>{{ (state.source_state_counts or {}).get("policy_blocked", 0) }}</strong></div>
+      <div><span>Parser failed</span><strong>{{ (state.source_state_counts or {}).get("parser_failed", 0) }}</strong></div>
+      <div><span>Awaiting run</span><strong>{{ (state.source_state_counts or {}).get("configured_never_run", 0) }}</strong></div>
     </div>
     {% if state.latest_health_states %}
       <details>
@@ -219,6 +223,10 @@
         <div><span>Health rows</span><strong>{{ summary.source_health_count }}</strong></div>
         <div><span>Last finished</span><strong>{{ summary.last_finished_ingest_at or "never" }}</strong></div>
         <div><span>Last success</span><strong>{{ summary.last_successful_ingest_at or "never" }}</strong></div>
+        <div><span>Failing</span><strong>{{ summary.failing_source_count or 0 }}</strong></div>
+        <div><span>Policy blocked</span><strong>{{ summary.policy_blocked_source_count or 0 }}</strong></div>
+        <div><span>Parser failed</span><strong>{{ summary.parser_failed_source_count or 0 }}</strong></div>
+        <div><span>Awaiting run</span><strong>{{ (summary.source_state_counts or {}).get("configured_never_run", 0) }}</strong></div>
       </div>
       {% if summary.last_scan_result %}
         <ul class="news-cluster-list">

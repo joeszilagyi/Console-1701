@@ -12,6 +12,7 @@ from console1701.config import load_config
 from console1701.db import connect_db, init_db, json_loads
 from console1701.news.parsers import parse_fixture_items
 from console1701.news.scanner import purge_news_retention, run_news_scan
+from console1701.news.storage import get_news_sources_status
 
 FIXTURE_DIR = Path(__file__).resolve().parent / "fixtures" / "news"
 
@@ -192,8 +193,8 @@ def test_run_news_scan_fails_soft_for_bad_fixture_and_non_file_source(tmp_path):
     assert result["status"] == "partial"
     assert result["healthy_sources"] == 1
     assert len(result["errors"]) == 2
-    assert [row["status"] for row in statuses] == ["success", "parser_failed", "blocked_policy"]
-    assert [row["state"] for row in health_rows] == ["healthy", "parser_failed", "blocked_policy"]
+    assert [row["status"] for row in statuses] == ["success", "parser_failed", "policy_blocked"]
+    assert [row["state"] for row in health_rows] == ["healthy", "parser_failed", "policy_blocked"]
     assert int(item_count) == 2
 
 
@@ -363,6 +364,7 @@ def test_cli_news_sources_command_reports_policy_and_health(tmp_path, capsys):
     assert "policy=allowed_fixture_only" in captured.out
     assert "health=healthy" in captured.out
     assert "items=2" in captured.out
+    assert "note=Fixture ingest succeeded" in captured.out
     assert "last_success=" in captured.out
     assert "next_eligible=" in captured.out
 
@@ -410,3 +412,58 @@ def test_run_news_scan_records_last_purge_and_last_result(tmp_path):
     assert settings["news.last_purge"]["cutoffs"]["items_before"]
     assert settings["news.last_scan_result"]["status"] == "complete"
     assert settings["news.last_scan_result"]["item_count"] == 2
+
+
+def test_news_sources_status_derives_policy_and_never_run_states(tmp_path):
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        """
+        paths: {repo_roots: [], explicit_repos: []}
+        news:
+          enabled: true
+          scopes:
+            LOCAL:
+              enabled: true
+              sources:
+                - id: auth_fixture
+                  name: Auth fixture
+                  kind: local_file_json
+                  enabled: true
+                  url: "file:///tmp/auth.json"
+                  auth: {token: ""}
+                - id: disabled_fixture
+                  name: Disabled fixture
+                  kind: local_file_json
+                  enabled: false
+                  url: "file:///tmp/disabled.json"
+            REGIONAL:
+              enabled: false
+              sources:
+                - id: disabled_scope_remote
+                  name: Disabled scope remote
+                  kind: rss
+                  enabled: true
+                  url: "https://example.invalid/feed.xml"
+            ORBITAL:
+              enabled: true
+              sources:
+                - id: waiting_fixture
+                  name: Waiting fixture
+                  kind: atom
+                  enabled: true
+                  url: "file:///tmp/waiting.atom"
+        """,
+    )
+
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        init_db(conn)
+        statuses = {
+            row["source_key"]: row
+            for row in get_news_sources_status(conn, config)
+        }
+
+    assert statuses["auth_fixture"]["health_state"] == "auth_required"
+    assert statuses["disabled_fixture"]["health_state"] == "disabled"
+    assert statuses["disabled_scope_remote"]["health_state"] == "policy_blocked"
+    assert statuses["waiting_fixture"]["health_state"] == "configured_never_run"

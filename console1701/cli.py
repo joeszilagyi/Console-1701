@@ -171,6 +171,11 @@ def main(argv: list[str] | None = None) -> int:
                 )
             )
             print(
+                "  note={note}".format(
+                    note=source.get("health_message") or "No recent source note recorded."
+                )
+            )
+            print(
                 "  last_success={last_success} last_failure={last_failure} "
                 "next_eligible={next_eligible} last_fetch={last_fetch}".format(
                     last_success=source.get("last_success_at") or "never",

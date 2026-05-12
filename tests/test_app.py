@@ -217,11 +217,18 @@ news:
     assert summary["active_item_count"] == 2
     assert summary["last_scan_result"]["status"] == "complete"
     assert summary["last_purge"]["before_counts"]["news_items"] == 2
+    assert summary["source_state_counts"]["healthy"] == 1
     assert scope_payload["state"]["state"] == "healthy"
+    assert scope_payload["state"]["source_state_counts"]["healthy"] == 1
     assert len(scope_payload["items"]) == 2
     assert sources[0]["policy"]["basis"] == "local_fixture_only"
     assert sources[0]["health_state"] == "healthy"
     assert item["title"] == "Seattle ferry delay at Colman Dock"
+    assert item["source"]["source_key"] == "local_fixture"
+    assert item["evidence"]["source"]["source_key"] == "local_fixture"
+    assert item["evidence"]["policy"]["policy_state"] == "allowed_fixture_only"
+    assert item["evidence"]["source_health"]["state"] == "healthy"
+    assert item["evidence"]["privacy"]["article_body_stored"] is False
     assert summary["last_purge"]["summary"]["items"] == 0
 
 
@@ -303,6 +310,55 @@ news:
     assert "LOCAL is enabled, but no sources are configured for it." in body
     assert "blocked_remote is enabled but blocked in the current fixture-only ingest phase." in body
     assert "LOCAL is enabled, but no sources are configured for it." in summary["config_warnings"]
+
+
+def test_news_summary_surfaces_source_state_counts(tmp_path, monkeypatch):
+    _use_temp_state(monkeypatch, tmp_path)
+    config_path = tmp_path / "config.yml"
+    config_path.write_text(
+        """
+paths:
+  repo_roots: []
+  explicit_repos: []
+logs: []
+projects: []
+news:
+  enabled: true
+  scopes:
+    LOCAL:
+      enabled: true
+      sources:
+        - id: waiting_fixture
+          name: Waiting fixture
+          kind: local_file_json
+          enabled: true
+          url: "file:///tmp/waiting.json"
+        - id: disabled_fixture
+          name: Disabled fixture
+          kind: local_file_json
+          enabled: false
+          url: "file:///tmp/disabled.json"
+    REGIONAL:
+      enabled: false
+      sources:
+        - id: blocked_remote
+          name: Blocked remote
+          kind: rss
+          enabled: true
+          url: "https://example.invalid/feed.xml"
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    router = build_router(str(config_path))
+
+    summary = _route_endpoint(router, "/api/news/summary")()
+    sources = _route_endpoint(router, "/api/news/sources")()
+
+    assert summary["source_state_counts"]["configured_never_run"] == 1
+    assert summary["source_state_counts"]["disabled"] == 1
+    assert summary["source_state_counts"]["policy_blocked"] == 1
+    assert any(source["health_message"] for source in sources)
 
 
 def test_root_page_renders_codex_terminal_action_for_host_penalty(tmp_path, monkeypatch):

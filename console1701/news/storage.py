@@ -9,6 +9,25 @@ from console1701.config import NEWS_SCOPES, iter_news_sources
 from console1701.db import json_loads
 from console1701.news.source_policy import evaluate_source_policy
 
+SOURCE_HEALTH_STATE_ALIASES = {
+    "blocked_policy": "policy_blocked",
+    "payload_too_large": "failing",
+    "failed": "failing",
+}
+
+SOURCE_HEALTH_STATE_MESSAGES = {
+    "disabled": "Source is disabled in config.",
+    "configured_never_run": "Source is enabled but has not completed ingest yet.",
+    "healthy": "Source completed ingest successfully.",
+    "stale": "Source health is older than the allowed freshness window.",
+    "failing": "Source ingest is failing without a parser- or policy-specific state.",
+    "parser_failed": "Source fixture could not be parsed.",
+    "policy_blocked": "Source is blocked by the current ingest policy.",
+    "auth_required": "Source declares auth but no credential material is configured.",
+    "manual_review_only": "Source is gated for manual review in this phase.",
+    "unsupported": "Source is configured in an unsupported way for this phase.",
+}
+
 
 def _count(
     conn: sqlite3.Connection,
@@ -36,6 +55,59 @@ def _latest_health_states(conn: sqlite3.Connection, scope: str) -> list[str]:
         (scope,),
     ).fetchall()
     return [str(row["state"]) for row in rows]
+
+
+def _normalize_source_health_state(raw_state: str | None) -> str | None:
+    if not raw_state:
+        return None
+    normalized = str(raw_state).strip().lower()
+    return SOURCE_HEALTH_STATE_ALIASES.get(normalized, normalized)
+
+
+def _base_source_state(
+    policy: dict[str, Any],
+    source_enabled: bool,
+    source_url: str | None,
+) -> tuple[str, str]:
+    if not source_enabled:
+        return "disabled", SOURCE_HEALTH_STATE_MESSAGES["disabled"]
+    if policy.get("auth_required") and not policy.get("auth_configured"):
+        return "auth_required", SOURCE_HEALTH_STATE_MESSAGES["auth_required"]
+    if policy.get("uses_homepage_extractor") and not policy.get("homepage_extractor_allowed"):
+        return "manual_review_only", SOURCE_HEALTH_STATE_MESSAGES["manual_review_only"]
+    if source_url and not policy.get("scope_enabled"):
+        return "policy_blocked", SOURCE_HEALTH_STATE_MESSAGES["policy_blocked"]
+    if source_url and policy.get("policy_state") == "blocked_fixture_phase":
+        return "policy_blocked", SOURCE_HEALTH_STATE_MESSAGES["policy_blocked"]
+    return "configured_never_run", SOURCE_HEALTH_STATE_MESSAGES["configured_never_run"]
+
+
+def _resolve_source_state(
+    *,
+    source_enabled: bool,
+    source_url: str | None,
+    policy: dict[str, Any],
+    fetch: dict[str, Any] | None,
+    health: dict[str, Any] | None,
+    stale: bool,
+) -> tuple[str, str]:
+    base_state, base_message = _base_source_state(policy, source_enabled, source_url)
+    if base_state != "configured_never_run":
+        return base_state, base_message
+    if stale:
+        return "stale", SOURCE_HEALTH_STATE_MESSAGES["stale"]
+    raw_health_state = _normalize_source_health_state(health.get("state") if health else None)
+    if raw_health_state:
+        default_message = SOURCE_HEALTH_STATE_MESSAGES.get(raw_health_state)
+        message = str((health or {}).get("message") or default_message)
+        return raw_health_state, message
+    raw_fetch_state = _normalize_source_health_state(fetch.get("status") if fetch else None)
+    if raw_fetch_state and raw_fetch_state != "success":
+        evidence = (fetch or {}).get("evidence") or {}
+        detail = str((fetch or {}).get("error_message") or evidence.get("detail") or "").strip()
+        message = detail or SOURCE_HEALTH_STATE_MESSAGES.get(raw_fetch_state, base_message)
+        return raw_fetch_state, message
+    return base_state, base_message
 
 
 def list_news_sources(conn: sqlite3.Connection) -> list[dict[str, Any]]:
@@ -167,10 +239,15 @@ def get_news_scope_states(
         configured_by_scope.setdefault(str(source.get("scope")), []).append(source)
 
     states: dict[str, dict[str, Any]] = {}
+    source_statuses = get_news_sources_status(conn, config)
+    source_statuses_by_scope: dict[str, list[dict[str, Any]]] = {scope: [] for scope in NEWS_SCOPES}
+    for status in source_statuses:
+        source_statuses_by_scope.setdefault(str(status["scope"]), []).append(status)
     for scope in NEWS_SCOPES:
         scope_cfg = ((news_cfg.get("scopes") or {}).get(scope)) or {}
         sources = configured_by_scope.get(scope, [])
         enabled_sources = [source for source in sources if source.get("enabled")]
+        status_rows = source_statuses_by_scope.get(scope, [])
         db_sources = _count(conn, "news_sources", "WHERE scope = ?", (scope,))
         db_enabled_sources = _count(
             conn,
@@ -184,7 +261,19 @@ def get_news_scope_states(
             "WHERE scope = ? AND status = 'active'",
             (scope,),
         )
-        health_states = _latest_health_states(conn, scope)
+        health_states = [
+            str(status["health_state"])
+            for status in status_rows
+            if status.get("health_state")
+        ]
+        blocking_states = {
+            "auth_required",
+            "failing",
+            "manual_review_only",
+            "parser_failed",
+            "policy_blocked",
+            "unsupported",
+        }
 
         if not news_cfg.get("enabled"):
             state = "disabled"
@@ -198,7 +287,7 @@ def get_news_scope_states(
         elif not health_states and (db_sources == 0 or db_enabled_sources == 0):
             state = "configured_never_run"
             message = f"{scope} sources are enabled but have not been ingested yet."
-        elif any(value not in {"healthy", "stale"} for value in health_states):
+        elif any(value in blocking_states for value in health_states):
             state = "failing"
             message = f"{scope} has failing or policy-blocked sources."
         elif "stale" in health_states:
@@ -222,12 +311,14 @@ def get_news_scope_states(
             "stored_enabled_source_count": db_enabled_sources,
             "active_item_count": active_items,
             "latest_health_states": health_states,
+            "source_state_counts": _state_counts(status_rows),
         }
 
     return states
 
 
 def get_news_storage_summary(conn: sqlite3.Connection, config: dict[str, Any]) -> dict[str, Any]:
+    source_statuses = get_news_sources_status(conn, config)
     scope_states = get_news_scope_states(conn, config)
     config_warnings = get_news_config_warnings(config)
     latest_health = _latest_health_by_source(conn)
@@ -261,6 +352,7 @@ def get_news_storage_summary(conn: sqlite3.Connection, config: dict[str, Any]) -
     db_path_row = conn.execute("PRAGMA database_list").fetchone()
     db_path = Path(str(db_path_row["file"])) if db_path_row and db_path_row["file"] else None
     db_size_bytes = db_path.stat().st_size if db_path and db_path.exists() else None
+    source_state_counts = _state_counts(source_statuses)
     return {
         "enabled": bool((config.get("news") or {}).get("enabled")),
         "configured_source_count": len(iter_news_sources(config)),
@@ -276,6 +368,10 @@ def get_news_storage_summary(conn: sqlite3.Connection, config: dict[str, Any]) -
         "db_size_bytes": db_size_bytes,
         "config_warnings": config_warnings,
         "scope_states": scope_states,
+        "source_state_counts": source_state_counts,
+        "failing_source_count": int(source_state_counts.get("failing", 0)),
+        "policy_blocked_source_count": int(source_state_counts.get("policy_blocked", 0)),
+        "parser_failed_source_count": int(source_state_counts.get("parser_failed", 0)),
     }
 
 
@@ -295,6 +391,14 @@ def get_news_sources_status(
         fetch = latest_fetch.get(stored_id) if stored_id is not None else None
         health = latest_health.get(stored_id) if stored_id is not None else None
         stale = _is_stale_health(health)
+        health_state, health_message = _resolve_source_state(
+            source_enabled=bool(source.get("enabled")),
+            source_url=str(source.get("url") or "").strip() or None,
+            policy=policy,
+            fetch=fetch,
+            health=health,
+            stale=stale,
+        )
         statuses.append(
             {
                 "source_key": source["id"],
@@ -310,7 +414,9 @@ def get_news_sources_status(
                 "stored": stored,
                 "latest_fetch_run": fetch,
                 "latest_health": health,
-                "health_state": "stale" if stale else (health.get("state") if health else None),
+                "health_state": health_state,
+                "health_message": health_message,
+                "raw_health_state": health.get("state") if health else None,
                 "last_success_at": health.get("last_success_at") if health else None,
                 "last_failure_at": health.get("last_failure_at") if health else None,
                 "next_eligible_at": _next_eligible_at(config, source, fetch),
@@ -336,6 +442,16 @@ def get_news_sources_status(
     return statuses
 
 
+def _state_counts(rows: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for row in rows:
+        state = str(row.get("health_state") or "").strip()
+        if not state:
+            continue
+        counts[state] = counts.get(state, 0) + 1
+    return counts
+
+
 def get_news_config_warnings(config: dict[str, Any]) -> list[str]:
     news_cfg = config.get("news") or {}
     warnings: list[str] = []
@@ -354,7 +470,10 @@ def get_news_config_warnings(config: dict[str, Any]) -> list[str]:
     for source in sources:
         policy = evaluate_source_policy(config, source)
         source_key = str(source["id"])
-        if source.get("enabled") and not str(source.get("url") or "").startswith("file://"):
+        url = str(source.get("url") or "").strip()
+        if source.get("enabled") and not url:
+            warnings.append(f"{source_key} is enabled but has no URL configured.")
+        elif source.get("enabled") and not url.startswith("file://"):
             warnings.append(
                 f"{source_key} is enabled but blocked in the current fixture-only ingest phase."
             )
@@ -447,15 +566,82 @@ def get_news_overview(
     }
 
 
-def get_news_item_detail(conn: sqlite3.Connection, item_id: int) -> dict[str, Any] | None:
+def get_news_item_detail(
+    conn: sqlite3.Connection,
+    item_id: int,
+) -> dict[str, Any] | None:
     row = conn.execute(
         """
-        SELECT *
+        SELECT
+          i.*,
+          s.source_key,
+          s.name AS source_name,
+          s.priority AS source_priority,
+          s.enabled AS source_enabled,
+          s.url AS source_url,
+          s.tags_json AS source_tags_json,
+          s.policy_json AS source_policy_json
         FROM news_items
-        WHERE id = ?
+        i
+        JOIN news_sources s ON s.id = i.source_id
+        WHERE i.id = ?
         """,
         (item_id,),
     ).fetchone()
     if row is None:
         return None
-    return _decode_news_item_row(row)
+    item = _decode_news_item_row(row)
+    source = {
+        "id": int(row["source_id"]),
+        "source_key": str(row["source_key"]),
+        "name": str(row["source_name"]),
+        "scope": str(row["scope"]),
+        "kind": str(row["source_kind"]),
+        "priority": int(row["source_priority"]),
+        "enabled": bool(row["source_enabled"]),
+        "url": str(row["source_url"] or ""),
+        "tags": json_loads(str(row["source_tags_json"]), []),
+        "policy": json_loads(str(row["source_policy_json"]), {}),
+    }
+    latest_health = _latest_health_by_source(conn).get(source["id"])
+    latest_fetch = _latest_fetch_runs_by_source(conn).get(source["id"])
+    stale = _is_stale_health(latest_health)
+    state, message = _resolve_source_state(
+        source_enabled=source["enabled"],
+        source_url=source["url"] or None,
+        policy=source["policy"],
+        fetch=latest_fetch,
+        health=latest_health,
+        stale=stale,
+    )
+    item["source"] = source
+    item["latest_health"] = latest_health
+    item["latest_fetch_run"] = latest_fetch
+    item["health_state"] = state
+    item["health_message"] = message
+    evidence = dict(item.get("evidence") or {})
+    evidence.setdefault("source", {})
+    evidence["source"].setdefault("source_key", source["source_key"])
+    evidence["source"].setdefault("source_name", source["name"])
+    evidence["source"].setdefault("scope", source["scope"])
+    evidence["source"].setdefault("kind", source["kind"])
+    evidence["source"].setdefault("priority", source["priority"])
+    evidence.setdefault("policy", {})
+    evidence["policy"].setdefault("policy_state", source["policy"].get("policy_state"))
+    evidence["policy"].setdefault("basis", source["policy"].get("basis"))
+    evidence["policy"].setdefault("robots_state", source["policy"].get("robots_state"))
+    evidence["policy"].setdefault("notes", source["policy"].get("notes") or [])
+    evidence.setdefault("source_health", {})
+    evidence["source_health"].setdefault("state", state)
+    evidence["source_health"].setdefault("message", message)
+    evidence.setdefault("retention", {})
+    evidence["retention"].setdefault("expires_at", item.get("expires_at"))
+    evidence.setdefault("privacy", {})
+    evidence["privacy"].setdefault("article_body_stored", False)
+    evidence["privacy"].setdefault("redaction_applied", False)
+    evidence.setdefault("storage", {})
+    evidence["storage"].setdefault("canonical_url", item.get("canonical_url"))
+    evidence["storage"].setdefault("url", item.get("url"))
+    evidence["storage"].setdefault("status", item.get("status"))
+    item["evidence"] = evidence
+    return item

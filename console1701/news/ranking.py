@@ -15,9 +15,11 @@ HEALTH_CONFIDENCE_BOOST = {
     "healthy": 6,
     "stale": -6,
     "parser_failed": -16,
+    "policy_blocked": -20,
     "blocked_policy": -20,
     "payload_too_large": -14,
     "failed": -12,
+    "failing": -12,
 }
 
 

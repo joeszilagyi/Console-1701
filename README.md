@@ -134,6 +134,9 @@ Explicit command path only
 Page loads read SQLite and config only
 No hidden fetch on GET routes
 Fixture-only ingest for enabled file:// JSON/RSS/Atom/homepage sources
+Source audit surfaces derive disabled / configured_never_run / healthy / stale / parser_failed /
+policy_blocked / auth_required states without fetching
+Stored item detail includes source, policy, ranking, retention, and privacy evidence
 Live external HTTP ingest not implemented yet
 ```
 
@@ -274,7 +277,7 @@ The non-INTERNAL scope pages now show honest recent-signal state:
 ```text
 OVERVIEW: cross-scope synthesis bays
 LOCAL / REGIONAL / NATIONAL / GLOBAL / ORBITAL: state, latest stored items, clusters, source health
-SYSTEM: source ingest status, scope readiness, source policy, and page-load safety evidence
+SYSTEM: source ingest status, source-state counts, scope readiness, source policy, and page-load safety evidence
 ```
 
 ## Safety Limits
@@ -397,8 +400,8 @@ GET  /api/host/history         compact host snapshot history
 GET  /api/live                 local live sensor snapshot and scan timing
 GET  /api/news/summary         recent-signal storage/config summary
 GET  /api/news/scopes/{scope}  latest stored recent-signal items/clusters for one scope
-GET  /api/news/sources         configured source policy and health state
-GET  /api/news/items/{id}      one stored recent-signal item with evidence
+GET  /api/news/sources         configured source policy plus derived source-state/health state
+GET  /api/news/items/{id}      one stored recent-signal item with source/policy/ranking evidence
 POST /api/news/scan            trigger explicit recent-signal ingest
 POST /api/host/actions/codex   launch a user-clicked host-alert Codex terminal
 GET  /api/evidence/{id}        raw interpretation evidence

@@ -1,5 +1,19 @@
 # Caretaking Log
 
+## 2026-05-12 06:43 PDT - recent-signal source-state contract and item evidence
+
+- Normalized recent-signal source status into a derived contract across API, UI, and CLI so sources
+  now report stable states such as `configured_never_run`, `policy_blocked`, `parser_failed`,
+  `auth_required`, `stale`, and `healthy` instead of exposing only raw health rows.
+- Extended the SYSTEM and scope panels with source-state counts, added per-source status notes to
+  `console-1701 news-sources`, and kept no-fetch page-load behavior intact.
+- Enriched stored item evidence and `/api/news/items/{id}` responses with source metadata, policy
+  notes, fetch run ids, retention expiration, privacy/body-storage flags, and joined latest
+  fetch/health context.
+- Updated README and BACKLOG to reflect the new source-state and evidence-contract surfaces.
+- Verified with `./.venv/bin/ruff check console1701 tests` and `./.venv/bin/python -m pytest -q`
+  (`91 passed`).
+
 ## 2026-05-11 20:40 PDT - richer recent-signal purge audit evidence
 
 - Expanded persisted `news.last_purge` runtime state to include before/after table counts and the cutoff timestamps used for item, fetch-run, and source-health retention.
