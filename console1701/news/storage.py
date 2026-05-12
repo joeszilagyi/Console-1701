@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Any
 
 from console1701.config import NEWS_SCOPES, iter_news_sources
@@ -120,6 +121,13 @@ def _is_stale_health(health: dict[str, Any] | None) -> bool:
     except ValueError:
         return False
     return stale_after.astimezone(UTC) < datetime.now(UTC)
+
+
+def _read_setting(conn: sqlite3.Connection, key: str, default: Any = None) -> Any:
+    row = conn.execute("SELECT value FROM settings WHERE key = ?", (key,)).fetchone()
+    if row is None:
+        return default
+    return json_loads(str(row["value"]), default)
 
 
 def _next_eligible_at(
@@ -247,6 +255,10 @@ def get_news_storage_summary(conn: sqlite3.Connection, config: dict[str, Any]) -
         if latest_run and latest_run["latest_finished"]
         else None
     )
+    last_purge = _read_setting(conn, "news.last_purge", {})
+    db_path_row = conn.execute("PRAGMA database_list").fetchone()
+    db_path = Path(str(db_path_row["file"])) if db_path_row and db_path_row["file"] else None
+    db_size_bytes = db_path.stat().st_size if db_path and db_path.exists() else None
     return {
         "enabled": bool((config.get("news") or {}).get("enabled")),
         "configured_source_count": len(iter_news_sources(config)),
@@ -257,6 +269,8 @@ def get_news_storage_summary(conn: sqlite3.Connection, config: dict[str, Any]) -
         "stale_source_count": stale_source_count,
         "last_successful_ingest_at": last_successful_ingest_at,
         "last_finished_ingest_at": last_finished_ingest_at,
+        "last_purge": last_purge,
+        "db_size_bytes": db_size_bytes,
         "scope_states": scope_states,
     }
 

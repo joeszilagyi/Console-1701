@@ -390,6 +390,7 @@ GET  /api/news/summary         recent-signal storage/config summary
 GET  /api/news/scopes/{scope}  latest stored recent-signal items/clusters for one scope
 GET  /api/news/sources         configured source policy and health state
 GET  /api/news/items/{id}      one stored recent-signal item with evidence
+POST /api/news/scan            trigger explicit recent-signal ingest
 POST /api/host/actions/codex   launch a user-clicked host-alert Codex terminal
 GET  /api/evidence/{id}        raw interpretation evidence
 GET  /api/handoffs             handoff packet list
@@ -401,6 +402,12 @@ If a scan is already running, `POST /api/scan` returns:
 
 ```json
 {"status": "already_running"}
+```
+
+If recent-signal ingest is disabled, `POST /api/news/scan` returns:
+
+```json
+{"status": "disabled"}
 ```
 
 ## Troubleshooting

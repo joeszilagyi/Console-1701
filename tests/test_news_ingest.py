@@ -350,3 +350,45 @@ def test_cli_news_sources_command_reports_policy_and_health(tmp_path, capsys):
     assert "ORBITAL orbital_atom enabled=yes kind=atom" in captured.out
     assert "policy=allowed_fixture_only" in captured.out
     assert "health=healthy" in captured.out
+
+
+def test_run_news_scan_records_last_purge_and_last_result(tmp_path):
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        news:
+          enabled: true
+          scopes:
+            LOCAL:
+              enabled: true
+              sources:
+                - id: local_json
+                  name: Local JSON
+                  kind: local_file_json
+                  enabled: true
+                  url: "{_file_url(FIXTURE_DIR / 'local_items.json')}"
+        """,
+    )
+
+    result = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        init_db(conn)
+        rows = conn.execute(
+            """
+            SELECT key, value
+            FROM settings
+            WHERE key IN ('news.last_purge', 'news.last_scan_result')
+            """
+        ).fetchall()
+    settings = {str(row["key"]): json_loads(str(row["value"])) for row in rows}
+
+    assert result["status"] == "complete"
+    assert settings["news.last_purge"]["summary"] == {
+        "items": 0,
+        "fetch_runs": 0,
+        "source_health": 0,
+    }
+    assert settings["news.last_scan_result"]["status"] == "complete"
+    assert settings["news.last_scan_result"]["item_count"] == 2

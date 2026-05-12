@@ -116,6 +116,7 @@ def test_root_page_renders_html(tmp_path, monkeypatch):
     assert "console-1701" in body
     assert "/static/app.js?v=machine-console-13" in body
     assert "/static/app.css?v=machine-console-17" in body
+    assert 'id="news-scan-button"' in body
     assert 'data-active-scope="OVERVIEW"' in body
     assert 'data-scope-nav="OVERVIEW"' in body
     assert 'href="/"' in body
@@ -219,6 +220,48 @@ news:
     assert sources[0]["policy"]["basis"] == "local_fixture_only"
     assert sources[0]["health_state"] == "healthy"
     assert item["title"] == "Seattle ferry delay at Colman Dock"
+    assert summary["last_purge"]["summary"]["items"] == 0
+
+
+def test_news_scan_api_returns_disabled_and_started_states(tmp_path, monkeypatch):
+    _use_temp_state(monkeypatch, tmp_path)
+    disabled_config = tmp_path / "disabled.yml"
+    _write_test_config(disabled_config)
+    disabled_router = build_router(str(disabled_config))
+
+    disabled = _route_endpoint(disabled_router, "/api/news/scan")(api_module.BackgroundTasks())
+
+    assert disabled["status"] == "disabled"
+
+    enabled_config = tmp_path / "enabled.yml"
+    fixture = Path(__file__).resolve().parent / "fixtures" / "news" / "local_items.json"
+    enabled_config.write_text(
+        f"""
+paths:
+  repo_roots: []
+  explicit_repos: []
+logs: []
+projects: []
+news:
+  enabled: true
+  scopes:
+    LOCAL:
+      enabled: true
+      sources:
+        - id: local_fixture
+          name: Local fixture
+          kind: local_file_json
+          enabled: true
+          url: "file://{fixture.resolve()}"
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    enabled_router = build_router(str(enabled_config))
+
+    started = _route_endpoint(enabled_router, "/api/news/scan")(api_module.BackgroundTasks())
+
+    assert started["status"] == "started"
 
 
 def test_root_page_renders_codex_terminal_action_for_host_penalty(tmp_path, monkeypatch):

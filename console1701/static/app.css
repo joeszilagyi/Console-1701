@@ -366,6 +366,15 @@ summary {
   text-transform: uppercase;
 }
 
+.command-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.secondary-action {
+  color: var(--blue);
+}
+
 .action-button.is-busy,
 .action-button:disabled {
   cursor: wait;

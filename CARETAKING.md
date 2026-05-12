@@ -1,5 +1,14 @@
 # Caretaking Log
 
+## 2026-05-11 19:38 PDT - recent-signal explicit scan controls and retention evidence
+
+- Added `POST /api/news/scan` with a separate lock from host scans so recent-signal ingest remains explicit and does not piggyback on page loads.
+- Added a separate command-strip News ingest button that triggers the explicit API route and reports disabled/running states without hidden background fetching.
+- Persisted `news.last_purge` and `news.last_scan_result` runtime state in SQLite `settings` so SYSTEM can show purge timing and recent ingest result details.
+- Extended recent-signal summary data to include last purge evidence and SQLite DB size, then surfaced that in the SYSTEM recent-signal panel.
+- Updated README and BACKLOG to reflect the explicit news scan API and the new retention/runtime evidence now visible in SYSTEM.
+- Verified with `.venv/bin/ruff check .` and `.venv/bin/python -m pytest -q` (`86 passed`).
+
 ## 2026-05-11 19:10 PDT - recent-signal fixture ingest and scope UI follow-up
 
 - Added explicit `console-1701 news-scan` fixture ingest and `console-1701 news-sources` source-status commands without introducing live external fetches.

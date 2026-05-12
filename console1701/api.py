@@ -26,6 +26,7 @@ from console1701.evidence import (
 )
 from console1701.handoff import DEFAULT_TASK, create_handoff_packet
 from console1701.live_probe import read_live_snapshot
+from console1701.news.scanner import run_news_scan
 from console1701.news.storage import (
     get_news_item_detail,
     get_news_overview,
@@ -39,6 +40,7 @@ from console1701.terminal_action import TerminalLaunchError, launch_host_alert_c
 PACKAGE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(PACKAGE_DIR / "templates"))
 _SCAN_LOCK = threading.Lock()
+_NEWS_SCAN_LOCK = threading.Lock()
 SCOPE_NAMES = ("INTERNAL", "LOCAL", "REGIONAL", "NATIONAL", "GLOBAL", "ORBITAL", "SYSTEM")
 NAV_SCOPE_NAMES = ("OVERVIEW", *SCOPE_NAMES)
 
@@ -78,6 +80,13 @@ def _run_scan_locked(config_path: str | None) -> None:
         run_scan(config_path)
     finally:
         _SCAN_LOCK.release()
+
+
+def _run_news_scan_locked(config_path: str | None) -> None:
+    try:
+        run_news_scan(config_path)
+    finally:
+        _NEWS_SCAN_LOCK.release()
 
 
 def build_router(config_path: str | None = None) -> APIRouter:
@@ -276,6 +285,16 @@ def build_router(config_path: str | None = None) -> APIRouter:
         if not _SCAN_LOCK.acquire(blocking=False):
             return {"status": "already_running"}
         background_tasks.add_task(_run_scan_locked, config_path)
+        return {"status": "started"}
+
+    @router.post("/api/news/scan")
+    def news_scan(background_tasks: BackgroundTasks):
+        config = _config(config_path)
+        if not bool((config.get("news") or {}).get("enabled")):
+            return {"status": "disabled"}
+        if not _NEWS_SCAN_LOCK.acquire(blocking=False):
+            return {"status": "already_running"}
+        background_tasks.add_task(_run_news_scan_locked, config_path)
         return {"status": "started"}
 
     @router.post("/api/handoffs")

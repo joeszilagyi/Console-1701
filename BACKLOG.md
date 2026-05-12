@@ -97,7 +97,8 @@ future raw-payload debug rows. Default intent: recent awareness, not archive. Ex
 and last purge evidence in SYSTEM.
 
 Current state: SQLite purge runs during `console-1701 news-scan` for items, fetch runs, and source
-health. SYSTEM exposure for purge evidence is still pending.
+health. SYSTEM now shows last purge evidence and retention state basics; richer purge audit detail is
+still pending.
 
 ### Deterministic Ranking
 
@@ -133,7 +134,8 @@ warnings, and evidence that page loads do not perform external fetches.
 
 Current state: SYSTEM now shows source ingest status, scope readiness, source policy/health rows,
 table counts, last finished/successful ingest timestamps, and page-load safety evidence. Explicit DB
-size, config validation warning surfacing, and richer retention evidence are still pending.
+size is now included. Config validation warning surfacing and richer retention evidence are still
+pending.
 
 ### Official API/RSS First Live Ingest
 

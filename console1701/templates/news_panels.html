@@ -257,6 +257,8 @@
         <li><b>Page loads</b><span>No background fetches are triggered by GET routes.</span></li>
         <li><b>Fixtures</b><span>Current ingest accepts only enabled <code>file://</code> sources.</span></li>
         <li><b>Retention</b><span>Items, fetch runs, and source health are purged during explicit ingest.</span></li>
+        <li><b>Last purge</b><span>{{ (summary.last_purge or {}).get("observed_at") or "never" }}</span></li>
+        <li><b>DB size</b><span>{{ summary.db_size_bytes if summary.db_size_bytes is not none else "unknown" }} bytes</span></li>
         <li><b>Homepage policy</b><span>Homepage extraction stays config-gated and local-fixture only in this phase.</span></li>
       </ul>
     </article>

@@ -72,7 +72,10 @@
         <div><span>Uptime</span><strong>{{ session.uptime_human or "unknown" }}</strong></div>
         <div><span>Kernel</span><strong>{{ kernel.release or "unknown" }}</strong></div>
       </div>
-      <button id="scan-button" class="action-button" type="button">Manual scan</button>
+      <div class="command-actions">
+        <button id="scan-button" class="action-button" type="button">Manual scan</button>
+        <button id="news-scan-button" class="action-button secondary-action" type="button">News ingest</button>
+      </div>
     </header>
 
     <nav class="scope-nav" aria-label="Console scope selector">

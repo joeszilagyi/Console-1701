@@ -68,20 +68,47 @@ def run_news_scan(config_path: str | Path | None = None) -> dict[str, Any]:
             except NewsIngestError as exc:
                 errors.append(f"{source['id']}: {exc}")
         purge_summary = purge_news_retention(conn, config)
+        _record_news_runtime_state(
+            conn,
+            "news.last_purge",
+            {
+                "observed_at": utc_now(),
+                "summary": purge_summary,
+                "retention": (config.get("news") or {}).get("retention") or {},
+            },
+        )
+        result_status = "complete" if not errors else "partial"
+        result = {
+            "status": result_status,
+            "configured_sources": len(configured_sources),
+            "stored_sources": upserted_sources,
+            "scanned_sources": scanned_sources,
+            "healthy_sources": healthy_sources,
+            "item_count": item_count,
+            "errors": errors,
+            "purged": purge_summary,
+        }
+        _record_news_runtime_state(conn, "news.last_scan_result", result)
         conn.commit()
     finally:
         conn.close()
 
-    return {
-        "status": "complete" if not errors else "partial",
-        "configured_sources": len(configured_sources),
-        "stored_sources": upserted_sources,
-        "scanned_sources": scanned_sources,
-        "healthy_sources": healthy_sources,
-        "item_count": item_count,
-        "errors": errors,
-        "purged": purge_summary,
-    }
+    return result
+
+
+def _record_news_runtime_state(
+    conn: sqlite3.Connection,
+    key: str,
+    value: dict[str, Any],
+) -> None:
+    conn.execute(
+        """
+        INSERT INTO settings (key, value)
+        VALUES (?, ?)
+        ON CONFLICT(key) DO UPDATE SET value = excluded.value
+        """,
+        (key, json_dumps(value)),
+    )
 
 
 def _source_is_enabled(config: dict[str, Any], source: dict[str, Any]) -> bool:
