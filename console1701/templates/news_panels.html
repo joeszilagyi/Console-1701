@@ -36,11 +36,12 @@
       {% for source in sources %}
         {% set health = source.latest_health or {} %}
         {% set policy = source.policy or {} %}
-        {% set tone = tone_for_state(source.health_state or source.state.state) %}
+        {% set source_state = source.health_state or "not_run" %}
+        {% set tone = tone_for_state(source_state) %}
         <li class="source-status source-tone-{{ tone }}">
           <div class="source-status-head">
             <b>{{ source.name }}</b>
-            <span>{{ source.health_state or source.state.state or "not_run" }}</span>
+            <span>{{ source_state }}</span>
           </div>
           <p><code>{{ source.kind }}</code> · {{ policy.policy_state or policy.basis or "policy pending" }}</p>
           <small>{{ health.message or (policy.notes[0] if policy.notes else "No recent health note recorded.") }}</small>
@@ -261,6 +262,25 @@
         <li><b>DB size</b><span>{{ summary.db_size_bytes if summary.db_size_bytes is not none else "unknown" }} bytes</span></li>
         <li><b>Homepage policy</b><span>Homepage extraction stays config-gated and local-fixture only in this phase.</span></li>
       </ul>
+    </article>
+
+    <article class="module news-panel">
+      <div class="module-head">
+        <div>
+          <p class="module-kicker">System</p>
+          <h2>Config warnings</h2>
+        </div>
+        <span class="module-code">{{ summary.config_warnings | length }} warning{{ "" if (summary.config_warnings | length) == 1 else "s" }}</span>
+      </div>
+      {% if summary.config_warnings %}
+        <ul class="news-cluster-list">
+          {% for warning in summary.config_warnings %}
+            <li><b>Warning</b><span>{{ warning }}</span></li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="muted">No current recent-signal config warnings were derived from config and policy state.</p>
+      {% endif %}
     </article>
   </section>
 {%- endmacro %}

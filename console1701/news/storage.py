@@ -229,6 +229,7 @@ def get_news_scope_states(
 
 def get_news_storage_summary(conn: sqlite3.Connection, config: dict[str, Any]) -> dict[str, Any]:
     scope_states = get_news_scope_states(conn, config)
+    config_warnings = get_news_config_warnings(config)
     latest_health = _latest_health_by_source(conn)
     stale_source_count = sum(1 for health in latest_health.values() if _is_stale_health(health))
     latest_success = conn.execute(
@@ -271,6 +272,7 @@ def get_news_storage_summary(conn: sqlite3.Connection, config: dict[str, Any]) -
         "last_finished_ingest_at": last_finished_ingest_at,
         "last_purge": last_purge,
         "db_size_bytes": db_size_bytes,
+        "config_warnings": config_warnings,
         "scope_states": scope_states,
     }
 
@@ -330,6 +332,40 @@ def get_news_sources_status(
         )
     )
     return statuses
+
+
+def get_news_config_warnings(config: dict[str, Any]) -> list[str]:
+    news_cfg = config.get("news") or {}
+    warnings: list[str] = []
+    sources = iter_news_sources(config)
+    enabled_sources = [source for source in sources if source.get("enabled")]
+
+    if news_cfg.get("enabled") and not enabled_sources:
+        warnings.append("News is enabled, but no sources are enabled.")
+
+    for scope in NEWS_SCOPES:
+        scope_cfg = ((news_cfg.get("scopes") or {}).get(scope)) or {}
+        scope_sources = scope_cfg.get("sources") or []
+        if scope_cfg.get("enabled") and not scope_sources:
+            warnings.append(f"{scope} is enabled, but no sources are configured for it.")
+
+    for source in sources:
+        policy = evaluate_source_policy(config, source)
+        source_key = str(source["id"])
+        if source.get("enabled") and not str(source.get("url") or "").startswith("file://"):
+            warnings.append(
+                f"{source_key} is enabled but blocked in the current fixture-only ingest phase."
+            )
+        if policy.get("auth_required") and not policy.get("auth_configured"):
+            warnings.append(f"{source_key} declares auth, but no auth material is configured.")
+        if source.get("enabled") and not (
+            (((news_cfg.get("scopes") or {}).get(source.get("scope"))) or {}).get("enabled")
+        ):
+            warnings.append(
+                f"{source_key} is enabled, but parent scope {source.get('scope')} is disabled."
+            )
+
+    return warnings
 
 
 def get_news_scope_view(

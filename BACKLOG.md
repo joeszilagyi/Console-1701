@@ -133,9 +133,8 @@ successful fetch by source/scope, retention state, DB size, source table counts,
 warnings, and evidence that page loads do not perform external fetches.
 
 Current state: SYSTEM now shows source ingest status, scope readiness, source policy/health rows,
-table counts, last finished/successful ingest timestamps, and page-load safety evidence. Explicit DB
-size is now included. Config validation warning surfacing and richer retention evidence are still
-pending.
+table counts, last finished/successful ingest timestamps, page-load safety evidence, DB size, and
+derived config warnings. Richer retention evidence is still pending.
 
 ### Official API/RSS First Live Ingest
 

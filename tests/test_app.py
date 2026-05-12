@@ -264,6 +264,45 @@ news:
     assert started["status"] == "started"
 
 
+def test_system_scope_renders_recent_signal_config_warnings(tmp_path, monkeypatch):
+    _use_temp_state(monkeypatch, tmp_path)
+    config_path = tmp_path / "config.yml"
+    config_path.write_text(
+        """
+paths:
+  repo_roots: []
+  explicit_repos: []
+logs: []
+projects: []
+news:
+  enabled: true
+  scopes:
+    LOCAL:
+      enabled: true
+    REGIONAL:
+      sources:
+        - id: blocked_remote
+          name: Blocked remote
+          kind: rss
+          enabled: true
+          url: "https://example.invalid/feed.xml"
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    router = build_router(str(config_path))
+
+    response = _route_endpoint(router, "/{scope}")(_request("/SYSTEM"), "SYSTEM")
+    body = response.body.decode()
+    summary = _route_endpoint(router, "/api/news/summary")()
+
+    assert response.status_code == 200
+    assert "Config warnings" in body
+    assert "LOCAL is enabled, but no sources are configured for it." in body
+    assert "blocked_remote is enabled but blocked in the current fixture-only ingest phase." in body
+    assert "LOCAL is enabled, but no sources are configured for it." in summary["config_warnings"]
+
+
 def test_root_page_renders_codex_terminal_action_for_host_penalty(tmp_path, monkeypatch):
     db_path = _use_temp_state(monkeypatch, tmp_path)
     config_path = tmp_path / "config.yml"

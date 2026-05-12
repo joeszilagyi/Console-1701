@@ -1,5 +1,12 @@
 # Caretaking Log
 
+## 2026-05-11 19:50 PDT - recent-signal config warnings and system readiness
+
+- Added derived recent-signal config warnings so SYSTEM can surface enabled-but-blocked fixture-phase sources, enabled scopes with no sources, disabled parent scopes, and missing auth material.
+- Extended recent-signal summary output with those warnings and rendered them in the SYSTEM scope panel instead of leaving operators to infer misconfiguration from raw source rows.
+- Added app coverage for SYSTEM warning rendering and summary API warning payloads.
+- Verified with `.venv/bin/ruff check .` and `.venv/bin/python -m pytest -q` (`87 passed`).
+
 ## 2026-05-11 19:38 PDT - recent-signal explicit scan controls and retention evidence
 
 - Added `POST /api/news/scan` with a separate lock from host scans so recent-signal ingest remains explicit and does not piggyback on page loads.
