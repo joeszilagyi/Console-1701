@@ -160,14 +160,27 @@ def main(argv: list[str] | None = None) -> int:
         for source in statuses:
             print(
                 "{scope} {source_key} enabled={enabled} kind={kind} "
-                "policy={policy} health={health} next_eligible={next_eligible}".format(
+                "policy={policy} health={health} items={item_count}".format(
                     scope=source["scope"],
                     source_key=source["source_key"],
                     enabled="yes" if source["enabled"] else "no",
                     kind=source["kind"],
                     policy=(source.get("policy") or {}).get("policy_state") or "unknown",
                     health=source.get("health_state") or "not_run",
+                    item_count=source.get("item_count") or 0,
+                )
+            )
+            print(
+                "  last_success={last_success} last_failure={last_failure} "
+                "next_eligible={next_eligible} last_fetch={last_fetch}".format(
+                    last_success=source.get("last_success_at") or "never",
+                    last_failure=source.get("last_failure_at") or "never",
                     next_eligible=source.get("next_eligible_at") or "n/a",
+                    last_fetch=(
+                        (source.get("latest_fetch_run") or {}).get("finished_at")
+                        or (source.get("latest_fetch_run") or {}).get("started_at")
+                        or "never"
+                    ),
                 )
             )
         return 0

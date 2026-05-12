@@ -362,6 +362,9 @@ def test_cli_news_sources_command_reports_policy_and_health(tmp_path, capsys):
     assert "ORBITAL orbital_atom enabled=yes kind=atom" in captured.out
     assert "policy=allowed_fixture_only" in captured.out
     assert "health=healthy" in captured.out
+    assert "items=2" in captured.out
+    assert "last_success=" in captured.out
+    assert "next_eligible=" in captured.out
 
 
 def test_run_news_scan_records_last_purge_and_last_result(tmp_path):

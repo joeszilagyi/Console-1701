@@ -1,5 +1,11 @@
 # Caretaking Log
 
+## 2026-05-11 20:22 PDT - richer recent-signal source audit output
+
+- Expanded `console-1701 news-sources` so each source reports item count, last success, last failure, next eligible ingest time, and the last recorded fetch timestamp instead of only a thin status line.
+- Brought the same timing fields into the shared recent-signal source-status panels so the UI and terminal views stay aligned when auditing source health and scheduling.
+- Verified with `.venv/bin/ruff check .` and `.venv/bin/python -m pytest -q` (`89 passed`).
+
 ## 2026-05-11 20:13 PDT - explainable recent-signal ranking factors
 
 - Added a dedicated deterministic ranking helper for recent-signal items instead of leaving rank computation embedded as a mostly opaque integer.

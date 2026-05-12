@@ -45,6 +45,11 @@
           </div>
           <p><code>{{ source.kind }}</code> · {{ policy.policy_state or policy.basis or "policy pending" }}</p>
           <small>{{ health.message or (policy.notes[0] if policy.notes else "No recent health note recorded.") }}</small>
+          <small>
+            last success {{ source.last_success_at or "never" }} ·
+            last failure {{ source.last_failure_at or "never" }} ·
+            next eligible {{ source.next_eligible_at or "n/a" }}
+          </small>
         </li>
       {% endfor %}
     </ul>
