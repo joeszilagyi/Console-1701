@@ -257,6 +257,7 @@ def get_news_storage_summary(conn: sqlite3.Connection, config: dict[str, Any]) -
         else None
     )
     last_purge = _read_setting(conn, "news.last_purge", {})
+    last_scan_result = _read_setting(conn, "news.last_scan_result", {})
     db_path_row = conn.execute("PRAGMA database_list").fetchone()
     db_path = Path(str(db_path_row["file"])) if db_path_row and db_path_row["file"] else None
     db_size_bytes = db_path.stat().st_size if db_path and db_path.exists() else None
@@ -271,6 +272,7 @@ def get_news_storage_summary(conn: sqlite3.Connection, config: dict[str, Any]) -
         "last_successful_ingest_at": last_successful_ingest_at,
         "last_finished_ingest_at": last_finished_ingest_at,
         "last_purge": last_purge,
+        "last_scan_result": last_scan_result,
         "db_size_bytes": db_size_bytes,
         "config_warnings": config_warnings,
         "scope_states": scope_states,

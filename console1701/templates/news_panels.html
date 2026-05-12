@@ -220,6 +220,19 @@
         <div><span>Last finished</span><strong>{{ summary.last_finished_ingest_at or "never" }}</strong></div>
         <div><span>Last success</span><strong>{{ summary.last_successful_ingest_at or "never" }}</strong></div>
       </div>
+      {% if summary.last_scan_result %}
+        <ul class="news-cluster-list">
+          <li>
+            <b>Last scan result</b>
+            <span>
+              {{ summary.last_scan_result.status or "unknown" }} ·
+              scanned {{ summary.last_scan_result.scanned_sources or 0 }} ·
+              healthy {{ summary.last_scan_result.healthy_sources or 0 }} ·
+              items {{ summary.last_scan_result.item_count or 0 }}
+            </span>
+          </li>
+        </ul>
+      {% endif %}
     </article>
 
     <article class="module news-panel">

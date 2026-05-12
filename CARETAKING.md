@@ -1,5 +1,11 @@
 # Caretaking Log
 
+## 2026-05-11 20:31 PDT - recent-signal last scan result visibility
+
+- Extended the recent-signal summary payload to expose the persisted `news.last_scan_result` runtime state alongside purge data.
+- Surfaced the last recent-signal scan outcome in the SYSTEM panel so partial or successful explicit ingests are visible without opening SQLite manually.
+- Added app coverage for summary API scan-result visibility and reverified with `.venv/bin/ruff check .` and `.venv/bin/python -m pytest -q` (`89 passed`).
+
 ## 2026-05-11 20:22 PDT - richer recent-signal source audit output
 
 - Expanded `console-1701 news-sources` so each source reports item count, last success, last failure, next eligible ingest time, and the last recorded fetch timestamp instead of only a thin status line.
