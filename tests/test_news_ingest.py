@@ -132,6 +132,18 @@ def test_run_news_scan_ingests_local_fixtures_and_dedupes(tmp_path):
     evidence_rows = [json_loads(str(row["evidence_json"]), {}) for row in items]
     assert {"fixture", "local"}.issubset(tag_values)
     assert any(str(row.get("fixture_path", "")).endswith(".json") for row in evidence_rows)
+    ranked_local_row = next(
+        row
+        for row in evidence_rows
+        if str(row.get("fixture_path", "")).endswith("local_items.json")
+        and row["ranking"]["factors"]["official_source_boost"] == 12
+    )
+    ranking = ranked_local_row["ranking"]
+    assert ranking["factors"]["source_priority"] == 60
+    assert ranking["factors"]["scope_priority_boost"] == 18
+    assert ranking["factors"]["official_source_boost"] == 12
+    assert ranking["factors"]["recency_bonus"] >= 0
+    assert ranking["reasons"]
     assert [row["status"] for row in fetch_runs] == ["success", "success", "success", "success"]
     assert len(clusters) == 4
 

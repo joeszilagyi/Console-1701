@@ -1,5 +1,12 @@
 # Caretaking Log
 
+## 2026-05-11 20:13 PDT - explainable recent-signal ranking factors
+
+- Added a dedicated deterministic ranking helper for recent-signal items instead of leaving rank computation embedded as a mostly opaque integer.
+- Ranking evidence now records explicit factors and reasons for source priority, recency, freshness, scope boost, official-tag boost, repeat observations, tag density, and prior source-health confidence.
+- Updated the scoped news backlog state to reflect that generic deterministic ranking is partially implemented rather than absent.
+- Verified with `.venv/bin/ruff check .` and `.venv/bin/python -m pytest -q` (`89 passed`).
+
 ## 2026-05-11 20:02 PDT - separate disabled news timer install path
 
 - Added `systemd/console-1701-news-scan.service` and `systemd/console-1701-news-scan.timer` so recent-signal ingest can be scheduled separately from the host scan timer.

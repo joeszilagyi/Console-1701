@@ -102,11 +102,16 @@ still pending.
 
 ### Deterministic Ranking
 
-Status: not implemented.
+Status: partially implemented.
 
 Add explainable ranking with no LLM calls. Candidate factors: recency, source priority, official
 source boost, scope priority, user-pinned tags, repeated topic/cluster count, source-provided alert
 severity, item freshness, and source health confidence. Store ranking factors in evidence.
+
+Current state: fixture ingest now stores explicit ranking factors and reasons in item evidence for
+source priority, recency, freshness, official-tag boost, scope priority, repeat observations, tag
+density, and prior source-health confidence. Cluster-count/topic repetition and source-provided
+severity weighting are still pending.
 
 ### Scope Page UI
 

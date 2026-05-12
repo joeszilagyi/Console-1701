@@ -7,7 +7,7 @@ from typing import Any
 
 from console1701.config import ensure_state_dirs, iter_news_sources, load_config
 from console1701.db import connect_db, init_db, json_dumps, json_loads, utc_now
-from console1701.news.normalize import cluster_key, content_hash, expires_at, rank_score, url_hash
+from console1701.news.normalize import cluster_key, content_hash, expires_at, url_hash
 from console1701.news.parsers import (
     NewsIngestError,
     NewsParserError,
@@ -16,6 +16,7 @@ from console1701.news.parsers import (
     load_fixture_text,
     parse_fixture_items,
 )
+from console1701.news.ranking import build_rank_result
 from console1701.news.source_policy import evaluate_source_policy
 
 
@@ -496,23 +497,11 @@ def _upsert_item(
     combined_tags = list(dict.fromkeys([*(source.get("tags") or []), *(item.get("tags") or [])]))
     hashed_url = url_hash(str(item["canonical_url"] or item["url"]))
     cluster = cluster_key(str(item["title"]), hashed_url)
-    evidence = dict(item.get("evidence") or {})
-    evidence["cluster_key"] = cluster
-    evidence["ranking"] = {
-        "source_priority": int(source.get("priority", 50)),
-        "tag_count": len(combined_tags),
-    }
-    item_rank = rank_score(
-        int(source.get("priority", 50)),
-        item.get("source_published_at"),
-        seen_at=seen_at,
-        tag_count=len(combined_tags),
-    )
     retention_days = int(source.get("retention_days") or default_retention_days)
     expire_at = expires_at(seen_at, retention_days)
     existing = conn.execute(
         """
-        SELECT id, first_seen_at
+        SELECT id, first_seen_at, trend_score
         FROM news_items
         WHERE source_id = ? AND url_hash = ?
         ORDER BY id DESC
@@ -520,6 +509,24 @@ def _upsert_item(
         """,
         (source_id, hashed_url),
     ).fetchone()
+    latest_health_state = _latest_health_state(conn, source_id)
+    repeat_count = (
+        int(existing["trend_score"])
+        if existing is not None and existing["trend_score"]
+        else 0
+    )
+    ranking = build_rank_result(
+        source,
+        item,
+        seen_at=seen_at,
+        combined_tags=combined_tags,
+        latest_health_state=latest_health_state,
+        repeat_count=repeat_count,
+    )
+    evidence = dict(item.get("evidence") or {})
+    evidence["cluster_key"] = cluster
+    evidence["ranking"] = ranking
+    item_rank = int(ranking["score"])
     if existing is None:
         conn.execute(
             """
@@ -585,6 +592,22 @@ def _upsert_item(
             int(existing["id"]),
         ),
     )
+
+
+def _latest_health_state(conn: sqlite3.Connection, source_id: int) -> str | None:
+    row = conn.execute(
+        """
+        SELECT state
+        FROM news_source_health
+        WHERE source_id = ?
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (source_id,),
+    ).fetchone()
+    if row is None or not row["state"]:
+        return None
+    return str(row["state"])
 
 
 def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
