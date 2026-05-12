@@ -8,6 +8,7 @@ from console1701 import api as api_module
 from console1701 import config as config_module
 from console1701.api import build_router
 from console1701.db import connect_db, init_db, utc_now
+from console1701.news.scanner import run_news_scan
 from console1701.scanner import insert_host_snapshot
 
 
@@ -121,9 +122,10 @@ def test_root_page_renders_html(tmp_path, monkeypatch):
     assert 'data-scope-nav="INTERNAL"' in body
     assert 'href="/INTERNAL"' in body
     assert 'data-scope-nav="ORBITAL"' in body
-    assert "Placeholder 1" in body
-    assert "Placeholder 4" in body
-    assert "Reserved for overview console content." in body
+    assert "Attention now" in body
+    assert "Local and regional pulse" in body
+    assert "Orbital and source health" in body
+    assert "Recent-signal ingest is disabled by config." in body
     assert "Machine readout" not in body
     assert "demo-host" in body
     assert str(db_path) in body
@@ -154,10 +156,69 @@ def test_scoped_root_page_marks_active_scope(tmp_path, monkeypatch):
     assert 'data-active-scope="ORBITAL"' in body
     assert 'data-scope-nav="ORBITAL"' in body
     assert 'aria-current="page"' in body
-    assert "Placeholder 1" in body
-    assert "Reserved for orbital console content." in body
+    assert "Latest items" in body
+    assert "Source health" in body
+    assert "External news ingest is disabled by config." in body
     assert "Machine readout" not in body
     assert str(db_path) in body
+
+
+def test_news_scope_page_and_api_render_fixture_backed_state(tmp_path, monkeypatch):
+    db_path = _use_temp_state(monkeypatch, tmp_path)
+    config_path = tmp_path / "config.yml"
+    fixture = Path(__file__).resolve().parent / "fixtures" / "news" / "local_items.json"
+    config_path.write_text(
+        f"""
+paths:
+  repo_roots: []
+  explicit_repos: []
+logs: []
+projects: []
+news:
+  enabled: true
+  scopes:
+    LOCAL:
+      enabled: true
+      sources:
+        - id: local_fixture
+          name: Local fixture
+          kind: local_file_json
+          enabled: true
+          url: "file://{fixture.resolve()}"
+          parser: generic_json_items
+          tags: [fixture]
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    router = build_router(str(config_path))
+    run_news_scan(str(config_path))
+
+    scope_response = _route_endpoint(router, "/{scope}")(_request("/LOCAL"), "LOCAL")
+    scope_body = scope_response.body.decode()
+
+    assert scope_response.status_code == 200
+    assert "Seattle ferry delay at Colman Dock" in scope_body
+    assert "Source health" in scope_body
+    assert "Local fixture" in scope_body
+
+    summary = _route_endpoint(router, "/api/news/summary")()
+    scope_payload = _route_endpoint(router, "/api/news/scopes/{scope}")("LOCAL", 8)
+    sources = _route_endpoint(router, "/api/news/sources")()
+
+    with connect_db(db_path) as conn:
+        init_db(conn)
+        item_id = conn.execute("SELECT id FROM news_items ORDER BY id LIMIT 1").fetchone()["id"]
+
+    item = _route_endpoint(router, "/api/news/items/{item_id}")(item_id)
+
+    assert summary["enabled"] is True
+    assert summary["active_item_count"] == 2
+    assert scope_payload["state"]["state"] == "healthy"
+    assert len(scope_payload["items"]) == 2
+    assert sources[0]["policy"]["basis"] == "local_fixture_only"
+    assert sources[0]["health_state"] == "healthy"
+    assert item["title"] == "Seattle ferry delay at Colman Dock"
 
 
 def test_root_page_renders_codex_terminal_action_for_host_penalty(tmp_path, monkeypatch):

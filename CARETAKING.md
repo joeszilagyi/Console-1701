@@ -1,5 +1,14 @@
 # Caretaking Log
 
+## 2026-05-11 19:10 PDT - recent-signal fixture ingest and scope UI follow-up
+
+- Added explicit `console-1701 news-scan` fixture ingest and `console-1701 news-sources` source-status commands without introducing live external fetches.
+- Implemented local fixture parsing for JSON, RSS, Atom, and homepage selector fixtures, plus SQLite writes for items, clusters, fetch runs, source health, and retention purge.
+- Added source policy evaluation and exposed recent-signal read APIs for summary, per-scope views, source status, and item detail.
+- Replaced non-INTERNAL placeholder scope bays with real OVERVIEW, scope, and SYSTEM recent-signal panels backed by SQLite/config only.
+- Updated README and BACKLOG status to reflect fixture-only ingest, explicit commands, and current SYSTEM/source-health coverage.
+- Verified with `.venv/bin/ruff check .` and `.venv/bin/python -m pytest -q` (`84 passed`).
+
 ## 2026-05-03 21:24 PDT - scripts/dev_server.sh serviceability review
 
 - Selected `scripts/dev_server.sh` as the oldest eligible tracked tool/script file after excluding ignored generated artifacts; initial mtime was epoch `1777861238` (`2026-05-03 19:20:38 PDT`).

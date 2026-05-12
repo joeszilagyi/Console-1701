@@ -42,6 +42,7 @@ Initialize config, scan once, and run the server:
 ```bash
 console-1701 init-config
 console-1701 scan
+console-1701 news-scan
 console-1701 serve
 ```
 
@@ -107,6 +108,24 @@ The scanner is separate from the web app:
 
 ```bash
 console-1701 scan
+```
+
+Recent-signal/news ingest is also separate from the web app:
+
+```bash
+console-1701 news-scan
+console-1701 news-sources
+```
+
+Current recent-signal phase:
+
+```text
+Disabled by default
+Explicit command path only
+Page loads read SQLite and config only
+No hidden fetch on GET routes
+Fixture-only ingest for enabled file:// JSON/RSS/Atom/homepage sources
+Live external HTTP ingest not implemented yet
 ```
 
 Scan sequence:
@@ -241,6 +260,14 @@ When external checks are disabled, the UI reports local route and DNS state only
 
 Page loads read SQLite only. They do not scan repos.
 
+The non-INTERNAL scope pages now show honest recent-signal state:
+
+```text
+OVERVIEW: cross-scope synthesis bays
+LOCAL / REGIONAL / NATIONAL / GLOBAL / ORBITAL: state, latest stored items, clusters, source health
+SYSTEM: source ingest status, scope readiness, source policy, and page-load safety evidence
+```
+
 ## Safety Limits
 
 Hard defaults:
@@ -359,6 +386,10 @@ GET  /api/events               recent event stream
 GET  /api/host                 latest host/system snapshot with summary and evidence
 GET  /api/host/history         compact host snapshot history
 GET  /api/live                 local live sensor snapshot and scan timing
+GET  /api/news/summary         recent-signal storage/config summary
+GET  /api/news/scopes/{scope}  latest stored recent-signal items/clusters for one scope
+GET  /api/news/sources         configured source policy and health state
+GET  /api/news/items/{id}      one stored recent-signal item with evidence
 POST /api/host/actions/codex   launch a user-clicked host-alert Codex terminal
 GET  /api/evidence/{id}        raw interpretation evidence
 GET  /api/handoffs             handoff packet list
@@ -408,6 +439,13 @@ or:
 
 ```bash
 ~/projects/console-1701/.venv/bin/console-1701 scan
+```
+
+Manual recent-signal ingest:
+
+```bash
+~/.local/bin/console-1701 news-scan
+~/.local/bin/console-1701 news-sources
 ```
 
 Config:

@@ -7,6 +7,8 @@ from importlib.metadata import PackageNotFoundError, version
 from console1701.config import DEFAULT_CONFIG_PATH, init_config, load_config
 from console1701.db import connect_db, init_db
 from console1701.handoff import DEFAULT_TASK, create_handoff_packet
+from console1701.news.scanner import run_news_scan
+from console1701.news.storage import get_news_sources_status
 from console1701.scanner import run_scan
 
 CLI_DESCRIPTION = """Local-only Debian machine console.
@@ -67,6 +69,26 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_config_arg(scan_parser)
 
+    news_scan_parser = subparsers.add_parser(
+        "news-scan",
+        help="Ingest configured local recent-signal fixtures once",
+        description=(
+            "Run one explicit recent-signal ingest pass. The current phase accepts only enabled "
+            "local file fixtures and never makes network calls."
+        ),
+    )
+    _add_config_arg(news_scan_parser)
+
+    news_sources_parser = subparsers.add_parser(
+        "news-sources",
+        help="List configured recent-signal sources and current policy/health state",
+        description=(
+            "Read configured recent-signal sources plus their SQLite-backed health/fetch status. "
+            "This command does not fetch sources."
+        ),
+    )
+    _add_config_arg(news_sources_parser)
+
     serve_parser = subparsers.add_parser(
         "serve",
         help="Run the local-only web UI on 127.0.0.1",
@@ -109,6 +131,46 @@ def main(argv: list[str] | None = None) -> int:
             for error in result["errors"]:
                 print(f"- {error}", file=sys.stderr)
         return 0 if result["status"] in {"complete", "capped"} else 1
+
+    if args.command == "news-scan":
+        result = run_news_scan(args.config)
+        print(
+            "News scan {status}: configured_sources={configured_sources} "
+            "scanned_sources={scanned_sources} healthy_sources={healthy_sources} "
+            "item_count={item_count}".format(**result)
+        )
+        if result.get("errors"):
+            for error in result["errors"]:
+                print(f"- {error}", file=sys.stderr)
+        return 0 if result["status"] in {"complete", "disabled", "partial"} else 1
+
+    if args.command == "news-sources":
+        config = load_config(args.config)
+        sqlite_cfg = config.get("sqlite", {})
+        with connect_db(
+            config["_db_path"],
+            busy_timeout_ms=int(sqlite_cfg.get("busy_timeout_ms", 5000)),
+            journal_mode=str(sqlite_cfg.get("journal_mode", "WAL")),
+        ) as conn:
+            init_db(conn)
+            statuses = get_news_sources_status(conn, config)
+        if not statuses:
+            print("No news sources are configured.")
+            return 0
+        for source in statuses:
+            print(
+                "{scope} {source_key} enabled={enabled} kind={kind} "
+                "policy={policy} health={health} next_eligible={next_eligible}".format(
+                    scope=source["scope"],
+                    source_key=source["source_key"],
+                    enabled="yes" if source["enabled"] else "no",
+                    kind=source["kind"],
+                    policy=(source.get("policy") or {}).get("policy_state") or "unknown",
+                    health=source.get("health_state") or "not_run",
+                    next_eligible=source.get("next_eligible_at") or "n/a",
+                )
+            )
+        return 0
 
     if args.command == "serve":
         import uvicorn

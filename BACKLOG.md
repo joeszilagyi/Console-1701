@@ -16,9 +16,17 @@ whenever new ideas come up and are not completed immediately.
   explanations.
 - Alert rows can launch a user-clicked local terminal with an interactive Codex scenario.
 - The local delta image is displayed from `console1701/static/codex-alert-delta.png`.
-- Recent-signal/news scaffolding is present but inert: `news:` config defaults disabled, source
-  validation rejects unsafe shapes, SQLite metadata tables exist, and storage helpers expose
-  disabled/not-configured states without fetching external sources.
+- Recent-signal/news support remains disabled by default: `news:` config validation rejects unsafe
+  shapes, SQLite metadata tables exist, storage helpers expose disabled/not-configured states, and
+  explicit fixture-only ingest exists without live external fetching.
+- `console-1701 news-scan` now provides explicit local-fixture-only ingest for enabled `file://`
+  JSON/RSS/Atom/homepage sources, updates source health/fetch runs/items/clusters in SQLite, and
+  performs retention purge without network access.
+- `/api/news/summary`, `/api/news/scopes/{scope}`, `/api/news/sources`, and `/api/news/items/{id}`
+  now expose SQLite-backed recent-signal state without triggering fetches.
+- OVERVIEW, LOCAL, REGIONAL, NATIONAL, GLOBAL, ORBITAL, and SYSTEM now render real
+  disabled/not-configured/source-backed recent-signal panels instead of placeholder bays.
+- `console-1701 news-sources` lists configured source policy and health state without fetching.
 
 ## Scoped Recent Signal / News Ingestion
 
@@ -52,7 +60,7 @@ Include indexes for latest-by-scope, latest-by-source, source health, retention 
 
 ### Local Fixture Ingest Harness
 
-Status: not implemented.
+Status: implemented.
 
 Create a news ingest path that reads local RSS/Atom/JSON/homepage fixtures only. This phase must not
 make network calls. It should normalize fixture items into SQLite, update source health, run
@@ -60,7 +68,7 @@ retention purge, and provide deterministic evidence for each item.
 
 ### Parser Tests
 
-Status: not implemented.
+Status: implemented.
 
 Add tests for RSS fixtures, Atom fixtures, JSON API fixtures, homepage fixture selectors,
 malformed feeds, huge payload rejection/truncation, bounded title/description lengths, timestamp
@@ -68,20 +76,28 @@ normalization, and fail-soft parser errors.
 
 ### Source Policy And Robots Evidence Layer
 
-Status: not implemented.
+Status: partially implemented.
 
 Add a policy module that records source basis, source kind, enablement, auth requirement state,
 homepage-extractor allowance, robots decisions when applicable, and policy notes. Homepage extraction
 must be blocked unless explicitly enabled and must record robots evidence when used. Robots handling
 is an operational courtesy, not a legal shield.
 
+Current state: source policy is recorded in `news_sources.policy_json`, surfaced in API/UI/CLI, and
+includes fixture-only/live-blocked basis, source kind, enablement, auth state, homepage-extractor
+allowance, and a robots placeholder state. Live robots fetch/decision evidence is still pending until
+real HTTP ingestion exists.
+
 ### Retention Purge
 
-Status: not implemented.
+Status: partially implemented.
 
 Add deterministic purge logic for expired news items, old fetch runs, old source health rows, and any
 future raw-payload debug rows. Default intent: recent awareness, not archive. Expose retention policy
 and last purge evidence in SYSTEM.
+
+Current state: SQLite purge runs during `console-1701 news-scan` for items, fetch runs, and source
+health. SYSTEM exposure for purge evidence is still pending.
 
 ### Deterministic Ranking
 
@@ -93,7 +109,7 @@ severity, item freshness, and source health confidence. Store ranking factors in
 
 ### Scope Page UI
 
-Status: not implemented.
+Status: implemented.
 
 Replace non-INTERNAL placeholder bays with real disabled/not-configured/source-backed panels when
 news support exists. LOCAL, REGIONAL, NATIONAL, GLOBAL, and ORBITAL should share a compact template
@@ -101,7 +117,7 @@ partial where possible. Do not show fake headlines or demo data.
 
 ### OVERVIEW Synthesis Bays
 
-Status: not implemented.
+Status: implemented.
 
 Turn OVERVIEW into a cross-scope synthesis surface with four initial bays: Attention now, Local and
 regional pulse, National and global pulse, and Orbital and source health. Local, INTERNAL, and SYSTEM
@@ -109,11 +125,15 @@ urgent items should not be buried under broad distant headlines.
 
 ### SYSTEM Source Health Bay
 
-Status: not implemented.
+Status: partially implemented.
 
 Add SYSTEM panels for source ingest status, stale sources, failed parsers, disabled sources, last
 successful fetch by source/scope, retention state, DB size, source table counts, config validation
 warnings, and evidence that page loads do not perform external fetches.
+
+Current state: SYSTEM now shows source ingest status, scope readiness, source policy/health rows,
+table counts, last finished/successful ingest timestamps, and page-load safety evidence. Explicit DB
+size, config validation warning surfacing, and richer retention evidence are still pending.
 
 ### Official API/RSS First Live Ingest
 
@@ -142,11 +162,15 @@ to bypass platform APIs, auth, paywalls, rate limits, or bot controls. Keep rete
 
 ### Documentation Update
 
-Status: not implemented.
+Status: partially implemented.
 
 When news scaffolding exists, update README, config documentation, safety notes, and command help to
 explain disabled-by-default behavior, page-load SQLite-only reads, explicit ingest commands,
 retention, source policy, and how to audit source health.
+
+Current state: README and CLI surfaces now mention `news-scan`, `news-sources`, page-load SQLite-only
+reads, and current fixture-only behavior. Config-specific walkthroughs, retention auditing details,
+and future live-ingest operational notes are still pending.
 
 ### Separate Disabled Systemd News Timer
 

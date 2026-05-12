@@ -389,6 +389,26 @@ summary {
   align-items: stretch;
 }
 
+.scope-dashboard {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 0.42rem;
+  align-items: stretch;
+}
+
+.news-panel {
+  grid-column: span 4;
+  min-height: 20rem;
+}
+
+.news-panel-wide {
+  grid-column: span 6;
+}
+
+.news-state-card {
+  min-height: 16rem;
+}
+
 .scope-placeholder-panel {
   min-height: 600px;
   height: auto;
@@ -895,6 +915,98 @@ summary {
 .module p,
 .repo-line em {
   color: var(--muted);
+}
+
+.news-item-list,
+.news-cluster-list,
+.source-status-list {
+  display: grid;
+  gap: 0.38rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.news-item,
+.source-status,
+.news-cluster-list li {
+  min-width: 0;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid rgba(45, 88, 124, 0.72);
+  background: rgba(5, 16, 27, 0.62);
+}
+
+.news-item-head,
+.source-status-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  align-items: start;
+}
+
+.news-item-head a,
+.source-status-head b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.news-item-head span,
+.source-status-head span,
+.news-cluster-list span,
+.news-tag-row em,
+.source-status small {
+  color: var(--muted);
+  font-family: "Cascadia Mono", "Fira Code", ui-monospace, monospace;
+  font-size: 0.72rem;
+}
+
+.news-item p,
+.source-status p,
+.source-status small {
+  margin: 0.28rem 0 0;
+}
+
+.news-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  margin-top: 0.35rem;
+}
+
+.news-tag-row code {
+  padding: 0.1rem 0.28rem;
+  border: 1px solid rgba(79, 220, 255, 0.18);
+  background: rgba(3, 10, 18, 0.72);
+  font-size: 0.72rem;
+}
+
+.news-cluster-list li,
+.source-status-list li {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.news-cluster-list b,
+.source-status-list b {
+  color: var(--text);
+}
+
+.source-tone-ok {
+  border-left: 3px solid var(--green);
+}
+
+.source-tone-warning {
+  border-left: 3px solid var(--amber);
+}
+
+.source-tone-critical {
+  border-left: 3px solid var(--red);
+}
+
+.source-tone-muted {
+  border-left: 3px solid var(--line-strong);
 }
 
 .alert-list,
@@ -1563,6 +1675,11 @@ textarea:focus-visible {
   .readout-grid.six {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+
+  .news-panel,
+  .news-panel-wide {
+    grid-column: span 6;
+  }
 }
 
 @media (max-width: 1050px) {
@@ -1577,7 +1694,8 @@ textarea:focus-visible {
 
   .command-readouts,
   .status-ribbon,
-  .scope-placeholder-grid {
+  .scope-placeholder-grid,
+  .scope-dashboard {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1620,6 +1738,7 @@ textarea:focus-visible {
   .status-ribbon,
   .scope-nav,
   .scope-placeholder-grid,
+  .scope-dashboard,
   .summary-grid,
   .readout-grid,
   .readout-grid.six {
