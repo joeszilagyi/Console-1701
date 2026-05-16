@@ -386,7 +386,11 @@ def _sfd_public_impact(*, incident_type: str, unit_count: int | None) -> dict[st
         "unit_threshold": 5,
         "type_signal": type_signal,
         "reason": reason,
-        "public_impact_score": (20 if type_signal else 0) + (min(unit_count or 0, 10) * 2),
+        "public_impact_score": (
+            (20 if type_signal else 0) + (min(unit_count or 0, 10) * 2)
+            if elevated
+            else 0
+        ),
     }
 
 

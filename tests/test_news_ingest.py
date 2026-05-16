@@ -382,6 +382,7 @@ def test_run_news_scan_ingests_registry_backed_nws_alert_fixture(tmp_path):
     assert evidence["nws_alert"]["severity"] == "Severe"
     assert evidence["nws_alert"]["ranking"]["total_alert_weight"] == 58
     assert evidence["ranking"]["factors"]["official_source_boost"] == 12
+    assert evidence["ranking"]["factors"]["local_official_alert_boost"] == 45
     assert source["name"] == "NWS active alerts API"
     assert policy["source_class"] == "official_weather_hazard"
     assert policy["adapter"] == "official_api_json"
@@ -440,6 +441,10 @@ def test_run_news_scan_ingests_registry_backed_alertseattle_fixture(tmp_path):
         evidence["ranking"]["factors"]["official_source_boost"] == 12
         for evidence in evidence_rows
     )
+    assert any(
+        evidence["ranking"]["factors"]["local_official_alert_boost"] == 45
+        for evidence in evidence_rows
+    )
 
 
 def test_run_news_scan_ingests_registry_backed_metro_rss_fixture(tmp_path):
@@ -493,6 +498,10 @@ def test_run_news_scan_ingests_registry_backed_metro_rss_fixture(tmp_path):
     )
     assert any(
         evidence["ranking"]["factors"]["official_source_boost"] == 12
+        for evidence in evidence_rows
+    )
+    assert any(
+        evidence["ranking"]["factors"]["local_transit_impact_boost"] == 37
         for evidence in evidence_rows
     )
 
@@ -571,6 +580,10 @@ def test_run_news_scan_ingests_gated_registry_backed_local_blog_fixture(tmp_path
         evidence["local_blog"]["signal_type"] == "disruption"
         for evidence in evidence_rows
     )
+    assert any(
+        evidence["ranking"]["factors"]["local_blog_signal_boost"] == 20
+        for evidence in evidence_rows
+    )
 
 
 def test_run_news_scan_ingests_registry_backed_sfd_fire_911_fixture(tmp_path):
@@ -624,10 +637,13 @@ def test_run_news_scan_ingests_registry_backed_sfd_fire_911_fixture(tmp_path):
     major = evidence_by_title["SFD Structure Fire near E Pine St"]
     aid = evidence_by_title["SFD Aid Response near Ballard"]
     assert major["sfd_fire_911"]["public_impact"]["elevated"] is True
+    assert major["ranking"]["factors"]["local_public_impact_boost"] == 34
     assert major["privacy"]["article_body_stored"] is False
     assert aid["privacy"]["exact_location_suppressed"] is True
     assert aid["privacy"]["redaction_applied"] is True
     assert aid["privacy"]["article_body_stored"] is False
+    assert aid["ranking"]["factors"]["local_public_impact_boost"] == 0
+    assert aid["ranking"]["factors"]["local_privacy_penalty"] == -40
     assert "9876" not in descriptions["SFD Aid Response near Ballard"]
     assert "9876" not in json.dumps(aid, sort_keys=True)
 
@@ -681,6 +697,7 @@ def test_run_news_scan_ingests_registry_backed_wsdot_alert_fixture(tmp_path):
     assert policy["parser"] == "wsdot_travel_alerts_json"
     assert evidence["wsdot_alert"]["route_tokens"] == ["I-5"]
     assert evidence["wsdot_alert"]["ranking"]["public_impact_score"] == 28
+    assert evidence["ranking"]["factors"]["local_public_impact_boost"] == 28
     assert evidence["ranking"]["factors"]["official_source_boost"] == 12
 
 

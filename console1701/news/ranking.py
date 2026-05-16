@@ -43,6 +43,7 @@ def build_rank_result(
     tag_bonus = min(len(combined_tags), 10)
     repeat_bonus = min(max(0, repeat_count), 5)
     health_confidence = HEALTH_CONFIDENCE_BOOST.get(str(latest_health_state or "").lower(), 0)
+    local_signal = _local_signal_factors(item)
 
     factors = {
         "source_priority": source_priority,
@@ -53,6 +54,7 @@ def build_rank_result(
         "tag_bonus": tag_bonus,
         "repeat_observation_bonus": repeat_bonus,
         "source_health_confidence": health_confidence,
+        **local_signal["factors"],
     }
     score = sum(factors.values())
     reasons = [
@@ -72,6 +74,7 @@ def build_rank_result(
         reasons.append(
             f"Source health contributes {health_confidence} from state {latest_health_state}."
         )
+    reasons.extend(local_signal["reasons"])
 
     return {
         "score": score,
@@ -79,6 +82,92 @@ def build_rank_result(
         "age_hours": age_hours,
         "reasons": reasons,
     }
+
+
+def _local_signal_factors(item: dict[str, Any]) -> dict[str, Any]:
+    evidence = item.get("evidence") if isinstance(item.get("evidence"), dict) else {}
+    factors: dict[str, int] = {
+        "local_official_alert_boost": 0,
+        "local_public_impact_boost": 0,
+        "local_transit_impact_boost": 0,
+        "local_blog_signal_boost": 0,
+        "local_privacy_penalty": 0,
+    }
+    reasons: list[str] = []
+
+    alertseattle = evidence.get("alertseattle")
+    if isinstance(alertseattle, dict):
+        ranking = (
+            alertseattle.get("ranking")
+            if isinstance(alertseattle.get("ranking"), dict)
+            else {}
+        )
+        boost = min(45, _int_value(ranking.get("city_alert_score")))
+        factors["local_official_alert_boost"] = max(factors["local_official_alert_boost"], boost)
+        if boost:
+            reasons.append(f"AlertSeattle city-alert evidence adds {boost}.")
+
+    nws_alert = evidence.get("nws_alert")
+    if isinstance(nws_alert, dict):
+        ranking = nws_alert.get("ranking") if isinstance(nws_alert.get("ranking"), dict) else {}
+        boost = min(45, _int_value(ranking.get("total_alert_weight")))
+        factors["local_official_alert_boost"] = max(factors["local_official_alert_boost"], boost)
+        if boost:
+            reasons.append(f"NWS active-alert severity evidence adds {boost}.")
+
+    sfd = evidence.get("sfd_fire_911")
+    if isinstance(sfd, dict):
+        public_impact = (
+            sfd.get("public_impact") if isinstance(sfd.get("public_impact"), dict) else {}
+        )
+        boost = min(40, _int_value(public_impact.get("public_impact_score")))
+        factors["local_public_impact_boost"] = max(
+            factors["local_public_impact_boost"],
+            boost,
+        )
+        if boost:
+            reasons.append(f"SFD public-impact evidence adds {boost}.")
+
+    wsdot = evidence.get("wsdot_alert")
+    if isinstance(wsdot, dict):
+        ranking = wsdot.get("ranking") if isinstance(wsdot.get("ranking"), dict) else {}
+        boost = min(40, _int_value(ranking.get("public_impact_score")))
+        factors["local_public_impact_boost"] = max(
+            factors["local_public_impact_boost"],
+            boost,
+        )
+        if boost:
+            reasons.append(f"WSDOT public-impact evidence adds {boost}.")
+
+    metro = evidence.get("metro_advisory")
+    if isinstance(metro, dict):
+        ranking = metro.get("ranking") if isinstance(metro.get("ranking"), dict) else {}
+        boost = min(40, _int_value(ranking.get("transit_impact_score")))
+        factors["local_transit_impact_boost"] = boost
+        if boost:
+            reasons.append(f"Metro transit-impact evidence adds {boost}.")
+
+    local_blog = evidence.get("local_blog")
+    if isinstance(local_blog, dict):
+        ranking = local_blog.get("ranking") if isinstance(local_blog.get("ranking"), dict) else {}
+        boost = min(20, _int_value(ranking.get("local_blog_score")))
+        factors["local_blog_signal_boost"] = boost
+        if boost:
+            reasons.append(f"Neighborhood-blog local signal evidence adds {boost}.")
+
+    privacy = evidence.get("privacy")
+    if isinstance(privacy, dict) and privacy.get("low_acuity_private"):
+        factors["local_privacy_penalty"] = -40
+        reasons.append("LOCAL privacy rules subtract 40 for low-acuity private-call evidence.")
+
+    return {"factors": factors, "reasons": reasons}
+
+
+def _int_value(value: Any) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
 
 
 def _parse_time(value: Any) -> datetime | None:

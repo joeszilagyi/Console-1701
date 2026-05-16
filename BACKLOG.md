@@ -38,6 +38,8 @@ whenever new ideas come up and are not completed immediately.
   severity evidence.
 - LOCAL fixture parsing now includes a neighborhood-blog RSS parser with explicit config gating,
   neighborhood matching, and headline-metadata-only evidence.
+- LOCAL deterministic ranking now consumes parser evidence for official alerts, public impact,
+  transit impact, neighborhood-blog signal, and privacy penalties.
 - `/api/news/summary`, `/api/news/scopes/{scope}`, `/api/news/sources`, and `/api/news/items/{id}`
   now expose SQLite-backed recent-signal state without triggering fetches.
 - OVERVIEW, LOCAL, REGIONAL, NATIONAL, GLOBAL, ORBITAL, and SYSTEM now render real
@@ -353,12 +355,19 @@ area, and privacy-safe location tokens. Do not use LLMs, embeddings, or hidden c
 
 ### LOCAL Deterministic Ranking
 
-Status: not implemented.
+Status: partially implemented.
 
 Implement explainable LOCAL ranking with recency, official severity, source diversity, public
 impact, source priority, active alert state, cluster size, privacy penalty, duplicate-family
 penalty, stale-source penalty, and low-confidence penalty. Store score features and ranking reasons
 in JSON evidence.
+
+Current state: item ranking now adds explicit LOCAL factors from parser evidence:
+`local_official_alert_boost`, `local_public_impact_boost`, `local_transit_impact_boost`,
+`local_blog_signal_boost`, and `local_privacy_penalty`. These cover AlertSeattle, NWS, SFD, WSDOT,
+Metro, and local-blog fixtures with stored factor values and human-readable reasons. Source
+diversity, event cluster size, duplicate-family penalty, and richer stale/low-confidence LOCAL
+adjustments remain pending.
 
 ### LOCAL Privacy Redaction Rules
 
