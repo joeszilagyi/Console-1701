@@ -369,6 +369,54 @@ news:
     assert any(source["health_message"] for source in sources)
 
 
+def test_news_get_routes_do_not_trigger_ingest_or_fixture_reads(tmp_path, monkeypatch):
+    _use_temp_state(monkeypatch, tmp_path)
+    config_path = tmp_path / "config.yml"
+    config_path.write_text(
+        """
+paths:
+  repo_roots: []
+  explicit_repos: []
+logs: []
+projects: []
+news:
+  enabled: true
+  scopes:
+    LOCAL:
+      enabled: true
+      sources:
+        - id: missing_fixture
+          name: Missing fixture
+          kind: local_file_json
+          enabled: true
+          url: "file:///tmp/console-1701-missing-news-fixture.json"
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    router = build_router(str(config_path))
+
+    def fail_if_scan_runs(_config_path=None):
+        raise AssertionError("GET route triggered news ingest")
+
+    monkeypatch.setattr(api_module, "run_news_scan", fail_if_scan_runs)
+
+    root = _route_endpoint(router, "/")(_request("/"))
+    local_page = _route_endpoint(router, "/{scope}")(_request("/LOCAL"), "LOCAL")
+    system_page = _route_endpoint(router, "/{scope}")(_request("/SYSTEM"), "SYSTEM")
+    summary = _route_endpoint(router, "/api/news/summary")()
+    scope = _route_endpoint(router, "/api/news/scopes/{scope}")("LOCAL", 8)
+    sources = _route_endpoint(router, "/api/news/sources")()
+
+    assert root.status_code == 200
+    assert local_page.status_code == 200
+    assert system_page.status_code == 200
+    assert summary["source_state_counts"]["configured_never_run"] == 1
+    assert scope["state"]["state"] == "configured_never_run"
+    assert sources[0]["source_key"] == "missing_fixture"
+    assert sources[0]["latest_fetch_run"] is None
+
+
 def test_root_page_renders_codex_terminal_action_for_host_penalty(tmp_path, monkeypatch):
     db_path = _use_temp_state(monkeypatch, tmp_path)
     config_path = tmp_path / "config.yml"

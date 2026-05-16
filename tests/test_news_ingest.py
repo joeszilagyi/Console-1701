@@ -76,6 +76,192 @@ def test_parse_fixture_items_support_json_rss_atom_and_homepage():
     assert homepage_items[0]["url"] == "https://news.example.test/port/cruise-terminal-plan"
 
 
+def test_parse_nws_alert_fixture_filters_local_alerts_and_preserves_evidence():
+    source = {
+        "id": "nws_active_alerts_api",
+        "scope": "LOCAL",
+        "kind": "api_json",
+        "parser": "nws_alerts_json",
+        "zone_ids": ["WAZ558"],
+    }
+
+    items = parse_fixture_items(source, (FIXTURE_DIR / "local_nws_alerts.json").read_text())
+
+    assert len(items) == 1
+    assert items[0]["title"] == "High Wind Warning issued May 5 for Seattle"
+    assert items[0]["source_published_at"] == "2026-05-05T17:00:00+00:00"
+    assert {"official", "weather", "alert", "nws", "severe"}.issubset(items[0]["tags"])
+    evidence = items[0]["evidence"]["nws_alert"]
+    assert evidence["event"] == "High Wind Warning"
+    assert evidence["severity"] == "Severe"
+    assert evidence["urgency"] == "Expected"
+    assert evidence["certainty"] == "Likely"
+    assert evidence["affected_zones"] == ["https://api.weather.gov/zones/forecast/WAZ558"]
+    assert evidence["effective"] == "2026-05-05T17:00:00+00:00"
+    assert evidence["expires"] == "2026-05-06T06:00:00+00:00"
+    assert evidence["ranking"]["active_alert"] is True
+    assert evidence["ranking"]["total_alert_weight"] == 58
+    assert evidence["filter"]["matched_keywords"] == ["Seattle"]
+    assert evidence["filter"]["matched_zone_ids"] == ["WAZ558"]
+
+
+def test_parse_alertseattle_rss_fixture_preserves_official_alert_evidence():
+    source = {
+        "id": "alertseattle_feed",
+        "scope": "LOCAL",
+        "kind": "rss",
+        "parser": "alertseattle_rss",
+    }
+
+    items = parse_fixture_items(source, (FIXTURE_DIR / "local_alertseattle.rss").read_text())
+
+    assert len(items) == 2
+    utility = items[0]["evidence"]["alertseattle"]
+    emergency = items[1]["evidence"]["alertseattle"]
+    assert items[0]["title"] == "Power outage affecting parts of Capitol Hill"
+    assert items[0]["source_published_at"] == "2026-05-05T22:15:00+00:00"
+    assert {"official", "alertseattle", "city-alert", "utility", "moderate"}.issubset(
+        items[0]["tags"]
+    )
+    assert utility["event_type"] == "utility"
+    assert utility["severity"] == "moderate"
+    assert utility["ranking"]["city_alert_score"] == 42
+    assert emergency["event_type"] == "emergency"
+    assert emergency["severity"] == "severe"
+    assert emergency["ranking"]["city_alert_score"] == 54
+
+
+def test_parse_metro_rss_fixture_preserves_route_and_impact_evidence():
+    source = {
+        "id": "metro_service_advisories_rss",
+        "scope": "LOCAL",
+        "kind": "rss",
+        "parser": "metro_rss",
+        "service_area_keywords": ["Downtown Seattle", "Ballard"],
+    }
+
+    items = parse_fixture_items(
+        source,
+        (FIXTURE_DIR / "local_metro_service_advisories.rss").read_text(),
+    )
+
+    assert len(items) == 2
+    first = items[0]["evidence"]["metro_advisory"]
+    second = items[1]["evidence"]["metro_advisory"]
+    assert items[0]["title"] == "Routes 7, 49 and 60 rerouted in Downtown Seattle"
+    assert items[0]["source_published_at"] == "2026-05-05T19:15:00+00:00"
+    assert first["route_ids"] == ["7", "49", "60"]
+    assert first["affected_service_areas"] == ["Downtown Seattle"]
+    assert first["impact"] == "reroute"
+    assert first["ranking"]["transit_impact_score"] == 37
+    assert {"official", "transit", "metro", "route-7", "route-49", "route-60"}.issubset(
+        items[0]["tags"]
+    )
+    assert second["route_ids"] == ["40"]
+    assert second["affected_service_areas"] == ["Ballard"]
+    assert second["impact"] == "delay"
+
+
+def test_parse_local_blog_rss_fixture_preserves_neighborhood_metadata_only_evidence():
+    source = {
+        "id": "west_seattle_blog_feed",
+        "scope": "LOCAL",
+        "kind": "rss",
+        "parser": "local_blog_rss",
+        "source_family": "west_seattle_blog",
+        "neighborhood_keywords": ["West Seattle", "Capitol Hill"],
+    }
+
+    items = parse_fixture_items(source, (FIXTURE_DIR / "local_blog_feed.rss").read_text())
+
+    assert len(items) == 2
+    bridge = items[0]["evidence"]["local_blog"]
+    civic = items[1]["evidence"]["local_blog"]
+    assert items[0]["title"] == "West Seattle Bridge lane blocked after collision"
+    assert items[0]["source_published_at"] == "2026-05-05T23:05:00+00:00"
+    assert {"local-news", "neighborhood-blog", "disruption", "west-seattle"}.issubset(
+        items[0]["tags"]
+    )
+    assert bridge["publisher_family"] == "west_seattle_blog"
+    assert bridge["neighborhoods"] == ["West Seattle"]
+    assert bridge["signal_type"] == "disruption"
+    assert bridge["ranking"]["local_blog_score"] == 22
+    assert bridge["storage"]["headline_metadata_only"] is True
+    assert bridge["storage"]["article_body_stored"] is False
+    assert civic["neighborhoods"] == ["Capitol Hill"]
+    assert civic["signal_type"] == "civic"
+
+
+def test_parse_sfd_fire_911_fixture_redacts_low_acuity_private_locations():
+    source = {
+        "id": "sfd_fire_911_dataset",
+        "scope": "LOCAL",
+        "kind": "open_data_json",
+        "parser": "sfd_fire_911_socrata",
+        "dataset_id": "kzjm-xkqj",
+        "homepage_url": "https://dev.socrata.com/foundry/data.seattle.gov/kzjm-xkqj",
+    }
+
+    items = parse_fixture_items(source, (FIXTURE_DIR / "local_sfd_fire_911.json").read_text())
+
+    assert len(items) == 2
+    major = items[0]
+    aid = items[1]
+    assert major["title"] == "SFD Structure Fire near E Pine St"
+    assert major["source_published_at"] == "2026-05-05T20:05:00+00:00"
+    major_evidence = major["evidence"]["sfd_fire_911"]
+    assert major_evidence["dataset_id"] == "kzjm-xkqj"
+    assert major_evidence["row_id"] == "row-major-fire"
+    assert major_evidence["incident_number"] == "F260050001"
+    assert major_evidence["unit_count"] == 7
+    assert major_evidence["location_tokens"] == ["Capitol Hill", "E Pine St"]
+    assert major_evidence["public_impact"]["elevated"] is True
+    assert major["evidence"]["privacy"]["exact_location_suppressed"] is False
+
+    assert aid["title"] == "SFD Aid Response near Ballard"
+    assert aid["description"] == (
+        "SFD reported Aid Response with 1 reported unit(s). Exact location suppressed by "
+        "LOCAL privacy rules."
+    )
+    aid_evidence = aid["evidence"]["sfd_fire_911"]
+    aid_privacy = aid["evidence"]["privacy"]
+    assert aid_evidence["row_id"] == "row-aid-response"
+    assert aid_evidence["public_impact"]["elevated"] is False
+    assert aid_privacy["exact_location_suppressed"] is True
+    assert aid_privacy["low_acuity_private"] is True
+    assert aid_privacy["display_location"] == "Ballard"
+    assert aid_privacy["raw_address_stored"] is False
+    assert "9876" not in json.dumps(aid, sort_keys=True)
+
+
+def test_parse_wsdot_alert_fixture_filters_seattle_corridors_and_scores_impact():
+    source = {
+        "id": "wsdot_traffic_api",
+        "scope": "LOCAL",
+        "kind": "api_json",
+        "parser": "wsdot_travel_alerts_json",
+        "route_keywords": ["I-5", "SR 99"],
+        "area_keywords": ["Seattle", "Downtown"],
+    }
+
+    items = parse_fixture_items(source, (FIXTURE_DIR / "local_wsdot_alerts.json").read_text())
+
+    assert len(items) == 1
+    assert items[0]["title"] == "I-5 northbound lane blocked near Downtown Seattle"
+    assert items[0]["source_published_at"] == "2026-05-05T21:05:00+00:00"
+    assert {"official", "transport", "wsdot", "lane_blocked", "i-5"}.issubset(
+        items[0]["tags"]
+    )
+    evidence = items[0]["evidence"]["wsdot_alert"]
+    assert evidence["alert_id"] == "1001"
+    assert evidence["route_tokens"] == ["I-5"]
+    assert evidence["impact"] == "lane_blocked"
+    assert evidence["impact_weight"] == 22
+    assert evidence["ranking"]["public_impact_score"] == 28
+    assert evidence["filter"]["matched_route_tokens"] == ["I-5"]
+    assert evidence["filter"]["matched_area_keywords"] == ["Seattle", "Downtown"]
+
+
 def test_run_news_scan_ingests_local_fixtures_and_dedupes(tmp_path):
     config_path = _write_config(
         tmp_path / "config.yml",
@@ -147,6 +333,355 @@ def test_run_news_scan_ingests_local_fixtures_and_dedupes(tmp_path):
     assert ranking["reasons"]
     assert [row["status"] for row in fetch_runs] == ["success", "success", "success", "success"]
     assert len(clusters) == 4
+
+
+def test_run_news_scan_ingests_registry_backed_nws_alert_fixture(tmp_path):
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        news:
+          enabled: true
+          scopes:
+            LOCAL:
+              enabled: true
+              sources:
+                - id: nws_active_alerts_api
+                  enabled: true
+                  url: "{_file_url(FIXTURE_DIR / 'local_nws_alerts.json')}"
+                  zone_ids: [WAZ558]
+        """,
+    )
+
+    result = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        init_db(conn)
+        row = conn.execute(
+            """
+            SELECT title, tags_json, evidence_json
+            FROM news_items
+            WHERE source_kind = 'api_json'
+            """
+        ).fetchone()
+        source = conn.execute(
+            """
+            SELECT source_key, name, policy_json
+            FROM news_sources
+            WHERE source_key = 'nws_active_alerts_api'
+            """
+        ).fetchone()
+
+    evidence = json_loads(str(row["evidence_json"]), {})
+    policy = json_loads(str(source["policy_json"]), {})
+
+    assert result["status"] == "complete"
+    assert result["item_count"] == 1
+    assert row["title"] == "High Wind Warning issued May 5 for Seattle"
+    assert "official" in json_loads(str(row["tags_json"]), [])
+    assert evidence["nws_alert"]["severity"] == "Severe"
+    assert evidence["nws_alert"]["ranking"]["total_alert_weight"] == 58
+    assert evidence["ranking"]["factors"]["official_source_boost"] == 12
+    assert source["name"] == "NWS active alerts API"
+    assert policy["source_class"] == "official_weather_hazard"
+    assert policy["adapter"] == "official_api_json"
+    assert policy["parser"] == "nws_alerts_json"
+
+
+def test_run_news_scan_ingests_registry_backed_alertseattle_fixture(tmp_path):
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        news:
+          enabled: true
+          scopes:
+            LOCAL:
+              enabled: true
+              sources:
+                - id: alertseattle_feed
+                  enabled: true
+                  url: "{_file_url(FIXTURE_DIR / 'local_alertseattle.rss')}"
+        """,
+    )
+
+    result = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        init_db(conn)
+        rows = conn.execute(
+            """
+            SELECT title, evidence_json
+            FROM news_items
+            ORDER BY title
+            """
+        ).fetchall()
+        source = conn.execute(
+            """
+            SELECT name, policy_json
+            FROM news_sources
+            WHERE source_key = 'alertseattle_feed'
+            """
+        ).fetchone()
+
+    evidence_rows = [json_loads(str(row["evidence_json"]), {}) for row in rows]
+    policy = json_loads(str(source["policy_json"]), {})
+
+    assert result["status"] == "complete"
+    assert result["item_count"] == 2
+    assert source["name"] == "AlertSeattle RSS feed candidate"
+    assert policy["adapter"] == "rss_atom"
+    assert policy["parser"] == "alertseattle_rss"
+    assert any(
+        evidence["alertseattle"]["severity"] == "severe"
+        for evidence in evidence_rows
+    )
+    assert any(
+        evidence["ranking"]["factors"]["official_source_boost"] == 12
+        for evidence in evidence_rows
+    )
+
+
+def test_run_news_scan_ingests_registry_backed_metro_rss_fixture(tmp_path):
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        news:
+          enabled: true
+          scopes:
+            LOCAL:
+              enabled: true
+              sources:
+                - id: metro_service_advisories_rss
+                  enabled: true
+                  url: "{_file_url(FIXTURE_DIR / 'local_metro_service_advisories.rss')}"
+                  service_area_keywords: ["Downtown Seattle", "Ballard"]
+        """,
+    )
+
+    result = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        init_db(conn)
+        rows = conn.execute(
+            """
+            SELECT title, evidence_json
+            FROM news_items
+            ORDER BY title
+            """
+        ).fetchall()
+        source = conn.execute(
+            """
+            SELECT name, policy_json
+            FROM news_sources
+            WHERE source_key = 'metro_service_advisories_rss'
+            """
+        ).fetchone()
+
+    evidence_rows = [json_loads(str(row["evidence_json"]), {}) for row in rows]
+    policy = json_loads(str(source["policy_json"]), {})
+
+    assert result["status"] == "complete"
+    assert result["item_count"] == 2
+    assert source["name"] == "King County Metro service advisories RSS"
+    assert policy["adapter"] == "rss_atom"
+    assert policy["parser"] == "metro_rss"
+    assert any(
+        evidence["metro_advisory"]["route_ids"] == ["7", "49", "60"]
+        for evidence in evidence_rows
+    )
+    assert any(
+        evidence["ranking"]["factors"]["official_source_boost"] == 12
+        for evidence in evidence_rows
+    )
+
+
+def test_run_news_scan_ingests_gated_registry_backed_local_blog_fixture(tmp_path):
+    blocked_config = _write_config(
+        tmp_path / "blocked.yml",
+        f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        news:
+          enabled: true
+          scopes:
+            LOCAL:
+              enabled: true
+              sources:
+                - id: west_seattle_blog_feed
+                  enabled: true
+                  url: "{_file_url(FIXTURE_DIR / 'local_blog_feed.rss')}"
+        """,
+    )
+    with pytest.raises(config_module.ConfigError, match="local.allow_neighborhood_blogs true"):
+        load_config(blocked_config)
+
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        local:
+          allow_neighborhood_blogs: true
+        news:
+          enabled: true
+          scopes:
+            LOCAL:
+              enabled: true
+              sources:
+                - id: west_seattle_blog_feed
+                  enabled: true
+                  url: "{_file_url(FIXTURE_DIR / 'local_blog_feed.rss')}"
+                  neighborhood_keywords: ["West Seattle", "Capitol Hill"]
+        """,
+    )
+
+    result = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        init_db(conn)
+        rows = conn.execute(
+            """
+            SELECT title, evidence_json
+            FROM news_items
+            ORDER BY title
+            """
+        ).fetchall()
+        source = conn.execute(
+            """
+            SELECT name, policy_json
+            FROM news_sources
+            WHERE source_key = 'west_seattle_blog_feed'
+            """
+        ).fetchone()
+
+    evidence_rows = [json_loads(str(row["evidence_json"]), {}) for row in rows]
+    policy = json_loads(str(source["policy_json"]), {})
+
+    assert result["status"] == "complete"
+    assert result["item_count"] == 2
+    assert source["name"] == "West Seattle Blog feed"
+    assert policy["source_class"] == "neighborhood_blog"
+    assert policy["parser"] == "local_blog_rss"
+    assert policy["local"]["allow_neighborhood_blogs"] is True
+    assert any(
+        evidence["local_blog"]["storage"]["article_body_stored"] is False
+        for evidence in evidence_rows
+    )
+    assert any(
+        evidence["local_blog"]["signal_type"] == "disruption"
+        for evidence in evidence_rows
+    )
+
+
+def test_run_news_scan_ingests_registry_backed_sfd_fire_911_fixture(tmp_path):
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        news:
+          enabled: true
+          scopes:
+            LOCAL:
+              enabled: true
+              sources:
+                - id: sfd_fire_911_dataset
+                  enabled: true
+                  url: "{_file_url(FIXTURE_DIR / 'local_sfd_fire_911.json')}"
+        """,
+    )
+
+    result = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        init_db(conn)
+        rows = conn.execute(
+            """
+            SELECT title, description, evidence_json
+            FROM news_items
+            ORDER BY title
+            """
+        ).fetchall()
+        source = conn.execute(
+            """
+            SELECT name, policy_json
+            FROM news_sources
+            WHERE source_key = 'sfd_fire_911_dataset'
+            """
+        ).fetchone()
+
+    evidence_by_title = {
+        str(row["title"]): json_loads(str(row["evidence_json"]), {})
+        for row in rows
+    }
+    descriptions = {str(row["title"]): str(row["description"]) for row in rows}
+    policy = json_loads(str(source["policy_json"]), {})
+
+    assert result["status"] == "complete"
+    assert result["item_count"] == 2
+    assert source["name"] == "Seattle Real-Time Fire 911 Calls dataset"
+    assert policy["adapter"] == "socrata_json"
+    assert policy["parser"] == "sfd_fire_911_socrata"
+    major = evidence_by_title["SFD Structure Fire near E Pine St"]
+    aid = evidence_by_title["SFD Aid Response near Ballard"]
+    assert major["sfd_fire_911"]["public_impact"]["elevated"] is True
+    assert major["privacy"]["article_body_stored"] is False
+    assert aid["privacy"]["exact_location_suppressed"] is True
+    assert aid["privacy"]["redaction_applied"] is True
+    assert aid["privacy"]["article_body_stored"] is False
+    assert "9876" not in descriptions["SFD Aid Response near Ballard"]
+    assert "9876" not in json.dumps(aid, sort_keys=True)
+
+
+def test_run_news_scan_ingests_registry_backed_wsdot_alert_fixture(tmp_path):
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        news:
+          enabled: true
+          scopes:
+            LOCAL:
+              enabled: true
+              sources:
+                - id: wsdot_traffic_api
+                  enabled: true
+                  url: "{_file_url(FIXTURE_DIR / 'local_wsdot_alerts.json')}"
+                  route_keywords: ["I-5", "SR 99"]
+                  area_keywords: ["Seattle", "Downtown"]
+        """,
+    )
+
+    result = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        init_db(conn)
+        row = conn.execute(
+            """
+            SELECT title, evidence_json
+            FROM news_items
+            WHERE source_kind = 'api_json'
+            """
+        ).fetchone()
+        source = conn.execute(
+            """
+            SELECT name, policy_json
+            FROM news_sources
+            WHERE source_key = 'wsdot_traffic_api'
+            """
+        ).fetchone()
+
+    evidence = json_loads(str(row["evidence_json"]), {})
+    policy = json_loads(str(source["policy_json"]), {})
+
+    assert result["status"] == "complete"
+    assert result["item_count"] == 1
+    assert row["title"] == "I-5 northbound lane blocked near Downtown Seattle"
+    assert source["name"] == "WSDOT traffic API page"
+    assert policy["adapter"] == "official_api_json"
+    assert policy["parser"] == "wsdot_travel_alerts_json"
+    assert evidence["wsdot_alert"]["route_tokens"] == ["I-5"]
+    assert evidence["wsdot_alert"]["ranking"]["public_impact_score"] == 28
+    assert evidence["ranking"]["factors"]["official_source_boost"] == 12
 
 
 def test_run_news_scan_fails_soft_for_bad_fixture_and_non_file_source(tmp_path):
@@ -475,6 +1010,10 @@ def test_news_sources_status_derives_policy_and_never_run_states(tmp_path):
                   kind: local_file_json
                   enabled: false
                   url: "file:///tmp/disabled.json"
+                  source_family: nws
+                  source_class: official_weather_hazard
+                  adapter: rss_atom
+                  verification_status: candidate_needs_verification
             REGIONAL:
               enabled: false
               sources:
@@ -506,3 +1045,10 @@ def test_news_sources_status_derives_policy_and_never_run_states(tmp_path):
     assert statuses["disabled_fixture"]["health_state"] == "disabled"
     assert statuses["disabled_scope_remote"]["health_state"] == "policy_blocked"
     assert statuses["waiting_fixture"]["health_state"] == "configured_never_run"
+    assert statuses["disabled_fixture"]["source_family"] == "nws"
+    assert statuses["disabled_fixture"]["source_class"] == "official_weather_hazard"
+    assert statuses["disabled_fixture"]["adapter"] == "rss_atom"
+    assert (
+        statuses["disabled_fixture"]["policy"]["local"]["verification_status"]
+        == "candidate_needs_verification"
+    )

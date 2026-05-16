@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>King County Metro Service Advisories</title>
+    <link>https://kingcounty.gov/en/dept/metro/rider-tools/service-advisories</link>
+    <description>Fixture service advisories for parser tests.</description>
+    <item>
+      <title>Routes 7, 49 and 60 rerouted in Downtown Seattle</title>
+      <link>https://metro.example.test/advisories/routes-7-49-60-reroute</link>
+      <description>Routes 7, 49 and 60 are rerouted near Downtown Seattle due to a blocked street.</description>
+      <pubDate>Tue, 05 May 2026 19:15:00 GMT</pubDate>
+      <category>service advisory</category>
+      <category>downtown</category>
+    </item>
+    <item>
+      <title>Route 40 delays near Ballard Bridge</title>
+      <link>https://metro.example.test/advisories/route-40-delay</link>
+      <description>Route 40 is delayed near Ballard Bridge with trips running about 15 minutes late.</description>
+      <pubDate>Tue, 05 May 2026 19:30:00 GMT</pubDate>
+      <category>service advisory</category>
+      <category>ballard</category>
+    </item>
+  </channel>
+</rss>

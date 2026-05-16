@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>AlertSeattle</title>
+    <link>https://alert.seattle.gov/</link>
+    <description>Fixture AlertSeattle feed for parser tests.</description>
+    <item>
+      <title>Power outage affecting parts of Capitol Hill</title>
+      <link>https://alert.seattle.gov/2026/05/05/capitol-hill-power-outage/</link>
+      <description>Seattle City Light crews are responding to a power outage affecting several blocks of Capitol Hill.</description>
+      <pubDate>Tue, 05 May 2026 22:15:00 GMT</pubDate>
+      <category>Power Outage</category>
+      <category>Seattle City Light</category>
+    </item>
+    <item>
+      <title>Emergency shelter-in-place notice near downtown waterfront</title>
+      <link>https://alert.seattle.gov/2026/05/05/waterfront-shelter-in-place/</link>
+      <description>Emergency officials have issued a shelter in place notice near the downtown waterfront.</description>
+      <pubDate>Tue, 05 May 2026 22:30:00 GMT</pubDate>
+      <category>Emergency</category>
+      <category>Downtown</category>
+    </item>
+  </channel>
+</rss>

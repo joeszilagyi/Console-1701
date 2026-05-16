@@ -12,6 +12,8 @@ Keep the local-only safety envelope intact:
   paths.
 - Treat host probes as read-only and timeout-protected.
 - Preserve existing repo scan behavior while keeping the Debian machine as the homepage focus.
+- The repo-root `Upkeeper.sh` symlink is off limits: do not read it, follow it, execute it, edit it,
+  chmod it, delete it, stage it, or otherwise interact with it.
 
 Backlog maintenance rule:
 

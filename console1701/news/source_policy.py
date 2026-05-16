@@ -2,7 +2,40 @@ from __future__ import annotations
 
 from typing import Any
 
-from console1701.config import NEWS_HOMEPAGE_SOURCE_KINDS
+from console1701.config import LOCAL_SOCIAL_SOURCE_FAMILIES, NEWS_HOMEPAGE_SOURCE_KINDS
+
+
+def _local_policy(config: dict[str, Any], source: dict[str, Any]) -> dict[str, Any] | None:
+    if str(source.get("scope") or "").upper() != "LOCAL":
+        return None
+    local_cfg = config.get("local") or {}
+    source_family = str(source.get("source_family") or "").strip().lower() or None
+    source_class = str(source.get("source_class") or "").strip().lower() or None
+    is_social = source_class == "social_candidate" or source_family in LOCAL_SOCIAL_SOURCE_FAMILIES
+    is_neighborhood_blog = source_class == "neighborhood_blog"
+    return {
+        "enabled": bool(local_cfg.get("enabled")),
+        "default_place_label": str(local_cfg.get("default_place_label") or "Seattle"),
+        "include_airport": bool(local_cfg.get("include_airport", True)),
+        "include_port": bool(local_cfg.get("include_port", True)),
+        "include_king_county_transit": bool(
+            local_cfg.get("include_king_county_transit", True)
+        ),
+        "include_wsdot_seattle_corridors": bool(
+            local_cfg.get("include_wsdot_seattle_corridors", True)
+        ),
+        "include_ferries": bool(local_cfg.get("include_ferries", True)),
+        "hazard_radius_miles": int(local_cfg.get("hazard_radius_miles", 75)),
+        "earthquake_min_magnitude": float(local_cfg.get("earthquake_min_magnitude", 3.0)),
+        "allow_neighborhood_blogs": bool(local_cfg.get("allow_neighborhood_blogs")),
+        "allow_social_sources": bool(local_cfg.get("allow_social_sources")),
+        "source_family": source_family,
+        "source_class": source_class,
+        "adapter": source.get("adapter") or source.get("parser"),
+        "verification_status": source.get("verification_status"),
+        "is_social_source": is_social,
+        "is_neighborhood_blog": is_neighborhood_blog,
+    }
 
 
 def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> dict[str, Any]:
@@ -17,6 +50,7 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
     homepage_allowed = bool(fetch_policy.get("allow_homepage_extractors"))
     is_local_fixture = url.startswith("file://")
     uses_homepage = kind in NEWS_HOMEPAGE_SOURCE_KINDS
+    local_policy = _local_policy(config, source)
 
     if is_local_fixture:
         policy_state = "allowed_fixture_only"
@@ -43,6 +77,16 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
         notes.append("Fixture phase blocks non-file URLs from ingest.")
     if uses_homepage and is_local_fixture:
         notes.append("Homepage selectors are being tested against a local fixture only.")
+    if local_policy:
+        if not local_policy["enabled"]:
+            notes.append("LOCAL Seattle policy layer is disabled by config.")
+        if local_policy["is_social_source"] and not local_policy["allow_social_sources"]:
+            notes.append("LOCAL social source allowance is disabled.")
+        if (
+            local_policy["is_neighborhood_blog"]
+            and not local_policy["allow_neighborhood_blogs"]
+        ):
+            notes.append("LOCAL neighborhood blog allowance is disabled.")
     for note in source.get("evidence_notes") or []:
         if note not in notes:
             notes.append(str(note))
@@ -52,6 +96,10 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
         "policy_state": policy_state,
         "kind": kind,
         "scope": source.get("scope"),
+        "source_family": source.get("source_family"),
+        "source_class": source.get("source_class"),
+        "adapter": source.get("adapter") or source.get("parser"),
+        "verification_status": source.get("verification_status"),
         "enabled": bool(source.get("enabled")),
         "scope_enabled": bool(scope_cfg.get("enabled")),
         "auth_required": auth_required,
@@ -59,5 +107,6 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
         "homepage_extractor_allowed": homepage_allowed,
         "uses_homepage_extractor": uses_homepage,
         "robots_state": robots_state,
+        "local": local_policy,
         "notes": notes,
     }

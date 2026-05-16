@@ -1,0 +1,26 @@
+{
+  "alerts": [
+    {
+      "AlertID": 1001,
+      "Headline": "I-5 northbound lane blocked near Downtown Seattle",
+      "Description": "A collision is blocking the right lane of I-5 northbound near Seneca Street in Downtown Seattle.",
+      "LastUpdatedTime": "2026-05-05T21:05:00+00:00",
+      "RoadName": "I-5",
+      "County": "King County",
+      "Region": "Northwest",
+      "Priority": "High",
+      "Url": "https://wsdot.example.test/travel/alerts/1001"
+    },
+    {
+      "AlertID": 1002,
+      "Headline": "US 2 maintenance near Leavenworth",
+      "Description": "Roadwork is planned on US 2 east of Leavenworth.",
+      "LastUpdatedTime": "2026-05-05T21:20:00+00:00",
+      "RoadName": "US 2",
+      "County": "Chelan County",
+      "Region": "North Central",
+      "Priority": "Low",
+      "Url": "https://wsdot.example.test/travel/alerts/1002"
+    }
+  ]
+}

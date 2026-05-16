@@ -7,6 +7,7 @@ from typing import Any
 
 from console1701.config import NEWS_SCOPES, iter_news_sources
 from console1701.db import json_loads
+from console1701.news.local_registry import local_source_registry_summary
 from console1701.news.source_policy import evaluate_source_policy
 
 SOURCE_HEALTH_STATE_ALIASES = {
@@ -413,6 +414,7 @@ def get_news_storage_summary(conn: sqlite3.Connection, config: dict[str, Any]) -
         "last_scan_result": last_scan_result,
         "db_size_bytes": db_size_bytes,
         "config_warnings": config_warnings,
+        "local_registry": local_source_registry_summary(),
         "scope_states": scope_states,
         "source_state_counts": source_state_counts,
         "failing_source_count": int(source_state_counts.get("failing", 0)),
@@ -453,6 +455,10 @@ def get_news_sources_status(
                 "scope": source["scope"],
                 "name": source["name"],
                 "kind": source["kind"],
+                "source_family": source.get("source_family"),
+                "source_class": source.get("source_class"),
+                "adapter": source.get("adapter") or source.get("parser"),
+                "verification_status": source.get("verification_status"),
                 "url": source.get("url"),
                 "homepage_url": source.get("homepage_url"),
                 "enabled": bool(source.get("enabled")),

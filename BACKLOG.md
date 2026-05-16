@@ -22,6 +22,22 @@ whenever new ideas come up and are not completed immediately.
 - `console-1701 news-scan` now provides explicit local-fixture-only ingest for enabled `file://`
   JSON/RSS/Atom/homepage sources, updates source health/fetch runs/items/clusters in SQLite, and
   performs retention purge without network access.
+- A disabled-by-default `local:` policy config now exists for Seattle-specific inclusion flags,
+  hazard thresholds, and explicit social/neighborhood-blog allowances.
+- A static LOCAL source registry now seeds disabled metadata for core official, blog, and
+  policy-sensitive social candidates without fetching.
+- LOCAL fixture parsing now includes an NWS active-alert JSON parser with Seattle/King/Puget Sound
+  filtering and alert severity evidence.
+- LOCAL fixture parsing now includes a King County Metro RSS parser with route, service-area, and
+  transit-impact evidence.
+- LOCAL fixture parsing now includes an SFD Fire 911 Socrata parser with privacy-safe location
+  tokens and low-acuity redaction evidence.
+- LOCAL fixture parsing now includes a WSDOT traveler-alert JSON parser with Seattle corridor
+  filtering and public-impact evidence.
+- LOCAL fixture parsing now includes an AlertSeattle RSS parser with official city-alert event and
+  severity evidence.
+- LOCAL fixture parsing now includes a neighborhood-blog RSS parser with explicit config gating,
+  neighborhood matching, and headline-metadata-only evidence.
 - `/api/news/summary`, `/api/news/scopes/{scope}`, `/api/news/sources`, and `/api/news/items/{id}`
   now expose SQLite-backed recent-signal state without triggering fetches.
 - OVERVIEW, LOCAL, REGIONAL, NATIONAL, GLOBAL, ORBITAL, and SYSTEM now render real
@@ -196,16 +212,25 @@ Architecture reference:
 
 ### LOCAL Source Registry Design Implementation
 
-Status: not implemented.
+Status: partially implemented.
 
 Implement the LOCAL source registry from the design document with explicit `source_key`,
 `source_family`, `source_class`, adapter, scope, priority, policy risk, parser risk, privacy risk,
 retention sensitivity, verification status, and future phase fields. Validate enum values and keep
 all sources disabled until explicitly configured.
 
+Current state: LOCAL source config entries can now carry and validate `source_family`,
+`source_class`, `adapter`, `privacy_risk`, `policy_risk`, `parser_risk`,
+`retention_sensitivity`, and `verification_status`, and source status/policy payloads surface that
+metadata. A static built-in registry seeds core disabled candidates including SFD, AlertSeattle,
+Metro, WSDOT, NWS, USGS, City Light, FAA/SEA, a neighborhood blog, and a social policy-sensitive
+candidate. Config entries that reference those registry IDs inherit disabled metadata unless the
+user overrides fields. Exhaustive design-inventory coverage, source-registry SQLite storage, and
+deeper future-phase fields remain pending.
+
 ### Disabled-By-Default LOCAL Config
 
-Status: not implemented.
+Status: implemented.
 
 Add a LOCAL config shape that defaults to disabled, with `include_airport`, `include_port`,
 `include_king_county_transit`, `include_wsdot_seattle_corridors`, `include_ferries`,
@@ -224,15 +249,26 @@ columns and indexes for latest-by-scope, source health, event ranking, source fa
 
 ### LOCAL Fixture Pack
 
-Status: not implemented.
+Status: partially implemented.
 
 Create local-only fixtures for SFD Socrata JSON, AlertSeattle RSS, King County Metro RSS, NWS alert
 JSON, WSDOT alert JSON, local blog RSS, City Light outage data, and FAA/SEA airport status. Fixture
 ingest must not perform network calls and must be safe for pytest.
 
+Current state: `tests/fixtures/news/local_sfd_fire_911.json` covers SFD Socrata rows for a major
+public-impact fire incident and a low-acuity aid response with exact-address redaction.
+`tests/fixtures/news/local_nws_alerts.json` covers a LOCAL NWS active-alert fixture with one
+Seattle-relevant alert and one filtered non-local alert.
+`tests/fixtures/news/local_metro_service_advisories.rss` covers Metro advisory RSS route and
+service-area extraction. `tests/fixtures/news/local_wsdot_alerts.json` covers Seattle corridor
+filtering and lane-blocked public-impact scoring. `tests/fixtures/news/local_alertseattle.rss`
+covers AlertSeattle city-alert severity extraction. `tests/fixtures/news/local_blog_feed.rss`
+covers gated neighborhood-blog metadata-only parsing. City Light and FAA/SEA fixtures remain
+pending.
+
 ### Socrata Parser For SFD Fire 911
 
-Status: not implemented.
+Status: implemented.
 
 Build a `socrata_json` fixture parser for Seattle Real-Time Fire 911 metadata. Preserve dataset ID,
 row ID, incident type, observed timestamp, unit count if present, location tokens, source URL, and
@@ -240,15 +276,20 @@ privacy redaction evidence. Low-acuity medical/private calls must not automatica
 
 ### RSS/Atom Parser For Official And Local Feeds
 
-Status: not implemented.
+Status: partially implemented.
 
 Build an RSS/Atom parser for fixture feeds first, covering AlertSeattle, SPD Blotter, SDOT Blog,
 Metro, local news, and neighborhood blogs where feeds verify later. Parse title, URL, published
 timestamp, bounded description, categories, source id, and evidence. Never fetch article bodies.
 
+Current state: generic RSS/Atom parsing exists for fixture feeds, Metro RSS has route/service-impact
+evidence, AlertSeattle RSS has official city-alert severity evidence, and neighborhood-blog RSS has
+metadata-only local signal evidence behind the explicit neighborhood-blog config gate. SPD Blotter,
+SDOT Blog, and broader local news fixture evidence remain pending.
+
 ### NWS Alert Fixture Parser
 
-Status: not implemented.
+Status: implemented.
 
 Build a fixture parser for NWS active alert JSON filtered to Seattle, King County, Puget Sound, and
 configured nearby hazard zones. Preserve severity, urgency, certainty, event type, affected zones,
@@ -256,7 +297,7 @@ effective/expiration times, and active-alert ranking evidence.
 
 ### WSDOT Official API Fixture Parser
 
-Status: not implemented.
+Status: implemented.
 
 Build a fixture parser for WSDOT traveler information affecting Seattle corridors, ferries, bridges,
 passes, routes, or regional access. Preserve route/facility tokens, closure/delay severity, published
@@ -264,7 +305,7 @@ time, source URL, and public-impact scoring evidence.
 
 ### Metro RSS Parser
 
-Status: not implemented.
+Status: implemented.
 
 Build a fixture parser for King County Metro service advisories RSS. Preserve route IDs, affected
 service area, advisory title, published time, source URL, and transit-impact ranking evidence.
@@ -321,12 +362,17 @@ in JSON evidence.
 
 ### LOCAL Privacy Redaction Rules
 
-Status: not implemented.
+Status: partially implemented.
 
 Add deterministic redaction rules for public safety data. Suppress exact addresses for low-acuity
 medical calls, overdose calls, private residential aid, single-source minor police calls, and
 low-public-value private distress. Prefer neighborhood or intersection-level display unless an
 official source frames the incident as public-impact.
+
+Current state: the SFD Fire 911 fixture parser suppresses exact address storage/display for
+low-acuity medical/private call types without public-impact signals, keeps privacy-safe location
+tokens, and stores redaction evidence. Broader SPD, social-only, overdose-specific, and cross-source
+event privacy rules remain pending.
 
 ### LOCAL UI Disabled States
 
@@ -402,10 +448,15 @@ verification status, and source-health behavior before enabling any source.
 
 ### Tests For No Page-Load External Fetches
 
-Status: not implemented.
+Status: partially implemented.
 
 Add tests proving GET routes and page renders read SQLite/config only and never call network fetchers.
 Include disabled/not configured/stale/failing state tests for LOCAL and SYSTEM source health.
+
+Current state: GET route regression coverage now exercises OVERVIEW, LOCAL, SYSTEM, and
+`/api/news/*` reads with enabled recent-signal config and a missing fixture path, proving page/API
+loads do not trigger ingest or fixture reads. Broader stale/failing matrix coverage across LOCAL and
+SYSTEM remains pending.
 
 ## REGIONAL Pacific Northwest Recent Signal Layer
 

@@ -134,6 +134,9 @@ Explicit command path only
 Page loads read SQLite and config only
 No hidden fetch on GET routes
 Fixture-only ingest for enabled file:// JSON/RSS/Atom/homepage sources
+LOCAL Seattle policy config defaults to disabled and gates social/neighborhood-blog sources
+LOCAL registry seeds known source metadata for disabled official, blog, and social candidates
+Fixture parsers include LOCAL SFD, AlertSeattle, NWS, WSDOT, Metro, and local-blog evidence
 Source audit surfaces derive disabled / configured_never_run / healthy / stale / parser_failed /
 policy_blocked / auth_required states without fetching
 Stored item detail includes source, policy, ranking, retention, and privacy evidence
@@ -238,6 +241,10 @@ The live sensor lane is updated in-place from `/api/live`. It uses only local ke
 surfaces, including `/proc/stat`, `/proc/loadavg`, `/proc/meminfo`, `/proc/net/dev`,
 `/proc/net/route`, `/proc/pressure/*`, `/sys/class/net`, `/sys/class/thermal`, and
 `shutil.disk_usage()`.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
 
 Sensor colors are intentionally simple and transparent:
 

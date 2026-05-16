@@ -73,6 +73,19 @@ system_probe:
   show_sensitive_identifiers: false
   critical_services: []
 
+local:
+  enabled: false
+  default_place_label: "Seattle"
+  include_airport: true
+  include_port: true
+  include_king_county_transit: true
+  include_wsdot_seattle_corridors: true
+  include_ferries: true
+  hazard_radius_miles: 75
+  earthquake_min_magnitude: 3.0
+  allow_neighborhood_blogs: false
+  allow_social_sources: false
+
 news:
   enabled: false
   retention:
@@ -110,6 +123,14 @@ news:
           tags: ["official", "local"]
           priority: 70
           parser: "socrata_json"
+          source_family: "seattle_open_data"
+          source_class: "official_open_data"
+          adapter: "socrata_json"
+          privacy_risk: "medium"
+          policy_risk: "low"
+          parser_risk: "low"
+          retention_sensitivity: "medium"
+          verification_status: "candidate_needs_verification"
           evidence_notes:
             - "Disabled example only. Do not enable without choosing a real dataset."
         - id: "local_file_fixture_example"
@@ -123,6 +144,14 @@ news:
           tags: ["fixture"]
           priority: 10
           parser: "generic_json_items"
+          source_family: "fixture"
+          source_class: "source_health_only"
+          adapter: "generic_json_items"
+          privacy_risk: "low"
+          policy_risk: "low"
+          parser_risk: "low"
+          retention_sensitivity: "low"
+          verification_status: "user_seeded"
           evidence_notes:
             - "Disabled local fixture shape for future parser tests."
     REGIONAL:

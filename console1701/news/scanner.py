@@ -590,10 +590,10 @@ def _upsert_item(
         "expires_at": expire_at,
         "retention_days": retention_days,
     }
-    evidence["privacy"] = {
-        "article_body_stored": False,
-        "redaction_applied": False,
-    }
+    privacy_evidence = dict(evidence.get("privacy") or {})
+    privacy_evidence.setdefault("article_body_stored", False)
+    privacy_evidence.setdefault("redaction_applied", False)
+    evidence["privacy"] = privacy_evidence
     evidence["storage"] = {
         "canonical_url": item.get("canonical_url"),
         "url": item["url"],
