@@ -1,5 +1,16 @@
 # Caretaking Log
 
+## 2026-06-05 15:39 PDT - disabled news-scan retention follow-up
+
+- Changed `run_news_scan` so a disabled recent-signal config still runs retention purge and records
+  `news.last_purge` / `news.last_scan_result` evidence instead of returning before cleanup.
+- Added a regression that seeds an expired item, disables ingest, and proves the disabled scan
+  still clears stale rows and persists the purge summary.
+- Rechecked the API wrapper behavior so `/api/news/scan` still reports `disabled` while the
+  underlying purge path runs.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
 ## 2026-06-05 15:36 PDT - install_user_service venv binary follow-up
 
 - Removed activation-dependent `console-1701` and `python` calls from

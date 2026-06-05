@@ -1450,6 +1450,82 @@ def test_run_news_scan_records_last_purge_and_last_result(tmp_path):
     assert settings["news.last_scan_result"]["item_count"] == 2
 
 
+def test_run_news_scan_purges_expired_items_even_when_disabled(tmp_path):
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        news:
+          enabled: true
+          scopes:
+            LOCAL:
+              enabled: true
+              sources:
+                - id: local_json
+                  name: Local JSON
+                  kind: local_file_json
+                  enabled: true
+                  url: "{_file_url(FIXTURE_DIR / "local_items.json")}"
+        """,
+    )
+
+    enabled_result = run_news_scan(config_path)
+    assert enabled_result["status"] == "complete"
+
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        init_db(conn)
+        conn.execute(
+            "UPDATE news_items SET expires_at = ?",
+            ("2000-01-01T00:00:00+00:00",),
+        )
+        conn.commit()
+
+    config_path.write_text(
+        f"""
+paths:
+  repo_roots: []
+  explicit_repos: []
+news:
+  enabled: false
+  scopes:
+    LOCAL:
+      enabled: true
+      sources:
+        - id: local_json
+          name: Local JSON
+          kind: local_file_json
+          enabled: true
+          url: "{_file_url(FIXTURE_DIR / "local_items.json")}"
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    disabled_result = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        init_db(conn)
+        item_count = conn.execute(
+            "SELECT COUNT(*) AS count FROM news_items"
+        ).fetchone()["count"]
+        rows = conn.execute(
+            """
+            SELECT key, value
+            FROM settings
+            WHERE key IN ('news.last_purge', 'news.last_scan_result')
+            """
+        ).fetchall()
+    settings = {str(row["key"]): json_loads(str(row["value"])) for row in rows}
+
+    assert disabled_result["status"] == "disabled"
+    assert disabled_result["purged"]["items"] == 2
+    assert item_count == 0
+    assert settings["news.last_purge"]["summary"]["items"] == 2
+    assert settings["news.last_scan_result"]["status"] == "disabled"
+    assert settings["news.last_scan_result"]["purged"]["items"] == 2
+
+
 def test_news_sources_status_derives_policy_and_never_run_states(tmp_path):
     config_path = _write_config(
         tmp_path / "config.yml",
