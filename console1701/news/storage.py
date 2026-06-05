@@ -73,6 +73,7 @@ def _base_source_state(
     policy: dict[str, Any],
     source_enabled: bool,
     source_url: str | None,
+    source_adapter: str | None = None,
 ) -> tuple[str, str]:
     if not source_enabled:
         return "disabled", SOURCE_HEALTH_STATE_MESSAGES["disabled"]
@@ -83,6 +84,8 @@ def _base_source_state(
     if policy.get("homepage_extractor_blocked"):
         return "homepage_disabled", SOURCE_HEALTH_STATE_MESSAGES["homepage_disabled"]
     if policy.get("uses_homepage_extractor") and not policy.get("homepage_extractor_allowed"):
+        return "manual_review_only", SOURCE_HEALTH_STATE_MESSAGES["manual_review_only"]
+    if str(source_adapter or "").strip().lower() == "manual_review_only":
         return "manual_review_only", SOURCE_HEALTH_STATE_MESSAGES["manual_review_only"]
     if source_url and not policy.get("scope_enabled"):
         return "policy_blocked", SOURCE_HEALTH_STATE_MESSAGES["policy_blocked"]
@@ -98,9 +101,15 @@ def _resolve_source_state(
     policy: dict[str, Any],
     fetch: dict[str, Any] | None,
     health: dict[str, Any] | None,
+    source_adapter: str | None,
     stale: bool,
 ) -> tuple[str, str]:
-    base_state, base_message = _base_source_state(policy, source_enabled, source_url)
+    base_state, base_message = _base_source_state(
+        policy,
+        source_enabled,
+        source_url,
+        source_adapter,
+    )
     if base_state != "configured_never_run":
         return base_state, base_message
     if stale:
@@ -543,6 +552,7 @@ def get_news_sources_status(
             policy=policy,
             fetch=fetch,
             health=health,
+            source_adapter=str(source.get("adapter") or source.get("parser") or "").strip() or None,
             stale=stale,
         )
         statuses.append(

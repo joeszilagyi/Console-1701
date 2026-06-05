@@ -412,6 +412,47 @@ def test_news_scope_states_report_social_source_blocked_when_social_disabled(tmp
     )
 
 
+def test_news_sources_report_manual_review_only_for_enabled_manual_review_sources(tmp_path):
+    conn = connect_db(tmp_path / "console.sqlite")
+    init_db(conn)
+    config = {
+        "news": {
+            "enabled": True,
+            "scopes": {
+                "LOCAL": {
+                    "enabled": True,
+                    "sources": [
+                        {
+                            "id": "manual_review_source",
+                            "name": "Manual review source",
+                            "scope": "LOCAL",
+                            "kind": "local_file_json",
+                            "enabled": True,
+                            "url": "file:///tmp/manual-review.json",
+                            "source_family": "bluesky",
+                            "source_class": "social_candidate",
+                            "adapter": "manual_review_only",
+                        },
+                    ],
+                },
+            },
+        },
+        "local": {
+            "allow_social_sources": True,
+        },
+    }
+
+    scope_states = get_news_scope_states(conn, config)
+    source_statuses = get_news_sources_status(conn, config)
+
+    assert source_statuses[0]["health_state"] == "manual_review_only"
+    assert source_statuses[0]["health_message"] == (
+        "Source is gated for manual review in this phase."
+    )
+    assert scope_states["LOCAL"]["state"] == "failing"
+    assert scope_states["LOCAL"]["source_state_counts"].get("manual_review_only") == 1
+
+
 def test_news_scope_states_report_homepage_extraction_disabled(tmp_path):
     conn = connect_db(tmp_path / "console.sqlite")
     init_db(conn)
