@@ -176,11 +176,16 @@ live network.
 
 ### Homepage Extractor Later And Disabled
 
-Status: not implemented.
+Status: partially implemented.
 
 Add homepage headline extraction only after API/RSS support is stable. Keep it disabled unless
 `allow_homepage_extractors` is true. Require per-source selectors, no recursive crawling, bounded
 payloads, robots/policy evidence, and no article body archive.
+
+Current state: fixture parsing for `homepage_selectors` already exists, and
+`news.fetch_policy.allow_homepage_extractors` blocks live homepage sources by default. The remaining
+work is the live crawler/fetch path, robots checks for configured homepages, and the per-source
+selector inventory for real production domains.
 
 ### Social Adapters Later And Terms-Sensitive
 
