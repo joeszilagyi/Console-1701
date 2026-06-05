@@ -28,6 +28,47 @@ NEWS_SOURCE_KINDS = {
     "local_file_rss",
 }
 NEWS_HOMEPAGE_SOURCE_KINDS = {"homepage_headlines"}
+REGIONAL_SOURCE_CLASSES = {
+    "county_emergency",
+    "local_tv_radio",
+    "official_alert",
+    "official_air_quality",
+    "official_seismic_volcano",
+    "official_transport",
+    "official_utility",
+    "official_wildfire",
+    "official_weather_hazard",
+    "policy_reference",
+    "regional_news",
+    "social_candidate",
+    "source_health_only",
+    "unofficial_aggregator",
+}
+REGIONAL_ADAPTER_TYPES = {
+    "api_json",
+    "atom",
+    "disabled",
+    "generic_json_items",
+    "manual_review_only",
+    "official_api_json",
+    "rss",
+    "rss_atom",
+    "source_health_probe_only",
+    "static_html_headline_candidate",
+    "wordpress_feed_candidate",
+}
+REGIONAL_RISK_LEVELS = {"low", "medium", "high"}
+REGIONAL_VERIFICATION_STATUSES = {
+    "candidate_needs_verification",
+    "candidate_policy_sensitive",
+    "manual_review_only",
+    "official_feed_seen",
+    "official_page_seen",
+    "source_health_probe_only",
+    "unofficial_secondary",
+    "user_seeded",
+    "verified",
+}
 LOCAL_SOURCE_CLASSES = {
     "local_news",
     "neighborhood_blog",
@@ -89,6 +130,24 @@ DEFAULT_LOCAL_CONFIG: dict[str, Any] = {
     "earthquake_min_magnitude": 3.0,
     "allow_neighborhood_blogs": False,
     "allow_social_sources": False,
+}
+
+DEFAULT_REGIONAL_CONFIG: dict[str, Any] = {
+    "enabled": False,
+    "label": "Washington / PNW",
+    "primary_region": "Washington",
+    "secondary_regions": ["Puget Sound", "Pacific Northwest", "Cascadia"],
+    "include_oregon_when_relevant": True,
+    "include_bc_when_relevant": True,
+    "include_transport_corridors": True,
+    "include_wildfire_smoke": True,
+    "include_seismic_volcano": True,
+    "include_public_health": True,
+    "include_state_government": True,
+    "include_regional_news": True,
+    "hazard_radius_miles": 250,
+    "allow_social_sources": False,
+    "allow_homepage_extractors": False,
 }
 
 DEFAULT_NEWS_CONFIG: dict[str, Any] = {
@@ -189,6 +248,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "show_sensitive_identifiers": False,
         "critical_services": [],
     },
+    "regional": DEFAULT_REGIONAL_CONFIG,
     "local": DEFAULT_LOCAL_CONFIG,
     "news": DEFAULT_NEWS_CONFIG,
     "projects": [
@@ -314,6 +374,7 @@ def normalize_config(config: dict[str, Any]) -> None:
     policy["allow_repos"] = normalized_allow
 
     normalize_local_config(config)
+    normalize_regional_config(config)
     normalize_news_config(config)
 
 
@@ -388,15 +449,20 @@ def _normalize_optional_keyword(
     return value
 
 
-def _apply_local_registry_defaults(source_cfg: dict[str, Any], scope: str) -> dict[str, Any]:
-    if scope != "LOCAL":
+def _apply_scope_registry_defaults(source_cfg: dict[str, Any], scope: str) -> dict[str, Any]:
+    if scope not in {"LOCAL", "REGIONAL"}:
         return source_cfg
     source_key = str(source_cfg.get("id") or "").strip()
     if not source_key:
         return source_cfg
-    from console1701.news.local_registry import local_registry_config_defaults
+    if scope == "LOCAL":
+        from console1701.news.local_registry import local_registry_config_defaults
 
-    defaults = local_registry_config_defaults(source_key)
+        defaults = local_registry_config_defaults(source_key)
+    else:
+        from console1701.news.regional_registry import regional_registry_config_defaults
+
+        defaults = regional_registry_config_defaults(source_key)
     if not defaults:
         return source_cfg
     return deep_merge(defaults, source_cfg)
@@ -428,6 +494,47 @@ def normalize_local_config(config: dict[str, Any]) -> None:
         local.get("earthquake_min_magnitude", 3.0),
         "local.earthquake_min_magnitude",
         minimum=0.0,
+    )
+
+
+def normalize_regional_config(config: dict[str, Any]) -> None:
+    regional = _require_mapping(
+        config.setdefault("regional", deepcopy(DEFAULT_REGIONAL_CONFIG)),
+        "regional",
+    )
+    regional["enabled"] = _coerce_bool(regional.get("enabled", False), "regional.enabled")
+    regional["label"] = _require_string(
+        regional.get("label", "Washington / PNW"),
+        "regional.label",
+    )
+    regional["primary_region"] = _require_string(
+        regional.get("primary_region", "Washington"),
+        "regional.primary_region",
+    )
+    regional["secondary_regions"] = _normalize_string_list(
+        regional.get("secondary_regions", DEFAULT_REGIONAL_CONFIG["secondary_regions"]),
+        "regional.secondary_regions",
+    )
+    for key in (
+        "include_oregon_when_relevant",
+        "include_bc_when_relevant",
+        "include_transport_corridors",
+        "include_wildfire_smoke",
+        "include_seismic_volcano",
+        "include_public_health",
+        "include_state_government",
+        "include_regional_news",
+        "allow_social_sources",
+        "allow_homepage_extractors",
+    ):
+        regional[key] = _coerce_bool(
+            regional.get(key, DEFAULT_REGIONAL_CONFIG[key]),
+            f"regional.{key}",
+        )
+    regional["hazard_radius_miles"] = _coerce_int(
+        regional.get("hazard_radius_miles", 250),
+        "regional.hazard_radius_miles",
+        minimum=0,
     )
 
 
@@ -474,6 +581,49 @@ def _normalize_local_source_metadata(
         )
 
 
+def _normalize_regional_source_metadata(
+    source_cfg: dict[str, Any],
+    *,
+    path: str,
+    regional_cfg: dict[str, Any],
+) -> None:
+    source_family = _normalize_optional_keyword(source_cfg, "source_family", path)
+    source_class = _normalize_optional_keyword(
+        source_cfg,
+        "source_class",
+        path,
+        allowed=REGIONAL_SOURCE_CLASSES,
+    )
+    _normalize_optional_keyword(source_cfg, "adapter", path, allowed=REGIONAL_ADAPTER_TYPES)
+    _normalize_optional_keyword(
+        source_cfg,
+        "verification_status",
+        path,
+        allowed=REGIONAL_VERIFICATION_STATUSES,
+    )
+    for key in ("privacy_risk", "policy_risk", "parser_risk"):
+        _normalize_optional_keyword(source_cfg, key, path, allowed=REGIONAL_RISK_LEVELS)
+    _normalize_optional_keyword(
+        source_cfg,
+        "retention_sensitivity",
+        path,
+        allowed=REGIONAL_RISK_LEVELS,
+    )
+
+    is_social = source_class == "social_candidate" or source_family in LOCAL_SOCIAL_SOURCE_FAMILIES
+    if is_social and not bool(regional_cfg.get("allow_social_sources")):
+        raise ConfigError(
+            f"{path} is a REGIONAL social source; set regional.allow_social_sources true first."
+        )
+    if source_cfg.get("kind") in NEWS_HOMEPAGE_SOURCE_KINDS and not bool(
+        regional_cfg.get("allow_homepage_extractors")
+    ):
+        raise ConfigError(
+            f"{path} kind uses homepage extraction; set regional.allow_homepage_extractors true "
+            "first."
+        )
+
+
 def _normalize_news_source(
     source: Any,
     *,
@@ -481,6 +631,7 @@ def _normalize_news_source(
     index: int,
     allow_homepage_extractors: bool,
     local_cfg: dict[str, Any],
+    regional_cfg: dict[str, Any],
     seen_source_keys: set[str],
 ) -> dict[str, Any]:
     path = f"news.scopes.{scope}.sources[{index}]"
@@ -491,7 +642,7 @@ def _normalize_news_source(
         raise ConfigError(f"Duplicate news source id: {source_key}")
     seen_source_keys.add(source_key)
 
-    source_cfg = _apply_local_registry_defaults(source_cfg, scope)
+    source_cfg = _apply_scope_registry_defaults(source_cfg, scope)
     source_cfg["id"] = source_key
     source_cfg["name"] = _require_string(source_cfg.get("name"), f"{path}.name")
     source_cfg["kind"] = _require_string(source_cfg.get("kind"), f"{path}.kind")
@@ -514,6 +665,8 @@ def _normalize_news_source(
     source_cfg["scope"] = source_scope
     if source_scope == "LOCAL":
         _normalize_local_source_metadata(source_cfg, path=path, local_cfg=local_cfg)
+    if source_scope == "REGIONAL":
+        _normalize_regional_source_metadata(source_cfg, path=path, regional_cfg=regional_cfg)
 
     source_cfg["enabled"] = _coerce_bool(source_cfg.get("enabled", False), f"{path}.enabled")
     source_cfg["priority"] = _coerce_int(source_cfg.get("priority", 50), f"{path}.priority")
@@ -554,6 +707,10 @@ def normalize_news_config(config: dict[str, Any]) -> None:
     local_cfg = _require_mapping(
         config.setdefault("local", deepcopy(DEFAULT_LOCAL_CONFIG)),
         "local",
+    )
+    regional_cfg = _require_mapping(
+        config.setdefault("regional", deepcopy(DEFAULT_REGIONAL_CONFIG)),
+        "regional",
     )
     news["enabled"] = _coerce_bool(news.get("enabled", False), "news.enabled")
 
@@ -660,6 +817,7 @@ def normalize_news_config(config: dict[str, Any]) -> None:
                 index=index,
                 allow_homepage_extractors=fetch_policy["allow_homepage_extractors"],
                 local_cfg=local_cfg,
+                regional_cfg=regional_cfg,
                 seen_source_keys=seen_source_keys,
             )
             for index, source in enumerate(sources)

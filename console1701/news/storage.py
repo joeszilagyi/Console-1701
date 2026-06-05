@@ -8,6 +8,7 @@ from typing import Any
 from console1701.config import NEWS_SCOPES, iter_news_sources
 from console1701.db import json_loads
 from console1701.news.local_registry import local_source_registry_summary
+from console1701.news.regional_registry import regional_source_registry_summary
 from console1701.news.source_policy import evaluate_source_policy
 
 SOURCE_HEALTH_STATE_ALIASES = {
@@ -73,6 +74,7 @@ def _base_source_state(
     policy: dict[str, Any],
     source_enabled: bool,
     source_url: str | None,
+    source_adapter: str | None = None,
 ) -> tuple[str, str]:
     if not source_enabled:
         return "disabled", SOURCE_HEALTH_STATE_MESSAGES["disabled"]
@@ -83,6 +85,8 @@ def _base_source_state(
     if policy.get("homepage_extractor_blocked"):
         return "homepage_disabled", SOURCE_HEALTH_STATE_MESSAGES["homepage_disabled"]
     if policy.get("uses_homepage_extractor") and not policy.get("homepage_extractor_allowed"):
+        return "manual_review_only", SOURCE_HEALTH_STATE_MESSAGES["manual_review_only"]
+    if str(source_adapter or "").strip().lower() == "manual_review_only":
         return "manual_review_only", SOURCE_HEALTH_STATE_MESSAGES["manual_review_only"]
     if source_url and not policy.get("scope_enabled"):
         return "policy_blocked", SOURCE_HEALTH_STATE_MESSAGES["policy_blocked"]
@@ -98,9 +102,15 @@ def _resolve_source_state(
     policy: dict[str, Any],
     fetch: dict[str, Any] | None,
     health: dict[str, Any] | None,
+    source_adapter: str | None,
     stale: bool,
 ) -> tuple[str, str]:
-    base_state, base_message = _base_source_state(policy, source_enabled, source_url)
+    base_state, base_message = _base_source_state(
+        policy,
+        source_enabled,
+        source_url,
+        source_adapter,
+    )
     if base_state != "configured_never_run":
         return base_state, base_message
     if stale:
@@ -468,6 +478,7 @@ def get_news_storage_summary(conn: sqlite3.Connection, config: dict[str, Any]) -
         "db_size_bytes": db_size_bytes,
         "config_warnings": config_warnings,
         "local_registry": get_local_registry_state(conn),
+        "regional_registry": get_regional_registry_state(conn),
         "scope_states": scope_states,
         "source_state_counts": source_state_counts,
         "failing_source_count": int(
@@ -519,6 +530,47 @@ def get_local_registry_state(conn: sqlite3.Connection) -> dict[str, Any]:
     }
 
 
+def get_regional_registry_state(conn: sqlite3.Connection) -> dict[str, Any]:
+    try:
+        rows = conn.execute(
+            "SELECT * FROM news_source_registry WHERE scope = 'REGIONAL'",
+        ).fetchall()
+    except sqlite3.OperationalError:
+        return regional_source_registry_summary()
+
+    if not rows:
+        return regional_source_registry_summary()
+
+    source_count = 0
+    source_classes: dict[str, int] = {}
+    future_phases: dict[str, int] = {}
+    official_status_counts: dict[str, int] = {}
+    verification_status_counts: dict[str, int] = {}
+
+    for row in rows:
+        source_count += 1
+        source_classes[str(row["source_class"])] = (
+            source_classes.get(str(row["source_class"]), 0) + 1
+        )
+        future_phases[str(row["future_phase"])] = future_phases.get(str(row["future_phase"]), 0) + 1
+        official_status_counts[str(row["official_status"])] = (
+            official_status_counts.get(str(row["official_status"]), 0) + 1
+        )
+        verification_status_counts[str(row["verification_status"])] = (
+            verification_status_counts.get(str(row["verification_status"]), 0) + 1
+        )
+
+    return {
+        "scope": "REGIONAL",
+        "enabled_by_default": bool(any(bool(int(row["enabled_by_default"])) for row in rows)),
+        "source_count": source_count,
+        "source_class_counts": source_classes,
+        "future_phase_counts": future_phases,
+        "official_status_counts": official_status_counts,
+        "verification_status_counts": verification_status_counts,
+    }
+
+
 def get_news_sources_status(
     conn: sqlite3.Connection,
     config: dict[str, Any],
@@ -543,6 +595,7 @@ def get_news_sources_status(
             policy=policy,
             fetch=fetch,
             health=health,
+            source_adapter=str(source.get("adapter") or source.get("parser") or "").strip() or None,
             stale=stale,
         )
         statuses.append(

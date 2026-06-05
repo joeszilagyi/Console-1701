@@ -390,6 +390,12 @@ Research underlying official feature services for SPD dashboards, City Light out
 traffic/camera maps. Do not screen scrape dashboards. Mark sources `manual_review_only` or
 `source_health_probe_only` when no stable official endpoint is available.
 
+Current state: SDOT traffic cameras have a verified public ArcGIS/open-data surface, the SPD crime
+and calls-for-service dashboards have official public pages but no exposed GIS service in the
+inspected `gisdata.seattle.gov/server/rest/services/SPD` folder, and the City Light outage map is
+still only verified as a public outage surface. The remaining work is to map any stable underlying
+feature services and keep the unresolved dashboard sources in probe-only or manual-review states.
+
 ### LOCAL Deterministic Event Correlation
 
 Status: implemented.
@@ -497,21 +503,36 @@ one safe official source at a time. First candidates are SFD Fire 911 Socrata, N
 County Metro RSS, and WSDOT API. Keep every source disabled by default and require an explicit
 command. No page-load fetches.
 
+Current state: the fixture parsers, correlation, ranking, retention, and tests for the LOCAL scope
+already exist, but the explicit live ingest command path and per-source enablement flow are still
+absent. The first official-source live candidates remain SFD Fire 911 Socrata, NWS alerts, King
+County Metro RSS, and WSDOT API.
+
 ### LOCAL News/Blog RSS Ingest Phase
 
-Status: not implemented.
+Status: partially implemented.
 
 Add opt-in RSS/Atom ingest for local news and neighborhood blogs only after source verification.
 Store headline metadata only, bound descriptions, avoid article bodies, avoid paywall bypass, and
 prevent duplicate syndicated articles from inflating independent convergence.
 
+Current state: fixture parsers for `local_blog_rss` and `local_news_rss` already exist, and local
+config can gate neighborhood blogs behind `allow_neighborhood_blogs`. The remaining work is the
+opt-in live RSS/Atom ingest command and source-specific duplicate-syndication handling for enabled
+local news and neighborhood-blog sources.
+
 ### LOCAL Social Source Policy Review
 
-Status: not implemented.
+Status: partially implemented.
 
 Review Bluesky AT Protocol, Reddit official API or permitted feed access, and X official API rules
 before implementing any community/social adapter. Keep social disabled by default, require explicit
 configuration, use short retention, and never scrape HTML to bypass platform restrictions.
+
+Current state: local config already requires `allow_social_sources` before social sources can be
+enabled, the built-in registry keeps social candidates disabled by default, and
+`manual_review_only` entries stay gated for explicit review rather than live ingest. The remaining
+work is a compliant live social adapter and a short-retention policy for any enabled social source.
 
 ### Documentation For Source Verification
 
@@ -547,16 +568,21 @@ Architecture reference:
 
 ### REGIONAL Source Registry Design Implementation
 
-Status: not implemented.
+Status: partially implemented.
 
 Implement the REGIONAL source registry from the design document with explicit `source_key`,
 `source_family`, `source_class`, adapter, scope, priority, official status, policy risk, parser
 risk, privacy risk, retention sensitivity, verification status, and future phase fields. Validate
 enum values and keep all REGIONAL sources disabled until explicitly configured.
 
+Current state: `console1701/news/regional_registry.py` now seeds disabled REGIONAL source metadata
+for NWS, WSDOT, USGS, county emergency, and regional-news candidates. The config layer now applies
+regional defaults and validates REGIONAL source metadata before a source can be enabled. Dedicated
+regional event, ranking, and live-ingest work still remains.
+
 ### Disabled-By-Default REGIONAL Config
 
-Status: not implemented.
+Status: partially implemented.
 
 Add a `regional_sources:` or equivalent REGIONAL config tree that defaults to disabled. Include
 geography flags for Washington, Puget Sound, Cascadia hazards, Oregon relevance, BC relevance,
@@ -564,9 +590,14 @@ transport corridors, wildfire/smoke, seismic/volcano, public health, state gover
 news, and social sources. Reject social sources unless explicitly allowed and reject homepage
 extraction unless a future `allow_homepage_extractors` flag is true.
 
+Current state: the top-level `regional` config tree now defaults to disabled and carries the
+regional geography, social, and homepage-extraction flags needed for later REGIONAL source
+planning. Source normalization rejects REGIONAL social sources unless the local configuration
+explicitly allows them, and homepage extraction stays blocked by default.
+
 ### REGIONAL SQLite Schema Or Extension
 
-Status: not implemented.
+Status: partially implemented.
 
 Add or extend SQLite storage for REGIONAL source registry state, fetch runs, normalized items,
 `regional_events` or scoped clusters, source health, ranking explanations, geographic labels, and
@@ -574,9 +605,14 @@ retention purge evidence. Use JSON-heavy columns and indexes for latest-by-scope
 source health, source family, geographic filters, and `expires_at` purge. Do not store full article
 bodies by default.
 
+Current state: the shared `news_source_registry` table now persists REGIONAL registry rows, and
+`get_news_storage_summary()` exposes a regional registry summary alongside the existing local
+summary. Dedicated `regional_events`, ranking partitions, geographic label indexes, and purge
+evidence tables are still pending.
+
 ### REGIONAL Fixture Pack
 
-Status: not implemented.
+Status: partially implemented.
 
 Create local-only fixtures for NWS active alert JSON, WSDOT travel alert JSON, WSF bulletin/API
 shape, WA DNR wildfire data after endpoint verification, NWCC feed shape after verification, USGS
@@ -584,23 +620,38 @@ earthquake GeoJSON, USGS water/hydrology data, King County emergency feed, Ecolo
 regional news RSS, and verified outage data if an official endpoint is found. Fixture ingest must
 not perform network calls and must be safe for pytest.
 
+Current state: the registry-backed RSS parser now accepts `regional_news_rss`, and a regional scan
+regression reuses the existing RSS fixture corpus to prove the REGIONAL ingest path. The shared
+local fixture corpus also now exercises REGIONAL NWS and WSDOT ingest paths. Dedicated regional
+fixture files for the remaining Washington sources are still pending.
+
 ### NWS Alert Parser For Washington
 
-Status: not implemented.
+Status: partially implemented.
 
 Build a fixture-first NWS alert parser filtered to Washington, Puget Sound, configured counties,
 weather zones, and regional hazard rules. Preserve alert id, event type, severity, urgency,
 certainty, affected zones, counties, effective time, expiration time, source URL, instruction URL,
 and official-alert ranking evidence.
 
+Current state: the existing NWS fixture parser now runs in REGIONAL scope through the registry-
+backed ingest path, and the REGIONAL regression covers the Washington alert fixture with the
+shared local test corpus. Dedicated Washington-only fixture files and broader county/zone
+coverage are still pending.
+
 ### WSDOT Traveler API Fixture Parser
 
-Status: not implemented.
+Status: partially implemented.
 
 Build a fixture parser for WSDOT traveler information affecting regional corridors, mountain
 passes, bridges, border crossings, and major Washington routes. Preserve route, direction, milepost
 or facility tokens, closure/delay severity, source update time, source URL, and transport-impact
 ranking evidence.
+
+Current state: the existing WSDOT travel-alert parser now runs in REGIONAL scope through the
+registry-backed ingest path, and the regional regression exercises the shared local travel-alert
+fixture corpus. Dedicated Washington corridor fixture files and broader route coverage are still
+pending.
 
 ### WSF Bulletin/API Fixture Parser
 
@@ -685,12 +736,16 @@ access method, parser risk, policy notes, privacy risk, source-health behavior, 
 
 ### Regional News RSS Parser
 
-Status: not implemented.
+Status: partially implemented.
 
 Build a fixture-first RSS/Atom parser for verified regional news, public media, local TV/radio, and
 nonprofit feeds. Store headline metadata only, bound descriptions, preserve publisher/source
 family, detect duplicate or syndicated stories, and prevent duplicated articles from inflating
 independent convergence.
+
+Current state: `console1701/news/parsers.py` now dispatches `regional_news_rss` through the shared
+RSS parser path, and the REGIONAL ingest tests cover that alias with the existing local RSS fixture.
+Scope-specific regional feed curation and duplication handling are still pending.
 
 ### REGIONAL Deterministic Event Correlation
 

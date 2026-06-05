@@ -1,5 +1,71 @@
 # Caretaking Log
 
+## 2026-06-05 15:25 PDT - regional fixture pack follow-up
+
+- Updated the REGIONAL fixture pack note to reflect the concrete NWS, WSDOT, and regional RSS
+  coverage that now exists in the shared local test corpus.
+- Kept the remaining Washington-specific fixture file work visible instead of marking the fixture
+  pack as fully complete before those source-specific files exist.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
+## 2026-06-05 15:24 PDT - regional WSDOT parser follow-up
+
+- Added a REGIONAL ingest regression for `wsdot_traveler_api` so the Washington traveler-alert
+  parser is now exercised through the registry-backed regional scan path.
+- Marked the WSDOT Traveler API Fixture Parser backlog entry as partially implemented while
+  keeping the remaining corridor-specific fixture and coverage work visible.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
+## 2026-06-05 15:24 PDT - regional NWS parser follow-up
+
+- Added a REGIONAL ingest regression for `nws_active_alerts_wa` so the Washington NWS alert
+  parser is now exercised through the registry-backed regional scan path.
+- Marked the NWS Alert Parser For Washington backlog entry as partially implemented while keeping
+  the remaining Washington-specific fixture and zone-coverage work visible.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
+## 2026-06-05 15:21 PDT - regional RSS parser follow-up
+
+- Added `regional_news_rss` dispatch to the shared RSS parser path and covered it with a REGIONAL
+  ingest regression that reuses the existing local RSS fixture corpus.
+- Marked the REGIONAL fixture pack and regional news RSS parser backlog entries as partially
+  implemented so the remaining Washington-specific fixture files and feed curation work stay
+  visible.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
+## 2026-06-05 15:18 PDT - regional schema/state follow-up
+
+- Exposed REGIONAL registry state through the shared news storage summary and confirmed the scan
+  path persists REGIONAL registry rows into the existing SQLite registry table.
+- Added a persistence regression so the REGIONAL registry entries survive a scan and show up in the
+  storage summary without introducing a separate branch of storage logic.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
+## 2026-06-05 15:15 PDT - regional registry and config follow-up
+
+- Added the first REGIONAL source registry implementation and the disabled-by-default regional
+  config tree, with validation and defaults for the Washington / PNW layer.
+- Added a short regional reference note so the new registry and config shape are documented in the
+  repo alongside the code that now consumes them.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
+## 2026-06-05 15:09 PDT - LOCAL backlog catch-up follow-up
+
+- Added backlog notes and supporting docs for LOCAL social policy, LOCAL news/blog RSS ingest,
+  ArcGIS dashboard endpoint research, and the LOCAL official-source live ingest phase so the
+  oldest unresolved LOCAL items are now described concretely instead of being left as vague
+  pending notes.
+- Surfaced manual-review-only source health in the LOCAL summary layer so policy-sensitive sources
+  do not collapse into configured_never_run when they are intentionally not live-ingested.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
 ## 2026-06-05 14:54 PDT - scope verification workflow documentation follow-up
 
 - Added `docs/project/ORBITAL_SOURCE_VERIFICATION_WORKFLOW.md` and

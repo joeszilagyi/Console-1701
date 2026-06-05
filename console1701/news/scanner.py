@@ -23,6 +23,7 @@ from console1701.news.ranking import (
     apply_local_event_ranking_adjustments,
     build_rank_result,
 )
+from console1701.news.regional_registry import list_regional_source_registry
 from console1701.news.source_policy import evaluate_source_policy
 
 LOCAL_EVENT_MATCH_WINDOW_HOURS = 3
@@ -70,6 +71,7 @@ def run_news_scan(config_path: str | Path | None = None) -> dict[str, Any]:
     init_db(conn)
     sync_time = utc_now()
     _sync_local_source_registry(conn, synced_at=sync_time)
+    _sync_regional_source_registry(conn, synced_at=sync_time)
 
     scanned_sources = 0
     healthy_sources = 0
@@ -269,6 +271,104 @@ def _sync_local_source_registry(conn: sqlite3.Connection, synced_at: str) -> int
             ),
             ("LOCAL", *source_keys),
         )
+
+    return updated
+
+
+def _sync_regional_source_registry(conn: sqlite3.Connection, synced_at: str) -> int:
+    entries = list_regional_source_registry()
+    if not entries:
+        return 0
+
+    source_keys = [str(entry["source_key"]) for entry in entries]
+
+    placeholder = ",".join(["?"] * len(entries))
+    rows = conn.execute(
+        "SELECT source_key FROM news_source_registry WHERE scope = ?",
+        ("REGIONAL",),
+    ).fetchall()
+    existing = {str(row["source_key"]) for row in rows}
+    updated = 0
+
+    for entry in entries:
+        source_key = str(entry["source_key"])
+        existing.discard(source_key)
+        conn.execute(
+            """
+            INSERT INTO news_source_registry (
+              source_key, scope, source_name, source_family, source_class, adapter,
+              kind, raw_url, priority, interval_minutes, official_status,
+              privacy_risk, policy_risk, parser_risk, retention_sensitivity,
+              verification_status, future_phase, expected_access_kind, homepage_url,
+              parser, enabled_by_default, why_it_matters, evidence_notes_json,
+              seen_at, last_synced_at, created_at, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(source_key) DO UPDATE SET
+              scope = excluded.scope,
+              source_name = excluded.source_name,
+              source_family = excluded.source_family,
+              source_class = excluded.source_class,
+              adapter = excluded.adapter,
+              kind = excluded.kind,
+              raw_url = excluded.raw_url,
+              priority = excluded.priority,
+              interval_minutes = excluded.interval_minutes,
+              official_status = excluded.official_status,
+              privacy_risk = excluded.privacy_risk,
+              policy_risk = excluded.policy_risk,
+              parser_risk = excluded.parser_risk,
+              retention_sensitivity = excluded.retention_sensitivity,
+              verification_status = excluded.verification_status,
+              future_phase = excluded.future_phase,
+              expected_access_kind = excluded.expected_access_kind,
+              homepage_url = excluded.homepage_url,
+              parser = excluded.parser,
+              enabled_by_default = excluded.enabled_by_default,
+              why_it_matters = excluded.why_it_matters,
+              evidence_notes_json = excluded.evidence_notes_json,
+              seen_at = COALESCE(news_source_registry.seen_at, excluded.seen_at),
+              last_synced_at = excluded.last_synced_at,
+              updated_at = excluded.updated_at
+            """,
+            (
+                source_key,
+                str(entry["scope"]),
+                str(entry["source_name"]),
+                str(entry["source_family"]),
+                str(entry["source_class"]),
+                str(entry["adapter"]),
+                str(entry["kind"]),
+                str(entry["raw_url"]),
+                int(entry["priority"]),
+                int(entry["interval_minutes"]),
+                str(entry["official_status"]),
+                str(entry["privacy_risk"]),
+                str(entry["policy_risk"]),
+                str(entry["parser_risk"]),
+                str(entry["retention_sensitivity"]),
+                str(entry["verification_status"]),
+                str(entry["future_phase"]),
+                str(entry["expected_access_kind"]),
+                entry.get("homepage_url"),
+                entry.get("parser"),
+                1 if bool(entry.get("enabled")) else 0,
+                str(entry.get("why_it_matters") or ""),
+                json_dumps(entry.get("evidence_notes") or []),
+                synced_at,
+                synced_at,
+                synced_at,
+                synced_at,
+            ),
+        )
+        updated += 1
+
+    if existing:
+        conn.execute(
+            f"DELETE FROM news_source_registry WHERE scope = ? AND source_key IN ({placeholder})",
+            ("REGIONAL", *source_keys),
+        )
+        updated += len(existing)
 
     return updated
 
