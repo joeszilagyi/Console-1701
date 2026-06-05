@@ -472,9 +472,10 @@ SYSTEM later and summarize them on LOCAL.
 
 Current state: API/UI/CLI source summaries now derive `disabled`, `configured_never_run`,
 `healthy`, `stale`, `failing`, `parser_failed`, `policy_blocked`, `social_disabled`,
-`homepage_disabled`, and `auth_required` from config, policy, fetch runs, and latest health rows.
-Live-fetch-only states such as `robots_blocked`, `rate_limited`, and richer unsupported/manual-review
-variants remain pending until HTTP ingest exists.
+`homepage_disabled`, `auth_required`, `manual_review_only`, `rate_limited`, `robots_blocked`,
+and `unsupported` from config, policy, fetch runs, and latest health rows. Remaining live-fetch-
+specific robots and rate-limit evidence still needs actual HTTP ingest before it can be populated
+from real network responses.
 
 ### LOCAL Evidence Drawer Contract
 

@@ -1,5 +1,16 @@
 # Caretaking Log
 
+## 2026-06-05 16:00 PDT - LOCAL source-health state follow-up
+
+- Extended LOCAL source-health resolution so `rate_limited`, `robots_blocked`, and `unsupported`
+  states are now classified explicitly instead of falling through to the generic
+  `configured_never_run` bucket.
+- Updated the LOCAL and SYSTEM source-state summaries so the new blocking states contribute to the
+  failing counts and are visible in the scope readouts.
+- Added regression coverage for the new health-state vocabulary and kept the local-only safety
+  envelope intact: no live fetch changes, no network calls from the application itself, and no
+  changes to the off-limits `Upkeeper.sh` file.
+
 ## 2026-06-05 15:54 PDT - LOCAL source-family weighting follow-up
 
 - Added a capped `local_source_family_boost` to LOCAL event-correlation ranking so trusted

@@ -17,6 +17,19 @@ SOURCE_HEALTH_STATE_ALIASES = {
     "failed": "failing",
 }
 
+FAILING_SOURCE_HEALTH_STATES = {
+    "auth_required",
+    "failing",
+    "homepage_disabled",
+    "manual_review_only",
+    "parser_failed",
+    "policy_blocked",
+    "rate_limited",
+    "robots_blocked",
+    "social_disabled",
+    "unsupported",
+}
+
 SOURCE_HEALTH_STATE_MESSAGES = {
     "disabled": "Source is disabled in config.",
     "configured_never_run": "Source is enabled but has not completed ingest yet.",
@@ -26,6 +39,8 @@ SOURCE_HEALTH_STATE_MESSAGES = {
     "parser_failed": "Source fixture could not be parsed.",
     "policy_blocked": "Source is blocked by the current ingest policy.",
     "auth_required": "Source declares auth but no credential material is configured.",
+    "rate_limited": "Source is currently rate-limited.",
+    "robots_blocked": "Source is blocked by robots policy.",
     "social_disabled": (
         "LOCAL social source is blocked until local.allow_social_sources is enabled."
     ),
@@ -86,8 +101,12 @@ def _base_source_state(
         return "homepage_disabled", SOURCE_HEALTH_STATE_MESSAGES["homepage_disabled"]
     if policy.get("uses_homepage_extractor") and not policy.get("homepage_extractor_allowed"):
         return "manual_review_only", SOURCE_HEALTH_STATE_MESSAGES["manual_review_only"]
+    if str(policy.get("robots_state") or "").strip().lower() in {"blocked", "robots_blocked"}:
+        return "robots_blocked", SOURCE_HEALTH_STATE_MESSAGES["robots_blocked"]
     if str(source_adapter or "").strip().lower() == "manual_review_only":
         return "manual_review_only", SOURCE_HEALTH_STATE_MESSAGES["manual_review_only"]
+    if str(source_adapter or "").strip().lower() == "unsupported":
+        return "unsupported", SOURCE_HEALTH_STATE_MESSAGES["unsupported"]
     if source_url and not policy.get("scope_enabled"):
         return "policy_blocked", SOURCE_HEALTH_STATE_MESSAGES["policy_blocked"]
     if source_url and policy.get("policy_state") == "blocked_fixture_phase":
@@ -373,16 +392,7 @@ def get_news_scope_states(
         health_states = [
             str(status["health_state"]) for status in status_rows if status.get("health_state")
         ]
-        blocking_states = {
-            "auth_required",
-            "failing",
-            "homepage_disabled",
-            "manual_review_only",
-            "parser_failed",
-            "policy_blocked",
-            "unsupported",
-            "social_disabled",
-        }
+        blocking_states = FAILING_SOURCE_HEALTH_STATES
 
         if not news_cfg.get("enabled"):
             state = "disabled"
@@ -482,7 +492,7 @@ def get_news_storage_summary(conn: sqlite3.Connection, config: dict[str, Any]) -
         "scope_states": scope_states,
         "source_state_counts": source_state_counts,
         "failing_source_count": int(
-            source_state_counts.get("failing", 0) + source_state_counts.get("parser_failed", 0)
+            sum(source_state_counts.get(state, 0) for state in FAILING_SOURCE_HEALTH_STATES)
         ),
         "policy_blocked_source_count": int(source_state_counts.get("policy_blocked", 0)),
         "parser_failed_source_count": int(source_state_counts.get("parser_failed", 0)),
