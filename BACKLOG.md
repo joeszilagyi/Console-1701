@@ -131,8 +131,10 @@ severity, item freshness, and source health confidence. Store ranking factors in
 
 Current state: fixture ingest now stores explicit ranking factors and reasons in item evidence for
 source priority, recency, freshness, official-tag boost, scope priority, repeat observations, tag
-density, and prior source-health confidence. Cluster-count/topic repetition and source-provided
-severity weighting are still pending.
+density, prior source-health confidence, source-provided severity, and topic repetition. Event
+merging now records the topic-repetition contract alongside the existing cluster-size and
+cross-source signals. Broader source-family weighting and future scope-specific severity
+normalization remain pending.
 
 ### Scope Page UI
 
@@ -198,7 +200,9 @@ retention, source policy, and how to audit source health.
 
 Current state: README and CLI surfaces now mention `news-scan`, `news-sources`, page-load SQLite-only
 reads, and current fixture-only behavior. Config-specific walkthroughs, retention auditing details,
-and future live-ingest operational notes are still pending.
+and future live-ingest operational notes are still pending. README now also documents the local
+event repetition/severity drawer fields surfaced by the website, but the remaining config walkthrough
+and retention-audit guidance still need a dedicated pass.
 
 ### Separate Disabled Systemd News Timer
 

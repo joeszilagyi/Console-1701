@@ -137,10 +137,13 @@ Fixture-only ingest for enabled file:// JSON/RSS/Atom/homepage sources
 LOCAL Seattle policy config defaults to disabled and gates social/neighborhood-blog sources
 LOCAL registry seeds known source metadata for disabled official, blog, and social candidates
 Fixture parsers include LOCAL SFD, AlertSeattle, NWS, WSDOT, Metro, City Light, FAA/SEA, and local-blog evidence
-LOCAL ranking consumes parser evidence for official alerts, public impact, transit, utility, airport, and privacy
+LOCAL ranking consumes parser evidence for official alerts, explicit source severity, public impact,
+transit, utility, airport, topic repetition, and privacy
 Source audit surfaces derive disabled / configured_never_run / healthy / stale / parser_failed /
 policy_blocked / auth_required states without fetching
-Stored item detail includes source, policy, ranking, retention, and privacy evidence
+Stored item detail includes source, policy, ranking, retention, privacy, and local-event evidence
+Local event drawers now show match score, topic repetition, and source severity from the stored
+matching contract
 Live external HTTP ingest not implemented yet
 ```
 
