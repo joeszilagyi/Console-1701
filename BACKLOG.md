@@ -640,12 +640,17 @@ coverage are still pending.
 
 ### WSDOT Traveler API Fixture Parser
 
-Status: not implemented.
+Status: partially implemented.
 
 Build a fixture parser for WSDOT traveler information affecting regional corridors, mountain
 passes, bridges, border crossings, and major Washington routes. Preserve route, direction, milepost
 or facility tokens, closure/delay severity, source update time, source URL, and transport-impact
 ranking evidence.
+
+Current state: the existing WSDOT travel-alert parser now runs in REGIONAL scope through the
+registry-backed ingest path, and the regional regression exercises the shared local travel-alert
+fixture corpus. Dedicated Washington corridor fixture files and broader route coverage are still
+pending.
 
 ### WSF Bulletin/API Fixture Parser
 

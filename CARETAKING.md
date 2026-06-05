@@ -1,5 +1,14 @@
 # Caretaking Log
 
+## 2026-06-05 15:24 PDT - regional WSDOT parser follow-up
+
+- Added a REGIONAL ingest regression for `wsdot_traveler_api` so the Washington traveler-alert
+  parser is now exercised through the registry-backed regional scan path.
+- Marked the WSDOT Traveler API Fixture Parser backlog entry as partially implemented while
+  keeping the remaining corridor-specific fixture and coverage work visible.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
 ## 2026-06-05 15:24 PDT - regional NWS parser follow-up
 
 - Added a REGIONAL ingest regression for `nws_active_alerts_wa` so the Washington NWS alert

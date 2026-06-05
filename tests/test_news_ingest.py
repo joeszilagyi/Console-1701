@@ -677,6 +677,67 @@ def test_run_news_scan_ingests_regional_nws_alert_fixture(tmp_path):
     )
 
 
+def test_run_news_scan_ingests_regional_wsdot_alert_fixture(tmp_path):
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        news:
+          enabled: true
+          scopes:
+            REGIONAL:
+              enabled: true
+              sources:
+                - id: wsdot_traveler_api
+                  enabled: true
+                  url: "{_file_url(FIXTURE_DIR / "local_wsdot_alerts.json")}"
+                  route_keywords: ["I-5", "SR 99"]
+                  area_keywords: ["Seattle", "Downtown"]
+        """,
+    )
+
+    result = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        init_db(conn)
+        rows = conn.execute(
+            """
+            SELECT i.title, i.evidence_json
+            FROM news_items i
+            JOIN news_sources s ON s.id = i.source_id
+            WHERE s.source_key = 'wsdot_traveler_api'
+            ORDER BY i.title
+            """
+        ).fetchall()
+        source = conn.execute(
+            """
+            SELECT name, policy_json
+            FROM news_sources
+            WHERE source_key = 'wsdot_traveler_api'
+            """
+        ).fetchone()
+
+    evidence_rows = [json_loads(str(row["evidence_json"]), {}) for row in rows]
+    policy = json_loads(str(source["policy_json"]), {})
+
+    assert result["status"] == "complete"
+    assert result["item_count"] == 2
+    assert [str(row["title"]) for row in rows] == [
+        "I-5 northbound lane blocked near Downtown Seattle",
+        "US 2 maintenance near Leavenworth",
+    ]
+    assert source["name"] == "WSDOT traveler information API"
+    assert policy["parser"] == "wsdot_travel_alerts_json"
+    assert any(
+        evidence["wsdot_alert"]["ranking"]["public_impact_score"] == 28
+        for evidence in evidence_rows
+    )
+    assert any(
+        evidence["ranking"]["factors"]["scope_priority_boost"] == 14
+        for evidence in evidence_rows
+    )
+
+
 def test_run_news_scan_ingests_gated_registry_backed_local_blog_fixture(tmp_path):
     blocked_config = _write_config(
         tmp_path / "blocked.yml",
