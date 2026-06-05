@@ -503,6 +503,11 @@ one safe official source at a time. First candidates are SFD Fire 911 Socrata, N
 County Metro RSS, and WSDOT API. Keep every source disabled by default and require an explicit
 command. No page-load fetches.
 
+Current state: the fixture parsers, correlation, ranking, retention, and tests for the LOCAL scope
+already exist, but the explicit live ingest command path and per-source enablement flow are still
+absent. The first official-source live candidates remain SFD Fire 911 Socrata, NWS alerts, King
+County Metro RSS, and WSDOT API.
+
 ### LOCAL News/Blog RSS Ingest Phase
 
 Status: partially implemented.

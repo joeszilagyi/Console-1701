@@ -1,5 +1,16 @@
 # Caretaking Log
 
+## 2026-06-05 15:09 PDT - LOCAL backlog catch-up follow-up
+
+- Added backlog notes and supporting docs for LOCAL social policy, LOCAL news/blog RSS ingest,
+  ArcGIS dashboard endpoint research, and the LOCAL official-source live ingest phase so the
+  oldest unresolved LOCAL items are now described concretely instead of being left as vague
+  pending notes.
+- Surfaced manual-review-only source health in the LOCAL summary layer so policy-sensitive sources
+  do not collapse into configured_never_run when they are intentionally not live-ingested.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
 ## 2026-06-05 14:54 PDT - scope verification workflow documentation follow-up
 
 - Added `docs/project/ORBITAL_SOURCE_VERIFICATION_WORKFLOW.md` and
