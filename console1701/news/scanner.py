@@ -1034,6 +1034,26 @@ def _local_event_match_score(
     return score
 
 
+def _local_event_topic_repetition_score(
+    signature: dict[str, Any],
+    event_row: sqlite3.Row,
+) -> tuple[int, list[str]]:
+    existing_title_tokens = set(
+        _deduplicate_ordered(json_loads(str(event_row["title_tokens_json"]), []))
+    )
+    existing_neighborhood_tokens = set(
+        _deduplicate_ordered(json_loads(str(event_row["neighborhoods_json"]), []))
+    )
+    repeated_title_tokens = _deduplicate_ordered(
+        [token for token in signature["title_tokens"] if token in existing_title_tokens]
+    )
+    repeated_location_tokens = _deduplicate_ordered(
+        [token for token in signature["location_tokens"] if token in existing_neighborhood_tokens]
+    )
+    score = min(12, len(repeated_title_tokens) * 3 + len(repeated_location_tokens) * 2)
+    return score, [*repeated_title_tokens, *repeated_location_tokens]
+
+
 def _local_event_severity(total_score: int) -> str:
     if total_score >= 72:
         return "critical"
@@ -1054,6 +1074,7 @@ def _local_event_component_scores(
     factors = ranking.get("factors") or {}
     total = int(factors.get("score", 0) if isinstance(factors, dict) else 0)
     official = int(factors.get("local_official_alert_boost", 0))
+    severity = int(factors.get("local_source_severity_boost", 0))
     public = int(factors.get("local_public_impact_boost", 0))
     transit = int(factors.get("local_transit_impact_boost", 0))
     utility = int(factors.get("local_utility_impact_boost", 0))
@@ -1066,6 +1087,7 @@ def _local_event_component_scores(
         "public_impact_score": public,
         "source_diversity_score": 0,
         "official_confirmation_score": official,
+        "source_severity_score": severity,
         "transport_impact_score": transit,
         "utility_impact_score": utility,
         "hazard_score": official if event_type in {"weather_alert"} else 0,
@@ -1140,6 +1162,9 @@ def _upsert_local_event(
             "match_token_count": len(signature["match_tokens"]),
             "location_token_count": len(signature["location_tokens"]),
             "title_token_count": len(signature["title_tokens"]),
+            "source_severity_score": int(component_scores["source_severity_score"]),
+            "topic_repetition_score": 0,
+            "topic_repetition_tokens": [],
             "confidence_basis": [
                 "time_window",
                 "event_type",
@@ -1206,6 +1231,9 @@ def _upsert_local_event(
             "item_count": 1,
             "families": [signature["source_family"]] if signature["source_family"] else [],
             "is_duplicate_family": False,
+            "source_severity_score": int(component_scores["source_severity_score"]),
+            "topic_repetition_score": 0,
+            "topic_repetition_tokens": [],
             "component_scores": component_scores,
             "signature": signature,
         }
@@ -1240,6 +1268,10 @@ def _upsert_local_event(
         ranking=ranking,
         evidence=dict(item.get("evidence") or {}),
         event_type=signature["event_type"],
+    )
+    topic_repetition_score, topic_repetition_tokens = _local_event_topic_repetition_score(
+        signature,
+        existing,
     )
     max_transport = max(
         int(existing["transport_impact_score"]),
@@ -1286,6 +1318,24 @@ def _upsert_local_event(
     existing_ranking["location_token_count"] = len(signature["location_tokens"])
     existing_ranking["title_token_count"] = len(signature["title_tokens"])
     existing_ranking["best_match_score"] = int(best_match_score)
+    existing_ranking["source_severity_score"] = max(
+        int(existing_ranking.get("source_severity_score", 0)),
+        component_scores["source_severity_score"],
+    )
+    existing_ranking["topic_repetition_score"] = max(
+        int(existing_ranking.get("topic_repetition_score", 0)),
+        topic_repetition_score,
+    )
+    existing_ranking["topic_repetition_tokens"] = _deduplicate_ordered(
+        [
+            *[
+                str(value)
+                for value in (existing_ranking.get("topic_repetition_tokens") or [])
+                if str(value).strip()
+            ],
+            *topic_repetition_tokens,
+        ]
+    )
     existing_ranking["confidence_basis"] = _deduplicate_ordered(
         [
             str(value)
@@ -1362,6 +1412,9 @@ def _upsert_local_event(
         "item_count": len(merged_item_ids),
         "families": merged_families,
         "is_duplicate_family": duplicate_family,
+        "source_severity_score": int(component_scores["source_severity_score"]),
+        "topic_repetition_score": int(topic_repetition_score),
+        "topic_repetition_tokens": topic_repetition_tokens,
         "component_scores": {
             **component_scores,
             "existing": {

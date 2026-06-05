@@ -56,9 +56,34 @@
                   </ul>
                 {% endif %}
                 {% if local_event %}
+                  {% set local_event_summary = local_event.summary or {} %}
                   {% set local_event_payload = local_event.event if local_event.event else local_event %}
+                  {% set local_event_match_score = (
+                    local_event_summary.match_score
+                    if local_event_summary.match_score is defined
+                    else local_event.match_score
+                  ) %}
+                  {% set local_event_topic_repetition = (
+                    local_event_summary.topic_repetition_score
+                    if local_event_summary.topic_repetition_score is defined
+                    else (local_event.matching_contract.topic_repetition_score if local_event.matching_contract else 0)
+                  ) %}
+                  {% set local_event_source_severity = (
+                    local_event_summary.source_severity_score
+                    if local_event_summary.source_severity_score is defined
+                    else (local_event.matching_contract.source_severity_score if local_event.matching_contract else 0)
+                  ) %}
                   <ul class="news-evidence-list">
-                    <li><b>Local event</b><span>ID {{ local_event_payload.id or "unknown" }} · {{ local_event_payload.event_type or "unclassified" }}</span></li>
+                    <li>
+                      <b>Local event</b>
+                      <span>
+                        ID {{ local_event_payload.id or "unknown" }} ·
+                        {{ local_event_payload.event_type or "unclassified" }} ·
+                        match {{ local_event_match_score if local_event_match_score is not none else "unknown" }} ·
+                        repeat {{ local_event_topic_repetition }} ·
+                        severity {{ local_event_source_severity }}
+                      </span>
+                    </li>
                   </ul>
                 {% endif %}
               </details>
@@ -94,6 +119,10 @@
             <summary>Audit trail</summary>
             <div class="news-evidence-grid">
               <div><span>Scope</span><strong>{{ source.scope }}</strong></div>
+              <div><span>Family</span><strong>{{ source.source_family or "unknown" }}</strong></div>
+              <div><span>Class</span><strong>{{ source.source_class or "unknown" }}</strong></div>
+              <div><span>Verification</span><strong>{{ source.verification_status or "unknown" }}</strong></div>
+              <div><span>Access</span><strong>{{ source.expected_access_kind or "unknown" }}</strong></div>
               <div><span>Policy</span><strong>{{ policy.policy_state or "unknown" }}</strong></div>
               <div><span>Raw health</span><strong>{{ source.raw_health_state or "none" }}</strong></div>
               <div><span>Fetch status</span><strong>{{ (source.latest_fetch_run or {}).get("status") or "never" }}</strong></div>

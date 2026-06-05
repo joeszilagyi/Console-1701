@@ -1,5 +1,55 @@
 # Caretaking Log
 
+## 2026-06-05 14:54 PDT - scope verification workflow documentation follow-up
+
+- Added `docs/project/ORBITAL_SOURCE_VERIFICATION_WORKFLOW.md` and
+  `docs/project/SYSTEM_SOLAR_SYSTEM_BEYOND_SOURCE_VERIFICATION_WORKFLOW.md` to capture the shared
+  verification checklist, required registry fields, and honest source-health states for the two
+  remaining scope families.
+- Updated the ORBITAL and Solar System and Beyond backlog entries so they now point at the new
+  workflow docs instead of leaving those follow-ups as vague pending notes.
+- Added a short README note that the scope-specific verification workflow docs now cover
+  REGIONAL, NATIONAL, GLOBAL, ORBITAL, and Solar System and Beyond guidance.
+- Kept the local-only safety envelope intact: no live fetch behavior changes, no network calls,
+  and no changes to the off-limits `Upkeeper.sh` file.
+
+## 2026-06-05 14:50 PDT - source verification workflow documentation follow-up
+
+- Added `docs/project/NEWS_SOURCE_VERIFICATION_WORKFLOW.md` to capture the shared verification
+  checklist, required registry fields, and honest source-health states before any source is enabled.
+- Updated README and the LOCAL backlog entry so the source verification workflow is now documented
+  and the remaining per-source signoff work is called out explicitly instead of being left as a
+  vague pending note.
+- Kept the existing recent-signal safety envelope intact: no page-load fetching changes, no live
+  network behavior, and no changes to the off-limits `Upkeeper.sh` file.
+- Verified the docs/backlog edits with `git diff --check` before committing them.
+
+## 2026-06-05 14:47 PDT - source audit metadata follow-up
+
+- Expanded `console-1701 news-sources` so it now prints registry metadata for source family, class,
+  verification status, and expected access kind alongside the existing policy and health details.
+- Surfaced the same metadata in the scope-page source audit drawers so the browser and CLI now show
+  matching audit context for the configured recent-signal sources.
+- Updated README, CLI help, and BACKLOG wording so the source-audit workflow and remaining
+  retention/config walkthrough gaps are documented in one place instead of being left as stale
+  pending notes.
+- Verified the touched paths with `./.venv/bin/ruff check console1701/cli.py` and
+  `./.venv/bin/python -m pytest -q tests/test_news_ingest.py -k "news_sources_command_reports_policy_and_health"`
+  plus `./.venv/bin/python -m pytest -q tests/test_app.py -k "news_scope_page_and_api_render_fixture_backed_state"`.
+
+## 2026-06-05 14:44 PDT - recent-signal severity and topic-repetition follow-up
+
+- Split LOCAL ranking into explicit source-severity and topic-repetition signals so official
+  alerts no longer hide severity inside one collapsed boost and repeated local event tokens now
+  feed the ranking explanation directly.
+- Threaded the new local-event contract through storage and the drawer UI so the website now shows
+  match score, topic repetition, and source severity for merged LOCAL events.
+- Updated README and BACKLOG to match the current ranking contract and to retire the stale note
+  that said source severity and topic repetition were still pending.
+- Verified the touched news stack with `./.venv/bin/ruff check console1701 tests/test_news_ranking.py
+  tests/test_news_ingest.py tests/test_app.py` and `./.venv/bin/python -m pytest -q tests/test_app.py`
+  plus the focused `tests/test_news_ranking.py` and `tests/test_news_ingest.py` runs.
+
 ## 2026-06-05 09:17 PDT - LOCAL event correlation and privacy ranking follow-up
 
 - Finished the interrupted LOCAL recent-signal follow-up by correcting a score-accounting bug in

@@ -131,8 +131,10 @@ severity, item freshness, and source health confidence. Store ranking factors in
 
 Current state: fixture ingest now stores explicit ranking factors and reasons in item evidence for
 source priority, recency, freshness, official-tag boost, scope priority, repeat observations, tag
-density, and prior source-health confidence. Cluster-count/topic repetition and source-provided
-severity weighting are still pending.
+density, prior source-health confidence, source-provided severity, and topic repetition. Event
+merging now records the topic-repetition contract alongside the existing cluster-size and
+cross-source signals. Broader source-family weighting and future scope-specific severity
+normalization remain pending.
 
 ### Scope Page UI
 
@@ -198,7 +200,10 @@ retention, source policy, and how to audit source health.
 
 Current state: README and CLI surfaces now mention `news-scan`, `news-sources`, page-load SQLite-only
 reads, and current fixture-only behavior. Config-specific walkthroughs, retention auditing details,
-and future live-ingest operational notes are still pending.
+and future live-ingest operational notes are still pending. README and CLI help now also describe the
+source-audit workflow with family/class/verification/access metadata, and the website audit drawers
+surface the same registry fields alongside policy and health. The remaining config walkthrough and
+retention-audit guidance still need a dedicated pass.
 
 ### Separate Disabled Systemd News Timer
 
@@ -488,11 +493,15 @@ configuration, use short retention, and never scrape HTML to bypass platform res
 
 ### Documentation For Source Verification
 
-Status: not implemented.
+Status: partially implemented.
 
 Document the later source verification workflow: confirm endpoint ownership, access method, source
 terms, robots/policy notes, parser shape, rate limits, retention sensitivity, privacy risk,
 verification status, and source-health behavior before enabling any source.
+
+Current state: `docs/project/NEWS_SOURCE_VERIFICATION_WORKFLOW.md` now captures the shared
+verification checklist, required registry fields, and source-health states. Per-source signoff
+templates and endpoint-specific walkthroughs still need a dedicated follow-up.
 
 ### Tests For No Page-Load External Fetches
 
@@ -743,12 +752,16 @@ configuration, use short retention, and never scrape HTML to bypass platform res
 
 ### Documentation For Source Verification
 
-Status: not implemented.
+Status: partially implemented.
 
 Document the later REGIONAL source verification workflow: confirm endpoint ownership, access method,
 source terms, robots/policy notes, parser shape, rate limits, retention sensitivity, privacy risk,
 verification status, geography/relevance filters, and source-health behavior before enabling any
 source.
+
+Current state: `docs/project/REGIONAL_SOURCE_VERIFICATION_WORKFLOW.md` now captures the shared
+verification checklist, required registry fields, and scope-specific geography/relevance filters.
+Per-source signoff templates and endpoint-specific walkthroughs still need a dedicated follow-up.
 
 ### Tests For No Page-Load External Fetches
 
@@ -1033,12 +1046,16 @@ explicit configuration, use short retention, and never scrape HTML to bypass pla
 
 ### Documentation For Source Verification
 
-Status: not implemented.
+Status: partially implemented.
 
 Document the later NATIONAL source verification workflow: confirm endpoint ownership, access
 method, source terms, robots/policy notes, parser shape, auth/key requirements, rate limits,
 retention sensitivity, privacy risk, verification status, agency/sector/state filters, and
 source-health behavior before enabling any source.
+
+Current state: `docs/project/NATIONAL_SOURCE_VERIFICATION_WORKFLOW.md` now captures the shared
+verification checklist, required registry fields, and scope-specific agency/sector/state filters.
+Per-source signoff templates and endpoint-specific walkthroughs still need a dedicated follow-up.
 
 ### Tests For No Page-Load External Fetches
 
@@ -1370,13 +1387,18 @@ platform restrictions, and never treat social as primary evidence.
 
 ### Documentation For Source Verification
 
-Status: not implemented.
+Status: partially implemented.
 
 Document the later GLOBAL source verification workflow: confirm endpoint ownership, access method,
 source terms, robots/policy notes, parser shape, auth/key requirements, rate limits, retention
 sensitivity, privacy risk, verification status, geography/relevance filters, source-health
 behavior, and whether the source is official, media, nonprofit, platform, open-data, or manual
 review only.
+
+Current state: `docs/project/GLOBAL_SOURCE_VERIFICATION_WORKFLOW.md` now captures the shared
+verification checklist, required registry fields, and scope-specific geography/relevance and
+source-type filters. Per-source signoff templates and endpoint-specific walkthroughs still need a
+dedicated follow-up.
 
 ### Tests For No Page-Load External Fetches
 
@@ -1717,13 +1739,18 @@ to bypass platform restrictions, and never treat social as primary evidence.
 
 ### Documentation For ORBITAL Source Verification
 
-Status: not implemented.
+Status: partially implemented.
 
 Document the later ORBITAL source verification workflow: confirm endpoint ownership, access method,
 source terms, robots/policy notes, parser shape, auth/key requirements, rate limits, retention
 sensitivity, privacy risk, verification status, source family, source class, orbital domain
 filters, source-health behavior, tactical/sensitivity review, and whether the source is official,
 provider, media, nonprofit, platform, restricted, open-data, or manual review only.
+
+Current state: `docs/project/ORBITAL_SOURCE_VERIFICATION_WORKFLOW.md` now captures the shared
+verification checklist, required registry fields, and scope-specific orbital-domain and source-type
+filters. Per-source signoff templates and endpoint-specific walkthroughs still need a dedicated
+follow-up.
 
 ### Tests For No Page-Load External Fetches
 
@@ -2071,13 +2098,18 @@ never treat social as primary evidence.
 
 ### Documentation For Source Verification
 
-Status: not implemented.
+Status: partially implemented.
 
 Document the later Solar System and Beyond source verification workflow: confirm endpoint
 ownership, access method, source terms, robots/policy notes, parser shape, auth/key requirements,
 rate limits, retention sensitivity, privacy risk, verification status, object/mission/scope
 filters, source-health behavior, and whether the source is official, archive, alert network,
 publisher, public media, social, auth-required, heavy archive, or manual review only.
+
+Current state: `docs/project/SYSTEM_SOLAR_SYSTEM_BEYOND_SOURCE_VERIFICATION_WORKFLOW.md` now
+captures the shared verification checklist, required registry fields, and source-health states
+with Solar System and Beyond scope filters. Per-source signoff templates and endpoint-specific
+walkthroughs still need a dedicated follow-up.
 
 ### Tests For No Page-Load External Fetches
 

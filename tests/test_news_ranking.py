@@ -22,6 +22,8 @@ def test_apply_local_event_ranking_adjustments_keeps_score_equal_to_factor_sum()
             "matched": True,
             "item_count": 2,
             "match_score": 30,
+            "topic_repetition_score": 6,
+            "topic_repetition_tokens": ["outage", "capitol"],
         },
     )
 
@@ -29,11 +31,13 @@ def test_apply_local_event_ranking_adjustments_keeps_score_equal_to_factor_sum()
     assert adjusted["factors"]["local_source_diversity_score"] == 2
     assert adjusted["factors"]["local_source_diversity_bonus"] == 3
     assert adjusted["factors"]["local_cluster_size_bonus"] == 4
+    assert adjusted["factors"]["local_topic_repetition_bonus"] == 6
     assert adjusted["score"] == sum(int(value) for value in adjusted["factors"].values())
     assert (
         "Independent cross-source confirmation partially offsets privacy suppression."
         in adjusted["reasons"]
     )
+    assert "LOCAL topic repetition adds 6 across 2 repeated tokens." in adjusted["reasons"]
 
 
 def test_apply_local_event_ranking_adjustments_penalizes_social_only_private_reports() -> None:
