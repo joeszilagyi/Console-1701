@@ -1,5 +1,16 @@
 # Caretaking Log
 
+## 2026-06-05 15:34 PDT - scan_once CLI validation follow-up
+
+- Hardened `scripts/scan_once.sh` so `--check` now verifies the resolved `console-1701`
+  executable actually runs `--version` before reporting success.
+- Added a runtime preflight so the scan helper fails with a clear message instead of trying to
+  launch a broken CLI entry point.
+- Added regression coverage for both the runnable and broken local CLI cases using a temp
+  project tree copy of the helper script.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
 ## 2026-06-05 15:25 PDT - regional fixture pack follow-up
 
 - Updated the REGIONAL fixture pack note to reflect the concrete NWS, WSDOT, and regional RSS

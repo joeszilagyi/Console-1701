@@ -22,6 +22,12 @@ Arguments after -- are forwarded to `console-1701 scan`.
 EOF
 }
 
+cli_is_runnable() {
+  local cli_path="$1"
+  [[ -n "$cli_path" ]] || return 1
+  "$cli_path" --version >/dev/null 2>&1
+}
+
 check_only=false
 scan_args=()
 while (($#)); do
@@ -57,7 +63,12 @@ fi
 if [[ "$check_only" == true ]]; then
   printf 'Project: %s\n' "$PROJECT_DIR"
   if [[ -n "$resolved_cli" ]]; then
-    printf 'CLI: %s\n' "$resolved_cli"
+    if cli_is_runnable "$resolved_cli"; then
+      printf 'CLI: %s (runnable)\n' "$resolved_cli"
+    else
+      printf 'CLI: present but not runnable (%s)\n' "$resolved_cli"
+      exit 1
+    fi
   else
     printf 'CLI: missing (console-1701)\n'
     exit 127
@@ -68,6 +79,11 @@ fi
 if [[ -z "$resolved_cli" ]]; then
   printf 'error: console-1701 not found; run scripts/dev_server.sh --check first.\n' >&2
   exit 127
+fi
+
+if ! cli_is_runnable "$resolved_cli"; then
+  printf 'error: console-1701 entry point is not runnable: %s\n' "$resolved_cli" >&2
+  exit 1
 fi
 
 exec "$resolved_cli" scan "${scan_args[@]}"
