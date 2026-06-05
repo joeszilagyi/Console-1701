@@ -437,7 +437,8 @@ def test_run_news_scan_ingests_registry_backed_nws_alert_fixture(tmp_path):
     assert evidence["nws_alert"]["severity"] == "Severe"
     assert evidence["nws_alert"]["ranking"]["total_alert_weight"] == 58
     assert evidence["ranking"]["factors"]["official_source_boost"] == 12
-    assert evidence["ranking"]["factors"]["local_official_alert_boost"] == 45
+    assert evidence["ranking"]["factors"]["local_official_alert_boost"] == 28
+    assert evidence["ranking"]["factors"]["local_source_severity_boost"] == 30
     assert source["name"] == "NWS active alerts API"
     assert policy["source_class"] == "official_weather_hazard"
     assert policy["adapter"] == "official_api_json"
@@ -489,11 +490,15 @@ def test_run_news_scan_ingests_registry_backed_alertseattle_fixture(tmp_path):
     assert policy["adapter"] == "rss_atom"
     assert policy["parser"] == "alertseattle_rss"
     assert any(evidence["alertseattle"]["severity"] == "severe" for evidence in evidence_rows)
+    assert {
+        evidence["ranking"]["factors"]["local_source_severity_boost"]
+        for evidence in evidence_rows
+    } == {18, 30}
     assert any(
         evidence["ranking"]["factors"]["official_source_boost"] == 12 for evidence in evidence_rows
     )
     assert any(
-        evidence["ranking"]["factors"]["local_official_alert_boost"] == 45
+        evidence["ranking"]["factors"]["local_official_alert_boost"] == 24
         for evidence in evidence_rows
     )
 
@@ -914,7 +919,9 @@ def test_run_news_scan_links_similar_local_items_to_same_event(tmp_path):
         ).fetchall()
         local_events = conn.execute(
             """
-            SELECT id, item_ids_json, source_ids_json, source_diversity_score
+            SELECT
+              id, item_ids_json, source_ids_json, source_diversity_score,
+              ranking_explanation_json
             FROM local_events
             """
         ).fetchall()
@@ -928,9 +935,12 @@ def test_run_news_scan_links_similar_local_items_to_same_event(tmp_path):
     event_row = local_events[0]
     item_ids = json_loads(str(event_row["item_ids_json"]), [])
     source_ids = json_loads(str(event_row["source_ids_json"]), [])
+    event_ranking = json_loads(str(event_row["ranking_explanation_json"]), {})
     assert len(item_ids) == 2
     assert len(source_ids) == 2
     assert int(event_row["source_diversity_score"]) == 1
+    assert int(event_ranking.get("topic_repetition_score", 0)) > 0
+    assert event_ranking.get("topic_repetition_tokens")
     item_evidences = [
         json_loads(str(row["evidence_json"]), {}).get("local_event", {}) for row in items
     ]

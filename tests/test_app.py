@@ -373,6 +373,8 @@ news:
     assert local_event["id"] == event_id
     assert int(local_event["source_count"]) == 2
     assert int(local_event["item_count"]) == 2
+    assert int(local_event["matching_contract"]["topic_repetition_score"]) > 0
+    assert int(local_event["matching_contract"]["source_severity_score"]) == 0
     assert any(payload["id"] == item_id for payload in local_event["items"])
     assert item["local_event"]["id"] == event_id
     assert item["evidence"]["local_event"]["event"]["id"] == event_id
