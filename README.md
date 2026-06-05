@@ -144,6 +144,7 @@ policy_blocked / auth_required states without fetching
 `console-1701 news-sources` also prints source family, class, verification status, and expected
 access kind so registry-backed sources can be audited without opening the database
 Source verification workflow: `docs/project/NEWS_SOURCE_VERIFICATION_WORKFLOW.md`
+Operational guide: `docs/project/NEWS_OPERATIONAL_GUIDE.md`
 Scope-specific source verification workflow docs now cover REGIONAL, NATIONAL, GLOBAL, ORBITAL,
 and Solar System and Beyond verification notes
 Stored item detail includes source, policy, ranking, retention, privacy, and local-event evidence

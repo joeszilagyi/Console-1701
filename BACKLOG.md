@@ -212,8 +212,10 @@ Current state: README and CLI surfaces now mention `news-scan`, `news-sources`, 
 reads, and current fixture-only behavior. Config-specific walkthroughs, retention auditing details,
 and future live-ingest operational notes are still pending. README and CLI help now also describe the
 source-audit workflow with family/class/verification/access metadata, and the website audit drawers
-surface the same registry fields alongside policy and health. The remaining config walkthrough and
-retention-audit guidance still need a dedicated pass.
+surface the same registry fields alongside policy and health. `docs/project/NEWS_OPERATIONAL_GUIDE.md`
+now captures the disabled-by-default operating notes, explicit ingest boundary, retention and purge
+evidence, and the SQLite-only page-load rule. The remaining live-ingest operational notes still need
+a dedicated pass.
 
 ### Separate Disabled Systemd News Timer
 
