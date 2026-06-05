@@ -143,6 +143,7 @@ Source audit surfaces derive disabled / configured_never_run / healthy / stale /
 policy_blocked / auth_required states without fetching
 `console-1701 news-sources` also prints source family, class, verification status, and expected
 access kind so registry-backed sources can be audited without opening the database
+Source verification workflow: `docs/project/NEWS_SOURCE_VERIFICATION_WORKFLOW.md`
 Stored item detail includes source, policy, ranking, retention, privacy, and local-event evidence
 Local event drawers now show match score, topic repetition, and source severity from the stored
 matching contract
