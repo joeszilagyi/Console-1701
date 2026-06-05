@@ -1387,13 +1387,18 @@ platform restrictions, and never treat social as primary evidence.
 
 ### Documentation For Source Verification
 
-Status: not implemented.
+Status: partially implemented.
 
 Document the later GLOBAL source verification workflow: confirm endpoint ownership, access method,
 source terms, robots/policy notes, parser shape, auth/key requirements, rate limits, retention
 sensitivity, privacy risk, verification status, geography/relevance filters, source-health
 behavior, and whether the source is official, media, nonprofit, platform, open-data, or manual
 review only.
+
+Current state: `docs/project/GLOBAL_SOURCE_VERIFICATION_WORKFLOW.md` now captures the shared
+verification checklist, required registry fields, and scope-specific geography/relevance and
+source-type filters. Per-source signoff templates and endpoint-specific walkthroughs still need a
+dedicated follow-up.
 
 ### Tests For No Page-Load External Fetches
 
