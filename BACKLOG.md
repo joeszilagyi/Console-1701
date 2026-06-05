@@ -133,8 +133,9 @@ Current state: fixture ingest now stores explicit ranking factors and reasons in
 source priority, recency, freshness, official-tag boost, scope priority, repeat observations, tag
 density, prior source-health confidence, source-provided severity, and topic repetition. Event
 merging now records the topic-repetition contract alongside the existing cluster-size and
-cross-source signals. Broader source-family weighting and future scope-specific severity
-normalization remain pending.
+cross-source signals. LOCAL event-correlation now also applies a capped, explainable
+`local_source_family_boost` for trusted official and local-news families. Future
+scope-specific severity normalization remains pending.
 
 ### Scope Page UI
 

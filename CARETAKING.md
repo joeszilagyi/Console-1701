@@ -1,5 +1,15 @@
 # Caretaking Log
 
+## 2026-06-05 15:54 PDT - LOCAL source-family weighting follow-up
+
+- Added a capped `local_source_family_boost` to LOCAL event-correlation ranking so trusted
+  official and local-news families contribute an explicit, explainable score term alongside the
+  existing diversity and privacy adjustments.
+- Covered the new factor with a direct ranking regression and a registry-backed NWS ingest
+  assertion so the stored evidence path and the helper contract stay aligned.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
 ## 2026-06-05 15:47 PDT - news item-detail adapter fallback follow-up
 
 - Aligned the item-detail `source.adapter` fallback with the evidence block so both use the same

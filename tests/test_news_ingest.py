@@ -437,6 +437,7 @@ def test_run_news_scan_ingests_registry_backed_nws_alert_fixture(tmp_path):
     assert evidence["nws_alert"]["severity"] == "Severe"
     assert evidence["nws_alert"]["ranking"]["total_alert_weight"] == 58
     assert evidence["ranking"]["factors"]["official_source_boost"] == 12
+    assert evidence["ranking"]["factors"]["local_source_family_boost"] == 10
     assert evidence["ranking"]["factors"]["local_official_alert_boost"] == 28
     assert evidence["ranking"]["factors"]["local_source_severity_boost"] == 30
     assert source["name"] == "NWS active alerts API"
