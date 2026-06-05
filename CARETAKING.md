@@ -1,5 +1,16 @@
 # Caretaking Log
 
+## 2026-06-05 15:36 PDT - install_user_service venv binary follow-up
+
+- Removed activation-dependent `console-1701` and `python` calls from
+  `scripts/install_user_service.sh` in favor of explicit repo-local venv binaries.
+- Added preflight checks so the installer fails fast if the venv Python or CLI entry point is
+  missing or not runnable after installation.
+- Extended the systemd install-script regression test to lock in the explicit venv path contract
+  and the existing disabled-news-timer behavior.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
 ## 2026-06-05 15:34 PDT - scan_once CLI validation follow-up
 
 - Hardened `scripts/scan_once.sh` so `--check` now verifies the resolved `console-1701`
