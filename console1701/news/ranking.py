@@ -29,6 +29,18 @@ LOCAL_SOCIAL_SOURCE_FAMILIES = {
     "x_api",
 }
 
+LOCAL_SEVERITY_LABEL_BOOST = {
+    "extreme": 40,
+    "critical": 40,
+    "severe": 30,
+    "major": 30,
+    "moderate": 18,
+    "notice": 8,
+    "minor": 8,
+    "low": 4,
+    "unknown": 0,
+}
+
 
 def _local_event_families(local_event: dict[str, Any] | None) -> list[str]:
     raw_families = local_event.get("families") if isinstance(local_event, dict) else []
@@ -36,6 +48,26 @@ def _local_event_families(local_event: dict[str, Any] | None) -> list[str]:
         raw_families = []
     families = [str(value).lower().strip() for value in raw_families if str(value).strip()]
     return _dedupe_in_order(families)
+
+
+def _severity_boost_from_payload(payload: dict[str, Any] | None) -> int:
+    if not isinstance(payload, dict):
+        return 0
+    ranking = payload.get("ranking") if isinstance(payload.get("ranking"), dict) else {}
+    for key in ("severity_weight",):
+        boost = _int_value(ranking.get(key))
+        if boost:
+            return min(40, boost)
+        boost = _int_value(payload.get(key))
+        if boost:
+            return min(40, boost)
+    label = str(
+        ranking.get("severity")
+        or payload.get("severity")
+        or payload.get("severity_label")
+        or ""
+    ).lower().strip()
+    return LOCAL_SEVERITY_LABEL_BOOST.get(label, 0)
 
 
 def _apply_local_privacy_ranking_adjustments(
@@ -183,6 +215,7 @@ def apply_local_event_ranking_adjustments(
     if source_diversity_score > 1:
         source_diversity_bonus = min(12, (source_diversity_score - 1) * 3)
 
+    topic_repetition_bonus = int(local_event.get("topic_repetition_score") or 0)
     cluster_size_bonus = 0
     if item_count > 1:
         cluster_size_bonus = min(12, item_count * 2)
@@ -197,6 +230,7 @@ def apply_local_event_ranking_adjustments(
     factors["local_source_diversity_score"] = source_diversity_score
     factors["local_source_diversity_bonus"] = source_diversity_bonus
     factors["local_cluster_size_bonus"] = cluster_size_bonus
+    factors["local_topic_repetition_bonus"] = topic_repetition_bonus
     factors["local_duplicate_family_penalty"] = duplicate_family_penalty
     factors["local_low_confidence_penalty"] = low_confidence_penalty
     if stale_source_penalty:
@@ -219,6 +253,17 @@ def apply_local_event_ranking_adjustments(
     if cluster_size_bonus:
         reasons.append(
             f"LOCAL event size adds {cluster_size_bonus} from {item_count} matched items."
+        )
+    if topic_repetition_bonus:
+        repeated_tokens = local_event.get("topic_repetition_tokens") or []
+        token_count = len(repeated_tokens) if isinstance(repeated_tokens, list) else 0
+        token_text = (
+            f" across {token_count} repeated token{'s' if token_count != 1 else ''}"
+            if token_count
+            else ""
+        )
+        reasons.append(
+            f"LOCAL topic repetition adds {topic_repetition_bonus}{token_text}."
         )
     if duplicate_family_penalty:
         reasons.append(
@@ -256,6 +301,7 @@ def _local_signal_factors(item: dict[str, Any]) -> dict[str, Any]:
     evidence = item.get("evidence") if isinstance(item.get("evidence"), dict) else {}
     factors: dict[str, int] = {
         "local_official_alert_boost": 0,
+        "local_source_severity_boost": 0,
         "local_public_impact_boost": 0,
         "local_transit_impact_boost": 0,
         "local_utility_impact_boost": 0,
@@ -270,18 +316,48 @@ def _local_signal_factors(item: dict[str, Any]) -> dict[str, Any]:
         ranking = (
             alertseattle.get("ranking") if isinstance(alertseattle.get("ranking"), dict) else {}
         )
-        boost = min(45, _int_value(ranking.get("city_alert_score")))
-        factors["local_official_alert_boost"] = max(factors["local_official_alert_boost"], boost)
-        if boost:
-            reasons.append(f"AlertSeattle city-alert evidence adds {boost}.")
+        severity_boost = _severity_boost_from_payload(alertseattle)
+        official_boost = min(
+            45,
+            max(
+                0,
+                _int_value(ranking.get("official_alert_weight"))
+                or _int_value(ranking.get("city_alert_score")) - severity_boost,
+            ),
+        )
+        factors["local_official_alert_boost"] = max(
+            factors["local_official_alert_boost"],
+            official_boost,
+        )
+        factors["local_source_severity_boost"] = max(
+            factors["local_source_severity_boost"],
+            severity_boost,
+        )
+        if official_boost:
+            reasons.append(f"AlertSeattle city-alert evidence adds {official_boost}.")
+        if severity_boost:
+            reasons.append(f"AlertSeattle severity evidence adds {severity_boost}.")
 
     nws_alert = evidence.get("nws_alert")
     if isinstance(nws_alert, dict):
         ranking = nws_alert.get("ranking") if isinstance(nws_alert.get("ranking"), dict) else {}
-        boost = min(45, _int_value(ranking.get("total_alert_weight")))
-        factors["local_official_alert_boost"] = max(factors["local_official_alert_boost"], boost)
-        if boost:
-            reasons.append(f"NWS active-alert severity evidence adds {boost}.")
+        severity_boost = _severity_boost_from_payload(nws_alert)
+        official_boost = min(
+            45,
+            max(0, _int_value(ranking.get("total_alert_weight")) - severity_boost),
+        )
+        factors["local_official_alert_boost"] = max(
+            factors["local_official_alert_boost"],
+            official_boost,
+        )
+        factors["local_source_severity_boost"] = max(
+            factors["local_source_severity_boost"],
+            severity_boost,
+        )
+        if official_boost:
+            reasons.append(f"NWS active-alert evidence adds {official_boost}.")
+        if severity_boost:
+            reasons.append(f"NWS severity evidence adds {severity_boost}.")
 
     sfd = evidence.get("sfd_fire_911")
     if isinstance(sfd, dict):

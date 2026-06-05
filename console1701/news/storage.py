@@ -189,6 +189,9 @@ def _decode_local_event_row(row: sqlite3.Row) -> dict[str, Any]:
             match_contract.get("best_match_score", match_contract.get("last_match_score", 0))
         ),
         "matched_count": int(match_contract.get("matched_count", 0)),
+        "source_severity_score": int(match_contract.get("source_severity_score", 0)),
+        "topic_repetition_score": int(match_contract.get("topic_repetition_score", 0)),
+        "topic_repetition_tokens": list(match_contract.get("topic_repetition_tokens", [])),
     }
     event["item_count"] = len(item_ids)
     event["source_count"] = len(source_ids)
