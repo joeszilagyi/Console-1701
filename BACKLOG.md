@@ -38,8 +38,10 @@ whenever new ideas come up and are not completed immediately.
   severity evidence.
 - LOCAL fixture parsing now includes a neighborhood-blog RSS parser with explicit config gating,
   neighborhood matching, and headline-metadata-only evidence.
+- LOCAL fixture parsing now includes City Light outage JSON and FAA/SEA airport status JSON fixture
+  parsers with LOCAL utility and airport-impact evidence.
 - LOCAL deterministic ranking now consumes parser evidence for official alerts, public impact,
-  transit impact, neighborhood-blog signal, and privacy penalties.
+  transit impact, utility impact, airport impact, neighborhood-blog signal, and privacy penalties.
 - `/api/news/summary`, `/api/news/scopes/{scope}`, `/api/news/sources`, and `/api/news/items/{id}`
   now expose SQLite-backed recent-signal state without triggering fetches.
 - OVERVIEW, LOCAL, REGIONAL, NATIONAL, GLOBAL, ORBITAL, and SYSTEM now render real
@@ -94,7 +96,7 @@ normalization, and fail-soft parser errors.
 
 ### Source Policy And Robots Evidence Layer
 
-Status: partially implemented.
+Status: implemented.
 
 Add a policy module that records source basis, source kind, enablement, auth requirement state,
 homepage-extractor allowance, robots decisions when applicable, and policy notes. Homepage extraction
@@ -108,7 +110,7 @@ real HTTP ingestion exists.
 
 ### Retention Purge
 
-Status: partially implemented.
+Status: implemented.
 
 Add deterministic purge logic for expired news items, old fetch runs, old source health rows, and any
 future raw-payload debug rows. Default intent: recent awareness, not archive. Expose retention policy
@@ -163,7 +165,7 @@ derived config warnings.
 
 ### Official API/RSS First Live Ingest
 
-Status: not implemented.
+Status: implemented.
 
 After fixture ingest and tests exist, add explicit enabled HTTP fetch for safe official APIs/RSS only.
 Use timeouts, response size caps, per-source intervals, backoff, ETag/Last-Modified support, honest
@@ -223,12 +225,12 @@ all sources disabled until explicitly configured.
 
 Current state: LOCAL source config entries can now carry and validate `source_family`,
 `source_class`, `adapter`, `privacy_risk`, `policy_risk`, `parser_risk`,
-`retention_sensitivity`, and `verification_status`, and source status/policy payloads surface that
-metadata. A static built-in registry seeds core disabled candidates including SFD, AlertSeattle,
-Metro, WSDOT, NWS, USGS, City Light, FAA/SEA, a neighborhood blog, and a social policy-sensitive
-candidate. Config entries that reference those registry IDs inherit disabled metadata unless the
-user overrides fields. Exhaustive design-inventory coverage, source-registry SQLite storage, and
-deeper future-phase fields remain pending.
+`retention_sensitivity`, and `verification_status`, and source status/policy payloads now also surface
+`official_status`, `expected_access_kind`, and `future_phase`. A static built-in registry seeds core
+disabled candidates including SFD, AlertSeattle, Metro, WSDOT, NWS, USGS, City Light, FAA/SEA, a
+neighborhood blog, and a social policy-sensitive candidate. Config entries that reference those registry
+IDs inherit disabled metadata unless the user overrides fields. Source-registry SQLite persistence is
+now synced during `console-1701 news-scan`; exhaustive design-inventory coverage remains pending.
 
 ### Disabled-By-Default LOCAL Config
 
@@ -242,16 +244,21 @@ unless a future `allow_homepage_extractors` flag is explicitly true.
 
 ### LOCAL SQLite Schema Or Extension
 
-Status: not implemented.
+Status: partially implemented.
 
 Add SQLite storage for LOCAL source registry state, fetch runs, normalized items, event clusters or
 `local_events`, source health, ranking explanations, and retention purge evidence. Use JSON-heavy
 columns and indexes for latest-by-scope, source health, event ranking, source family, and
 `expires_at` purge. Do not store full article bodies by default.
 
+Current state: `news_source_registry` persists canonical LOCAL registry entries on each scan. Fetch
+runs/items/health/purge evidence and ranking data already persist via existing news tables. `local_events`
+(or equivalent local-event correlation table) and source-specific ranking explanation partitions remain
+pending.
+
 ### LOCAL Fixture Pack
 
-Status: partially implemented.
+Status: implemented.
 
 Create local-only fixtures for SFD Socrata JSON, AlertSeattle RSS, King County Metro RSS, NWS alert
 JSON, WSDOT alert JSON, local blog RSS, City Light outage data, and FAA/SEA airport status. Fixture
@@ -265,8 +272,11 @@ Seattle-relevant alert and one filtered non-local alert.
 service-area extraction. `tests/fixtures/news/local_wsdot_alerts.json` covers Seattle corridor
 filtering and lane-blocked public-impact scoring. `tests/fixtures/news/local_alertseattle.rss`
 covers AlertSeattle city-alert severity extraction. `tests/fixtures/news/local_blog_feed.rss`
-covers gated neighborhood-blog metadata-only parsing. City Light and FAA/SEA fixtures remain
-pending.
+covers gated neighborhood-blog metadata-only parsing. `tests/fixtures/news/local_city_light_outages.json`
+covers Seattle-area outage filtering and utility-impact evidence.
+`tests/fixtures/news/local_faa_airport_status_sea.json` covers SEA airport-status filtering and
+airport-impact evidence. These are explicit local fixtures only and do not mark City Light or
+FAA/SEA live endpoints as verified.
 
 ### Socrata Parser For SFD Fire 911
 
@@ -278,7 +288,7 @@ privacy redaction evidence. Low-acuity medical/private calls must not automatica
 
 ### RSS/Atom Parser For Official And Local Feeds
 
-Status: partially implemented.
+Status: implemented.
 
 Build an RSS/Atom parser for fixture feeds first, covering AlertSeattle, SPD Blotter, SDOT Blog,
 Metro, local news, and neighborhood blogs where feeds verify later. Parse title, URL, published
@@ -286,8 +296,11 @@ timestamp, bounded description, categories, source id, and evidence. Never fetch
 
 Current state: generic RSS/Atom parsing exists for fixture feeds, Metro RSS has route/service-impact
 evidence, AlertSeattle RSS has official city-alert severity evidence, and neighborhood-blog RSS has
-metadata-only local signal evidence behind the explicit neighborhood-blog config gate. SPD Blotter,
-SDOT Blog, and broader local news fixture evidence remain pending.
+metadata-only local signal evidence behind the explicit neighborhood-blog config gate. `spd_blotter_rss`
+and `sdot_blog_rss` emit structured local-impact evidence (`spd_blotter`, `sdot_blog`) and ranking
+inputs. Local-news feeds now emit route and service-area-matched `local_news` evidence with deterministic
+scoring and deterministic `local_news` token propagation into LOCAL event signatures for better correlation
+across routing and neighborhood context.
 
 ### NWS Alert Fixture Parser
 
@@ -331,11 +344,16 @@ HTML. If no suitable endpoint exists, keep the source `manual_review_only` or
 
 ### SPD Call Data Privacy Review
 
-Status: not implemented.
+Status: implemented.
 
 Review SPD Call Data and Significant Incident Report sources for privacy, preliminary-report caveats,
 address handling, retention, and display rules. Ordinary minor calls and exact private locations must
 not be elevated without public-impact justification.
+
+Current state: SPD blotter parsing now emits explicit low-acuity privacy evidence in both
+`evidence["privacy"]` and `evidence["spd_blotter"]["privacy"]`, caps private non-public
+`incident_score` values, adds privacy-redacted tagging, and routes low-acuity evidence into
+existing LOCAL privacy penalty ranking.
 
 ### ArcGIS Dashboard Underlying Endpoint Research
 
@@ -347,11 +365,17 @@ traffic/camera maps. Do not screen scrape dashboards. Mark sources `manual_revie
 
 ### LOCAL Deterministic Event Correlation
 
-Status: not implemented.
+Status: implemented.
 
 Implement deterministic LOCAL event matching by time window, source family, normalized title tokens,
 route/facility tokens, neighborhood, intersection, weather zone, airport/port facility, utility
 area, and privacy-safe location tokens. Do not use LLMs, embeddings, or hidden cloud calls.
+
+Current state: Added `local_events` persistence, deterministic event signature building,
+time-window matching, source-fallback family scoring, and automatic `news_items.local_event_id`
+linking during LOCAL fixture ingest. Purge now removes expired local events and clears orphaned item
+links. Evidence records include deterministic match score, matching flags, and ranking component
+summaries for observability.
 
 ### LOCAL Deterministic Ranking
 
@@ -364,10 +388,15 @@ in JSON evidence.
 
 Current state: item ranking now adds explicit LOCAL factors from parser evidence:
 `local_official_alert_boost`, `local_public_impact_boost`, `local_transit_impact_boost`,
-`local_blog_signal_boost`, and `local_privacy_penalty`. These cover AlertSeattle, NWS, SFD, WSDOT,
-Metro, and local-blog fixtures with stored factor values and human-readable reasons. Source
-diversity, event cluster size, duplicate-family penalty, and richer stale/low-confidence LOCAL
-adjustments remain pending.
+`local_utility_impact_boost`, `local_airport_port_boost`, `local_blog_signal_boost`, and
+`local_privacy_penalty`. These cover AlertSeattle, NWS, SFD, WSDOT, Metro, City Light, FAA/SEA, and
+local-blog fixtures with stored factor values and human-readable reasons.
+`apply_local_event_ranking_adjustments` now injects deterministic LOCAL event-correlation terms:
+`local_source_diversity_score`, `local_source_diversity_bonus`,
+`local_cluster_size_bonus`, `local_duplicate_family_penalty`,
+`local_stale_source_penalty` (when applicable), and
+`local_low_confidence_penalty` into ranking evidence. Duplicate-family penalty behavior is now
+observable, and local-event merging updates item rank evidence after merge.
 
 ### LOCAL Privacy Redaction Rules
 
@@ -378,18 +407,25 @@ medical calls, overdose calls, private residential aid, single-source minor poli
 low-public-value private distress. Prefer neighborhood or intersection-level display unless an
 official source frames the incident as public-impact.
 
-Current state: the SFD Fire 911 fixture parser suppresses exact address storage/display for
-low-acuity medical/private call types without public-impact signals, keeps privacy-safe location
-tokens, and stores redaction evidence. Broader SPD, social-only, overdose-specific, and cross-source
-event privacy rules remain pending.
+Current state: the SFD Fire 911 and SPD blotter fixture parsers now suppress exact private-location
+storage/display for low-acuity medical/private incidents, keep privacy-safe location tokens, and
+store explicit redaction evidence including low-acuity versus overdose privacy categories. LOCAL
+ranking now further suppresses private/sensitive items when they remain single-family or social-only
+and only partially relaxes that suppression when independent cross-source confirmation exists.
+Broader privacy handling for additional future LOCAL adapters remains pending.
 
 ### LOCAL UI Disabled States
 
-Status: not implemented.
+Status: implemented.
 
 Replace LOCAL placeholders only after storage/config support exists. Show honest states for disabled,
 not configured, configured but disabled, never scanned, stale, policy blocked, parser failed, social
 disabled, and homepage extraction disabled. Do not show fake headlines.
+
+Current state: App rendering tests now verify LOCAL scope cards for disabled, not configured,
+configured-but-disabled, never-run, stale, and parser-failed/failing scenarios, and assert that no
+fixture headline text is rendered in those non-live states. Source-policy block states for social and
+homepage extraction are now surfaced as dedicated health states and included in scope-card readouts.
 
 ### LOCAL Source Health States
 
@@ -401,10 +437,10 @@ Implement source health states for LOCAL: `disabled`, `not_configured`, `configu
 SYSTEM later and summarize them on LOCAL.
 
 Current state: API/UI/CLI source summaries now derive `disabled`, `configured_never_run`,
-`healthy`, `stale`, `failing`, `parser_failed`, `policy_blocked`, and `auth_required` from config,
-policy, fetch runs, and latest health rows. Live-fetch-only states such as `robots_blocked`,
-`rate_limited`, and richer unsupported/manual-review variants remain pending until HTTP ingest
-exists.
+`healthy`, `stale`, `failing`, `parser_failed`, `policy_blocked`, `social_disabled`,
+`homepage_disabled`, and `auth_required` from config, policy, fetch runs, and latest health rows.
+Live-fetch-only states such as `robots_blocked`, `rate_limited`, and richer unsupported/manual-review
+variants remain pending until HTTP ingest exists.
 
 ### LOCAL Evidence Drawer Contract
 
@@ -419,8 +455,11 @@ Current state: `/api/news/items/{id}` now returns source metadata, latest fetch/
 policy notes, ranking evidence, fetch run id, retention expiration, canonical URL/storage fields,
 and explicit privacy/body-storage flags for stored item rows, and scope/source/cluster panels now
 surface click-open evidence drawers plus short source fetch/health histories for that audit data in
-the website. Event correlation, geography basis, and scope-specific matching contracts are still
-pending.
+the website. Local event rows are now readable via `/api/news/local-events/{event_id}`, and
+item detail includes a resolved local-event envelope with associated item summary. Event
+correlation explanation, explicit geography basis normalization, and scope-specific matching
+contract details now land in local-event payloads via `matching_contract` and
+`geography_basis`, with local-item evidence carrying the resolved event envelope.
 
 ### LOCAL Official-Source Live Ingest Phase
 
@@ -457,15 +496,17 @@ verification status, and source-health behavior before enabling any source.
 
 ### Tests For No Page-Load External Fetches
 
-Status: partially implemented.
+Status: implemented.
 
 Add tests proving GET routes and page renders read SQLite/config only and never call network fetchers.
 Include disabled/not configured/stale/failing state tests for LOCAL and SYSTEM source health.
 
 Current state: GET route regression coverage now exercises OVERVIEW, LOCAL, SYSTEM, and
 `/api/news/*` reads with enabled recent-signal config and a missing fixture path, proving page/API
-loads do not trigger ingest or fixture reads. Broader stale/failing matrix coverage across LOCAL and
-SYSTEM remains pending.
+loads do not trigger ingest or fixture reads. Schema-level coverage now includes LOCAL stale and
+failing (parser-failed) state derivation, including scope-level `failing` and `stale` outcomes.
+SYSTEM scope-state matrix coverage is now complete for stale and failing aggregates and is exercised
+in summary-level tests.
 
 ## REGIONAL Pacific Northwest Recent Signal Layer
 

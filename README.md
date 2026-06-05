@@ -136,8 +136,8 @@ No hidden fetch on GET routes
 Fixture-only ingest for enabled file:// JSON/RSS/Atom/homepage sources
 LOCAL Seattle policy config defaults to disabled and gates social/neighborhood-blog sources
 LOCAL registry seeds known source metadata for disabled official, blog, and social candidates
-Fixture parsers include LOCAL SFD, AlertSeattle, NWS, WSDOT, Metro, and local-blog evidence
-LOCAL ranking consumes parser evidence for official alerts, public impact, transit impact, and privacy
+Fixture parsers include LOCAL SFD, AlertSeattle, NWS, WSDOT, Metro, City Light, FAA/SEA, and local-blog evidence
+LOCAL ranking consumes parser evidence for official alerts, public impact, transit, utility, airport, and privacy
 Source audit surfaces derive disabled / configured_never_run / healthy / stale / parser_failed /
 policy_blocked / auth_required states without fetching
 Stored item detail includes source, policy, ranking, retention, and privacy evidence
@@ -417,6 +417,7 @@ GET  /api/news/summary         recent-signal storage/config summary
 GET  /api/news/scopes/{scope}  latest stored recent-signal items/clusters for one scope
 GET  /api/news/sources         configured source policy plus derived source-state/health state
 GET  /api/news/items/{id}      one stored recent-signal item with source/policy/ranking evidence
+GET  /api/news/local-events/{id} resolved local-event correlation state and associated items
 POST /api/news/scan            trigger explicit recent-signal ingest
 POST /api/host/actions/codex   launch a user-clicked host-alert Codex terminal
 GET  /api/evidence/{id}        raw interpretation evidence

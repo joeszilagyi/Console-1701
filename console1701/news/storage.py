@@ -25,6 +25,10 @@ SOURCE_HEALTH_STATE_MESSAGES = {
     "parser_failed": "Source fixture could not be parsed.",
     "policy_blocked": "Source is blocked by the current ingest policy.",
     "auth_required": "Source declares auth but no credential material is configured.",
+    "social_disabled": (
+        "LOCAL social source is blocked until local.allow_social_sources is enabled."
+    ),
+    "homepage_disabled": "Homepage extraction is disabled by config.",
     "manual_review_only": "Source is gated for manual review in this phase.",
     "unsupported": "Source is configured in an unsupported way for this phase.",
 }
@@ -74,6 +78,10 @@ def _base_source_state(
         return "disabled", SOURCE_HEALTH_STATE_MESSAGES["disabled"]
     if policy.get("auth_required") and not policy.get("auth_configured"):
         return "auth_required", SOURCE_HEALTH_STATE_MESSAGES["auth_required"]
+    if policy.get("social_source_blocked"):
+        return "social_disabled", SOURCE_HEALTH_STATE_MESSAGES["social_disabled"]
+    if policy.get("homepage_extractor_blocked"):
+        return "homepage_disabled", SOURCE_HEALTH_STATE_MESSAGES["homepage_disabled"]
     if policy.get("uses_homepage_extractor") and not policy.get("homepage_extractor_allowed"):
         return "manual_review_only", SOURCE_HEALTH_STATE_MESSAGES["manual_review_only"]
     if source_url and not policy.get("scope_enabled"):
@@ -142,6 +150,51 @@ def _decode_news_cluster_row(row: sqlite3.Row) -> dict[str, Any]:
     return cluster
 
 
+def _decode_local_event_row(row: sqlite3.Row) -> dict[str, Any]:
+    event = dict(row)
+    item_ids = [str(value) for value in json_loads(event.pop("item_ids_json"), [])]
+    source_ids = [str(value) for value in json_loads(event.pop("source_ids_json"), [])]
+    event["item_ids"] = item_ids
+    event["source_ids"] = source_ids
+    event["geography_tokens"] = json_loads(event.pop("geography_json"), [])
+    event["neighborhoods"] = json_loads(event.pop("neighborhoods_json"), [])
+    event["title_tokens"] = json_loads(event.pop("title_tokens_json"), [])
+    event["families"] = json_loads(event.pop("families_json"), [])
+    event["evidence"] = json_loads(event.pop("evidence_json"), {})
+    event["ranking_explanation"] = json_loads(event.pop("ranking_explanation_json"), {})
+    event["geography_basis"] = {
+        "signature_tokens": event["geography_tokens"],
+        "location_tokens": event["neighborhoods"],
+        "title_tokens": event["title_tokens"],
+    }
+    match_contract = event["ranking_explanation"] or {}
+    event["matching_contract"] = {
+        "scope": str(event.get("scope") or ""),
+        "event_type": str(event.get("event_type") or ""),
+        "source_families": [value for value in event.get("families") if value],
+        "match_threshold": int(match_contract.get("match_threshold", 20)),
+        "match_window_hours": int(match_contract.get("match_window_hours", 3)),
+        "confidence_basis": list(match_contract.get("confidence_basis", [])),
+        "match_token_count": int(
+            match_contract.get("match_token_count", len(event["geography_tokens"]))
+        ),
+        "location_token_count": int(
+            match_contract.get("location_token_count", len(event["neighborhoods"]))
+        ),
+        "title_token_count": int(
+            match_contract.get("title_token_count", len(event["title_tokens"]))
+        ),
+        "last_match_score": int(match_contract.get("last_match_score", 0)),
+        "best_match_score": int(
+            match_contract.get("best_match_score", match_contract.get("last_match_score", 0))
+        ),
+        "matched_count": int(match_contract.get("matched_count", 0)),
+    }
+    event["item_count"] = len(item_ids)
+    event["source_count"] = len(source_ids)
+    return event
+
+
 def _decode_news_health_row(row: sqlite3.Row) -> dict[str, Any]:
     health = dict(row)
     health["evidence"] = json_loads(health.pop("evidence_json"), {})
@@ -204,10 +257,7 @@ def _latest_health_by_source(conn: sqlite3.Connection) -> dict[int, dict[str, An
         ) latest ON latest.latest_id = h.id
         """
     ).fetchall()
-    return {
-        int(row["source_id"]): _decode_news_health_row(row)
-        for row in rows
-    }
+    return {int(row["source_id"]): _decode_news_health_row(row) for row in rows}
 
 
 def _recent_health_by_source(
@@ -260,9 +310,8 @@ def _next_eligible_at(
     )
     if interval_minutes <= 0:
         return None
-    last_finished = (
-        (latest_fetch_run or {}).get("finished_at")
-        or (latest_fetch_run or {}).get("started_at")
+    last_finished = (latest_fetch_run or {}).get("finished_at") or (latest_fetch_run or {}).get(
+        "started_at"
     )
     if not last_finished:
         return None
@@ -309,17 +358,17 @@ def get_news_scope_states(
             (scope,),
         )
         health_states = [
-            str(status["health_state"])
-            for status in status_rows
-            if status.get("health_state")
+            str(status["health_state"]) for status in status_rows if status.get("health_state")
         ]
         blocking_states = {
             "auth_required",
             "failing",
+            "homepage_disabled",
             "manual_review_only",
             "parser_failed",
             "policy_blocked",
             "unsupported",
+            "social_disabled",
         }
 
         if not news_cfg.get("enabled"):
@@ -331,6 +380,9 @@ def get_news_scope_states(
         elif not enabled_sources:
             state = "configured_disabled"
             message = f"{scope} sources are configured but disabled."
+        elif health_states and all(value == "configured_never_run" for value in health_states):
+            state = "configured_never_run"
+            message = f"{scope} sources are enabled but have not been ingested yet."
         elif not health_states and (db_sources == 0 or db_enabled_sources == 0):
             state = "configured_never_run"
             message = f"{scope} sources are enabled but have not been ingested yet."
@@ -390,9 +442,7 @@ def get_news_storage_summary(conn: sqlite3.Connection, config: dict[str, Any]) -
         else None
     )
     last_finished_ingest_at = (
-        str(latest_run["latest_finished"])
-        if latest_run and latest_run["latest_finished"]
-        else None
+        str(latest_run["latest_finished"]) if latest_run and latest_run["latest_finished"] else None
     )
     last_purge = _read_setting(conn, "news.last_purge", {})
     last_scan_result = _read_setting(conn, "news.last_scan_result", {})
@@ -414,12 +464,55 @@ def get_news_storage_summary(conn: sqlite3.Connection, config: dict[str, Any]) -
         "last_scan_result": last_scan_result,
         "db_size_bytes": db_size_bytes,
         "config_warnings": config_warnings,
-        "local_registry": local_source_registry_summary(),
+        "local_registry": get_local_registry_state(conn),
         "scope_states": scope_states,
         "source_state_counts": source_state_counts,
-        "failing_source_count": int(source_state_counts.get("failing", 0)),
+        "failing_source_count": int(
+            source_state_counts.get("failing", 0) + source_state_counts.get("parser_failed", 0)
+        ),
         "policy_blocked_source_count": int(source_state_counts.get("policy_blocked", 0)),
         "parser_failed_source_count": int(source_state_counts.get("parser_failed", 0)),
+    }
+
+
+def get_local_registry_state(conn: sqlite3.Connection) -> dict[str, Any]:
+    try:
+        rows = conn.execute(
+            "SELECT * FROM news_source_registry WHERE scope = 'LOCAL'",
+        ).fetchall()
+    except sqlite3.OperationalError:
+        return local_source_registry_summary()
+
+    if not rows:
+        return local_source_registry_summary()
+
+    source_count = 0
+    source_classes: dict[str, int] = {}
+    future_phases: dict[str, int] = {}
+    official_status_counts: dict[str, int] = {}
+    verification_status_counts: dict[str, int] = {}
+
+    for row in rows:
+        source_count += 1
+        source_classes[str(row["source_class"])] = (
+            source_classes.get(str(row["source_class"]), 0) + 1
+        )
+        future_phases[str(row["future_phase"])] = future_phases.get(str(row["future_phase"]), 0) + 1
+        official_status_counts[str(row["official_status"])] = (
+            official_status_counts.get(str(row["official_status"]), 0) + 1
+        )
+        verification_status_counts[str(row["verification_status"])] = (
+            verification_status_counts.get(str(row["verification_status"]), 0) + 1
+        )
+
+    return {
+        "scope": "LOCAL",
+        "enabled_by_default": bool(any(bool(int(row["enabled_by_default"])) for row in rows)),
+        "source_count": source_count,
+        "source_class_counts": source_classes,
+        "future_phase_counts": future_phases,
+        "official_status_counts": official_status_counts,
+        "verification_status_counts": verification_status_counts,
     }
 
 
@@ -457,6 +550,12 @@ def get_news_sources_status(
                 "kind": source["kind"],
                 "source_family": source.get("source_family"),
                 "source_class": source.get("source_class"),
+                "official_status": source.get("official_status"),
+                "future_phase": source.get("future_phase"),
+                "expected_access_kind": source.get("expected_access_kind"),
+                "policy_risk": source.get("policy_risk"),
+                "parser_risk": source.get("parser_risk"),
+                "retention_sensitivity": source.get("retention_sensitivity"),
                 "adapter": source.get("adapter") or source.get("parser"),
                 "verification_status": source.get("verification_status"),
                 "url": source.get("url"),
@@ -594,6 +693,62 @@ def get_news_scope_view(
     }
 
 
+def get_news_local_event_detail(
+    conn: sqlite3.Connection,
+    event_id: int,
+) -> dict[str, Any] | None:
+    row = conn.execute(
+        """
+        SELECT *
+        FROM local_events
+        WHERE id = ?
+        """,
+        (event_id,),
+    ).fetchone()
+    if row is None:
+        return None
+
+    event = _decode_local_event_row(row)
+    item_ids = [int(value) for value in event["item_ids"] if str(value).isdigit()]
+    if item_ids:
+        placeholders = ",".join(["?"] * len(item_ids))
+        item_rows = conn.execute(
+            f"""
+            SELECT
+              i.id,
+              i.title,
+              i.scope,
+              i.url,
+              i.last_seen_at,
+              s.source_key,
+              s.name AS source_name
+            FROM news_items i
+            JOIN news_sources s ON s.id = i.source_id
+            WHERE i.id IN ({placeholders})
+            """,
+            item_ids,
+        ).fetchall()
+        id_to_item = {
+            int(item["id"]): {
+                "id": int(item["id"]),
+                "title": str(item["title"]),
+                "scope": str(item["scope"]),
+                "url": str(item["url"]),
+                "last_seen_at": str(item["last_seen_at"]),
+                "source_key": str(item["source_key"]),
+                "source_name": str(item["source_name"]),
+            }
+            for item in item_rows
+        }
+        event["items"] = [
+            id_to_item[identifier] for identifier in item_ids if identifier in id_to_item
+        ]
+    else:
+        event["items"] = []
+
+    return event
+
+
 def get_news_overview(
     conn: sqlite3.Connection,
     config: dict[str, Any],
@@ -703,5 +858,19 @@ def get_news_item_detail(
     evidence["storage"].setdefault("canonical_url", item.get("canonical_url"))
     evidence["storage"].setdefault("url", item.get("url"))
     evidence["storage"].setdefault("status", item.get("status"))
+    local_event_summary = dict(evidence.get("local_event") or {})
+    local_event_id = row["local_event_id"]
+    if local_event_id:
+        local_event = get_news_local_event_detail(conn, int(local_event_id))
+        if local_event:
+            item["local_event"] = local_event
+            evidence["local_event"] = {
+                "summary": local_event_summary or None,
+                "event": local_event,
+            }
+        else:
+            evidence["local_event"] = local_event_summary or None
+    else:
+        evidence["local_event"] = local_event_summary
     item["evidence"] = evidence
     return item

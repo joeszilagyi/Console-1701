@@ -7,9 +7,12 @@ from starlette.requests import Request
 from console1701 import api as api_module
 from console1701 import config as config_module
 from console1701.api import build_router
+from console1701.config import load_config
 from console1701.db import connect_db, init_db, utc_now
 from console1701.news.scanner import run_news_scan
 from console1701.scanner import insert_host_snapshot
+
+FIXTURE_DIR = Path(__file__).resolve().parent / "fixtures" / "news"
 
 
 def _write_test_config(path: Path) -> None:
@@ -57,6 +60,78 @@ def _request(path: str) -> Request:
 def _route_endpoint(router, path: str):
     route = next(route for route in router.routes if getattr(route, "path", None) == path)
     return route.endpoint
+
+
+def _insert_news_source(
+    conn,
+    source_key: str,
+    *,
+    scope: str,
+    name: str,
+    kind: str = "local_file_json",
+    url: str | None = None,
+    enabled: bool = True,
+) -> int:
+    row = conn.execute(
+        """
+        INSERT INTO news_sources (
+          source_key, scope, name, kind, url, homepage_url, enabled, config_hash,
+          priority, tags_json, policy_json, created_at, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            source_key,
+            scope,
+            name,
+            kind,
+            url,
+            None,
+            1 if enabled else 0,
+            "manual-test",
+            50,
+            "[]",
+            "{}",
+            "2026-06-01T12:00:00+00:00",
+            "2026-06-01T12:00:00+00:00",
+        ),
+    )
+    conn.commit()
+    return int(row.lastrowid)
+
+
+def _insert_news_source_health(
+    conn,
+    source_id: int,
+    *,
+    observed_at: str,
+    state: str,
+    stale_after: str | None = None,
+    last_success_at: str | None = None,
+    last_failure_at: str | None = None,
+    message: str | None = None,
+    consecutive_failures: int = 0,
+) -> None:
+    conn.execute(
+        """
+        INSERT INTO news_source_health (
+          source_id, observed_at, state, last_success_at, last_failure_at,
+          consecutive_failures, stale_after, message, evidence_json
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, '{}')
+        """,
+        (
+            source_id,
+            observed_at,
+            state,
+            last_success_at,
+            last_failure_at,
+            consecutive_failures,
+            stale_after,
+            message,
+        ),
+    )
+    conn.commit()
 
 
 def test_root_page_renders_html(tmp_path, monkeypatch):
@@ -240,6 +315,69 @@ news:
     assert summary["last_purge"]["summary"]["items"] == 0
 
 
+def test_news_local_event_api_returns_event_summary(tmp_path, monkeypatch):
+    db_path = _use_temp_state(monkeypatch, tmp_path)
+    config_path = tmp_path / "config.yml"
+    fixture = FIXTURE_DIR / "local_city_light_outages.json"
+    config_path.write_text(
+        f"""
+paths:
+  repo_roots: []
+  explicit_repos: []
+logs: []
+projects: []
+news:
+  enabled: true
+  scopes:
+    LOCAL:
+      enabled: true
+      sources:
+        - id: city_light_outage_fixture_a
+          name: City Light outage fixture A
+          kind: local_file_json
+          enabled: true
+          url: "file://{fixture.resolve()}"
+          parser: city_light_outages_json
+          source_family: city_light
+          source_class: official_utility
+          adapter: source_health_probe_only
+        - id: city_light_outage_fixture_b
+          name: City Light outage fixture B
+          kind: local_file_json
+          enabled: true
+          url: "file://{fixture.resolve()}"
+          parser: city_light_outages_json
+          source_family: city_light
+          source_class: official_utility
+          adapter: source_health_probe_only
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    router = build_router(str(config_path))
+    run_news_scan(str(config_path))
+    with connect_db(db_path) as conn:
+        init_db(conn)
+        row = conn.execute(
+            "SELECT id, local_event_id FROM news_items ORDER BY id LIMIT 1"
+        ).fetchone()
+        event_id = int(row["local_event_id"]) if row and row["local_event_id"] else None
+        item_id = int(row["id"]) if row else None
+
+    if not event_id:
+        raise AssertionError("No local event was linked during scan")
+
+    local_event = _route_endpoint(router, "/api/news/local-events/{event_id}")(event_id)
+    item = _route_endpoint(router, "/api/news/items/{item_id}")(item_id)
+
+    assert local_event["id"] == event_id
+    assert int(local_event["source_count"]) == 2
+    assert int(local_event["item_count"]) == 2
+    assert any(payload["id"] == item_id for payload in local_event["items"])
+    assert item["local_event"]["id"] == event_id
+    assert item["evidence"]["local_event"]["event"]["id"] == event_id
+
+
 def test_news_scan_api_returns_disabled_and_started_states(tmp_path, monkeypatch):
     _use_temp_state(monkeypatch, tmp_path)
     disabled_config = tmp_path / "disabled.yml"
@@ -367,6 +505,249 @@ news:
     assert summary["source_state_counts"]["disabled"] == 1
     assert summary["source_state_counts"]["policy_blocked"] == 1
     assert any(source["health_message"] for source in sources)
+
+
+def test_local_scope_ui_shows_disabled_source_states_without_fake_headlines(tmp_path, monkeypatch):
+    _use_temp_state(monkeypatch, tmp_path)
+    config_path = tmp_path / "config.yml"
+    config_path.write_text(
+        """
+paths:
+  repo_roots: []
+  explicit_repos: []
+logs: []
+projects: []
+news:
+  enabled: true
+  scopes:
+    LOCAL:
+      enabled: true
+      sources:
+        - id: disabled_fixture
+          name: Disabled fixture
+          kind: local_file_json
+          enabled: false
+          url: "file:///tmp/disabled.json"
+    REGIONAL:
+      enabled: false
+      sources: []
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    router = build_router(str(config_path))
+    response = _route_endpoint(router, "/{scope}")(_request("/LOCAL"), "LOCAL")
+    body = response.body.decode()
+
+    assert response.status_code == 200
+    assert "configured but disabled" in body
+    assert "Source health" in body
+    assert "No sources are configured for this scope." not in body
+    assert "Seattle ferry delay at Colman Dock" not in body
+
+
+def test_local_scope_ui_shows_not_configured_and_never_run_states(tmp_path, monkeypatch):
+    _use_temp_state(monkeypatch, tmp_path)
+    config_path = tmp_path / "config.yml"
+    config_path.write_text(
+        """
+paths:
+  repo_roots: []
+  explicit_repos: []
+logs: []
+projects: []
+news:
+  enabled: true
+  scopes:
+    LOCAL:
+      enabled: true
+    REGIONAL:
+      enabled: true
+      sources:
+        - id: regional_stub
+          name: Regional stub
+          kind: local_file_json
+          enabled: false
+          url: "file:///tmp/regional.json"
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    router = build_router(str(config_path))
+    not_configured_page = _route_endpoint(router, "/{scope}")(_request("/LOCAL"), "LOCAL")
+    not_configured_body = not_configured_page.body.decode()
+
+    assert "No LOCAL sources are configured." in not_configured_body
+    assert "No sources are configured for this scope." in not_configured_body
+
+    _use_temp_state(monkeypatch, tmp_path)
+    config_path.write_text(
+        """
+paths:
+  repo_roots: []
+  explicit_repos: []
+logs: []
+projects: []
+news:
+  enabled: true
+  scopes:
+    LOCAL:
+      enabled: true
+      sources:
+        - id: waiting_fixture
+          name: Waiting fixture
+          kind: local_file_json
+          enabled: true
+          url: "file:///tmp/waiting.json"
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    never_run_router = build_router(str(config_path))
+    never_run_page = _route_endpoint(never_run_router, "/{scope}")(_request("/LOCAL"), "LOCAL")
+    never_run_body = never_run_page.body.decode()
+
+    assert "have not been ingested yet" in never_run_body
+    assert "No LOCAL sources are configured." not in never_run_body
+
+
+def test_local_scope_ui_shows_stale_and_failing_states(tmp_path, monkeypatch):
+    db_path = _use_temp_state(monkeypatch, tmp_path)
+    config_path = tmp_path / "config.yml"
+    config_path.write_text(
+        """
+paths:
+  repo_roots: []
+  explicit_repos: []
+logs: []
+projects: []
+news:
+  enabled: true
+  scopes:
+    LOCAL:
+      enabled: true
+      sources:
+        - id: stale_local_fixture
+          name: Stale fixture
+          kind: local_file_json
+          enabled: true
+          url: "file:///tmp/stale.json"
+        - id: failed_local_fixture
+          name: Failed fixture
+          kind: local_file_json
+          enabled: true
+          url: "file:///tmp/fail.json"
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    with connect_db(db_path) as conn:
+        init_db(conn)
+        stale_source_id = _insert_news_source(
+            conn,
+            "stale_local_fixture",
+            scope="LOCAL",
+            name="Stale fixture",
+            url="file:///tmp/stale.json",
+            enabled=True,
+        )
+        fail_source_id = _insert_news_source(
+            conn,
+            "failed_local_fixture",
+            scope="LOCAL",
+            name="Failed fixture",
+            url="file:///tmp/fail.json",
+            enabled=True,
+        )
+        _insert_news_source_health(
+            conn,
+            stale_source_id,
+            observed_at="2020-01-01T00:00:00+00:00",
+            state="healthy",
+            stale_after="2020-01-01T00:00:00+00:00",
+            last_success_at="2020-01-01T00:00:00+00:00",
+            message="stale fixture",
+        )
+        _insert_news_source_health(
+            conn,
+            fail_source_id,
+            observed_at="2026-05-01T00:00:00+00:00",
+            state="parser_failed",
+            last_failure_at="2026-05-01T00:00:00+00:00",
+            message="forced parser failure",
+            consecutive_failures=2,
+        )
+
+    router = build_router(str(config_path))
+    stale_or_fail_page = _route_endpoint(router, "/{scope}")(_request("/LOCAL"), "LOCAL")
+    body = stale_or_fail_page.body.decode()
+
+    assert stale_or_fail_page.status_code == 200
+    assert "stale" in body.lower()
+    assert "failing" in body.lower()
+    assert "parser failed" in body.lower()
+    assert "forced parser failure" in body.lower()
+
+
+def test_local_scope_ui_shows_social_and_homepage_disabled_states(tmp_path, monkeypatch):
+    _use_temp_state(monkeypatch, tmp_path)
+    config_path = tmp_path / "config.yml"
+    _write_test_config(config_path)
+    config = load_config(str(config_path))
+    config["news"]["enabled"] = True
+    config["news"]["scopes"]["LOCAL"]["enabled"] = True
+    config["news"]["scopes"]["LOCAL"]["sources"] = [
+        {
+            "id": "social_candidate_fixture",
+            "name": "Blocked social source",
+            "scope": "LOCAL",
+            "kind": "local_file_json",
+            "enabled": True,
+            "url": "file:///tmp/social-source.json",
+            "source_family": "bluesky",
+            "source_class": "social_candidate",
+        },
+        {
+            "id": "homepage_headline_fixture",
+            "name": "Blocked homepage extractor",
+            "scope": "LOCAL",
+            "kind": "homepage_headlines",
+            "enabled": True,
+            "url": "file:///tmp/homepage-source.html",
+            "source_family": "official_seattle",
+            "source_class": "official_local",
+            "selectors": {
+                "item_selector": ".item",
+                "link_selector": "a",
+            },
+        },
+    ]
+    config["local"]["allow_social_sources"] = False
+    config["news"]["fetch_policy"]["allow_homepage_extractors"] = False
+
+    def fake_config(_path=None):
+        return config
+
+    monkeypatch.setattr(api_module, "_config", fake_config)
+    router = build_router(str(config_path))
+
+    scope_response = _route_endpoint(router, "/{scope}")(_request("/LOCAL"), "LOCAL")
+    _route_endpoint(router, "/api/news/sources")()
+    summary = _route_endpoint(router, "/api/news/summary")()
+    body = scope_response.body.decode()
+
+    assert scope_response.status_code == 200
+    assert summary["source_state_counts"]["social_disabled"] == 1
+    assert summary["source_state_counts"]["homepage_disabled"] == 1
+    assert summary["scope_states"]["LOCAL"]["source_state_counts"]["social_disabled"] == 1
+    assert summary["scope_states"]["LOCAL"]["source_state_counts"]["homepage_disabled"] == 1
+    assert "Homepage extraction is disabled by config." in body
+    assert (
+        "LOCAL social source is blocked until local.allow_social_sources is enabled."
+        in body
+    )
+    assert "Blocked social source" in body
+    assert "Blocked homepage extractor" in body
 
 
 def test_news_get_routes_do_not_trigger_ingest_or_fixture_reads(tmp_path, monkeypatch):

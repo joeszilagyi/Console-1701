@@ -30,7 +30,48 @@ def connect_db(
     return conn
 
 
+def _has_table_column(conn: sqlite3.Connection, table: str, column: str) -> bool:
+    rows = conn.execute(f"PRAGMA table_info({table})").fetchall()
+    return any(str(row["name"]) == column for row in rows)
+
+
+def _has_index(conn: sqlite3.Connection, table: str, index: str) -> bool:
+    rows = conn.execute(f"PRAGMA index_list({table})").fetchall()
+    return any(str(row["name"]) == index for row in rows)
+
+
+def _table_exists(conn: sqlite3.Connection, table: str) -> bool:
+    row = conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name = ?",
+        (table,),
+    ).fetchone()
+    return bool(row)
+
+
+def _ensure_news_migrations(conn: sqlite3.Connection) -> None:
+    if _has_table_column(conn, "news_items", "local_event_id"):
+        return
+
+    conn.execute(
+        """
+        ALTER TABLE news_items
+        ADD COLUMN local_event_id INTEGER
+        """
+    )
+    if not _has_index(conn, "news_items", "idx_news_items_local_event"):
+        conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_news_items_local_event
+            ON news_items(local_event_id)
+            """
+        )
+
+
 def init_db(conn: sqlite3.Connection) -> None:
+    if _table_exists(conn, "news_items") and not _has_table_column(
+        conn, "news_items", "local_event_id"
+    ):
+        _ensure_news_migrations(conn)
     schema = files("console1701").joinpath("schema.sql").read_text(encoding="utf-8")
     conn.executescript(schema)
     conn.commit()

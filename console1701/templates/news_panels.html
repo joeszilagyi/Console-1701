@@ -1,6 +1,7 @@
 {% macro tone_for_state(state) -%}
-  {%- if state in ["healthy"] -%}ok
+{%- if state in ["healthy"] -%}ok
   {%- elif state in ["failing"] -%}critical
+  {%- elif state in ["social_disabled", "homepage_disabled"] -%}warning
   {%- elif state in ["stale", "configured_never_run", "configured_disabled"] -%}warning
   {%- else -%}muted
   {%- endif -%}
@@ -17,6 +18,7 @@
         {% set retention = evidence.retention or {} %}
         {% set ranking = evidence.ranking or {} %}
         {% set source_health = evidence.source_health or {} %}
+        {% set local_event = evidence.local_event or {} %}
         <li class="news-item">
           <div class="news-item-head">
             <a href="{{ item.url }}" target="_blank" rel="noreferrer">{{ item.title }}</a>
@@ -31,11 +33,11 @@
           </div>
           <details class="news-evidence-drawer">
             <summary>Evidence</summary>
-            <div class="news-evidence-grid">
-              <div><span>Source</span><strong>{{ source.source_name or source.source_key or "unknown" }}</strong></div>
-              <div><span>Health</span><strong>{{ source_health.state or ingest.source_health_state_at_ingest or "unknown" }}</strong></div>
-              <div><span>Fetch run</span><strong>{{ ingest.fetch_run_id or "unknown" }}</strong></div>
-              <div><span>Seen</span><strong>{{ ingest.seen_at or item.last_seen_at }}</strong></div>
+          <div class="news-evidence-grid">
+            <div><span>Source</span><strong>{{ source.source_name or source.source_key or "unknown" }}</strong></div>
+            <div><span>Health</span><strong>{{ source_health.state or ingest.source_health_state_at_ingest or "unknown" }}</strong></div>
+            <div><span>Fetch run</span><strong>{{ ingest.fetch_run_id or "unknown" }}</strong></div>
+            <div><span>Seen</span><strong>{{ ingest.seen_at or item.last_seen_at }}</strong></div>
               <div><span>Policy</span><strong>{{ policy.policy_state or "unknown" }}</strong></div>
               <div><span>Retention expiry</span><strong>{{ retention.expires_at or item.expires_at }}</strong></div>
             </div>
@@ -46,16 +48,22 @@
                 {% endfor %}
               </ul>
             {% endif %}
-            {% if policy.notes %}
-              <ul class="news-evidence-list">
-                {% for note in policy.notes %}
-                  <li><b>Policy</b><span>{{ note }}</span></li>
-                {% endfor %}
-              </ul>
-            {% endif %}
-          </details>
-        </li>
-      {% endfor %}
+                {% if policy.notes %}
+                  <ul class="news-evidence-list">
+                    {% for note in policy.notes %}
+                      <li><b>Policy</b><span>{{ note }}</span></li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+                {% if local_event %}
+                  {% set local_event_payload = local_event.event if local_event.event else local_event %}
+                  <ul class="news-evidence-list">
+                    <li><b>Local event</b><span>ID {{ local_event_payload.id or "unknown" }} · {{ local_event_payload.event_type or "unclassified" }}</span></li>
+                  </ul>
+                {% endif %}
+              </details>
+            </li>
+          {% endfor %}
     </ul>
   {% else %}
     <p class="muted">{{ empty_message }}</p>
@@ -156,6 +164,8 @@
       <div><span>Active items</span><strong>{{ state.active_item_count }}</strong></div>
       <div><span>Healthy</span><strong>{{ (state.source_state_counts or {}).get("healthy", 0) }}</strong></div>
       <div><span>Blocked</span><strong>{{ (state.source_state_counts or {}).get("policy_blocked", 0) }}</strong></div>
+      <div><span>Social blocked</span><strong>{{ (state.source_state_counts or {}).get("social_disabled", 0) }}</strong></div>
+      <div><span>Homepage blocked</span><strong>{{ (state.source_state_counts or {}).get("homepage_disabled", 0) }}</strong></div>
       <div><span>Parser failed</span><strong>{{ (state.source_state_counts or {}).get("parser_failed", 0) }}</strong></div>
       <div><span>Awaiting run</span><strong>{{ (state.source_state_counts or {}).get("configured_never_run", 0) }}</strong></div>
     </div>
