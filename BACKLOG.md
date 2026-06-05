@@ -568,22 +568,32 @@ Architecture reference:
 
 ### REGIONAL Source Registry Design Implementation
 
-Status: not implemented.
+Status: partially implemented.
 
 Implement the REGIONAL source registry from the design document with explicit `source_key`,
 `source_family`, `source_class`, adapter, scope, priority, official status, policy risk, parser
 risk, privacy risk, retention sensitivity, verification status, and future phase fields. Validate
 enum values and keep all REGIONAL sources disabled until explicitly configured.
 
+Current state: `console1701/news/regional_registry.py` now seeds disabled REGIONAL source metadata
+for NWS, WSDOT, USGS, county emergency, and regional-news candidates. The config layer now applies
+regional defaults and validates REGIONAL source metadata before a source can be enabled. Dedicated
+regional event, ranking, and live-ingest work still remains.
+
 ### Disabled-By-Default REGIONAL Config
 
-Status: not implemented.
+Status: partially implemented.
 
 Add a `regional_sources:` or equivalent REGIONAL config tree that defaults to disabled. Include
 geography flags for Washington, Puget Sound, Cascadia hazards, Oregon relevance, BC relevance,
 transport corridors, wildfire/smoke, seismic/volcano, public health, state government, regional
 news, and social sources. Reject social sources unless explicitly allowed and reject homepage
 extraction unless a future `allow_homepage_extractors` flag is true.
+
+Current state: the top-level `regional` config tree now defaults to disabled and carries the
+regional geography, social, and homepage-extraction flags needed for later REGIONAL source
+planning. Source normalization rejects REGIONAL social sources unless the local configuration
+explicitly allows them, and homepage extraction stays blocked by default.
 
 ### REGIONAL SQLite Schema Or Extension
 

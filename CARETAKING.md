@@ -1,5 +1,14 @@
 # Caretaking Log
 
+## 2026-06-05 15:15 PDT - regional registry and config follow-up
+
+- Added the first REGIONAL source registry implementation and the disabled-by-default regional
+  config tree, with validation and defaults for the Washington / PNW layer.
+- Added a short regional reference note so the new registry and config shape are documented in the
+  repo alongside the code that now consumes them.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
 ## 2026-06-05 15:09 PDT - LOCAL backlog catch-up follow-up
 
 - Added backlog notes and supporting docs for LOCAL social policy, LOCAL news/blog RSS ingest,

@@ -253,6 +253,32 @@ def test_local_accepts_social_source_with_explicit_allowance(tmp_path):
     assert source["verification_status"] == "candidate_policy_sensitive"
 
 
+def test_regional_defaults_can_seed_nws_source(tmp_path):
+    config = load_config(
+        _write_config(
+            tmp_path / "config.yml",
+            """
+            news:
+              scopes:
+                REGIONAL:
+                  sources:
+                    - id: nws_active_alerts_wa
+            """,
+        )
+    )
+
+    source = iter_news_sources(config)[0]
+
+    assert config["regional"]["enabled"] is False
+    assert config["regional"]["allow_social_sources"] is False
+    assert config["regional"]["allow_homepage_extractors"] is False
+    assert source["name"] == "NWS active alerts for Washington"
+    assert source["source_family"] == "nws"
+    assert source["source_class"] == "official_weather_hazard"
+    assert source["adapter"] == "official_api_json"
+    assert source["verification_status"] == "official_page_seen"
+
+
 def test_local_rejects_neighborhood_blog_without_explicit_allowance(tmp_path):
     with pytest.raises(ConfigError, match="local.allow_neighborhood_blogs true"):
         load_config(
