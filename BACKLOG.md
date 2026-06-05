@@ -1046,12 +1046,16 @@ explicit configuration, use short retention, and never scrape HTML to bypass pla
 
 ### Documentation For Source Verification
 
-Status: not implemented.
+Status: partially implemented.
 
 Document the later NATIONAL source verification workflow: confirm endpoint ownership, access
 method, source terms, robots/policy notes, parser shape, auth/key requirements, rate limits,
 retention sensitivity, privacy risk, verification status, agency/sector/state filters, and
 source-health behavior before enabling any source.
+
+Current state: `docs/project/NATIONAL_SOURCE_VERIFICATION_WORKFLOW.md` now captures the shared
+verification checklist, required registry fields, and scope-specific agency/sector/state filters.
+Per-source signoff templates and endpoint-specific walkthroughs still need a dedicated follow-up.
 
 ### Tests For No Page-Load External Fetches
 
