@@ -499,11 +499,16 @@ command. No page-load fetches.
 
 ### LOCAL News/Blog RSS Ingest Phase
 
-Status: not implemented.
+Status: partially implemented.
 
 Add opt-in RSS/Atom ingest for local news and neighborhood blogs only after source verification.
 Store headline metadata only, bound descriptions, avoid article bodies, avoid paywall bypass, and
 prevent duplicate syndicated articles from inflating independent convergence.
+
+Current state: fixture parsers for `local_blog_rss` and `local_news_rss` already exist, and local
+config can gate neighborhood blogs behind `allow_neighborhood_blogs`. The remaining work is the
+opt-in live RSS/Atom ingest command and source-specific duplicate-syndication handling for enabled
+local news and neighborhood-blog sources.
 
 ### LOCAL Social Source Policy Review
 
