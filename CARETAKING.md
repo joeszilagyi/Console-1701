@@ -1,5 +1,14 @@
 # Caretaking Log
 
+## 2026-06-05 15:25 PDT - regional fixture pack follow-up
+
+- Updated the REGIONAL fixture pack note to reflect the concrete NWS, WSDOT, and regional RSS
+  coverage that now exists in the shared local test corpus.
+- Kept the remaining Washington-specific fixture file work visible instead of marking the fixture
+  pack as fully complete before those source-specific files exist.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
 ## 2026-06-05 15:24 PDT - regional WSDOT parser follow-up
 
 - Added a REGIONAL ingest regression for `wsdot_traveler_api` so the Washington traveler-alert

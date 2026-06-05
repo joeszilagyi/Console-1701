@@ -621,8 +621,9 @@ regional news RSS, and verified outage data if an official endpoint is found. Fi
 not perform network calls and must be safe for pytest.
 
 Current state: the registry-backed RSS parser now accepts `regional_news_rss`, and a regional scan
-regression reuses the existing RSS fixture corpus to prove the REGIONAL ingest path. Dedicated
-regional fixture files for the remaining Washington sources are still pending.
+regression reuses the existing RSS fixture corpus to prove the REGIONAL ingest path. The shared
+local fixture corpus also now exercises REGIONAL NWS and WSDOT ingest paths. Dedicated regional
+fixture files for the remaining Washington sources are still pending.
 
 ### NWS Alert Parser For Washington
 
