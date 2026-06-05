@@ -390,6 +390,12 @@ Research underlying official feature services for SPD dashboards, City Light out
 traffic/camera maps. Do not screen scrape dashboards. Mark sources `manual_review_only` or
 `source_health_probe_only` when no stable official endpoint is available.
 
+Current state: SDOT traffic cameras have a verified public ArcGIS/open-data surface, the SPD crime
+and calls-for-service dashboards have official public pages but no exposed GIS service in the
+inspected `gisdata.seattle.gov/server/rest/services/SPD` folder, and the City Light outage map is
+still only verified as a public outage surface. The remaining work is to map any stable underlying
+feature services and keep the unresolved dashboard sources in probe-only or manual-review states.
+
 ### LOCAL Deterministic Event Correlation
 
 Status: implemented.
