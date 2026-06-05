@@ -83,8 +83,9 @@ def build_parser() -> argparse.ArgumentParser:
         "news-sources",
         help="List configured recent-signal sources and current policy/health state",
         description=(
-            "Read configured recent-signal sources plus their SQLite-backed health/fetch status. "
-            "This command does not fetch sources."
+            "Read configured recent-signal sources plus their SQLite-backed health/fetch status, "
+            "registry metadata, and audit-friendly access details. This command does not fetch "
+            "sources."
         ),
     )
     _add_config_arg(news_sources_parser)
