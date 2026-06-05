@@ -862,17 +862,19 @@ def get_news_item_detail(
     if row is None:
         return None
     item = _decode_news_item_row(row)
+    policy = json_loads(str(row["source_policy_json"]), {})
     source = {
         "id": int(row["source_id"]),
         "source_key": str(row["source_key"]),
         "name": str(row["source_name"]),
         "scope": str(row["scope"]),
         "kind": str(row["source_kind"]),
+        "adapter": str((policy or {}).get("adapter") or ""),
         "priority": int(row["source_priority"]),
         "enabled": bool(row["source_enabled"]),
         "url": str(row["source_url"] or ""),
         "tags": json_loads(str(row["source_tags_json"]), []),
-        "policy": json_loads(str(row["source_policy_json"]), {}),
+        "policy": policy,
     }
     latest_health = _latest_health_by_source(conn).get(source["id"])
     latest_fetch = _latest_fetch_runs_by_source(conn).get(source["id"])
@@ -883,6 +885,7 @@ def get_news_item_detail(
         policy=source["policy"],
         fetch=latest_fetch,
         health=latest_health,
+        source_adapter=source["adapter"] or None,
         stale=stale,
     )
     item["source"] = source
@@ -896,6 +899,7 @@ def get_news_item_detail(
     evidence["source"].setdefault("source_name", source["name"])
     evidence["source"].setdefault("scope", source["scope"])
     evidence["source"].setdefault("kind", source["kind"])
+    evidence["source"].setdefault("adapter", source["adapter"] or source["kind"])
     evidence["source"].setdefault("priority", source["priority"])
     evidence.setdefault("policy", {})
     evidence["policy"].setdefault("policy_state", source["policy"].get("policy_state"))

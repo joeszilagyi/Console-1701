@@ -311,7 +311,9 @@ news:
     assert sources[0]["recent_health_rows"][0]["state"] == "healthy"
     assert item["title"] == "Seattle ferry delay at Colman Dock"
     assert item["source"]["source_key"] == "local_fixture"
+    assert item["source"]["adapter"] == "generic_json_items"
     assert item["evidence"]["source"]["source_key"] == "local_fixture"
+    assert item["evidence"]["source"]["adapter"] == "generic_json_items"
     assert item["evidence"]["policy"]["policy_state"] == "allowed_fixture_only"
     assert item["evidence"]["source_health"]["state"] == "healthy"
     assert item["evidence"]["privacy"]["article_body_stored"] is False

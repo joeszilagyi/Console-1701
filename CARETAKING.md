@@ -1,5 +1,16 @@
 # Caretaking Log
 
+## 2026-06-05 15:46 PDT - news item-detail adapter follow-up
+
+- Restored the missing `source_adapter` argument when `get_news_item_detail` calls the shared
+  source-state resolver, which was causing `/api/news/items/{item_id}` lookups to fail.
+- Made the item-detail payload self-consistent by surfacing the resolved adapter in the source
+  evidence block as well as the top-level source object.
+- Extended the item-detail regression so the API now locks in the adapter field alongside the
+  existing source-key and health evidence checks.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
 ## 2026-06-05 15:41 PDT - dev_server python-venv failure follow-up
 
 - Wrapped the dev-server virtualenv creation step so it now reports a clear
