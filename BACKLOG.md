@@ -344,11 +344,16 @@ service area, advisory title, published time, source URL, and transit-impact ran
 
 ### FAA/SEA Airport Status Research
 
-Status: not implemented.
+Status: partially implemented.
 
 Verify which FAA, NAS Status, Port of Seattle, or SEA Airport endpoints provide lawful,
 machine-readable operational metadata for SEA ground stops, delays, closures, checkpoint impacts, or
 traveler advisories. Do not implement live fetch until endpoint and policy review are complete.
+
+Current state: the FAA airport-status page and the NAS Status XML page are verified official
+sources, and the LOCAL registry now marks `faa_airport_status_sea` as
+`source_health_probe_only` with a machine-readable access note. A live parser/fetch path and policy
+review for any production ingest remain pending.
 
 ### City Light Outage Endpoint Research
 
