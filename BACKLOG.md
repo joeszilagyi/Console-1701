@@ -2098,13 +2098,18 @@ never treat social as primary evidence.
 
 ### Documentation For Source Verification
 
-Status: not implemented.
+Status: partially implemented.
 
 Document the later Solar System and Beyond source verification workflow: confirm endpoint
 ownership, access method, source terms, robots/policy notes, parser shape, auth/key requirements,
 rate limits, retention sensitivity, privacy risk, verification status, object/mission/scope
 filters, source-health behavior, and whether the source is official, archive, alert network,
 publisher, public media, social, auth-required, heavy archive, or manual review only.
+
+Current state: `docs/project/SYSTEM_SOLAR_SYSTEM_BEYOND_SOURCE_VERIFICATION_WORKFLOW.md` now
+captures the shared verification checklist, required registry fields, and source-health states
+with Solar System and Beyond scope filters. Per-source signoff templates and endpoint-specific
+walkthroughs still need a dedicated follow-up.
 
 ### Tests For No Page-Load External Fetches
 

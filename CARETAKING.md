@@ -1,5 +1,18 @@
 # Caretaking Log
 
+## 2026-06-05 14:54 PDT - scope verification workflow documentation follow-up
+
+- Added `docs/project/ORBITAL_SOURCE_VERIFICATION_WORKFLOW.md` and
+  `docs/project/SYSTEM_SOLAR_SYSTEM_BEYOND_SOURCE_VERIFICATION_WORKFLOW.md` to capture the shared
+  verification checklist, required registry fields, and honest source-health states for the two
+  remaining scope families.
+- Updated the ORBITAL and Solar System and Beyond backlog entries so they now point at the new
+  workflow docs instead of leaving those follow-ups as vague pending notes.
+- Added a short README note that the scope-specific verification workflow docs now cover
+  REGIONAL, NATIONAL, GLOBAL, ORBITAL, and Solar System and Beyond guidance.
+- Kept the local-only safety envelope intact: no live fetch behavior changes, no network calls,
+  and no changes to the off-limits `Upkeeper.sh` file.
+
 ## 2026-06-05 14:50 PDT - source verification workflow documentation follow-up
 
 - Added `docs/project/NEWS_SOURCE_VERIFICATION_WORKFLOW.md` to capture the shared verification
