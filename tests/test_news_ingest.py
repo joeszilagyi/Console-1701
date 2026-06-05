@@ -560,6 +560,59 @@ def test_run_news_scan_ingests_registry_backed_metro_rss_fixture(tmp_path):
     )
 
 
+def test_run_news_scan_ingests_registry_backed_regional_news_rss_fixture(tmp_path):
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        news:
+          enabled: true
+          scopes:
+            REGIONAL:
+              enabled: true
+              sources:
+                - id: regional_news_rss
+                  enabled: true
+                  url: "{_file_url(FIXTURE_DIR / "local_feed.rss")}"
+                  service_area_keywords: ["Seattle", "Capitol Hill"]
+        """,
+    )
+
+    result = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        init_db(conn)
+        rows = conn.execute(
+            """
+            SELECT title, evidence_json
+            FROM news_items
+            ORDER BY title
+            """
+        ).fetchall()
+        source = conn.execute(
+            """
+            SELECT name, policy_json
+            FROM news_sources
+            WHERE source_key = 'regional_news_rss'
+            """
+        ).fetchone()
+
+    evidence_rows = [json_loads(str(row["evidence_json"]), {}) for row in rows]
+    policy = json_loads(str(source["policy_json"]), {})
+
+    assert result["status"] == "complete"
+    assert result["item_count"] == 2
+    assert source["name"] == "Regional news RSS"
+    assert policy["parser"] == "regional_news_rss"
+    assert any(
+        evidence["local_news"]["service_areas"] == ["Seattle"] for evidence in evidence_rows
+    )
+    assert any(
+        evidence["ranking"]["factors"]["scope_priority_boost"] == 14
+        for evidence in evidence_rows
+    )
+
+
 def test_run_news_scan_ingests_gated_registry_backed_local_blog_fixture(tmp_path):
     blocked_config = _write_config(
         tmp_path / "blocked.yml",

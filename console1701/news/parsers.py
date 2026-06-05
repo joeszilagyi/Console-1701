@@ -117,7 +117,7 @@ def parse_fixture_items(
         return _parse_spd_blotter_rss_feed(source, payload_text)
     if parser_name in {"sdot_blog_rss", "sdot_blog_feed"}:
         return _parse_sdot_blog_rss_feed(source, payload_text)
-    if parser_name == "local_news_rss":
+    if parser_name in {"local_news_rss", "regional_news_rss"}:
         return _parse_local_news_rss_feed(source, payload_text)
     if parser_name == "sfd_fire_911_socrata":
         return _parse_sfd_fire_911_socrata(source, payload_text)

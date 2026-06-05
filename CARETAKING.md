@@ -1,5 +1,24 @@
 # Caretaking Log
 
+## 2026-06-05 15:21 PDT - regional RSS parser follow-up
+
+- Added `regional_news_rss` dispatch to the shared RSS parser path and covered it with a REGIONAL
+  ingest regression that reuses the existing local RSS fixture corpus.
+- Marked the REGIONAL fixture pack and regional news RSS parser backlog entries as partially
+  implemented so the remaining Washington-specific fixture files and feed curation work stay
+  visible.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
+## 2026-06-05 15:18 PDT - regional schema/state follow-up
+
+- Exposed REGIONAL registry state through the shared news storage summary and confirmed the scan
+  path persists REGIONAL registry rows into the existing SQLite registry table.
+- Added a persistence regression so the REGIONAL registry entries survive a scan and show up in the
+  storage summary without introducing a separate branch of storage logic.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
 ## 2026-06-05 15:15 PDT - regional registry and config follow-up
 
 - Added the first REGIONAL source registry implementation and the disabled-by-default regional

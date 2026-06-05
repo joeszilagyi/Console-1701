@@ -597,7 +597,7 @@ explicitly allows them, and homepage extraction stays blocked by default.
 
 ### REGIONAL SQLite Schema Or Extension
 
-Status: not implemented.
+Status: partially implemented.
 
 Add or extend SQLite storage for REGIONAL source registry state, fetch runs, normalized items,
 `regional_events` or scoped clusters, source health, ranking explanations, geographic labels, and
@@ -605,15 +605,24 @@ retention purge evidence. Use JSON-heavy columns and indexes for latest-by-scope
 source health, source family, geographic filters, and `expires_at` purge. Do not store full article
 bodies by default.
 
+Current state: the shared `news_source_registry` table now persists REGIONAL registry rows, and
+`get_news_storage_summary()` exposes a regional registry summary alongside the existing local
+summary. Dedicated `regional_events`, ranking partitions, geographic label indexes, and purge
+evidence tables are still pending.
+
 ### REGIONAL Fixture Pack
 
-Status: not implemented.
+Status: partially implemented.
 
 Create local-only fixtures for NWS active alert JSON, WSDOT travel alert JSON, WSF bulletin/API
 shape, WA DNR wildfire data after endpoint verification, NWCC feed shape after verification, USGS
 earthquake GeoJSON, USGS water/hydrology data, King County emergency feed, Ecology/AirNow AQI,
 regional news RSS, and verified outage data if an official endpoint is found. Fixture ingest must
 not perform network calls and must be safe for pytest.
+
+Current state: the registry-backed RSS parser now accepts `regional_news_rss`, and a regional scan
+regression reuses the existing RSS fixture corpus to prove the REGIONAL ingest path. Dedicated
+regional fixture files for the remaining Washington sources are still pending.
 
 ### NWS Alert Parser For Washington
 
@@ -716,12 +725,16 @@ access method, parser risk, policy notes, privacy risk, source-health behavior, 
 
 ### Regional News RSS Parser
 
-Status: not implemented.
+Status: partially implemented.
 
 Build a fixture-first RSS/Atom parser for verified regional news, public media, local TV/radio, and
 nonprofit feeds. Store headline metadata only, bound descriptions, preserve publisher/source
 family, detect duplicate or syndicated stories, and prevent duplicated articles from inflating
 independent convergence.
+
+Current state: `console1701/news/parsers.py` now dispatches `regional_news_rss` through the shared
+RSS parser path, and the REGIONAL ingest tests cover that alias with the existing local RSS fixture.
+Scope-specific regional feed curation and duplication handling are still pending.
 
 ### REGIONAL Deterministic Event Correlation
 
