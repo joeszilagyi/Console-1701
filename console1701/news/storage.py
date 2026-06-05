@@ -869,7 +869,7 @@ def get_news_item_detail(
         "name": str(row["source_name"]),
         "scope": str(row["scope"]),
         "kind": str(row["source_kind"]),
-        "adapter": str((policy or {}).get("adapter") or ""),
+        "adapter": str((policy or {}).get("adapter") or row["source_kind"]),
         "priority": int(row["source_priority"]),
         "enabled": bool(row["source_enabled"]),
         "url": str(row["source_url"] or ""),

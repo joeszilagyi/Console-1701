@@ -1,5 +1,14 @@
 # Caretaking Log
 
+## 2026-06-05 15:47 PDT - news item-detail adapter fallback follow-up
+
+- Aligned the item-detail `source.adapter` fallback with the evidence block so both use the same
+  adapter-derived value when the source policy does not carry one explicitly.
+- Kept the item-detail API regression covered with the same focused tests and reverified the full
+  suite after the payload shape cleanup.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
 ## 2026-06-05 15:46 PDT - news item-detail adapter follow-up
 
 - Restored the missing `source_adapter` argument when `get_news_item_detail` calls the shared
