@@ -493,11 +493,15 @@ configuration, use short retention, and never scrape HTML to bypass platform res
 
 ### Documentation For Source Verification
 
-Status: not implemented.
+Status: partially implemented.
 
 Document the later source verification workflow: confirm endpoint ownership, access method, source
 terms, robots/policy notes, parser shape, rate limits, retention sensitivity, privacy risk,
 verification status, and source-health behavior before enabling any source.
+
+Current state: `docs/project/NEWS_SOURCE_VERIFICATION_WORKFLOW.md` now captures the shared
+verification checklist, required registry fields, and source-health states. Per-source signoff
+templates and endpoint-specific walkthroughs still need a dedicated follow-up.
 
 ### Tests For No Page-Load External Fetches
 
