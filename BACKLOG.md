@@ -189,11 +189,16 @@ selector inventory for real production domains.
 
 ### Social Adapters Later And Terms-Sensitive
 
-Status: not implemented.
+Status: partially implemented.
 
 Treat social sources as terms-sensitive. Bluesky/AT Protocol is the preferred first candidate if
 social signals are needed. Reddit and X require explicit compliant access methods. Do not scrape HTML
 to bypass platform APIs, auth, paywalls, rate limits, or bot controls. Keep retention short.
+
+Current state: local config already requires `allow_social_sources` before social candidates can be
+enabled, the built-in registry keeps social entries disabled by default, and `manual_review_only`
+paths exist for policy-sensitive candidates. The remaining work is a compliant live social adapter
+and retention policy for any future enabled social source.
 
 ### Documentation Update
 
