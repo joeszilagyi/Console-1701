@@ -1,5 +1,18 @@
 # Caretaking Log
 
+## 2026-06-05 14:44 PDT - recent-signal severity and topic-repetition follow-up
+
+- Split LOCAL ranking into explicit source-severity and topic-repetition signals so official
+  alerts no longer hide severity inside one collapsed boost and repeated local event tokens now
+  feed the ranking explanation directly.
+- Threaded the new local-event contract through storage and the drawer UI so the website now shows
+  match score, topic repetition, and source severity for merged LOCAL events.
+- Updated README and BACKLOG to match the current ranking contract and to retire the stale note
+  that said source severity and topic repetition were still pending.
+- Verified the touched news stack with `./.venv/bin/ruff check console1701 tests/test_news_ranking.py
+  tests/test_news_ingest.py tests/test_app.py` and `./.venv/bin/python -m pytest -q tests/test_app.py`
+  plus the focused `tests/test_news_ranking.py` and `tests/test_news_ingest.py` runs.
+
 ## 2026-06-05 09:17 PDT - LOCAL event correlation and privacy ranking follow-up
 
 - Finished the interrupted LOCAL recent-signal follow-up by correcting a score-accounting bug in
