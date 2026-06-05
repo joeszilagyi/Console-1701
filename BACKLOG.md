@@ -200,9 +200,10 @@ retention, source policy, and how to audit source health.
 
 Current state: README and CLI surfaces now mention `news-scan`, `news-sources`, page-load SQLite-only
 reads, and current fixture-only behavior. Config-specific walkthroughs, retention auditing details,
-and future live-ingest operational notes are still pending. README now also documents the local
-event repetition/severity drawer fields surfaced by the website, but the remaining config walkthrough
-and retention-audit guidance still need a dedicated pass.
+and future live-ingest operational notes are still pending. README and CLI help now also describe the
+source-audit workflow with family/class/verification/access metadata, and the website audit drawers
+surface the same registry fields alongside policy and health. The remaining config walkthrough and
+retention-audit guidance still need a dedicated pass.
 
 ### Separate Disabled Systemd News Timer
 
