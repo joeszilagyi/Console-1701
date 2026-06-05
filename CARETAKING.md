@@ -1,5 +1,16 @@
 # Caretaking Log
 
+## 2026-06-05 14:50 PDT - source verification workflow documentation follow-up
+
+- Added `docs/project/NEWS_SOURCE_VERIFICATION_WORKFLOW.md` to capture the shared verification
+  checklist, required registry fields, and honest source-health states before any source is enabled.
+- Updated README and the LOCAL backlog entry so the source verification workflow is now documented
+  and the remaining per-source signoff work is called out explicitly instead of being left as a
+  vague pending note.
+- Kept the existing recent-signal safety envelope intact: no page-load fetching changes, no live
+  network behavior, and no changes to the off-limits `Upkeeper.sh` file.
+- Verified the docs/backlog edits with `git diff --check` before committing them.
+
 ## 2026-06-05 14:47 PDT - source audit metadata follow-up
 
 - Expanded `console-1701 news-sources` so it now prints registry metadata for source family, class,
