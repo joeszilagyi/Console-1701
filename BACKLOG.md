@@ -626,12 +626,17 @@ regional fixture files for the remaining Washington sources are still pending.
 
 ### NWS Alert Parser For Washington
 
-Status: not implemented.
+Status: partially implemented.
 
 Build a fixture-first NWS alert parser filtered to Washington, Puget Sound, configured counties,
 weather zones, and regional hazard rules. Preserve alert id, event type, severity, urgency,
 certainty, affected zones, counties, effective time, expiration time, source URL, instruction URL,
 and official-alert ranking evidence.
+
+Current state: the existing NWS fixture parser now runs in REGIONAL scope through the registry-
+backed ingest path, and the REGIONAL regression covers the Washington alert fixture with the
+shared local test corpus. Dedicated Washington-only fixture files and broader county/zone
+coverage are still pending.
 
 ### WSDOT Traveler API Fixture Parser
 
