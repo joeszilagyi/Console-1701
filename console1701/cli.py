@@ -159,12 +159,17 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         for source in statuses:
             print(
-                "{scope} {source_key} enabled={enabled} kind={kind} "
+                "{scope} {source_key} enabled={enabled} kind={kind} family={family} "
+                "class={source_class} verification={verification} access={access} "
                 "policy={policy} health={health} items={item_count}".format(
                     scope=source["scope"],
                     source_key=source["source_key"],
                     enabled="yes" if source["enabled"] else "no",
                     kind=source["kind"],
+                    family=source.get("source_family") or "unknown",
+                    source_class=source.get("source_class") or "unknown",
+                    verification=source.get("verification_status") or "unknown",
+                    access=source.get("expected_access_kind") or "unknown",
                     policy=(source.get("policy") or {}).get("policy_state") or "unknown",
                     health=source.get("health_state") or "not_run",
                     item_count=source.get("item_count") or 0,

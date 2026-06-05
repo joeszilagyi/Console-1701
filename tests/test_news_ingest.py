@@ -1178,7 +1178,10 @@ def test_cli_news_sources_command_reports_policy_and_health(tmp_path, capsys):
     captured = capsys.readouterr()
 
     assert exit_code == 0
-    assert "ORBITAL orbital_atom enabled=yes kind=atom" in captured.out
+    assert (
+        "ORBITAL orbital_atom enabled=yes kind=atom family=unknown class=unknown "
+        "verification=unknown access=unknown"
+    ) in captured.out
     assert "policy=allowed_fixture_only" in captured.out
     assert "health=healthy" in captured.out
     assert "items=2" in captured.out
