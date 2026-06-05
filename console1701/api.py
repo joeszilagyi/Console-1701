@@ -26,12 +26,21 @@ from console1701.evidence import (
 )
 from console1701.handoff import DEFAULT_TASK, create_handoff_packet
 from console1701.live_probe import read_live_snapshot
+from console1701.news.scanner import run_news_scan
+from console1701.news.storage import (
+    get_news_item_detail,
+    get_news_overview,
+    get_news_scope_view,
+    get_news_sources_status,
+    get_news_storage_summary,
+)
 from console1701.scanner import run_scan
 from console1701.terminal_action import TerminalLaunchError, launch_host_alert_codex_terminal
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(PACKAGE_DIR / "templates"))
 _SCAN_LOCK = threading.Lock()
+_NEWS_SCAN_LOCK = threading.Lock()
 SCOPE_NAMES = ("INTERNAL", "LOCAL", "REGIONAL", "NATIONAL", "GLOBAL", "ORBITAL", "SYSTEM")
 NAV_SCOPE_NAMES = ("OVERVIEW", *SCOPE_NAMES)
 
@@ -73,6 +82,13 @@ def _run_scan_locked(config_path: str | None) -> None:
         _SCAN_LOCK.release()
 
 
+def _run_news_scan_locked(config_path: str | None) -> None:
+    try:
+        run_news_scan(config_path)
+    finally:
+        _NEWS_SCAN_LOCK.release()
+
+
 def build_router(config_path: str | None = None) -> APIRouter:
     router = APIRouter()
 
@@ -86,6 +102,14 @@ def build_router(config_path: str | None = None) -> APIRouter:
             attention = get_attention_items(conn)
             events = get_recent_events(conn)
             handoffs = get_handoffs(conn)
+            config = _config(config_path)
+            news_overview = get_news_overview(conn, config)
+            news_scope_view = (
+                get_news_scope_view(conn, config, active_scope)
+                if active_scope in {"LOCAL", "REGIONAL", "NATIONAL", "GLOBAL", "ORBITAL"}
+                else None
+            )
+            news_summary = get_news_storage_summary(conn, config)
         return templates.TemplateResponse(
             request,
             "index.html",
@@ -100,6 +124,9 @@ def build_router(config_path: str | None = None) -> APIRouter:
                 "handoffs": handoffs,
                 "scopes": NAV_SCOPE_NAMES,
                 "active_scope": active_scope,
+                "news_overview": news_overview,
+                "news_scope_view": news_scope_view,
+                "news_summary": news_summary,
             },
         )
 
@@ -139,6 +166,40 @@ def build_router(config_path: str | None = None) -> APIRouter:
     def summary():
         with _conn(config_path) as conn:
             return get_system_summary(conn)
+
+    @router.get("/api/news/summary")
+    def news_summary():
+        config = _config(config_path)
+        with _conn(config_path) as conn:
+            return get_news_storage_summary(conn, config)
+
+    @router.get("/api/news/scopes/{scope}")
+    def news_scope(scope: str, limit: int = 8):
+        normalized = str(scope).upper()
+        if normalized not in {"LOCAL", "REGIONAL", "NATIONAL", "GLOBAL", "ORBITAL"}:
+            raise HTTPException(status_code=404, detail="News scope not found")
+        config = _config(config_path)
+        with _conn(config_path) as conn:
+            return get_news_scope_view(
+                conn,
+                config,
+                normalized,
+                item_limit=max(1, min(int(limit), 50)),
+            )
+
+    @router.get("/api/news/sources")
+    def news_sources():
+        config = _config(config_path)
+        with _conn(config_path) as conn:
+            return get_news_sources_status(conn, config)
+
+    @router.get("/api/news/items/{item_id}")
+    def news_item(item_id: int):
+        with _conn(config_path) as conn:
+            item = get_news_item_detail(conn, item_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="News item not found")
+        return item
 
     @router.get("/api/repos")
     def repos():
@@ -224,6 +285,16 @@ def build_router(config_path: str | None = None) -> APIRouter:
         if not _SCAN_LOCK.acquire(blocking=False):
             return {"status": "already_running"}
         background_tasks.add_task(_run_scan_locked, config_path)
+        return {"status": "started"}
+
+    @router.post("/api/news/scan")
+    def news_scan(background_tasks: BackgroundTasks):
+        config = _config(config_path)
+        if not bool((config.get("news") or {}).get("enabled")):
+            return {"status": "disabled"}
+        if not _NEWS_SCAN_LOCK.acquire(blocking=False):
+            return {"status": "already_running"}
+        background_tasks.add_task(_run_news_scan_locked, config_path)
         return {"status": "started"}
 
     @router.post("/api/handoffs")

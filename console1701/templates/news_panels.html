@@ -1,0 +1,416 @@
+{% macro tone_for_state(state) -%}
+  {%- if state in ["healthy"] -%}ok
+  {%- elif state in ["failing"] -%}critical
+  {%- elif state in ["stale", "configured_never_run", "configured_disabled"] -%}warning
+  {%- else -%}muted
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro render_item_list(items, empty_message) -%}
+  {% if items %}
+    <ul class="news-item-list">
+      {% for item in items %}
+        {% set evidence = item.evidence or {} %}
+        {% set source = evidence.source or {} %}
+        {% set ingest = evidence.ingest or {} %}
+        {% set policy = evidence.policy or {} %}
+        {% set retention = evidence.retention or {} %}
+        {% set ranking = evidence.ranking or {} %}
+        {% set source_health = evidence.source_health or {} %}
+        <li class="news-item">
+          <div class="news-item-head">
+            <a href="{{ item.url }}" target="_blank" rel="noreferrer">{{ item.title }}</a>
+            <span>{{ item.source_published_at or item.last_seen_at }}</span>
+          </div>
+          <p>{{ item.description or "No bounded description was stored for this item." }}</p>
+          <div class="news-tag-row">
+            {% for tag in item.tags[:5] %}
+              <code>{{ tag }}</code>
+            {% endfor %}
+            <em>rank {{ item.rank_score }}</em>
+          </div>
+          <details class="news-evidence-drawer">
+            <summary>Evidence</summary>
+            <div class="news-evidence-grid">
+              <div><span>Source</span><strong>{{ source.source_name or source.source_key or "unknown" }}</strong></div>
+              <div><span>Health</span><strong>{{ source_health.state or ingest.source_health_state_at_ingest or "unknown" }}</strong></div>
+              <div><span>Fetch run</span><strong>{{ ingest.fetch_run_id or "unknown" }}</strong></div>
+              <div><span>Seen</span><strong>{{ ingest.seen_at or item.last_seen_at }}</strong></div>
+              <div><span>Policy</span><strong>{{ policy.policy_state or "unknown" }}</strong></div>
+              <div><span>Retention expiry</span><strong>{{ retention.expires_at or item.expires_at }}</strong></div>
+            </div>
+            {% if ranking.reasons %}
+              <ul class="news-evidence-list">
+                {% for reason in ranking.reasons %}
+                  <li><b>Rank</b><span>{{ reason }}</span></li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+            {% if policy.notes %}
+              <ul class="news-evidence-list">
+                {% for note in policy.notes %}
+                  <li><b>Policy</b><span>{{ note }}</span></li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </details>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">{{ empty_message }}</p>
+  {% endif %}
+{%- endmacro %}
+
+{% macro render_source_list(sources, empty_message) -%}
+  {% if sources %}
+    <ul class="source-status-list">
+      {% for source in sources %}
+        {% set health = source.latest_health or {} %}
+        {% set policy = source.policy or {} %}
+        {% set source_state = source.health_state or "not_run" %}
+        {% set tone = tone_for_state(source_state) %}
+        <li class="source-status source-tone-{{ tone }}">
+          <div class="source-status-head">
+            <b>{{ source.name }}</b>
+            <span>{{ source_state }}</span>
+          </div>
+          <p><code>{{ source.kind }}</code> · {{ policy.policy_state or policy.basis or "policy pending" }}</p>
+          <small>{{ source.health_message or health.message or (policy.notes[0] if policy.notes else "No recent health note recorded.") }}</small>
+          <small>
+            last success {{ source.last_success_at or "never" }} ·
+            last failure {{ source.last_failure_at or "never" }} ·
+            next eligible {{ source.next_eligible_at or "n/a" }}
+          </small>
+          <details class="news-evidence-drawer">
+            <summary>Audit trail</summary>
+            <div class="news-evidence-grid">
+              <div><span>Scope</span><strong>{{ source.scope }}</strong></div>
+              <div><span>Policy</span><strong>{{ policy.policy_state or "unknown" }}</strong></div>
+              <div><span>Raw health</span><strong>{{ source.raw_health_state or "none" }}</strong></div>
+              <div><span>Fetch status</span><strong>{{ (source.latest_fetch_run or {}).get("status") or "never" }}</strong></div>
+              <div><span>Error class</span><strong>{{ (source.latest_fetch_run or {}).get("error_class") or "none" }}</strong></div>
+              <div><span>Items</span><strong>{{ source.item_count or 0 }}</strong></div>
+            </div>
+            {% if source.health_message %}
+              <ul class="news-evidence-list">
+                <li><b>Status</b><span>{{ source.health_message }}</span></li>
+              </ul>
+            {% endif %}
+            {% if policy.notes %}
+              <ul class="news-evidence-list">
+                {% for note in policy.notes %}
+                  <li><b>Policy</b><span>{{ note }}</span></li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+            {% if (source.latest_fetch_run or {}).get("error_message") %}
+              <ul class="news-evidence-list">
+                <li><b>Failure</b><span>{{ (source.latest_fetch_run or {}).get("error_message") }}</span></li>
+              </ul>
+            {% endif %}
+            {% if source.recent_fetch_runs %}
+              <ul class="news-evidence-list">
+                {% for run in source.recent_fetch_runs %}
+                  <li>
+                    <b>Fetch {{ loop.index }}</b>
+                    <span>{{ run.status }} · {{ run.finished_at or run.started_at or "unknown time" }} · items {{ run.item_count or 0 }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+            {% if source.recent_health_rows %}
+              <ul class="news-evidence-list">
+                {% for row in source.recent_health_rows %}
+                  <li>
+                    <b>Health {{ loop.index }}</b>
+                    <span>{{ row.state }} · {{ row.observed_at }}{% if row.message %} · {{ row.message }}{% endif %}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </details>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">{{ empty_message }}</p>
+  {% endif %}
+{%- endmacro %}
+
+{% macro render_scope_state_card(state) -%}
+  {% set tone = tone_for_state(state.state) %}
+  <article class="module news-panel news-state-card source-tone-{{ tone }}">
+    <div class="module-head">
+      <div>
+        <p class="module-kicker">{{ state.scope }}</p>
+        <h2>{{ state.label }}</h2>
+      </div>
+      <span class="module-code">{{ state.state }}</span>
+    </div>
+    <p class="summary-text">{{ state.message }}</p>
+    <div class="readout-grid">
+      <div><span>Configured</span><strong>{{ state.configured_source_count }}</strong></div>
+      <div><span>Enabled</span><strong>{{ state.enabled_source_count }}</strong></div>
+      <div><span>Stored sources</span><strong>{{ state.stored_source_count }}</strong></div>
+      <div><span>Active items</span><strong>{{ state.active_item_count }}</strong></div>
+      <div><span>Healthy</span><strong>{{ (state.source_state_counts or {}).get("healthy", 0) }}</strong></div>
+      <div><span>Blocked</span><strong>{{ (state.source_state_counts or {}).get("policy_blocked", 0) }}</strong></div>
+      <div><span>Parser failed</span><strong>{{ (state.source_state_counts or {}).get("parser_failed", 0) }}</strong></div>
+      <div><span>Awaiting run</span><strong>{{ (state.source_state_counts or {}).get("configured_never_run", 0) }}</strong></div>
+    </div>
+    {% if state.latest_health_states %}
+      <details>
+        <summary>Latest health states</summary>
+        <pre>{{ state.latest_health_states | tojson(indent=2) }}</pre>
+      </details>
+    {% endif %}
+  </article>
+{%- endmacro %}
+
+{% macro render_scope_page(view) -%}
+  <section class="scope-dashboard" aria-label="{{ view['scope'] }} recent signal panels">
+    {{ render_scope_state_card(view['state']) }}
+
+    <article class="module news-panel news-panel-wide">
+      <div class="module-head">
+        <div>
+          <p class="module-kicker">{{ view['scope'] }}</p>
+          <h2>Latest items</h2>
+        </div>
+        <span class="module-code">{{ view['items'] | length }} shown</span>
+      </div>
+      {{ render_item_list(view['items'], view['state']['message']) }}
+    </article>
+
+    <article class="module news-panel">
+      <div class="module-head">
+        <div>
+          <p class="module-kicker">{{ view['scope'] }}</p>
+          <h2>Cluster traces</h2>
+        </div>
+        <span class="module-code">{{ view['clusters'] | length }} active</span>
+      </div>
+      {% if view['clusters'] %}
+        <ul class="news-cluster-list">
+          {% for cluster in view['clusters'] %}
+            {% set cluster_evidence = cluster.evidence or {} %}
+            <li>
+              <b>{{ cluster.title }}</b>
+              <span>{{ cluster.item_count }} item{{ "" if cluster.item_count == 1 else "s" }} · score {{ cluster.score }}</span>
+              <details class="news-evidence-drawer">
+                <summary>Evidence</summary>
+                <div class="news-evidence-grid">
+                  <div><span>Representative item</span><strong>{{ cluster.representative_item_id or "unknown" }}</strong></div>
+                  <div><span>First seen</span><strong>{{ cluster.first_seen_at }}</strong></div>
+                  <div><span>Last seen</span><strong>{{ cluster.last_seen_at }}</strong></div>
+                  <div><span>Cluster key</span><strong>{{ cluster.cluster_key }}</strong></div>
+                </div>
+                {% if cluster.tags %}
+                  <div class="news-tag-row">
+                    {% for tag in cluster.tags[:6] %}
+                      <code>{{ tag }}</code>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+                {% if cluster_evidence %}
+                  <ul class="news-evidence-list">
+                    <li><b>Storage</b><span>{{ cluster_evidence | tojson }}</span></li>
+                  </ul>
+                {% endif %}
+              </details>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="muted">No deterministic clusters are stored for this scope yet.</p>
+      {% endif %}
+    </article>
+
+    <article class="module news-panel">
+      <div class="module-head">
+        <div>
+          <p class="module-kicker">{{ view['scope'] }}</p>
+          <h2>Source health</h2>
+        </div>
+        <span class="module-code">{{ view['sources'] | length }} source{{ "" if (view['sources'] | length) == 1 else "s" }}</span>
+      </div>
+      {{ render_source_list(view['sources'], "No sources are configured for this scope.") }}
+    </article>
+  </section>
+{%- endmacro %}
+
+{% macro render_overview(data) -%}
+  {% set summary = data['summary'] %}
+  {% set local = data['scope_views']['LOCAL'] %}
+  {% set regional = data['scope_views']['REGIONAL'] %}
+  {% set national = data['scope_views']['NATIONAL'] %}
+  {% set global = data['scope_views']['GLOBAL'] %}
+  {% set orbital = data['scope_views']['ORBITAL'] %}
+  <section class="scope-dashboard" aria-label="Overview recent signal panels">
+    <article class="module news-panel news-panel-wide">
+      <div class="module-head">
+        <div>
+          <p class="module-kicker">Overview</p>
+          <h2>Attention now</h2>
+        </div>
+        <span class="module-code">{{ summary.active_item_count }} active</span>
+      </div>
+      <p class="summary-text">
+        {{ "Recent-signal ingest is enabled." if summary.enabled else "Recent-signal ingest is disabled by config." }}
+        Last success: {{ summary.last_successful_ingest_at or "never" }}.
+      </p>
+      <div class="readout-grid">
+        <div><span>Configured</span><strong>{{ summary.configured_source_count }}</strong></div>
+        <div><span>Stored</span><strong>{{ summary.stored_source_count }}</strong></div>
+        <div><span>Fetch runs</span><strong>{{ summary.fetch_run_count }}</strong></div>
+        <div><span>Stale</span><strong>{{ summary.stale_source_count }}</strong></div>
+      </div>
+      {{ render_item_list(local['items'][:2] + regional['items'][:1], "No local or regional items are stored yet.") }}
+    </article>
+
+    <article class="module news-panel">
+      <div class="module-head">
+        <div>
+          <p class="module-kicker">Overview</p>
+          <h2>Local and regional pulse</h2>
+        </div>
+        <span class="module-code">{{ local['state']['state'] }} / {{ regional['state']['state'] }}</span>
+      </div>
+      {{ render_source_list(local['sources'][:2] + regional['sources'][:2], local['state']['message']) }}
+    </article>
+
+    <article class="module news-panel">
+      <div class="module-head">
+        <div>
+          <p class="module-kicker">Overview</p>
+          <h2>National and global pulse</h2>
+        </div>
+        <span class="module-code">{{ national['state']['state'] }} / {{ global['state']['state'] }}</span>
+      </div>
+      {{ render_item_list(national['items'][:2] + global['items'][:2], national['state']['message']) }}
+    </article>
+
+    <article class="module news-panel">
+      <div class="module-head">
+        <div>
+          <p class="module-kicker">Overview</p>
+          <h2>Orbital and source health</h2>
+        </div>
+        <span class="module-code">{{ orbital['state']['state'] }}</span>
+      </div>
+      {{ render_source_list(data['failing_sources'][:3] + orbital['sources'][:2], orbital['state']['message']) }}
+    </article>
+  </section>
+{%- endmacro %}
+
+{% macro render_system(summary, sources) -%}
+  <section class="scope-dashboard" aria-label="System recent signal panels">
+    <article class="module news-panel news-panel-wide">
+      <div class="module-head">
+        <div>
+          <p class="module-kicker">System</p>
+          <h2>Source ingest status</h2>
+        </div>
+        <span class="module-code">{{ summary.fetch_run_count }} runs</span>
+      </div>
+      <p class="summary-text">
+        Page loads read SQLite and config only. External fetch remains explicit via
+        <code>console-1701 news-scan</code>.
+      </p>
+      <div class="readout-grid">
+        <div><span>Configured</span><strong>{{ summary.configured_source_count }}</strong></div>
+        <div><span>Stored</span><strong>{{ summary.stored_source_count }}</strong></div>
+        <div><span>Active items</span><strong>{{ summary.active_item_count }}</strong></div>
+        <div><span>Health rows</span><strong>{{ summary.source_health_count }}</strong></div>
+        <div><span>Last finished</span><strong>{{ summary.last_finished_ingest_at or "never" }}</strong></div>
+        <div><span>Last success</span><strong>{{ summary.last_successful_ingest_at or "never" }}</strong></div>
+        <div><span>Failing</span><strong>{{ summary.failing_source_count or 0 }}</strong></div>
+        <div><span>Policy blocked</span><strong>{{ summary.policy_blocked_source_count or 0 }}</strong></div>
+        <div><span>Parser failed</span><strong>{{ summary.parser_failed_source_count or 0 }}</strong></div>
+        <div><span>Awaiting run</span><strong>{{ (summary.source_state_counts or {}).get("configured_never_run", 0) }}</strong></div>
+      </div>
+      {% if summary.last_scan_result %}
+        <ul class="news-cluster-list">
+          <li>
+            <b>Last scan result</b>
+            <span>
+              {{ summary.last_scan_result.status or "unknown" }} ·
+              scanned {{ summary.last_scan_result.scanned_sources or 0 }} ·
+              healthy {{ summary.last_scan_result.healthy_sources or 0 }} ·
+              items {{ summary.last_scan_result.item_count or 0 }}
+            </span>
+          </li>
+        </ul>
+      {% endif %}
+    </article>
+
+    <article class="module news-panel">
+      <div class="module-head">
+        <div>
+          <p class="module-kicker">System</p>
+          <h2>Scope readiness</h2>
+        </div>
+        <span class="module-code">{{ summary.scope_states | length }} scopes</span>
+      </div>
+      <ul class="news-cluster-list">
+        {% for scope_name, state in summary.scope_states.items() %}
+          <li>
+            <b>{{ scope_name }}</b>
+            <span>{{ state.state }} · {{ state.message }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </article>
+
+    <article class="module news-panel">
+      <div class="module-head">
+        <div>
+          <p class="module-kicker">System</p>
+          <h2>Source policy</h2>
+        </div>
+        <span class="module-code">{{ sources | length }} source{{ "" if (sources | length) == 1 else "s" }}</span>
+      </div>
+      {{ render_source_list(sources[:6], "No configured sources exist yet.") }}
+    </article>
+
+    <article class="module news-panel">
+      <div class="module-head">
+        <div>
+          <p class="module-kicker">System</p>
+          <h2>Retention and safety</h2>
+        </div>
+        <span class="module-code">SQLite only</span>
+      </div>
+      <ul class="news-cluster-list">
+        <li><b>Page loads</b><span>No background fetches are triggered by GET routes.</span></li>
+        <li><b>Fixtures</b><span>Current ingest accepts only enabled <code>file://</code> sources.</span></li>
+        <li><b>Retention</b><span>Items, fetch runs, and source health are purged during explicit ingest.</span></li>
+        <li><b>Last purge</b><span>{{ (summary.last_purge or {}).get("observed_at") or "never" }}</span></li>
+        <li><b>Purge before</b><span>{{ ((summary.last_purge or {}).get("before_counts") or {}).get("news_items", "unknown") }} items / {{ ((summary.last_purge or {}).get("before_counts") or {}).get("news_fetch_runs", "unknown") }} fetch runs / {{ ((summary.last_purge or {}).get("before_counts") or {}).get("news_source_health", "unknown") }} health rows</span></li>
+        <li><b>Purge after</b><span>{{ ((summary.last_purge or {}).get("after_counts") or {}).get("news_items", "unknown") }} items / {{ ((summary.last_purge or {}).get("after_counts") or {}).get("news_fetch_runs", "unknown") }} fetch runs / {{ ((summary.last_purge or {}).get("after_counts") or {}).get("news_source_health", "unknown") }} health rows</span></li>
+        <li><b>DB size</b><span>{{ summary.db_size_bytes if summary.db_size_bytes is not none else "unknown" }} bytes</span></li>
+        <li><b>Homepage policy</b><span>Homepage extraction stays config-gated and local-fixture only in this phase.</span></li>
+      </ul>
+    </article>
+
+    <article class="module news-panel">
+      <div class="module-head">
+        <div>
+          <p class="module-kicker">System</p>
+          <h2>Config warnings</h2>
+        </div>
+        <span class="module-code">{{ summary.config_warnings | length }} warning{{ "" if (summary.config_warnings | length) == 1 else "s" }}</span>
+      </div>
+      {% if summary.config_warnings %}
+        <ul class="news-cluster-list">
+          {% for warning in summary.config_warnings %}
+            <li><b>Warning</b><span>{{ warning }}</span></li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="muted">No current recent-signal config warnings were derived from config and policy state.</p>
+      {% endif %}
+    </article>
+  </section>
+{%- endmacro %}

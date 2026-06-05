@@ -1,0 +1,8 @@
+[Unit]
+Description=console-1701 recent-signal fixture ingest
+
+[Service]
+Type=oneshot
+WorkingDirectory=__PROJECT_DIR__
+ExecStart=__PROJECT_DIR__/.venv/bin/console-1701 news-scan --config %h/.config/console-1701/config.yml
+Environment=PYTHONUNBUFFERED=1

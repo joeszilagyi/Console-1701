@@ -8,6 +8,7 @@ from console1701 import api as api_module
 from console1701 import config as config_module
 from console1701.api import build_router
 from console1701.db import connect_db, init_db, utc_now
+from console1701.news.scanner import run_news_scan
 from console1701.scanner import insert_host_snapshot
 
 
@@ -115,15 +116,17 @@ def test_root_page_renders_html(tmp_path, monkeypatch):
     assert "console-1701" in body
     assert "/static/app.js?v=machine-console-13" in body
     assert "/static/app.css?v=machine-console-17" in body
+    assert 'id="news-scan-button"' in body
     assert 'data-active-scope="OVERVIEW"' in body
     assert 'data-scope-nav="OVERVIEW"' in body
     assert 'href="/"' in body
     assert 'data-scope-nav="INTERNAL"' in body
     assert 'href="/INTERNAL"' in body
     assert 'data-scope-nav="ORBITAL"' in body
-    assert "Placeholder 1" in body
-    assert "Placeholder 4" in body
-    assert "Reserved for overview console content." in body
+    assert "Attention now" in body
+    assert "Local and regional pulse" in body
+    assert "Orbital and source health" in body
+    assert "Recent-signal ingest is disabled by config." in body
     assert "Machine readout" not in body
     assert "demo-host" in body
     assert str(db_path) in body
@@ -154,10 +157,264 @@ def test_scoped_root_page_marks_active_scope(tmp_path, monkeypatch):
     assert 'data-active-scope="ORBITAL"' in body
     assert 'data-scope-nav="ORBITAL"' in body
     assert 'aria-current="page"' in body
-    assert "Placeholder 1" in body
-    assert "Reserved for orbital console content." in body
+    assert "Latest items" in body
+    assert "Source health" in body
+    assert "External news ingest is disabled by config." in body
     assert "Machine readout" not in body
     assert str(db_path) in body
+
+
+def test_news_scope_page_and_api_render_fixture_backed_state(tmp_path, monkeypatch):
+    db_path = _use_temp_state(monkeypatch, tmp_path)
+    config_path = tmp_path / "config.yml"
+    fixture = Path(__file__).resolve().parent / "fixtures" / "news" / "local_items.json"
+    config_path.write_text(
+        f"""
+paths:
+  repo_roots: []
+  explicit_repos: []
+logs: []
+projects: []
+news:
+  enabled: true
+  scopes:
+    LOCAL:
+      enabled: true
+      sources:
+        - id: local_fixture
+          name: Local fixture
+          kind: local_file_json
+          enabled: true
+          url: "file://{fixture.resolve()}"
+          parser: generic_json_items
+          tags: [fixture]
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    router = build_router(str(config_path))
+    run_news_scan(str(config_path))
+
+    scope_response = _route_endpoint(router, "/{scope}")(_request("/LOCAL"), "LOCAL")
+    scope_body = scope_response.body.decode()
+
+    assert scope_response.status_code == 200
+    assert "Seattle ferry delay at Colman Dock" in scope_body
+    assert "Source health" in scope_body
+    assert "Local fixture" in scope_body
+    assert "Audit trail" in scope_body
+    assert "Retention expiry" in scope_body
+    assert "Fetch run" in scope_body
+    assert "Policy" in scope_body
+    assert "Fetch 1" in scope_body
+    assert "Health 1" in scope_body
+
+    summary = _route_endpoint(router, "/api/news/summary")()
+    scope_payload = _route_endpoint(router, "/api/news/scopes/{scope}")("LOCAL", 8)
+    sources = _route_endpoint(router, "/api/news/sources")()
+
+    with connect_db(db_path) as conn:
+        init_db(conn)
+        item_id = conn.execute("SELECT id FROM news_items ORDER BY id LIMIT 1").fetchone()["id"]
+
+    item = _route_endpoint(router, "/api/news/items/{item_id}")(item_id)
+
+    assert summary["enabled"] is True
+    assert summary["active_item_count"] == 2
+    assert summary["last_scan_result"]["status"] == "complete"
+    assert summary["last_purge"]["before_counts"]["news_items"] == 2
+    assert summary["source_state_counts"]["healthy"] == 1
+    assert scope_payload["state"]["state"] == "healthy"
+    assert scope_payload["state"]["source_state_counts"]["healthy"] == 1
+    assert len(scope_payload["items"]) == 2
+    assert sources[0]["policy"]["basis"] == "local_fixture_only"
+    assert sources[0]["health_state"] == "healthy"
+    assert sources[0]["recent_fetch_runs"][0]["status"] == "success"
+    assert sources[0]["recent_health_rows"][0]["state"] == "healthy"
+    assert item["title"] == "Seattle ferry delay at Colman Dock"
+    assert item["source"]["source_key"] == "local_fixture"
+    assert item["evidence"]["source"]["source_key"] == "local_fixture"
+    assert item["evidence"]["policy"]["policy_state"] == "allowed_fixture_only"
+    assert item["evidence"]["source_health"]["state"] == "healthy"
+    assert item["evidence"]["privacy"]["article_body_stored"] is False
+    assert summary["last_purge"]["summary"]["items"] == 0
+
+
+def test_news_scan_api_returns_disabled_and_started_states(tmp_path, monkeypatch):
+    _use_temp_state(monkeypatch, tmp_path)
+    disabled_config = tmp_path / "disabled.yml"
+    _write_test_config(disabled_config)
+    disabled_router = build_router(str(disabled_config))
+
+    disabled = _route_endpoint(disabled_router, "/api/news/scan")(api_module.BackgroundTasks())
+
+    assert disabled["status"] == "disabled"
+
+    enabled_config = tmp_path / "enabled.yml"
+    fixture = Path(__file__).resolve().parent / "fixtures" / "news" / "local_items.json"
+    enabled_config.write_text(
+        f"""
+paths:
+  repo_roots: []
+  explicit_repos: []
+logs: []
+projects: []
+news:
+  enabled: true
+  scopes:
+    LOCAL:
+      enabled: true
+      sources:
+        - id: local_fixture
+          name: Local fixture
+          kind: local_file_json
+          enabled: true
+          url: "file://{fixture.resolve()}"
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    enabled_router = build_router(str(enabled_config))
+
+    started = _route_endpoint(enabled_router, "/api/news/scan")(api_module.BackgroundTasks())
+
+    assert started["status"] == "started"
+
+
+def test_system_scope_renders_recent_signal_config_warnings(tmp_path, monkeypatch):
+    _use_temp_state(monkeypatch, tmp_path)
+    config_path = tmp_path / "config.yml"
+    config_path.write_text(
+        """
+paths:
+  repo_roots: []
+  explicit_repos: []
+logs: []
+projects: []
+news:
+  enabled: true
+  scopes:
+    LOCAL:
+      enabled: true
+    REGIONAL:
+      sources:
+        - id: blocked_remote
+          name: Blocked remote
+          kind: rss
+          enabled: true
+          url: "https://example.invalid/feed.xml"
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    router = build_router(str(config_path))
+
+    response = _route_endpoint(router, "/{scope}")(_request("/SYSTEM"), "SYSTEM")
+    body = response.body.decode()
+    summary = _route_endpoint(router, "/api/news/summary")()
+
+    assert response.status_code == 200
+    assert "Config warnings" in body
+    assert "LOCAL is enabled, but no sources are configured for it." in body
+    assert "blocked_remote is enabled but blocked in the current fixture-only ingest phase." in body
+    assert "LOCAL is enabled, but no sources are configured for it." in summary["config_warnings"]
+
+
+def test_news_summary_surfaces_source_state_counts(tmp_path, monkeypatch):
+    _use_temp_state(monkeypatch, tmp_path)
+    config_path = tmp_path / "config.yml"
+    config_path.write_text(
+        """
+paths:
+  repo_roots: []
+  explicit_repos: []
+logs: []
+projects: []
+news:
+  enabled: true
+  scopes:
+    LOCAL:
+      enabled: true
+      sources:
+        - id: waiting_fixture
+          name: Waiting fixture
+          kind: local_file_json
+          enabled: true
+          url: "file:///tmp/waiting.json"
+        - id: disabled_fixture
+          name: Disabled fixture
+          kind: local_file_json
+          enabled: false
+          url: "file:///tmp/disabled.json"
+    REGIONAL:
+      enabled: false
+      sources:
+        - id: blocked_remote
+          name: Blocked remote
+          kind: rss
+          enabled: true
+          url: "https://example.invalid/feed.xml"
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    router = build_router(str(config_path))
+
+    summary = _route_endpoint(router, "/api/news/summary")()
+    sources = _route_endpoint(router, "/api/news/sources")()
+
+    assert summary["source_state_counts"]["configured_never_run"] == 1
+    assert summary["source_state_counts"]["disabled"] == 1
+    assert summary["source_state_counts"]["policy_blocked"] == 1
+    assert any(source["health_message"] for source in sources)
+
+
+def test_news_get_routes_do_not_trigger_ingest_or_fixture_reads(tmp_path, monkeypatch):
+    _use_temp_state(monkeypatch, tmp_path)
+    config_path = tmp_path / "config.yml"
+    config_path.write_text(
+        """
+paths:
+  repo_roots: []
+  explicit_repos: []
+logs: []
+projects: []
+news:
+  enabled: true
+  scopes:
+    LOCAL:
+      enabled: true
+      sources:
+        - id: missing_fixture
+          name: Missing fixture
+          kind: local_file_json
+          enabled: true
+          url: "file:///tmp/console-1701-missing-news-fixture.json"
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    router = build_router(str(config_path))
+
+    def fail_if_scan_runs(_config_path=None):
+        raise AssertionError("GET route triggered news ingest")
+
+    monkeypatch.setattr(api_module, "run_news_scan", fail_if_scan_runs)
+
+    root = _route_endpoint(router, "/")(_request("/"))
+    local_page = _route_endpoint(router, "/{scope}")(_request("/LOCAL"), "LOCAL")
+    system_page = _route_endpoint(router, "/{scope}")(_request("/SYSTEM"), "SYSTEM")
+    summary = _route_endpoint(router, "/api/news/summary")()
+    scope = _route_endpoint(router, "/api/news/scopes/{scope}")("LOCAL", 8)
+    sources = _route_endpoint(router, "/api/news/sources")()
+
+    assert root.status_code == 200
+    assert local_page.status_code == 200
+    assert system_page.status_code == 200
+    assert summary["source_state_counts"]["configured_never_run"] == 1
+    assert scope["state"]["state"] == "configured_never_run"
+    assert sources[0]["source_key"] == "missing_fixture"
+    assert sources[0]["latest_fetch_run"] is None
 
 
 def test_root_page_renders_codex_terminal_action_for_host_penalty(tmp_path, monkeypatch):

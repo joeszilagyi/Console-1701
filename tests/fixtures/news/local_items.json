@@ -1,0 +1,19 @@
+{
+  "items": [
+    {
+      "title": "Seattle ferry delay at Colman Dock",
+      "url": "https://alerts.example.test/ferry-delay",
+      "description": "Washington State Ferries reports a temporary loading delay at Colman Dock.",
+      "published_at": "2026-05-05T10:30:00-07:00",
+      "tags": ["official", "ferry"]
+    },
+    {
+      "title": "Capitol Hill power outage restoration underway",
+      "url": "https://alerts.example.test/power-outage?b=2&a=1#details",
+      "canonical_url": "https://alerts.example.test/power-outage?a=1&b=2",
+      "description": "Seattle City Light crews are restoring several downtown blocks after a feeder fault.",
+      "published_at": "Tue, 05 May 2026 18:05:00 GMT",
+      "tags": ["utility"]
+    }
+  ]
+}

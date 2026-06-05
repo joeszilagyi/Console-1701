@@ -42,6 +42,7 @@ Initialize config, scan once, and run the server:
 ```bash
 console-1701 init-config
 console-1701 scan
+console-1701 news-scan
 console-1701 serve
 ```
 
@@ -66,6 +67,8 @@ From the repo root:
 ```
 
 The script creates `.venv`, installs the package, creates config/state paths, installs systemd user units, starts the web service, enables the 30-minute scan timer, runs one initial scan, and prints the local URL.
+It also installs `console-1701-news-scan.service` and `console-1701-news-scan.timer`, but leaves the
+news timer disabled by default.
 
 Check service state:
 
@@ -73,6 +76,13 @@ Check service state:
 systemctl --user status console-1701.service
 systemctl --user status console-1701-scan.timer
 curl -fsS http://127.0.0.1:1701/api/health
+```
+
+Optional explicit news timer enablement:
+
+```bash
+systemctl --user enable --now console-1701-news-scan.timer
+systemctl --user status console-1701-news-scan.timer
 ```
 
 ## Paths
@@ -107,6 +117,30 @@ The scanner is separate from the web app:
 
 ```bash
 console-1701 scan
+```
+
+Recent-signal/news ingest is also separate from the web app:
+
+```bash
+console-1701 news-scan
+console-1701 news-sources
+```
+
+Current recent-signal phase:
+
+```text
+Disabled by default
+Explicit command path only
+Page loads read SQLite and config only
+No hidden fetch on GET routes
+Fixture-only ingest for enabled file:// JSON/RSS/Atom/homepage sources
+LOCAL Seattle policy config defaults to disabled and gates social/neighborhood-blog sources
+LOCAL registry seeds known source metadata for disabled official, blog, and social candidates
+Fixture parsers include LOCAL SFD, AlertSeattle, NWS, WSDOT, Metro, and local-blog evidence
+Source audit surfaces derive disabled / configured_never_run / healthy / stale / parser_failed /
+policy_blocked / auth_required states without fetching
+Stored item detail includes source, policy, ranking, retention, and privacy evidence
+Live external HTTP ingest not implemented yet
 ```
 
 Scan sequence:
@@ -208,6 +242,10 @@ surfaces, including `/proc/stat`, `/proc/loadavg`, `/proc/meminfo`, `/proc/net/d
 `/proc/net/route`, `/proc/pressure/*`, `/sys/class/net`, `/sys/class/thermal`, and
 `shutil.disk_usage()`.
 
+## License
+
+MIT. See [LICENSE](LICENSE).
+
 Sensor colors are intentionally simple and transparent:
 
 ```text
@@ -240,6 +278,21 @@ system_probe:
 When external checks are disabled, the UI reports local route and DNS state only. MAC addresses, DMI serials, machine IDs, UUIDs, and disk serials are not shown in the default UI.
 
 Page loads read SQLite only. They do not scan repos.
+
+The non-INTERNAL scope pages now show honest recent-signal state:
+
+```text
+OVERVIEW: cross-scope synthesis bays
+LOCAL / REGIONAL / NATIONAL / GLOBAL / ORBITAL: state, latest stored items, clusters, source health
+SYSTEM: source ingest status, source-state counts, scope readiness, source policy, and page-load safety evidence
+```
+
+Source audit drawers now include short recent fetch-run and source-health histories so operators can
+see transitions like `healthy -> parser_failed` without querying SQLite manually.
+
+Recent-signal items, clusters, and source rows now use click-open drawers for ranking, policy,
+retention, fetch-run, and source-health audit details instead of hiding that evidence behind the API
+only.
 
 ## Safety Limits
 
@@ -359,6 +412,11 @@ GET  /api/events               recent event stream
 GET  /api/host                 latest host/system snapshot with summary and evidence
 GET  /api/host/history         compact host snapshot history
 GET  /api/live                 local live sensor snapshot and scan timing
+GET  /api/news/summary         recent-signal storage/config summary
+GET  /api/news/scopes/{scope}  latest stored recent-signal items/clusters for one scope
+GET  /api/news/sources         configured source policy plus derived source-state/health state
+GET  /api/news/items/{id}      one stored recent-signal item with source/policy/ranking evidence
+POST /api/news/scan            trigger explicit recent-signal ingest
 POST /api/host/actions/codex   launch a user-clicked host-alert Codex terminal
 GET  /api/evidence/{id}        raw interpretation evidence
 GET  /api/handoffs             handoff packet list
@@ -370,6 +428,12 @@ If a scan is already running, `POST /api/scan` returns:
 
 ```json
 {"status": "already_running"}
+```
+
+If recent-signal ingest is disabled, `POST /api/news/scan` returns:
+
+```json
+{"status": "disabled"}
 ```
 
 ## Troubleshooting
@@ -398,6 +462,12 @@ Timer status:
 systemctl --user status console-1701-scan.timer
 ```
 
+Optional news timer status:
+
+```bash
+systemctl --user status console-1701-news-scan.timer
+```
+
 Manual scan:
 
 ```bash
@@ -408,6 +478,13 @@ or:
 
 ```bash
 ~/projects/console-1701/.venv/bin/console-1701 scan
+```
+
+Manual recent-signal ingest:
+
+```bash
+~/.local/bin/console-1701 news-scan
+~/.local/bin/console-1701 news-sources
 ```
 
 Config:

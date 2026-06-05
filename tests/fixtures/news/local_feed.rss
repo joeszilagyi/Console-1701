@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Local Alerts</title>
+    <item>
+      <title>Metro route reroute near Pioneer Square</title>
+      <link>https://metro.example.test/reroute</link>
+      <description>Construction is moving buses off 3rd Avenue for the afternoon peak.</description>
+      <pubDate>Tue, 05 May 2026 19:15:00 GMT</pubDate>
+      <category>transit</category>
+      <category>official</category>
+    </item>
+    <item>
+      <title>Seattle parks event setup closes west lot</title>
+      <link>https://parks.example.test/west-lot</link>
+      <description>The west lot closes at noon for stage and tent setup.</description>
+      <pubDate>2026-05-05T12:45:00-07:00</pubDate>
+      <category>community</category>
+    </item>
+  </channel>
+</rss>

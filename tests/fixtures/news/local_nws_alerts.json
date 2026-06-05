@@ -1,0 +1,63 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.seattle-wind",
+      "type": "Feature",
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.seattle-wind",
+        "id": "urn:oid:2.49.0.1.840.0.seattle-wind",
+        "areaDesc": "Seattle; Bremerton Area; Tacoma Area",
+        "geocode": {
+          "SAME": ["053033"],
+          "UGC": ["WAZ558"]
+        },
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/WAZ558"
+        ],
+        "sent": "2026-05-05T16:12:00+00:00",
+        "effective": "2026-05-05T17:00:00+00:00",
+        "onset": "2026-05-05T18:00:00+00:00",
+        "expires": "2026-05-06T06:00:00+00:00",
+        "ends": "2026-05-06T05:00:00+00:00",
+        "status": "Actual",
+        "messageType": "Alert",
+        "category": "Met",
+        "severity": "Severe",
+        "certainty": "Likely",
+        "urgency": "Expected",
+        "event": "High Wind Warning",
+        "senderName": "NWS Seattle WA",
+        "headline": "High Wind Warning issued May 5 for Seattle",
+        "description": "South winds 35 to 45 mph with gusts up to 60 mph expected.",
+        "instruction": "Use caution if traveling. Secure loose outdoor objects.",
+        "references": []
+      }
+    },
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.spokane-frost",
+      "type": "Feature",
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.spokane-frost",
+        "id": "urn:oid:2.49.0.1.840.0.spokane-frost",
+        "areaDesc": "Spokane Area",
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/WAZ036"
+        ],
+        "sent": "2026-05-05T10:00:00+00:00",
+        "effective": "2026-05-05T11:00:00+00:00",
+        "expires": "2026-05-05T19:00:00+00:00",
+        "status": "Actual",
+        "messageType": "Alert",
+        "category": "Met",
+        "severity": "Minor",
+        "certainty": "Possible",
+        "urgency": "Future",
+        "event": "Frost Advisory",
+        "senderName": "NWS Spokane WA",
+        "headline": "Frost Advisory issued May 5 for Spokane",
+        "description": "Temperatures as low as 34 may result in frost formation."
+      }
+    }
+  ]
+}

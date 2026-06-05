@@ -133,6 +133,95 @@ CREATE TABLE IF NOT EXISTS settings (
   value TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS news_sources (
+  id INTEGER PRIMARY KEY,
+  source_key TEXT NOT NULL UNIQUE,
+  scope TEXT NOT NULL,
+  name TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  url TEXT,
+  homepage_url TEXT,
+  enabled INTEGER NOT NULL DEFAULT 0,
+  config_hash TEXT NOT NULL,
+  priority INTEGER NOT NULL DEFAULT 50,
+  tags_json TEXT NOT NULL DEFAULT '[]',
+  policy_json TEXT NOT NULL DEFAULT '{}',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS news_fetch_runs (
+  id INTEGER PRIMARY KEY,
+  source_id INTEGER NOT NULL,
+  started_at TEXT NOT NULL,
+  finished_at TEXT,
+  status TEXT NOT NULL,
+  http_status INTEGER,
+  item_count INTEGER NOT NULL DEFAULT 0,
+  error_class TEXT,
+  error_message TEXT,
+  robots_allowed INTEGER,
+  etag_sent TEXT,
+  etag_received TEXT,
+  last_modified_sent TEXT,
+  last_modified_received TEXT,
+  duration_ms INTEGER,
+  evidence_json TEXT NOT NULL DEFAULT '{}',
+  FOREIGN KEY(source_id) REFERENCES news_sources(id)
+);
+
+CREATE TABLE IF NOT EXISTS news_items (
+  id INTEGER PRIMARY KEY,
+  source_id INTEGER NOT NULL,
+  scope TEXT NOT NULL,
+  canonical_url TEXT,
+  url TEXT NOT NULL,
+  url_hash TEXT NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  source_published_at TEXT,
+  first_seen_at TEXT NOT NULL,
+  last_seen_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  source_kind TEXT NOT NULL,
+  tags_json TEXT NOT NULL DEFAULT '[]',
+  rank_score INTEGER NOT NULL DEFAULT 0,
+  trend_score INTEGER NOT NULL DEFAULT 0,
+  evidence_json TEXT NOT NULL DEFAULT '{}',
+  content_hash TEXT,
+  status TEXT NOT NULL DEFAULT 'active',
+  FOREIGN KEY(source_id) REFERENCES news_sources(id)
+);
+
+CREATE TABLE IF NOT EXISTS news_clusters (
+  id INTEGER PRIMARY KEY,
+  scope TEXT NOT NULL,
+  cluster_key TEXT NOT NULL,
+  title TEXT NOT NULL,
+  representative_item_id INTEGER,
+  first_seen_at TEXT NOT NULL,
+  last_seen_at TEXT NOT NULL,
+  item_count INTEGER NOT NULL DEFAULT 0,
+  score INTEGER NOT NULL DEFAULT 0,
+  tags_json TEXT NOT NULL DEFAULT '[]',
+  evidence_json TEXT NOT NULL DEFAULT '{}',
+  FOREIGN KEY(representative_item_id) REFERENCES news_items(id)
+);
+
+CREATE TABLE IF NOT EXISTS news_source_health (
+  id INTEGER PRIMARY KEY,
+  source_id INTEGER NOT NULL,
+  observed_at TEXT NOT NULL,
+  state TEXT NOT NULL,
+  last_success_at TEXT,
+  last_failure_at TEXT,
+  consecutive_failures INTEGER NOT NULL DEFAULT 0,
+  stale_after TEXT,
+  message TEXT,
+  evidence_json TEXT NOT NULL DEFAULT '{}',
+  FOREIGN KEY(source_id) REFERENCES news_sources(id)
+);
+
 CREATE INDEX IF NOT EXISTS idx_repo_snapshots_repo_time
   ON repo_snapshots(repo_id, scanned_at DESC);
 
@@ -147,3 +236,42 @@ CREATE INDEX IF NOT EXISTS idx_attention_status
 
 CREATE INDEX IF NOT EXISTS idx_host_snapshots_scanned_at
   ON host_snapshots(scanned_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_news_sources_scope_enabled
+  ON news_sources(scope, enabled);
+
+CREATE INDEX IF NOT EXISTS idx_news_sources_source_key
+  ON news_sources(source_key);
+
+CREATE INDEX IF NOT EXISTS idx_news_fetch_runs_source_started
+  ON news_fetch_runs(source_id, started_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_news_fetch_runs_status_started
+  ON news_fetch_runs(status, started_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_news_items_scope_seen
+  ON news_items(scope, last_seen_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_news_items_source_seen
+  ON news_items(source_id, last_seen_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_news_items_expires_at
+  ON news_items(expires_at);
+
+CREATE INDEX IF NOT EXISTS idx_news_items_url_hash
+  ON news_items(url_hash);
+
+CREATE INDEX IF NOT EXISTS idx_news_items_rank_scope
+  ON news_items(scope, rank_score DESC, last_seen_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_news_clusters_scope_score
+  ON news_clusters(scope, score DESC, last_seen_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_news_clusters_key
+  ON news_clusters(cluster_key);
+
+CREATE INDEX IF NOT EXISTS idx_news_source_health_source_observed
+  ON news_source_health(source_id, observed_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_news_source_health_state
+  ON news_source_health(state, observed_at DESC);

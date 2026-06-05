@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/static/app.css?v=machine-console-17">
   </head>
   <body data-active-scope="{{ active_scope or 'LOCAL' }}">
+    {% import "news_panels.html" as news_panels %}
     {% set snap = host.snapshot if host else {} %}
     {% set identity = snap.identity or {} %}
     {% set os_info = snap.os or {} %}
@@ -71,7 +72,10 @@
         <div><span>Uptime</span><strong>{{ session.uptime_human or "unknown" }}</strong></div>
         <div><span>Kernel</span><strong>{{ kernel.release or "unknown" }}</strong></div>
       </div>
-      <button id="scan-button" class="action-button" type="button">Manual scan</button>
+      <div class="command-actions">
+        <button id="scan-button" class="action-button" type="button">Manual scan</button>
+        <button id="news-scan-button" class="action-button secondary-action" type="button">News ingest</button>
+      </div>
     </header>
 
     <nav class="scope-nav" aria-label="Console scope selector">
@@ -780,22 +784,13 @@
         </details>
       </section>
       {% else %}
-        <section class="scope-placeholder-grid" aria-label="{{ active_scope }} placeholder modules">
-          {% for number in range(1, 5) %}
-            <article class="module scope-placeholder-panel">
-              <div class="module-head">
-                <div>
-                  <p class="module-kicker">{{ active_scope }}</p>
-                  <h2>Placeholder {{ number }}</h2>
-                </div>
-                <span class="module-code">BAY-{{ number }}</span>
-              </div>
-              <div class="scope-placeholder-body">
-                <span>Reserved for {{ active_scope | lower }} console content.</span>
-              </div>
-            </article>
-          {% endfor %}
-        </section>
+        {% if active_scope == "OVERVIEW" %}
+          {{ news_panels.render_overview(news_overview) }}
+        {% elif active_scope == "SYSTEM" %}
+          {{ news_panels.render_system(news_summary, news_overview.sources) }}
+        {% else %}
+          {{ news_panels.render_scope_page(news_scope_view) }}
+        {% endif %}
       {% endif %}
 
       <section class="safety-strip">

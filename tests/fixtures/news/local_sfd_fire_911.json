@@ -1,0 +1,28 @@
+[
+  {
+    ":id": "row-major-fire",
+    "incident_number": "F260050001",
+    "type": "Structure Fire",
+    "datetime": "2026-05-05T20:05:00",
+    "address": "1234 E Pine St",
+    "neighborhood": "Capitol Hill",
+    "unit_count": "7",
+    "report_location": {
+      "latitude": "47.615",
+      "longitude": "-122.321"
+    }
+  },
+  {
+    ":id": "row-aid-response",
+    "incident_number": "F260050002",
+    "type": "Aid Response",
+    "datetime": "2026-05-05T20:12:00",
+    "address": "9876 15th Ave NW",
+    "neighborhood": "Ballard",
+    "unit_count": "1",
+    "report_location": {
+      "latitude": "47.670",
+      "longitude": "-122.377"
+    }
+  }
+]

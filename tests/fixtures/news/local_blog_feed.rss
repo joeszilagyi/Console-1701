@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Local Blog Fixture</title>
+    <link>https://westseattleblog.example.test/</link>
+    <description>Fixture neighborhood blog feed for parser tests.</description>
+    <item>
+      <title>West Seattle Bridge lane blocked after collision</title>
+      <link>https://westseattleblog.example.test/2026/05/bridge-lane-blocked</link>
+      <description>Traffic is backing up near the West Seattle Bridge after a collision blocked one lane.</description>
+      <pubDate>Tue, 05 May 2026 23:05:00 GMT</pubDate>
+      <category>traffic</category>
+      <category>West Seattle</category>
+    </item>
+    <item>
+      <title>Capitol Hill open house scheduled for transit project</title>
+      <link>https://westseattleblog.example.test/2026/05/transit-open-house</link>
+      <description>A public open house will discuss a future transit project with neighborhood residents.</description>
+      <pubDate>Tue, 05 May 2026 23:30:00 GMT</pubDate>
+      <category>civic</category>
+      <category>Capitol Hill</category>
+    </item>
+  </channel>
+</rss>

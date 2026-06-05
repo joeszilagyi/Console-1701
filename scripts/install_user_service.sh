@@ -21,7 +21,10 @@ sed "s|__PROJECT_DIR__|$PROJECT_DIR|g" \
   systemd/console-1701.service > "$SERVICE_DIR/console-1701.service"
 sed "s|__PROJECT_DIR__|$PROJECT_DIR|g" \
   systemd/console-1701-scan.service > "$SERVICE_DIR/console-1701-scan.service"
+sed "s|__PROJECT_DIR__|$PROJECT_DIR|g" \
+  systemd/console-1701-news-scan.service > "$SERVICE_DIR/console-1701-news-scan.service"
 cp systemd/console-1701-scan.timer "$SERVICE_DIR/"
+cp systemd/console-1701-news-scan.timer "$SERVICE_DIR/"
 
 systemctl --user daemon-reload
 systemctl --user enable --now console-1701.service
@@ -30,3 +33,4 @@ systemctl --user enable --now console-1701-scan.timer
 console-1701 scan --config "$CONFIG_PATH"
 
 echo "console-1701 is available at http://127.0.0.1:1701"
+echo "console-1701-news-scan.timer was installed but left disabled."

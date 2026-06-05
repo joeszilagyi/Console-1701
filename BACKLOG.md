@@ -16,6 +16,33 @@ whenever new ideas come up and are not completed immediately.
   explanations.
 - Alert rows can launch a user-clicked local terminal with an interactive Codex scenario.
 - The local delta image is displayed from `console1701/static/codex-alert-delta.png`.
+- Recent-signal/news support remains disabled by default: `news:` config validation rejects unsafe
+  shapes, SQLite metadata tables exist, storage helpers expose disabled/not-configured states, and
+  explicit fixture-only ingest exists without live external fetching.
+- `console-1701 news-scan` now provides explicit local-fixture-only ingest for enabled `file://`
+  JSON/RSS/Atom/homepage sources, updates source health/fetch runs/items/clusters in SQLite, and
+  performs retention purge without network access.
+- A disabled-by-default `local:` policy config now exists for Seattle-specific inclusion flags,
+  hazard thresholds, and explicit social/neighborhood-blog allowances.
+- A static LOCAL source registry now seeds disabled metadata for core official, blog, and
+  policy-sensitive social candidates without fetching.
+- LOCAL fixture parsing now includes an NWS active-alert JSON parser with Seattle/King/Puget Sound
+  filtering and alert severity evidence.
+- LOCAL fixture parsing now includes a King County Metro RSS parser with route, service-area, and
+  transit-impact evidence.
+- LOCAL fixture parsing now includes an SFD Fire 911 Socrata parser with privacy-safe location
+  tokens and low-acuity redaction evidence.
+- LOCAL fixture parsing now includes a WSDOT traveler-alert JSON parser with Seattle corridor
+  filtering and public-impact evidence.
+- LOCAL fixture parsing now includes an AlertSeattle RSS parser with official city-alert event and
+  severity evidence.
+- LOCAL fixture parsing now includes a neighborhood-blog RSS parser with explicit config gating,
+  neighborhood matching, and headline-metadata-only evidence.
+- `/api/news/summary`, `/api/news/scopes/{scope}`, `/api/news/sources`, and `/api/news/items/{id}`
+  now expose SQLite-backed recent-signal state without triggering fetches.
+- OVERVIEW, LOCAL, REGIONAL, NATIONAL, GLOBAL, ORBITAL, and SYSTEM now render real
+  disabled/not-configured/source-backed recent-signal panels instead of placeholder bays.
+- `console-1701 news-sources` lists configured source policy and health state without fetching.
 
 ## Scoped Recent Signal / News Ingestion
 
@@ -25,7 +52,7 @@ Architecture reference:
 
 ### Disabled-By-Default News Config
 
-Status: not implemented.
+Status: implemented.
 
 Add a `news:` config tree that defaults to fully disabled. Include retention, fetch policy, scope,
 and source definitions. Reject page-load external fetching, unknown scopes, unknown source kinds,
@@ -34,7 +61,7 @@ sources only and no live source enabled by default.
 
 ### News SQLite Schema
 
-Status: not implemented.
+Status: implemented.
 
 Add JSON-heavy SQLite tables for recent signal state:
 
@@ -49,7 +76,7 @@ Include indexes for latest-by-scope, latest-by-source, source health, retention 
 
 ### Local Fixture Ingest Harness
 
-Status: not implemented.
+Status: implemented.
 
 Create a news ingest path that reads local RSS/Atom/JSON/homepage fixtures only. This phase must not
 make network calls. It should normalize fixture items into SQLite, update source health, run
@@ -57,7 +84,7 @@ retention purge, and provide deterministic evidence for each item.
 
 ### Parser Tests
 
-Status: not implemented.
+Status: implemented.
 
 Add tests for RSS fixtures, Atom fixtures, JSON API fixtures, homepage fixture selectors,
 malformed feeds, huge payload rejection/truncation, bounded title/description lengths, timestamp
@@ -65,32 +92,47 @@ normalization, and fail-soft parser errors.
 
 ### Source Policy And Robots Evidence Layer
 
-Status: not implemented.
+Status: partially implemented.
 
 Add a policy module that records source basis, source kind, enablement, auth requirement state,
 homepage-extractor allowance, robots decisions when applicable, and policy notes. Homepage extraction
 must be blocked unless explicitly enabled and must record robots evidence when used. Robots handling
 is an operational courtesy, not a legal shield.
 
+Current state: source policy is recorded in `news_sources.policy_json`, surfaced in API/UI/CLI, and
+includes fixture-only/live-blocked basis, source kind, enablement, auth state, homepage-extractor
+allowance, and a robots placeholder state. Live robots fetch/decision evidence is still pending until
+real HTTP ingestion exists.
+
 ### Retention Purge
 
-Status: not implemented.
+Status: partially implemented.
 
 Add deterministic purge logic for expired news items, old fetch runs, old source health rows, and any
 future raw-payload debug rows. Default intent: recent awareness, not archive. Expose retention policy
 and last purge evidence in SYSTEM.
 
+Current state: SQLite purge runs during `console-1701 news-scan` for items, fetch runs, and source
+health. SYSTEM now shows last purge evidence, retention state basics, before/after row counts, and
+cutoff timing. Any future raw-payload debug retention and deeper historical purge audit views are
+still pending.
+
 ### Deterministic Ranking
 
-Status: not implemented.
+Status: partially implemented.
 
 Add explainable ranking with no LLM calls. Candidate factors: recency, source priority, official
 source boost, scope priority, user-pinned tags, repeated topic/cluster count, source-provided alert
 severity, item freshness, and source health confidence. Store ranking factors in evidence.
 
+Current state: fixture ingest now stores explicit ranking factors and reasons in item evidence for
+source priority, recency, freshness, official-tag boost, scope priority, repeat observations, tag
+density, and prior source-health confidence. Cluster-count/topic repetition and source-provided
+severity weighting are still pending.
+
 ### Scope Page UI
 
-Status: not implemented.
+Status: implemented.
 
 Replace non-INTERNAL placeholder bays with real disabled/not-configured/source-backed panels when
 news support exists. LOCAL, REGIONAL, NATIONAL, GLOBAL, and ORBITAL should share a compact template
@@ -98,7 +140,7 @@ partial where possible. Do not show fake headlines or demo data.
 
 ### OVERVIEW Synthesis Bays
 
-Status: not implemented.
+Status: implemented.
 
 Turn OVERVIEW into a cross-scope synthesis surface with four initial bays: Attention now, Local and
 regional pulse, National and global pulse, and Orbital and source health. Local, INTERNAL, and SYSTEM
@@ -106,11 +148,16 @@ urgent items should not be buried under broad distant headlines.
 
 ### SYSTEM Source Health Bay
 
-Status: not implemented.
+Status: implemented.
 
 Add SYSTEM panels for source ingest status, stale sources, failed parsers, disabled sources, last
 successful fetch by source/scope, retention state, DB size, source table counts, config validation
 warnings, and evidence that page loads do not perform external fetches.
+
+Current state: SYSTEM now shows source ingest status, derived source-state counts, scope readiness,
+source policy/health rows, short fetch/health transition history, table counts, last
+finished/successful ingest timestamps, purge evidence, page-load safety evidence, DB size, and
+derived config warnings.
 
 ### Official API/RSS First Live Ingest
 
@@ -139,15 +186,19 @@ to bypass platform APIs, auth, paywalls, rate limits, or bot controls. Keep rete
 
 ### Documentation Update
 
-Status: not implemented.
+Status: partially implemented.
 
 When news scaffolding exists, update README, config documentation, safety notes, and command help to
 explain disabled-by-default behavior, page-load SQLite-only reads, explicit ingest commands,
 retention, source policy, and how to audit source health.
 
+Current state: README and CLI surfaces now mention `news-scan`, `news-sources`, page-load SQLite-only
+reads, and current fixture-only behavior. Config-specific walkthroughs, retention auditing details,
+and future live-ingest operational notes are still pending.
+
 ### Separate Disabled Systemd News Timer
 
-Status: not implemented.
+Status: implemented.
 
 If scheduled news ingest is added, create a separate user-level `console-1701-news-scan.timer`.
 Existing `console-1701-scan.timer` must not silently start external fetching. The news timer should
@@ -161,16 +212,25 @@ Architecture reference:
 
 ### LOCAL Source Registry Design Implementation
 
-Status: not implemented.
+Status: partially implemented.
 
 Implement the LOCAL source registry from the design document with explicit `source_key`,
 `source_family`, `source_class`, adapter, scope, priority, policy risk, parser risk, privacy risk,
 retention sensitivity, verification status, and future phase fields. Validate enum values and keep
 all sources disabled until explicitly configured.
 
+Current state: LOCAL source config entries can now carry and validate `source_family`,
+`source_class`, `adapter`, `privacy_risk`, `policy_risk`, `parser_risk`,
+`retention_sensitivity`, and `verification_status`, and source status/policy payloads surface that
+metadata. A static built-in registry seeds core disabled candidates including SFD, AlertSeattle,
+Metro, WSDOT, NWS, USGS, City Light, FAA/SEA, a neighborhood blog, and a social policy-sensitive
+candidate. Config entries that reference those registry IDs inherit disabled metadata unless the
+user overrides fields. Exhaustive design-inventory coverage, source-registry SQLite storage, and
+deeper future-phase fields remain pending.
+
 ### Disabled-By-Default LOCAL Config
 
-Status: not implemented.
+Status: implemented.
 
 Add a LOCAL config shape that defaults to disabled, with `include_airport`, `include_port`,
 `include_king_county_transit`, `include_wsdot_seattle_corridors`, `include_ferries`,
@@ -189,15 +249,26 @@ columns and indexes for latest-by-scope, source health, event ranking, source fa
 
 ### LOCAL Fixture Pack
 
-Status: not implemented.
+Status: partially implemented.
 
 Create local-only fixtures for SFD Socrata JSON, AlertSeattle RSS, King County Metro RSS, NWS alert
 JSON, WSDOT alert JSON, local blog RSS, City Light outage data, and FAA/SEA airport status. Fixture
 ingest must not perform network calls and must be safe for pytest.
 
+Current state: `tests/fixtures/news/local_sfd_fire_911.json` covers SFD Socrata rows for a major
+public-impact fire incident and a low-acuity aid response with exact-address redaction.
+`tests/fixtures/news/local_nws_alerts.json` covers a LOCAL NWS active-alert fixture with one
+Seattle-relevant alert and one filtered non-local alert.
+`tests/fixtures/news/local_metro_service_advisories.rss` covers Metro advisory RSS route and
+service-area extraction. `tests/fixtures/news/local_wsdot_alerts.json` covers Seattle corridor
+filtering and lane-blocked public-impact scoring. `tests/fixtures/news/local_alertseattle.rss`
+covers AlertSeattle city-alert severity extraction. `tests/fixtures/news/local_blog_feed.rss`
+covers gated neighborhood-blog metadata-only parsing. City Light and FAA/SEA fixtures remain
+pending.
+
 ### Socrata Parser For SFD Fire 911
 
-Status: not implemented.
+Status: implemented.
 
 Build a `socrata_json` fixture parser for Seattle Real-Time Fire 911 metadata. Preserve dataset ID,
 row ID, incident type, observed timestamp, unit count if present, location tokens, source URL, and
@@ -205,15 +276,20 @@ privacy redaction evidence. Low-acuity medical/private calls must not automatica
 
 ### RSS/Atom Parser For Official And Local Feeds
 
-Status: not implemented.
+Status: partially implemented.
 
 Build an RSS/Atom parser for fixture feeds first, covering AlertSeattle, SPD Blotter, SDOT Blog,
 Metro, local news, and neighborhood blogs where feeds verify later. Parse title, URL, published
 timestamp, bounded description, categories, source id, and evidence. Never fetch article bodies.
 
+Current state: generic RSS/Atom parsing exists for fixture feeds, Metro RSS has route/service-impact
+evidence, AlertSeattle RSS has official city-alert severity evidence, and neighborhood-blog RSS has
+metadata-only local signal evidence behind the explicit neighborhood-blog config gate. SPD Blotter,
+SDOT Blog, and broader local news fixture evidence remain pending.
+
 ### NWS Alert Fixture Parser
 
-Status: not implemented.
+Status: implemented.
 
 Build a fixture parser for NWS active alert JSON filtered to Seattle, King County, Puget Sound, and
 configured nearby hazard zones. Preserve severity, urgency, certainty, event type, affected zones,
@@ -221,7 +297,7 @@ effective/expiration times, and active-alert ranking evidence.
 
 ### WSDOT Official API Fixture Parser
 
-Status: not implemented.
+Status: implemented.
 
 Build a fixture parser for WSDOT traveler information affecting Seattle corridors, ferries, bridges,
 passes, routes, or regional access. Preserve route/facility tokens, closure/delay severity, published
@@ -229,7 +305,7 @@ time, source URL, and public-impact scoring evidence.
 
 ### Metro RSS Parser
 
-Status: not implemented.
+Status: implemented.
 
 Build a fixture parser for King County Metro service advisories RSS. Preserve route IDs, affected
 service area, advisory title, published time, source URL, and transit-impact ranking evidence.
@@ -286,12 +362,17 @@ in JSON evidence.
 
 ### LOCAL Privacy Redaction Rules
 
-Status: not implemented.
+Status: partially implemented.
 
 Add deterministic redaction rules for public safety data. Suppress exact addresses for low-acuity
 medical calls, overdose calls, private residential aid, single-source minor police calls, and
 low-public-value private distress. Prefer neighborhood or intersection-level display unless an
 official source frames the incident as public-impact.
+
+Current state: the SFD Fire 911 fixture parser suppresses exact address storage/display for
+low-acuity medical/private call types without public-impact signals, keeps privacy-safe location
+tokens, and stores redaction evidence. Broader SPD, social-only, overdose-specific, and cross-source
+event privacy rules remain pending.
 
 ### LOCAL UI Disabled States
 
@@ -303,21 +384,34 @@ disabled, and homepage extraction disabled. Do not show fake headlines.
 
 ### LOCAL Source Health States
 
-Status: not implemented.
+Status: partially implemented.
 
 Implement source health states for LOCAL: `disabled`, `not_configured`, `configured_never_run`,
 `healthy`, `stale`, `failing`, `parser_failed`, `policy_blocked`, `robots_blocked`,
 `auth_required`, `rate_limited`, `unsupported`, and `manual_review_only`. Surface these states in
 SYSTEM later and summarize them on LOCAL.
 
+Current state: API/UI/CLI source summaries now derive `disabled`, `configured_never_run`,
+`healthy`, `stale`, `failing`, `parser_failed`, `policy_blocked`, and `auth_required` from config,
+policy, fetch runs, and latest health rows. Live-fetch-only states such as `robots_blocked`,
+`rate_limited`, and richer unsupported/manual-review variants remain pending until HTTP ingest
+exists.
+
 ### LOCAL Evidence Drawer Contract
 
-Status: not implemented.
+Status: partially implemented.
 
 Define and test evidence payloads for LOCAL items and events. Include source ids, source names,
 families, classes, item URLs, canonical URLs, official flags, source published times, first/last
 seen, fetch run ids, parser names, source health, ranking features, privacy redaction decision,
 retention expiration, matching tokens, geographic basis, event confidence, and policy notes.
+
+Current state: `/api/news/items/{id}` now returns source metadata, latest fetch/health state,
+policy notes, ranking evidence, fetch run id, retention expiration, canonical URL/storage fields,
+and explicit privacy/body-storage flags for stored item rows, and scope/source/cluster panels now
+surface click-open evidence drawers plus short source fetch/health histories for that audit data in
+the website. Event correlation, geography basis, and scope-specific matching contracts are still
+pending.
 
 ### LOCAL Official-Source Live Ingest Phase
 
@@ -354,10 +448,15 @@ verification status, and source-health behavior before enabling any source.
 
 ### Tests For No Page-Load External Fetches
 
-Status: not implemented.
+Status: partially implemented.
 
 Add tests proving GET routes and page renders read SQLite/config only and never call network fetchers.
 Include disabled/not configured/stale/failing state tests for LOCAL and SYSTEM source health.
+
+Current state: GET route regression coverage now exercises OVERVIEW, LOCAL, SYSTEM, and
+`/api/news/*` reads with enabled recent-signal config and a missing fixture path, proving page/API
+loads do not trigger ingest or fixture reads. Broader stale/failing matrix coverage across LOCAL and
+SYSTEM remains pending.
 
 ## REGIONAL Pacific Northwest Recent Signal Layer
 

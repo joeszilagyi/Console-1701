@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Orbital Updates</title>
+  <entry>
+    <title>Starlink visibility window shifts later tonight</title>
+    <link rel="alternate" href="https://orbital.example.test/starlink-window" />
+    <updated>2026-05-05T20:20:00Z</updated>
+    <summary>Cloud cover and orbital geometry shift the best pass several minutes later.</summary>
+    <category term="orbital" />
+    <category term="forecast" />
+  </entry>
+  <entry>
+    <title>ISS overpass remains visible above the western horizon</title>
+    <link href="https://orbital.example.test/iss-overpass" />
+    <published>Tue, 05 May 2026 20:45:00 GMT</published>
+    <summary>Low cloud cover still leaves a short clear viewing window.</summary>
+    <category term="orbital" />
+  </entry>
+</feed>

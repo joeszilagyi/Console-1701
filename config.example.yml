@@ -73,6 +73,133 @@ system_probe:
   show_sensitive_identifiers: false
   critical_services: []
 
+local:
+  enabled: false
+  default_place_label: "Seattle"
+  include_airport: true
+  include_port: true
+  include_king_county_transit: true
+  include_wsdot_seattle_corridors: true
+  include_ferries: true
+  hazard_radius_miles: 75
+  earthquake_min_magnitude: 3.0
+  allow_neighborhood_blogs: false
+  allow_social_sources: false
+
+news:
+  enabled: false
+  retention:
+    items_days: 7
+    fetch_runs_days: 14
+    source_health_days: 30
+    raw_payload_debug_enabled: false
+    raw_payload_debug_ttl_hours: 6
+  fetch_policy:
+    global_concurrency: 2
+    default_timeout_seconds: 10
+    default_interval_minutes: 30
+    default_backoff_minutes: 120
+    max_response_bytes: 1048576
+    user_agent: "console-1701 local recent-signal monitor"
+    page_load_external_fetches: false
+    respect_robots_txt: true
+    allow_homepage_extractors: false
+  scopes:
+    LOCAL:
+      enabled: false
+      label: "Seattle"
+      sources:
+        - id: "seattle_open_data_example"
+          name: "Seattle Open Data example"
+          scope: "LOCAL"
+          kind: "open_data_json"
+          enabled: false
+          url: "https://data.seattle.gov/resource/example.json"
+          homepage_url: "https://data.seattle.gov/"
+          robots_url: "https://data.seattle.gov/robots.txt"
+          interval_minutes: 60
+          timeout_seconds: 10
+          retention_days: 7
+          tags: ["official", "local"]
+          priority: 70
+          parser: "socrata_json"
+          source_family: "seattle_open_data"
+          source_class: "official_open_data"
+          adapter: "socrata_json"
+          privacy_risk: "medium"
+          policy_risk: "low"
+          parser_risk: "low"
+          retention_sensitivity: "medium"
+          verification_status: "candidate_needs_verification"
+          evidence_notes:
+            - "Disabled example only. Do not enable without choosing a real dataset."
+        - id: "local_file_fixture_example"
+          name: "Local fixture example"
+          scope: "LOCAL"
+          kind: "local_file_json"
+          enabled: false
+          url: "file://./tests/fixtures/news/local_items.json"
+          interval_minutes: 0
+          retention_days: 3
+          tags: ["fixture"]
+          priority: 10
+          parser: "generic_json_items"
+          source_family: "fixture"
+          source_class: "source_health_only"
+          adapter: "generic_json_items"
+          privacy_risk: "low"
+          policy_risk: "low"
+          parser_risk: "low"
+          retention_sensitivity: "low"
+          verification_status: "user_seeded"
+          evidence_notes:
+            - "Disabled local fixture shape for future parser tests."
+    REGIONAL:
+      enabled: false
+      label: "Washington / PNW"
+      sources: []
+    NATIONAL:
+      enabled: false
+      label: "United States"
+      sources:
+        - id: "national_rss_example"
+          name: "National RSS example"
+          scope: "NATIONAL"
+          kind: "rss"
+          enabled: false
+          url: "https://example.invalid/feed.xml"
+          interval_minutes: 60
+          timeout_seconds: 10
+          retention_days: 7
+          tags: ["news"]
+          priority: 30
+          parser: "rss"
+          evidence_notes:
+            - "Disabled example only. Replace with a verified RSS/Atom feed before enabling."
+    GLOBAL:
+      enabled: false
+      label: "World"
+      sources: []
+    ORBITAL:
+      enabled: false
+      label: "Orbital"
+      sources:
+        - id: "nasa_api_example"
+          name: "NASA API example"
+          scope: "ORBITAL"
+          kind: "api_json"
+          enabled: false
+          url: "https://api.nasa.gov/example"
+          homepage_url: "https://api.nasa.gov/"
+          interval_minutes: 120
+          timeout_seconds: 10
+          retention_days: 7
+          tags: ["official", "orbital"]
+          priority: 50
+          parser: "api_json"
+          evidence_notes:
+            - "Disabled example only. Do not enable without endpoint and key-policy review."
+
 projects:
   - name: "console-1701"
     path: "~/projects/console-1701/main"

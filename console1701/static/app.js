@@ -51,6 +51,14 @@ function setScanButtonBusy(isBusy) {
   button.classList.toggle("is-busy", isBusy);
 }
 
+function setNewsScanButtonBusy(isBusy) {
+  const button = document.querySelector("#news-scan-button");
+  if (!button) return;
+  button.disabled = isBusy;
+  button.textContent = isBusy ? "Ingesting..." : "News ingest";
+  button.classList.toggle("is-busy", isBusy);
+}
+
 function pageIsForeground() {
   return document.visibilityState === "visible" && document.hasFocus();
 }
@@ -109,6 +117,25 @@ document.querySelector("#scan-button")?.addEventListener("click", async () => {
   } catch (error) {
     setScanButtonBusy(false);
     showToast(`Scan request failed: ${error}`);
+  }
+});
+
+document.querySelector("#news-scan-button")?.addEventListener("click", async () => {
+  setNewsScanButtonBusy(true);
+  try {
+    const response = await fetch("/api/news/scan", { method: "POST" });
+    const payload = await response.json();
+    if (payload.status === "started") {
+      showToast("Recent-signal ingest started.");
+    } else if (payload.status === "disabled") {
+      showToast("Recent-signal ingest is disabled by config.");
+    } else {
+      showToast("Recent-signal ingest is already running.");
+    }
+  } catch (error) {
+    showToast(`Recent-signal ingest request failed: ${error}`);
+  } finally {
+    window.setTimeout(() => setNewsScanButtonBusy(false), 1200);
   }
 });
 
