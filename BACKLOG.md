@@ -507,11 +507,16 @@ prevent duplicate syndicated articles from inflating independent convergence.
 
 ### LOCAL Social Source Policy Review
 
-Status: not implemented.
+Status: partially implemented.
 
 Review Bluesky AT Protocol, Reddit official API or permitted feed access, and X official API rules
 before implementing any community/social adapter. Keep social disabled by default, require explicit
 configuration, use short retention, and never scrape HTML to bypass platform restrictions.
+
+Current state: local config already requires `allow_social_sources` before social sources can be
+enabled, the built-in registry keeps social candidates disabled by default, and
+`manual_review_only` entries stay gated for explicit review rather than live ingest. The remaining
+work is a compliant live social adapter and a short-retention policy for any enabled social source.
 
 ### Documentation For Source Verification
 
