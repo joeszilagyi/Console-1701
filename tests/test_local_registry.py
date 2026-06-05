@@ -75,6 +75,24 @@ def test_local_registry_defaults_can_seed_minimal_config(tmp_path):
     assert "Official active hazard alerts" in source["evidence_notes"][1]
 
 
+def test_local_registry_exposes_faa_airport_status_probe_only_defaults():
+    source = get_local_source_registry_entry("faa_airport_status_sea")
+
+    assert source is not None
+    assert source["verification_status"] == "source_health_probe_only"
+    assert source["expected_access_kind"] == "public airport-status page and NAS Status XML"
+    assert "machine-readable path" in source["why_it_matters"]
+
+
+def test_local_registry_exposes_city_light_probe_only_defaults():
+    source = get_local_source_registry_entry("city_light_outages_home")
+
+    assert source is not None
+    assert source["verification_status"] == "source_health_probe_only"
+    assert source["expected_access_kind"] == "public outage page and map web app"
+    assert "machine-readable endpoint remains unverified" in source["why_it_matters"]
+
+
 def test_local_registry_defaults_keep_user_overrides(tmp_path):
     config = load_config(
         _write_config(

@@ -176,19 +176,29 @@ live network.
 
 ### Homepage Extractor Later And Disabled
 
-Status: not implemented.
+Status: partially implemented.
 
 Add homepage headline extraction only after API/RSS support is stable. Keep it disabled unless
 `allow_homepage_extractors` is true. Require per-source selectors, no recursive crawling, bounded
 payloads, robots/policy evidence, and no article body archive.
 
+Current state: fixture parsing for `homepage_selectors` already exists, and
+`news.fetch_policy.allow_homepage_extractors` blocks live homepage sources by default. The remaining
+work is the live crawler/fetch path, robots checks for configured homepages, and the per-source
+selector inventory for real production domains.
+
 ### Social Adapters Later And Terms-Sensitive
 
-Status: not implemented.
+Status: partially implemented.
 
 Treat social sources as terms-sensitive. Bluesky/AT Protocol is the preferred first candidate if
 social signals are needed. Reddit and X require explicit compliant access methods. Do not scrape HTML
 to bypass platform APIs, auth, paywalls, rate limits, or bot controls. Keep retention short.
+
+Current state: local config already requires `allow_social_sources` before social candidates can be
+enabled, the built-in registry keeps social entries disabled by default, and `manual_review_only`
+paths exist for policy-sensitive candidates. The remaining work is a compliant live social adapter
+and retention policy for any future enabled social source.
 
 ### Documentation Update
 
@@ -202,8 +212,10 @@ Current state: README and CLI surfaces now mention `news-scan`, `news-sources`, 
 reads, and current fixture-only behavior. Config-specific walkthroughs, retention auditing details,
 and future live-ingest operational notes are still pending. README and CLI help now also describe the
 source-audit workflow with family/class/verification/access metadata, and the website audit drawers
-surface the same registry fields alongside policy and health. The remaining config walkthrough and
-retention-audit guidance still need a dedicated pass.
+surface the same registry fields alongside policy and health. `docs/project/NEWS_OPERATIONAL_GUIDE.md`
+now captures the disabled-by-default operating notes, explicit ingest boundary, retention and purge
+evidence, and the SQLite-only page-load rule. The remaining live-ingest operational notes still need
+a dedicated pass.
 
 ### Separate Disabled Systemd News Timer
 
@@ -332,11 +344,16 @@ service area, advisory title, published time, source URL, and transit-impact ran
 
 ### FAA/SEA Airport Status Research
 
-Status: not implemented.
+Status: partially implemented.
 
 Verify which FAA, NAS Status, Port of Seattle, or SEA Airport endpoints provide lawful,
 machine-readable operational metadata for SEA ground stops, delays, closures, checkpoint impacts, or
 traveler advisories. Do not implement live fetch until endpoint and policy review are complete.
+
+Current state: the FAA airport-status page and the NAS Status XML page are verified official
+sources, and the LOCAL registry now marks `faa_airport_status_sea` as
+`source_health_probe_only` with a machine-readable access note. A live parser/fetch path and policy
+review for any production ingest remain pending.
 
 ### City Light Outage Endpoint Research
 
@@ -346,6 +363,11 @@ Identify whether Seattle City Light outage data has a stable official endpoint b
 outage pages or maps. Prefer official APIs or feature services. Do not scrape ArcGIS/Experience map
 HTML. If no suitable endpoint exists, keep the source `manual_review_only` or
 `source_health_probe_only`.
+
+Current state: the public outage page and map web app are the verified public surface, and the LOCAL
+registry now points `city_light_outages_home` at that surface with `source_health_probe_only`.
+Seattle City Light still needs a verified machine-readable endpoint before any live ingest can be
+enabled.
 
 ### SPD Call Data Privacy Review
 

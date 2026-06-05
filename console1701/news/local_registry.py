@@ -222,9 +222,10 @@ LOCAL_SOURCE_REGISTRY: tuple[LocalSourceRegistryEntry, ...] = (
         retention_sensitivity="medium",
         verification_status="source_health_probe_only",
         future_phase="L7",
-        expected_access_kind="public official webpage",
+        expected_access_kind="public outage page and map web app",
         why_it_matters=(
-            "Power outage context matters locally, but endpoint verification is pending."
+            "Power outage context matters locally, the public outage page is verified, and a "
+            "stable machine-readable endpoint remains unverified."
         ),
     ),
     LocalSourceRegistryEntry(
@@ -242,10 +243,13 @@ LOCAL_SOURCE_REGISTRY: tuple[LocalSourceRegistryEntry, ...] = (
         policy_risk="low",
         parser_risk="medium",
         retention_sensitivity="medium",
-        verification_status="candidate_needs_verification",
+        verification_status="source_health_probe_only",
         future_phase="L6",
-        expected_access_kind="public official webpage",
-        why_it_matters="SEA operational disruptions have local travel impact.",
+        expected_access_kind="public airport-status page and NAS Status XML",
+        why_it_matters=(
+            "SEA operational disruptions have local travel impact, and the FAA NAS Status XML page "
+            "provides a machine-readable path for verified status research."
+        ),
     ),
     LocalSourceRegistryEntry(
         source_key="west_seattle_blog_feed",
