@@ -1739,13 +1739,18 @@ to bypass platform restrictions, and never treat social as primary evidence.
 
 ### Documentation For ORBITAL Source Verification
 
-Status: not implemented.
+Status: partially implemented.
 
 Document the later ORBITAL source verification workflow: confirm endpoint ownership, access method,
 source terms, robots/policy notes, parser shape, auth/key requirements, rate limits, retention
 sensitivity, privacy risk, verification status, source family, source class, orbital domain
 filters, source-health behavior, tactical/sensitivity review, and whether the source is official,
 provider, media, nonprofit, platform, restricted, open-data, or manual review only.
+
+Current state: `docs/project/ORBITAL_SOURCE_VERIFICATION_WORKFLOW.md` now captures the shared
+verification checklist, required registry fields, and scope-specific orbital-domain and source-type
+filters. Per-source signoff templates and endpoint-specific walkthroughs still need a dedicated
+follow-up.
 
 ### Tests For No Page-Load External Fetches
 
