@@ -36,7 +36,10 @@ ensure_venv_python() {
   fi
 
   printf 'Creating virtualenv: %s\n' "$VENV_DIR" >&2
-  "$PYTHON_BIN" -m venv "$VENV_DIR"
+  if ! "$PYTHON_BIN" -m venv "$VENV_DIR"; then
+    printf 'error: virtualenv creation failed with %s; install python3-venv.\n' "$PYTHON_BIN" >&2
+    exit 1
+  fi
   if [[ ! -x "$VENV_PYTHON" ]]; then
     printf 'error: virtualenv Python missing after creation: %s\n' "$VENV_PYTHON" >&2
     exit 1

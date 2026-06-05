@@ -1,5 +1,14 @@
 # Caretaking Log
 
+## 2026-06-05 15:41 PDT - dev_server python-venv failure follow-up
+
+- Wrapped the dev-server virtualenv creation step so it now reports a clear
+  `python3-venv`-style failure message instead of surfacing only the raw subprocess failure.
+- Added a temp-tree regression that simulates a broken `PYTHON_BIN` venv creation path and asserts
+  the helper exits with the new explicit error.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
 ## 2026-06-05 15:40 PDT - install_user_service python preflight follow-up
 
 - Added a `PYTHON_BIN` override and explicit preflight to `scripts/install_user_service.sh` so the
