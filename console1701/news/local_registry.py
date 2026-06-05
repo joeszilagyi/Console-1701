@@ -222,9 +222,10 @@ LOCAL_SOURCE_REGISTRY: tuple[LocalSourceRegistryEntry, ...] = (
         retention_sensitivity="medium",
         verification_status="source_health_probe_only",
         future_phase="L7",
-        expected_access_kind="public official webpage",
+        expected_access_kind="public outage page and map web app",
         why_it_matters=(
-            "Power outage context matters locally, but endpoint verification is pending."
+            "Power outage context matters locally, the public outage page is verified, and a "
+            "stable machine-readable endpoint remains unverified."
         ),
     ),
     LocalSourceRegistryEntry(

@@ -364,6 +364,11 @@ outage pages or maps. Prefer official APIs or feature services. Do not scrape Ar
 HTML. If no suitable endpoint exists, keep the source `manual_review_only` or
 `source_health_probe_only`.
 
+Current state: the public outage page and map web app are the verified public surface, and the LOCAL
+registry now points `city_light_outages_home` at that surface with `source_health_probe_only`.
+Seattle City Light still needs a verified machine-readable endpoint before any live ingest can be
+enabled.
+
 ### SPD Call Data Privacy Review
 
 Status: implemented.
