@@ -6,13 +6,19 @@ PROJECT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
 VENV_DIR="$PROJECT_DIR/.venv"
 VENV_PYTHON="$VENV_DIR/bin/python"
 CONSOLE_CLI="$VENV_DIR/bin/console-1701"
+PYTHON_BIN="${PYTHON_BIN:-python3}"
 SERVICE_DIR="$HOME/.config/systemd/user"
 CONFIG_PATH="$HOME/.config/console-1701/config.yml"
 STATE_DIR="$HOME/.local/state/console-1701"
 
 cd "$PROJECT_DIR"
 
-python3 -m venv "$VENV_DIR"
+if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
+  printf 'error: %s not found; install Python 3 or set PYTHON_BIN.\n' "$PYTHON_BIN" >&2
+  exit 127
+fi
+
+"$PYTHON_BIN" -m venv "$VENV_DIR"
 if [[ ! -x "$VENV_PYTHON" ]]; then
   printf 'error: virtualenv Python missing after creation: %s\n' "$VENV_PYTHON" >&2
   exit 1

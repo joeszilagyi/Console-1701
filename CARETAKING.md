@@ -1,5 +1,15 @@
 # Caretaking Log
 
+## 2026-06-05 15:40 PDT - install_user_service python preflight follow-up
+
+- Added a `PYTHON_BIN` override and explicit preflight to `scripts/install_user_service.sh` so the
+  installer fails fast with a clear message if Python 3 is missing.
+- Kept the explicit repo-local venv binary workflow from the previous pass and extended the
+  regression test to lock in the `PYTHON_BIN` contract alongside the existing service-install
+  behavior.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
 ## 2026-06-05 15:39 PDT - disabled news-scan retention follow-up
 
 - Changed `run_news_scan` so a disabled recent-signal config still runs retention purge and records
