@@ -13,7 +13,8 @@ from console1701.news.local_registry import (
     local_registry_config_defaults,
     local_source_registry_summary,
 )
-from console1701.news.storage import get_news_storage_summary
+from console1701.news.scanner import run_news_scan
+from console1701.news.storage import get_local_registry_state, get_news_storage_summary
 
 
 def _write_config(path: Path, text: str) -> Path:
@@ -68,6 +69,9 @@ def test_local_registry_defaults_can_seed_minimal_config(tmp_path):
     assert source["source_class"] == "official_weather_hazard"
     assert source["adapter"] == "official_api_json"
     assert source["verification_status"] == "candidate_needs_verification"
+    assert source["official_status"] == "official"
+    assert source["future_phase"] == "L6"
+    assert source["expected_access_kind"] == "documented official JSON API"
     assert "Official active hazard alerts" in source["evidence_notes"][1]
 
 
@@ -144,3 +148,30 @@ def test_news_summary_exposes_local_registry_counts(tmp_path):
     assert summary["local_registry"]["scope"] == "LOCAL"
     assert summary["local_registry"]["enabled_by_default"] is False
     assert summary["local_registry"]["source_count"] >= 10
+
+
+def test_local_registry_is_persisted_in_sqlite_news_scan(tmp_path):
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        "paths: {repo_roots: [], explicit_repos: []}",
+    )
+    result = run_news_scan(config_path)
+    config = load_config(config_path)
+
+    with connect_db(config["_db_path"]) as conn:
+        init_db(conn)
+        registry_rows = conn.execute(
+            "SELECT source_key, enabled_by_default, source_family FROM news_source_registry"
+        ).fetchall()
+        registry_state = get_local_registry_state(conn)
+
+    assert result["status"] == "disabled"
+    assert len(registry_rows) >= len(list_local_source_registry())
+    by_key = {str(row["source_key"]): row for row in registry_rows}
+    nws_row = by_key.get("nws_active_alerts_api")
+
+    assert nws_row is not None
+    assert int(nws_row["enabled_by_default"]) == 0
+    assert str(nws_row["source_family"]) == "nws"
+    assert registry_state["enabled_by_default"] is False
+    assert registry_state["source_count"] >= len(list_local_source_registry())

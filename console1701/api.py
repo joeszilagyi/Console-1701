@@ -29,6 +29,7 @@ from console1701.live_probe import read_live_snapshot
 from console1701.news.scanner import run_news_scan
 from console1701.news.storage import (
     get_news_item_detail,
+    get_news_local_event_detail,
     get_news_overview,
     get_news_scope_view,
     get_news_sources_status,
@@ -200,6 +201,14 @@ def build_router(config_path: str | None = None) -> APIRouter:
         if not item:
             raise HTTPException(status_code=404, detail="News item not found")
         return item
+
+    @router.get("/api/news/local-events/{event_id}")
+    def news_local_event(event_id: int):
+        with _conn(config_path) as conn:
+            event = get_news_local_event_detail(conn, event_id)
+        if not event:
+            raise HTTPException(status_code=404, detail="News local event not found")
+        return event
 
     @router.get("/api/repos")
     def repos():

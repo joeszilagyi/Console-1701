@@ -46,6 +46,7 @@ class LocalSourceRegistryEntry:
             "kind": self.kind,
             "enabled": False,
             "url": self.raw_url,
+            "official_status": self.official_status,
             "priority": self.priority,
             "interval_minutes": self.interval_minutes,
             "source_family": self.source_family,
@@ -56,6 +57,8 @@ class LocalSourceRegistryEntry:
             "parser_risk": self.parser_risk,
             "retention_sensitivity": self.retention_sensitivity,
             "verification_status": self.verification_status,
+            "future_phase": self.future_phase,
+            "expected_access_kind": self.expected_access_kind,
             "evidence_notes": [
                 f"Registry seed only; future_phase={self.future_phase}.",
                 self.why_it_matters,
@@ -312,10 +315,14 @@ def local_registry_config_defaults(source_key: str) -> dict[str, Any] | None:
 def local_source_registry_summary() -> dict[str, Any]:
     classes: dict[str, int] = {}
     phases: dict[str, int] = {}
+    official_status_counts: dict[str, int] = {}
     verification: dict[str, int] = {}
     for entry in LOCAL_SOURCE_REGISTRY:
         classes[entry.source_class] = classes.get(entry.source_class, 0) + 1
         phases[entry.future_phase] = phases.get(entry.future_phase, 0) + 1
+        official_status_counts[entry.official_status] = (
+            official_status_counts.get(entry.official_status, 0) + 1
+        )
         verification[entry.verification_status] = verification.get(entry.verification_status, 0) + 1
     return {
         "scope": "LOCAL",
@@ -323,6 +330,7 @@ def local_source_registry_summary() -> dict[str, Any]:
         "source_count": len(LOCAL_SOURCE_REGISTRY),
         "source_class_counts": classes,
         "future_phase_counts": phases,
+        "official_status_counts": official_status_counts,
         "verification_status_counts": verification,
     }
 

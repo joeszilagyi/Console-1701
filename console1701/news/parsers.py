@@ -51,6 +51,23 @@ _SFD_PUBLIC_IMPACT_RE = re.compile(
     re.IGNORECASE,
 )
 _WSDOT_ROUTE_RE = re.compile(r"\b(?:I-\d+|US\s?\d+|SR\s?\d+|WA\s?\d+)\b", re.IGNORECASE)
+_SPD_IMPACT_RE = re.compile(
+    r"\b(incident|shooting|fatal|homicide|explosion|fire|crash|collision|arrest|evacuation|missing|"
+    r"robbery|assault|significant)\b",
+    re.IGNORECASE,
+)
+_SPD_MAJOR_IMPACT_RE = re.compile(r"\b(critical|major|severe|fatal|homicide|shooting|explosion)\b")
+_SPD_PRELIMINARY_RE = re.compile(r"\b(preliminary|prelim|investigating|update)\b", re.IGNORECASE)
+_SPD_LOW_ACUITY_RE = re.compile(
+    r"\b(aid|assistance|medical|medic|overdose|psychiatric|sick|suicide|domestic|mental|welfare)\b",
+    re.IGNORECASE,
+)
+_SPD_OVERDOSE_RE = re.compile(r"\boverdose\b", re.IGNORECASE)
+_SDOT_BLOG_IMPACT_RE = re.compile(
+    r"\b(bridge|highway|freeway|transit|bus|light rail|road|street|"
+    r"flood|storm|closure|delay|accident)\b",
+    re.IGNORECASE,
+)
 
 
 def resolve_file_url(url: str, *, config_dir: Path) -> Path:
@@ -96,10 +113,20 @@ def parse_fixture_items(
         return _parse_metro_rss_feed(source, payload_text)
     if parser_name == "local_blog_rss":
         return _parse_local_blog_rss_feed(source, payload_text)
+    if parser_name in {"spd_blotter_rss", "spd_blotter_feed"}:
+        return _parse_spd_blotter_rss_feed(source, payload_text)
+    if parser_name in {"sdot_blog_rss", "sdot_blog_feed"}:
+        return _parse_sdot_blog_rss_feed(source, payload_text)
+    if parser_name == "local_news_rss":
+        return _parse_local_news_rss_feed(source, payload_text)
     if parser_name == "sfd_fire_911_socrata":
         return _parse_sfd_fire_911_socrata(source, payload_text)
     if parser_name == "wsdot_travel_alerts_json":
         return _parse_wsdot_travel_alerts_json(source, payload_text)
+    if parser_name == "city_light_outages_json":
+        return _parse_city_light_outages_json(source, payload_text)
+    if parser_name == "faa_airport_status_json":
+        return _parse_faa_airport_status_json(source, payload_text)
     if parser_name == "generic_json_items" or kind in {
         "local_file_json",
         "api_json",
@@ -290,6 +317,8 @@ def _normalize_sfd_fire_911_row(
         "display_location": display_location,
         "raw_address_stored": False,
         "low_acuity_private": privacy["low_acuity_private"],
+        "overdose_related": privacy["overdose_related"],
+        "privacy_category": privacy["privacy_category"],
     }
     return item
 
@@ -313,7 +342,10 @@ def _int_value(value: Any) -> int | None:
 
 def _sfd_source_url(source: dict[str, Any], row_key: str) -> str:
     explicit = str(source.get("homepage_url") or source.get("url") or "").strip()
-    base_url = explicit or "https://data.seattle.gov/Public-Safety/Seattle-Real-Time-Fire-911-Calls/kzjm-xkqj"
+    base_url = (
+        explicit
+        or "https://data.seattle.gov/Public-Safety/Seattle-Real-Time-Fire-911-Calls/kzjm-xkqj"
+    )
     separator = "&" if "?" in base_url else "?"
     return normalize_url(f"{base_url}{separator}row_id={quote(str(row_key))}")
 
@@ -351,6 +383,7 @@ def _sfd_privacy_decision(
 ) -> dict[str, Any]:
     low_acuity = bool(_SFD_LOW_ACUITY_RE.search(incident_type))
     public_impact = _sfd_public_impact(incident_type=incident_type, unit_count=unit_count)
+    overdose_related = bool(_SPD_OVERDOSE_RE.search(incident_type))
     suppress_exact = low_acuity and not public_impact["elevated"]
     street_only = _street_only(address)
     if suppress_exact:
@@ -367,6 +400,10 @@ def _sfd_privacy_decision(
         "display_location": display_location,
         "location_basis": basis,
         "low_acuity_private": low_acuity,
+        "overdose_related": overdose_related,
+        "privacy_category": (
+            "overdose" if overdose_related else "low_acuity" if low_acuity else "none"
+        ),
     }
 
 
@@ -386,7 +423,9 @@ def _sfd_public_impact(*, incident_type: str, unit_count: int | None) -> dict[st
         "unit_threshold": 5,
         "type_signal": type_signal,
         "reason": reason,
-        "public_impact_score": (20 if type_signal else 0) + (min(unit_count or 0, 10) * 2),
+        "public_impact_score": (
+            (20 if type_signal else 0) + (min(unit_count or 0, 10) * 2) if elevated else 0
+        ),
     }
 
 
@@ -633,6 +672,535 @@ def _wsdot_row_text(row: dict[str, Any]) -> str:
     return " ".join(str(value) for value in values if value)
 
 
+def _parse_city_light_outages_json(
+    source: dict[str, Any],
+    payload_text: str,
+) -> list[dict[str, Any]]:
+    try:
+        payload = json.loads(payload_text)
+    except json.JSONDecodeError as exc:
+        raise NewsParserError(f"Malformed City Light outage JSON fixture: {exc}") from exc
+    if isinstance(payload, dict):
+        rows = payload.get("outages") or payload.get("items") or payload.get("data")
+    else:
+        rows = payload
+    if not isinstance(rows, list):
+        raise NewsParserError("City Light outage fixture must be a list or object with outages.")
+
+    normalized: list[dict[str, Any]] = []
+    for index, row in enumerate(rows):
+        if not isinstance(row, dict):
+            raise NewsParserError(f"City Light outage row {index} must be an object.")
+        if not _city_light_outage_matches_scope(source, row):
+            continue
+        normalized.append(_normalize_city_light_outage(source, row, index=index))
+    return normalized
+
+
+def _normalize_city_light_outage(
+    source: dict[str, Any],
+    row: dict[str, Any],
+    *,
+    index: int,
+) -> dict[str, Any]:
+    outage_id = bounded_text(
+        _first_value(row, "outage_id", "outageId", "id", "event_id", "eventId"),
+        max_chars=120,
+    )
+    area = bounded_text(
+        _first_value(row, "area", "neighborhood", "location", "impacted_area", "city"),
+        max_chars=160,
+    )
+    status = (
+        bounded_text(
+            _first_value(row, "status", "outage_status", "state"),
+            max_chars=80,
+        )
+        or "reported"
+    )
+    customers_affected = _int_value(
+        _first_value(
+            row,
+            "customers_affected",
+            "customersAffected",
+            "customer_count",
+            "affected_customers",
+        )
+    )
+    started_at = normalize_timestamp(
+        _first_value(row, "started_at", "start_time", "reported_at", "outage_start")
+    )
+    updated_at = normalize_timestamp(
+        _first_value(row, "updated_at", "last_updated", "lastUpdated", "observed_at")
+    )
+    observed_at = started_at or updated_at
+    if not area or not observed_at:
+        raise NewsParserError(
+            f"City Light outage row {index} is missing area or observed timestamp."
+        )
+
+    cause = bounded_text(_first_value(row, "cause", "estimated_cause"), max_chars=160)
+    crew_status = bounded_text(
+        _first_value(row, "crew_status", "crewStatus", "crew"),
+        max_chars=160,
+    )
+    estimated_restoration_at = normalize_timestamp(
+        _first_value(
+            row,
+            "estimated_restoration_at",
+            "estimatedRestorationAt",
+            "estimated_restore_time",
+            "etor",
+        )
+    )
+    source_url = _city_light_source_url(source, outage_id or str(index), row)
+    filter_evidence = _city_light_filter_evidence(source, row)
+    impact = _city_light_impact(
+        status=status,
+        customers_affected=customers_affected,
+        row=row,
+        matched_area_count=len(filter_evidence["matched_area_keywords"]),
+    )
+    customer_text = (
+        f" affecting {customers_affected} customer(s)" if customers_affected is not None else ""
+    )
+    description_parts = [
+        f"Seattle City Light reports a {status.lower()} outage{customer_text} in {area}.",
+    ]
+    if estimated_restoration_at:
+        description_parts.append(f"Estimated restoration: {estimated_restoration_at}.")
+    if cause:
+        description_parts.append(f"Cause: {cause}.")
+    tags = _unique_texts(
+        [
+            "official",
+            "utility",
+            "city-light",
+            "power-outage",
+            impact["label"],
+            area.lower().replace(" ", "-"),
+        ],
+        max_chars=64,
+    )
+    item = _normalize_item(
+        source,
+        {
+            "title": f"City Light outage affecting {area}",
+            "url": source_url,
+            "canonical_url": source_url,
+            "description": " ".join(description_parts),
+            "published_at": observed_at,
+            "tags": tags,
+        },
+        index=index,
+    )
+    item["evidence"]["city_light_outage"] = {
+        "outage_id": outage_id,
+        "area": area,
+        "status": status,
+        "customers_affected": customers_affected,
+        "started_at": started_at,
+        "updated_at": updated_at,
+        "estimated_restoration_at": estimated_restoration_at,
+        "cause": cause,
+        "crew_status": crew_status,
+        "source_url": source_url,
+        "filter": filter_evidence,
+        "ranking": {
+            "impact_label": impact["label"],
+            "customer_impact_weight": impact["customer_weight"],
+            "status_weight": impact["status_weight"],
+            "area_match_weight": impact["area_match_weight"],
+            "utility_impact_score": impact["utility_impact_score"],
+        },
+    }
+    return item
+
+
+def _city_light_outage_matches_scope(source: dict[str, Any], row: dict[str, Any]) -> bool:
+    if str(source.get("scope") or "").upper() != "LOCAL":
+        return True
+    evidence = _city_light_filter_evidence(source, row)
+    return bool(evidence["matched_area_keywords"])
+
+
+def _city_light_filter_evidence(source: dict[str, Any], row: dict[str, Any]) -> dict[str, Any]:
+    area_keywords = _configured_texts(
+        source.get("area_keywords"),
+        default=[
+            "Seattle",
+            "Capitol Hill",
+            "Downtown",
+            "First Hill",
+            "University District",
+            "Ballard",
+            "West Seattle",
+            "Rainier Valley",
+            "Beacon Hill",
+            "Queen Anne",
+        ],
+    )
+    values = [
+        _first_value(row, "area", "neighborhood", "location", "impacted_area", "city"),
+        _first_value(row, "description", "summary", "cause"),
+    ]
+    text = " ".join(str(value) for value in values if value)
+    return {
+        "area_keywords": area_keywords,
+        "matched_area_keywords": _matched_keywords(text, area_keywords),
+    }
+
+
+def _city_light_impact(
+    *,
+    status: str,
+    customers_affected: int | None,
+    row: dict[str, Any],
+    matched_area_count: int,
+) -> dict[str, Any]:
+    text = " ".join(
+        str(value)
+        for value in (
+            status,
+            _first_value(row, "description", "summary", "cause", "crew_status", "crewStatus"),
+        )
+        if value
+    ).lower()
+    if customers_affected is None:
+        customer_weight = 0
+    elif customers_affected >= 10000:
+        customer_weight = 40
+    elif customers_affected >= 5000:
+        customer_weight = 32
+    elif customers_affected >= 1000:
+        customer_weight = 24
+    elif customers_affected >= 100:
+        customer_weight = 12
+    elif customers_affected > 0:
+        customer_weight = 6
+    else:
+        customer_weight = 0
+
+    if any(word in text for word in ("downed", "wire", "emergency")):
+        status_weight = 20
+    elif any(word in text for word in ("investigating", "repair", "dispatched", "active")):
+        status_weight = 12
+    elif any(word in text for word in ("planned", "scheduled")):
+        status_weight = 4
+    elif any(word in text for word in ("restored", "resolved")):
+        status_weight = -8
+    else:
+        status_weight = 6
+
+    area_match_weight = min(9, matched_area_count * 3)
+    score = max(0, min(55, customer_weight + status_weight + area_match_weight))
+    if customers_affected is not None and customers_affected >= 1000:
+        label = "major_outage"
+    elif score > 0:
+        label = "active_outage"
+    else:
+        label = "outage_status"
+    return {
+        "label": label,
+        "customer_weight": customer_weight,
+        "status_weight": status_weight,
+        "area_match_weight": area_match_weight,
+        "utility_impact_score": score,
+    }
+
+
+def _city_light_source_url(source: dict[str, Any], row_key: str, row: dict[str, Any]) -> str:
+    explicit = _first_value(row, "url", "source_url", "link")
+    if explicit:
+        return normalize_url(explicit)
+    base_url = str(source.get("homepage_url") or source.get("url") or "").strip()
+    if not base_url or base_url.startswith("file://"):
+        base_url = "https://www.seattle.gov/city-light/outages"
+    separator = "&" if "?" in base_url else "?"
+    return normalize_url(f"{base_url}{separator}outage_id={quote(str(row_key))}")
+
+
+def _parse_faa_airport_status_json(
+    source: dict[str, Any],
+    payload_text: str,
+) -> list[dict[str, Any]]:
+    try:
+        payload = json.loads(payload_text)
+    except json.JSONDecodeError as exc:
+        raise NewsParserError(f"Malformed FAA airport status JSON fixture: {exc}") from exc
+    rows = _faa_airport_rows(payload)
+    if rows is None:
+        raise NewsParserError(
+            "FAA airport status fixture must be an object or list of airport rows."
+        )
+
+    normalized: list[dict[str, Any]] = []
+    for index, row in enumerate(rows):
+        if not isinstance(row, dict):
+            raise NewsParserError(f"FAA airport status row {index} must be an object.")
+        if not _faa_airport_matches_scope(source, row):
+            continue
+        normalized.append(_normalize_faa_airport_status(source, row, index=index))
+    return normalized
+
+
+def _faa_airport_rows(payload: Any) -> list[dict[str, Any]] | None:
+    if isinstance(payload, list):
+        return payload
+    if not isinstance(payload, dict):
+        return None
+    for key in ("airports", "airport_statuses", "items", "data"):
+        rows = payload.get(key)
+        if isinstance(rows, list):
+            return rows
+    events = payload.get("events")
+    if isinstance(events, list):
+        airport = payload.get("airport") if isinstance(payload.get("airport"), dict) else {}
+        return [{**airport, **event} for event in events if isinstance(event, dict)]
+    return [payload]
+
+
+def _normalize_faa_airport_status(
+    source: dict[str, Any],
+    row: dict[str, Any],
+    *,
+    index: int,
+) -> dict[str, Any]:
+    airport_code = _faa_airport_code(row)
+    airport_name = bounded_text(
+        _first_value(row, "airport_name", "airportName", "name"),
+        max_chars=160,
+    )
+    location = bounded_text(_first_value(row, "location", "city", "city_state"), max_chars=160)
+    status = (
+        bounded_text(
+            _first_value(row, "status", "delay_type", "delayType", "event_type", "type"),
+            max_chars=120,
+        )
+        or "On Time"
+    )
+    observed_at = normalize_timestamp(
+        _first_value(
+            row,
+            "updated_at",
+            "updateTimeUtc",
+            "observed_at",
+            "published_at",
+            "start_time",
+            "startTime",
+        )
+    )
+    if not airport_code or not observed_at:
+        raise NewsParserError(
+            f"FAA airport status row {index} is missing airport code or timestamp."
+        )
+    reason = bounded_text(_first_value(row, "reason", "description", "summary"), max_chars=240)
+    average_delay = bounded_text(
+        _first_value(row, "average_delay", "averageDelay", "avg_delay", "avgDelay"),
+        max_chars=120,
+    )
+    max_delay = bounded_text(
+        _first_value(row, "max_delay", "maxDelay"),
+        max_chars=120,
+    )
+    start_time = normalize_timestamp(_first_value(row, "start_time", "startTime"))
+    end_time = normalize_timestamp(_first_value(row, "end_time", "endTime", "closureReopen"))
+    impact = _faa_airport_impact(
+        status=status,
+        reason=reason,
+        delay_minutes=_faa_delay_minutes(row, average_delay=average_delay, max_delay=max_delay),
+    )
+    source_url = _faa_airport_source_url(source, airport_code, row)
+    description_parts = [f"FAA reports {airport_code} airport status as {status}."]
+    if average_delay:
+        description_parts.append(f"Average delay: {average_delay}.")
+    if max_delay:
+        description_parts.append(f"Maximum delay: {max_delay}.")
+    if reason:
+        description_parts.append(f"Reason: {reason}.")
+    tags = _unique_texts(
+        [
+            "official",
+            "airport",
+            "faa",
+            airport_code.lower(),
+            impact["label"],
+        ],
+        max_chars=64,
+    )
+    item = _normalize_item(
+        source,
+        {
+            "title": f"FAA {airport_code} airport status: {status}",
+            "url": source_url,
+            "canonical_url": source_url,
+            "description": " ".join(description_parts),
+            "published_at": observed_at,
+            "tags": tags,
+        },
+        index=index,
+    )
+    item["evidence"]["faa_airport_status"] = {
+        "airport_code": airport_code,
+        "airport_name": airport_name,
+        "location": location,
+        "status": status,
+        "reason": reason,
+        "average_delay": average_delay,
+        "max_delay": max_delay,
+        "start_time": start_time,
+        "end_time": end_time,
+        "observed_at": observed_at,
+        "source_url": source_url,
+        "weather": {
+            "conditions": bounded_text(
+                _first_value(row, "weather", "weather_conditions", "conditions"),
+                max_chars=120,
+            ),
+            "temperature": bounded_text(
+                _first_value(row, "temperature", "temperature_f", "temperatureF"),
+                max_chars=80,
+            ),
+            "wind": bounded_text(_first_value(row, "wind", "wind_speed"), max_chars=120),
+        },
+        "ranking": {
+            "impact_label": impact["label"],
+            "event_weight": impact["event_weight"],
+            "delay_minutes": impact["delay_minutes"],
+            "delay_weight": impact["delay_weight"],
+            "airport_impact_score": impact["airport_impact_score"],
+        },
+        "filter": _faa_airport_filter_evidence(source, row),
+    }
+    return item
+
+
+def _faa_airport_matches_scope(source: dict[str, Any], row: dict[str, Any]) -> bool:
+    if str(source.get("scope") or "").upper() != "LOCAL":
+        return True
+    evidence = _faa_airport_filter_evidence(source, row)
+    return bool(evidence["matched_airport_codes"])
+
+
+def _faa_airport_filter_evidence(source: dict[str, Any], row: dict[str, Any]) -> dict[str, Any]:
+    airport_codes = [
+        _normalize_airport_code(value)
+        for value in _configured_texts(source.get("airport_codes"), default=["SEA"])
+    ]
+    airport_codes = [value for value in airport_codes if value]
+    row_code = _faa_airport_code(row)
+    return {
+        "airport_codes": airport_codes,
+        "matched_airport_codes": [
+            airport_code for airport_code in airport_codes if row_code and airport_code == row_code
+        ],
+    }
+
+
+def _faa_airport_code(row: dict[str, Any]) -> str | None:
+    airport = row.get("airport")
+    value = None
+    if isinstance(airport, dict):
+        value = _first_value(airport, "code", "iata", "faa", "airport_code", "airportCode")
+    if value is None:
+        value = _first_value(row, "airport_code", "airportCode", "code", "iata", "faa")
+    return _normalize_airport_code(value)
+
+
+def _normalize_airport_code(value: Any) -> str | None:
+    text = bounded_text(value, max_chars=8)
+    if not text:
+        return None
+    code = text.upper().strip()
+    if len(code) == 4 and code.startswith("K"):
+        code = code[1:]
+    return code
+
+
+def _faa_airport_impact(
+    *,
+    status: str,
+    reason: str | None,
+    delay_minutes: int,
+) -> dict[str, Any]:
+    text = f"{status} {reason or ''}".lower()
+    if "closure" in text or "closed" in text:
+        label = "airport_closure"
+        event_weight = 45
+    elif "ground stop" in text:
+        label = "ground_stop"
+        event_weight = 40
+    elif "ground delay" in text:
+        label = "ground_delay"
+        event_weight = 34
+    elif "arrival delay" in text or "departure delay" in text:
+        label = "airport_delay"
+        event_weight = 24
+    elif "delay" in text:
+        label = "airport_delay"
+        event_weight = 18
+    elif "on time" in text or "no delay" in text or "no delays" in text:
+        label = "on_time"
+        event_weight = 0
+    else:
+        label = "airport_status"
+        event_weight = 8
+    delay_weight = min(12, max(0, delay_minutes // 5))
+    return {
+        "label": label,
+        "event_weight": event_weight,
+        "delay_minutes": delay_minutes,
+        "delay_weight": delay_weight,
+        "airport_impact_score": min(55, event_weight + delay_weight),
+    }
+
+
+def _faa_delay_minutes(
+    row: dict[str, Any],
+    *,
+    average_delay: str | None,
+    max_delay: str | None,
+) -> int:
+    explicit = _int_value(
+        _first_value(row, "delay_minutes", "delayMinutes", "average_delay_minutes")
+    )
+    if explicit is not None:
+        return explicit
+    for text in (average_delay, max_delay):
+        parsed = _duration_minutes(text)
+        if parsed is not None:
+            return parsed
+    return 0
+
+
+def _duration_minutes(value: Any) -> int | None:
+    if value in (None, ""):
+        return None
+    text = str(value).lower()
+    hours = 0
+    minutes = 0
+    hour_match = re.search(r"(\d+)\s*(?:hour|hr)", text)
+    minute_match = re.search(r"(\d+)\s*(?:minute|min)", text)
+    if hour_match:
+        hours = int(hour_match.group(1))
+    if minute_match:
+        minutes = int(minute_match.group(1))
+    if hours or minutes:
+        return hours * 60 + minutes
+    first_number = re.search(r"\d+", text)
+    return int(first_number.group(0)) if first_number else None
+
+
+def _faa_airport_source_url(source: dict[str, Any], airport_code: str, row: dict[str, Any]) -> str:
+    explicit = _first_value(row, "url", "source_url", "sourceUrl", "link")
+    if explicit:
+        return normalize_url(explicit)
+    base_url = str(source.get("homepage_url") or source.get("url") or "").strip()
+    if not base_url or base_url.startswith("file://"):
+        base_url = f"https://www.faa.gov/airport-status/{airport_code}"
+    return normalize_url(base_url)
+
+
 def _parse_nws_alerts_json(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:
     try:
         payload = json.loads(payload_text)
@@ -669,10 +1237,7 @@ def _normalize_nws_alert(
     headline = bounded_text(properties.get("headline"), max_chars=MAX_TITLE_LENGTH)
     title = headline or (f"{event} for {area_desc}" if area_desc else event)
     url = (
-        properties.get("@id")
-        or properties.get("uri")
-        or properties.get("id")
-        or feature.get("id")
+        properties.get("@id") or properties.get("uri") or properties.get("id") or feature.get("id")
     )
     if not url:
         raise NewsParserError(f"NWS alert feature {index} is missing an alert URL.")
@@ -683,9 +1248,7 @@ def _normalize_nws_alert(
         max_chars=MAX_DESCRIPTION_LENGTH,
     )
     published_at = normalize_timestamp(
-        properties.get("effective")
-        or properties.get("sent")
-        or properties.get("onset")
+        properties.get("effective") or properties.get("sent") or properties.get("onset")
     )
     severity = bounded_text(properties.get("severity"), max_chars=64)
     urgency = bounded_text(properties.get("urgency"), max_chars=64)
@@ -767,11 +1330,7 @@ def _nws_filter_evidence(source: dict[str, Any], properties: dict[str, Any]) -> 
     area_desc = str(properties.get("areaDesc") or "")
     affected_zones = _string_list(properties.get("affectedZones"), max_chars=240)
     area_lower = area_desc.lower()
-    matched_keywords = [
-        keyword
-        for keyword in area_keywords
-        if keyword.lower() in area_lower
-    ]
+    matched_keywords = [keyword for keyword in area_keywords if keyword.lower() in area_lower]
     matched_zone_ids = [
         zone_id
         for zone_id in zone_ids
@@ -1041,6 +1600,427 @@ def _parse_local_blog_rss_feed(source: dict[str, Any], payload_text: str) -> lis
     return enriched
 
 
+def _parse_spd_blotter_rss_feed(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:
+    items = _parse_xml_feed(source, payload_text)
+    enriched: list[dict[str, Any]] = []
+    neighborhoods = _configured_texts(
+        source.get("neighborhood_keywords"),
+        default=[
+            "West Seattle",
+            "Capitol Hill",
+            "Downtown",
+            "Rainier Valley",
+            "Ballard",
+            "Beacon Hill",
+            "University District",
+        ],
+    )
+    for index, item in enumerate(items):
+        text = " ".join(
+            value
+            for value in (
+                item.get("title"),
+                item.get("description"),
+                " ".join(item.get("tags") or []),
+            )
+            if value
+        )
+        signal = _spd_blotter_signal(text)
+        route_tokens = _local_route_tokens(text)
+        matched_neighborhoods = _matched_keywords(text, neighborhoods)
+        privacy = _spd_privacy_decision(
+            text=text,
+            preliminary_report=signal["preliminary"],
+            public_impact=signal["public_impact"],
+            neighborhoods=matched_neighborhoods,
+            route_tokens=route_tokens,
+        )
+        incident_score = int(signal["score"])
+        if privacy["exact_location_suppressed"]:
+            incident_score = min(incident_score, 10)
+        tags = list(item.get("tags") or [])
+        for tag in [
+            "official",
+            "local-news",
+            "spd",
+            "safety-alert",
+            signal["incident_type"],
+        ]:
+            if tag not in tags:
+                tags.append(tag)
+        if privacy["exact_location_suppressed"] and "privacy-redacted" not in tags:
+            tags.append("privacy-redacted")
+        evidence = dict(item.get("evidence") or {})
+        evidence["parser"] = str(source.get("parser") or "spd_blotter_rss")
+        evidence["raw_index"] = index
+        evidence["spd_blotter"] = {
+            "source_url": item.get("url"),
+            "published_at": item.get("source_published_at"),
+            "incident_type": signal["incident_type"],
+            "incident_label": signal["incident_label"],
+            "severity": signal["severity_label"],
+            "preliminary_report": signal["preliminary"],
+            "preliminary_signal": signal["preliminary_signal"],
+            "neighborhoods": matched_neighborhoods,
+            "route_tokens": route_tokens,
+            "ranking": {
+                "incident_score": incident_score,
+                "severity_weight": signal["severity_weight"],
+                "route_impact": len(route_tokens),
+            },
+            "privacy": {
+                "low_acuity_private": privacy["low_acuity_private"],
+                "exact_location_suppressed": privacy["exact_location_suppressed"],
+                "public_impact_justified": privacy["public_impact_justified"],
+                "redaction_reason": privacy["redaction_reason"],
+                "display_location": privacy["display_location"],
+                "location_basis": privacy["location_basis"],
+                "overdose_related": privacy["overdose_related"],
+                "privacy_category": privacy["privacy_category"],
+            },
+            "filter": {
+                "neighborhood_keywords": neighborhoods,
+                "matched_neighborhoods": matched_neighborhoods,
+                "matched_route_tokens": route_tokens,
+            },
+        }
+        evidence["privacy"] = {
+            "exact_location_suppressed": privacy["exact_location_suppressed"],
+            "redaction_applied": privacy["exact_location_suppressed"],
+            "redaction_reason": privacy["redaction_reason"],
+            "display_location": privacy["display_location"],
+            "location_basis": privacy["location_basis"],
+            "raw_address_stored": False,
+            "low_acuity_private": privacy["low_acuity_private"],
+            "public_impact_justified": privacy["public_impact_justified"],
+            "overdose_related": privacy["overdose_related"],
+            "privacy_category": privacy["privacy_category"],
+        }
+        item["tags"] = tags
+        item["evidence"] = evidence
+        enriched.append(item)
+    return enriched
+
+
+def _parse_sdot_blog_rss_feed(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:
+    items = _parse_xml_feed(source, payload_text)
+    enriched: list[dict[str, Any]] = []
+    service_areas = _configured_texts(
+        source.get("service_area_keywords"),
+        default=[
+            "Seattle",
+            "Downtown",
+            "Capitol Hill",
+            "East Seattle",
+            "West Seattle",
+            "Ballard",
+            "University District",
+            "Seattle Center",
+        ],
+    )
+    for index, item in enumerate(items):
+        text = " ".join(
+            value
+            for value in (
+                item.get("title"),
+                item.get("description"),
+                " ".join(item.get("tags") or []),
+            )
+            if value
+        )
+        signal = _sdot_blog_signal(text)
+        route_tokens = _local_route_tokens(text)
+        areas = _matched_keywords(text, service_areas)
+        tags = list(item.get("tags") or [])
+        for tag in [
+            "official",
+            "local-news",
+            "sdot",
+            signal["incident_type"],
+            signal["impact_label"],
+        ]:
+            if tag not in tags:
+                tags.append(tag)
+        evidence = dict(item.get("evidence") or {})
+        evidence["parser"] = str(source.get("parser") or "sdot_blog_rss")
+        evidence["raw_index"] = index
+        signal_score = int(signal["score"])
+        service_area_count = len(areas)
+        route_count = len(route_tokens)
+        evidence["sdot_blog"] = {
+            "source_url": item.get("url"),
+            "published_at": item.get("source_published_at"),
+            "incident_type": signal["incident_type"],
+            "impact_label": signal["impact_label"],
+            "impact_score": signal_score,
+            "route_tokens": route_tokens,
+            "service_areas": areas,
+            "route_count": route_count,
+            "service_area_count": service_area_count,
+            "ranking": {
+                "route_count": route_count,
+                "area_count": service_area_count,
+                "traffic_impact_score": signal_score + route_count + service_area_count,
+            },
+        }
+        item["tags"] = tags
+        item["evidence"] = evidence
+        enriched.append(item)
+    return enriched
+
+
+def _parse_local_news_rss_feed(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:
+    items = _parse_xml_feed(source, payload_text)
+    enriched: list[dict[str, Any]] = []
+    service_areas = _configured_texts(
+        source.get("service_area_keywords"),
+        default=[
+            "Seattle",
+            "Downtown",
+            "Capitol Hill",
+            "Ballard",
+            "West Seattle",
+            "University District",
+            "Rainier Valley",
+        ],
+    )
+    for index, item in enumerate(items):
+        text = " ".join(
+            value
+            for value in (
+                item.get("title"),
+                item.get("description"),
+                " ".join(item.get("tags") or []),
+            )
+            if value
+        )
+        signal = _local_news_signal(text)
+        route_tokens = _local_route_tokens(text)
+        matched_areas = _matched_keywords(text, service_areas)
+        score = signal["score"] + len(route_tokens) * 3 + len(matched_areas) * 2
+        traffic_related = bool(signal["traffic_related"])
+        tags = list(item.get("tags") or [])
+        for tag in [
+            "local-news",
+            "news",
+            signal["news_type"],
+            signal["impact_label"],
+        ]:
+            if tag not in tags:
+                tags.append(tag)
+        for route in route_tokens:
+            route_tag = f"route-{route}"
+            if route_tag not in tags:
+                tags.append(route_tag)
+            if route not in tags:
+                tags.append(route)
+        for area in matched_areas:
+            normalized = str(area).lower().replace(" ", "-")
+            if normalized not in tags:
+                tags.append(normalized)
+        evidence = dict(item.get("evidence") or {})
+        evidence["parser"] = str(source.get("parser") or "local_news_rss")
+        evidence["raw_index"] = index
+        evidence["local_news"] = {
+            "source_url": item.get("url"),
+            "published_at": item.get("source_published_at"),
+            "news_type": signal["news_type"],
+            "impact_label": signal["impact_label"],
+            "traffic_related": traffic_related,
+            "route_tokens": route_tokens,
+            "service_areas": matched_areas,
+            "public_impact_score": score,
+            "ranking": {
+                "local_news_score": score,
+                "route_count": len(route_tokens),
+                "service_area_count": len(matched_areas),
+            },
+        }
+        item["tags"] = tags
+        item["evidence"] = evidence
+        enriched.append(item)
+    return enriched
+
+
+def _spd_blotter_signal(text: str) -> dict[str, Any]:
+    lowered = text.lower()
+    preliminary = bool(_SPD_PRELIMINARY_RE.search(text))
+    impact = bool(_SPD_IMPACT_RE.search(text))
+    major = bool(_SPD_MAJOR_IMPACT_RE.search(text))
+    if any(term in lowered for term in ("shooting", "homicide", "fatal")):
+        incident_type = "law_enforcement_major_incident"
+        label = "major incident"
+        severity_label = "severe"
+        severity_weight = 38 if major else 26
+    elif "significant" in lowered and impact:
+        incident_type = "law_enforcement_significant"
+        label = "significant report"
+        severity_label = "moderate"
+        severity_weight = 28
+    elif any(term in lowered for term in ("collision", "crash", "accident")):
+        incident_type = "traffic_incident"
+        label = "traffic incident"
+        severity_label = "moderate"
+        severity_weight = 22
+    elif impact:
+        incident_type = "incident_report"
+        label = "incident report"
+        severity_label = "notice"
+        severity_weight = 12
+    else:
+        incident_type = "incident_report"
+        label = "incident update"
+        severity_label = "notice"
+        severity_weight = 6
+    public_impact = incident_type in {
+        "law_enforcement_major_incident",
+        "law_enforcement_significant",
+        "traffic_incident",
+    }
+    score = max(
+        5,
+        severity_weight + (8 if preliminary else 0) + (12 if major else 0),
+    )
+    return {
+        "incident_type": incident_type,
+        "incident_label": label,
+        "severity_label": severity_label,
+        "severity_weight": severity_weight,
+        "public_impact": public_impact,
+        "preliminary": preliminary,
+        "preliminary_signal": "preliminary" if preliminary else "official",
+        "score": min(50, score),
+    }
+
+
+def _spd_privacy_decision(
+    *,
+    text: str,
+    preliminary_report: bool,
+    public_impact: bool,
+    neighborhoods: list[str],
+    route_tokens: list[str],
+) -> dict[str, Any]:
+    lowered = str(text).lower()
+    low_acuity = bool(_SPD_LOW_ACUITY_RE.search(lowered))
+    overdose_related = bool(_SPD_OVERDOSE_RE.search(lowered))
+    suppress_exact = low_acuity and not public_impact
+    if suppress_exact:
+        reason = "Low-acuity or private SPD report without public-impact justification."
+    elif low_acuity and public_impact:
+        reason = "SPD item is low-acuity/private but elevated by public-impact evidence."
+    else:
+        reason = "Exact private location is not stored; privacy-safe tokens are used."
+    if neighborhoods:
+        display_location = neighborhoods[0]
+        basis = "neighborhood"
+    elif route_tokens:
+        display_location = route_tokens[0]
+        basis = "route_token"
+    else:
+        display_location = "Seattle"
+        basis = "city"
+    if suppress_exact:
+        display_location = display_location if basis != "city" else "Seattle"
+    return {
+        "exact_location_suppressed": suppress_exact,
+        "redaction_reason": reason,
+        "display_location": display_location,
+        "location_basis": basis,
+        "low_acuity_private": low_acuity,
+        "public_impact_justified": public_impact,
+        "preliminary_report": preliminary_report,
+        "overdose_related": overdose_related,
+        "privacy_category": (
+            "overdose" if overdose_related else "low_acuity" if low_acuity else "none"
+        ),
+        "raw_address_stored": False,
+    }
+
+
+def _sdot_blog_signal(text: str) -> dict[str, Any]:
+    lowered = text.lower()
+    traffic_related = bool(_SDOT_BLOG_IMPACT_RE.search(text))
+    if any(term in lowered for term in ("collision", "crash", "pileup", "accident", "fatal")):
+        incident_type = "traffic_collision"
+        impact_label = "traffic_collision"
+        score = 24
+    elif any(term in lowered for term in ("closure", "closed", "detour", "shutdown", "outage")):
+        incident_type = "transit_disruption"
+        impact_label = "closure_or_detour"
+        score = 30
+    elif any(term in lowered for term in ("delay", "delayed", "slow")):
+        incident_type = "service_disruption"
+        impact_label = "delay"
+        score = 18
+    elif traffic_related:
+        incident_type = "transit_update"
+        impact_label = "transit_related"
+        score = 14
+    else:
+        incident_type = "news_story"
+        impact_label = "informational"
+        score = 8
+    return {
+        "incident_type": incident_type,
+        "impact_label": impact_label,
+        "traffic_related": traffic_related,
+        "score": score,
+    }
+
+
+def _local_news_signal(text: str) -> dict[str, Any]:
+    lowered = text.lower()
+    if any(
+        term in lowered
+        for term in (
+            "road",
+            "traffic",
+            "transit",
+            "bridge",
+            "highway",
+            "flood",
+            "closure",
+            "lane",
+        )
+    ):
+        impact_label = "transit_or_infrastructure"
+        score = 12
+        traffic_related = True
+    elif any(
+        term in lowered
+        for term in ("accident", "crash", "collision", "evacuation", "incident", "fire")
+    ):
+        impact_label = "public_safety"
+        score = 10
+        traffic_related = False
+    else:
+        impact_label = "general_news"
+        score = 4
+        traffic_related = False
+    return {
+        "news_type": "local_news",
+        "impact_label": impact_label,
+        "traffic_related": traffic_related,
+        "score": score,
+    }
+
+
+def _local_route_tokens(value: str) -> list[str]:
+    text = str(value or "")
+    route_tokens: list[str] = []
+    for match in _WSDOT_ROUTE_RE.findall(text):
+        token = " ".join(str(match).upper().replace("SR", "SR ").replace("US", "US ").split())
+        token = token.replace("I ", "I-")
+        if token and token not in route_tokens:
+            route_tokens.append(token)
+    for match in _METRO_ROUTE_TOKEN_RE.findall(text):
+        token = str(match).upper().strip()
+        if token and token not in route_tokens:
+            route_tokens.append(token)
+    return route_tokens
+
+
 def _local_blog_signal(text: str) -> dict[str, Any]:
     lowered = text.lower()
     if any(word in lowered for word in ("closed", "closure", "blocked", "collision")):
@@ -1090,9 +2070,7 @@ def _parse_rss_feed(source: dict[str, Any], root: ET.Element) -> list[dict[str, 
     items: list[dict[str, Any]] = []
     for index, element in enumerate(channel.findall("./item")):
         tags = [
-            text
-            for text in (_element_text(node) for node in element.findall("./category"))
-            if text
+            text for text in (_element_text(node) for node in element.findall("./category")) if text
         ]
         items.append(
             _normalize_item(
@@ -1201,9 +2179,7 @@ def _parse_homepage_items(source: dict[str, Any], payload_text: str) -> list[dic
         title_node = _first_matching_descendant(node, title_selector)
         url_node = _first_matching_descendant(node, url_selector)
         description_node = (
-            _first_matching_descendant(node, description_selector)
-            if description_selector
-            else None
+            _first_matching_descendant(node, description_selector) if description_selector else None
         )
         href = ""
         if url_node is not None:

@@ -170,10 +170,42 @@ CREATE TABLE IF NOT EXISTS news_fetch_runs (
   FOREIGN KEY(source_id) REFERENCES news_sources(id)
 );
 
+CREATE TABLE IF NOT EXISTS news_source_registry (
+  id INTEGER PRIMARY KEY,
+  source_key TEXT NOT NULL UNIQUE,
+  scope TEXT NOT NULL,
+  source_name TEXT NOT NULL,
+  source_family TEXT NOT NULL,
+  source_class TEXT NOT NULL,
+  adapter TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  raw_url TEXT NOT NULL,
+  priority INTEGER NOT NULL,
+  interval_minutes INTEGER NOT NULL,
+  official_status TEXT NOT NULL,
+  privacy_risk TEXT NOT NULL,
+  policy_risk TEXT NOT NULL,
+  parser_risk TEXT NOT NULL,
+  retention_sensitivity TEXT NOT NULL,
+  verification_status TEXT NOT NULL,
+  future_phase TEXT NOT NULL,
+  expected_access_kind TEXT NOT NULL,
+  homepage_url TEXT,
+  parser TEXT,
+  enabled_by_default INTEGER NOT NULL DEFAULT 0,
+  why_it_matters TEXT,
+  evidence_notes_json TEXT NOT NULL DEFAULT '[]',
+  seen_at TEXT,
+  last_synced_at TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS news_items (
   id INTEGER PRIMARY KEY,
   source_id INTEGER NOT NULL,
   scope TEXT NOT NULL,
+  local_event_id INTEGER,
   canonical_url TEXT,
   url TEXT NOT NULL,
   url_hash TEXT NOT NULL,
@@ -191,6 +223,38 @@ CREATE TABLE IF NOT EXISTS news_items (
   content_hash TEXT,
   status TEXT NOT NULL DEFAULT 'active',
   FOREIGN KEY(source_id) REFERENCES news_sources(id)
+);
+
+CREATE TABLE IF NOT EXISTS local_events (
+  id INTEGER PRIMARY KEY,
+  scope TEXT NOT NULL,
+  event_key TEXT NOT NULL,
+  event_type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  representative_item_id INTEGER,
+  severity TEXT NOT NULL DEFAULT 'notice',
+  public_impact_score INTEGER NOT NULL DEFAULT 0,
+  source_diversity_score INTEGER NOT NULL DEFAULT 0,
+  official_confirmation_score INTEGER NOT NULL DEFAULT 0,
+  social_echo_score INTEGER NOT NULL DEFAULT 0,
+  news_echo_score INTEGER NOT NULL DEFAULT 0,
+  transport_impact_score INTEGER NOT NULL DEFAULT 0,
+  utility_impact_score INTEGER NOT NULL DEFAULT 0,
+  hazard_score INTEGER NOT NULL DEFAULT 0,
+  airport_port_score INTEGER NOT NULL DEFAULT 0,
+  first_seen_at TEXT NOT NULL,
+  last_seen_at TEXT NOT NULL,
+  last_elevated_at TEXT,
+  expires_at TEXT NOT NULL,
+  geography_json TEXT NOT NULL DEFAULT '[]',
+  neighborhoods_json TEXT NOT NULL DEFAULT '[]',
+  title_tokens_json TEXT NOT NULL DEFAULT '[]',
+  source_ids_json TEXT NOT NULL DEFAULT '[]',
+  families_json TEXT NOT NULL DEFAULT '[]',
+  item_ids_json TEXT NOT NULL DEFAULT '[]',
+  evidence_json TEXT NOT NULL DEFAULT '{}',
+  ranking_explanation_json TEXT NOT NULL DEFAULT '{}',
+  status TEXT NOT NULL DEFAULT 'active'
 );
 
 CREATE TABLE IF NOT EXISTS news_clusters (
@@ -261,6 +325,21 @@ CREATE INDEX IF NOT EXISTS idx_news_items_expires_at
 CREATE INDEX IF NOT EXISTS idx_news_items_url_hash
   ON news_items(url_hash);
 
+CREATE INDEX IF NOT EXISTS idx_news_items_local_event
+  ON news_items(local_event_id);
+
+CREATE INDEX IF NOT EXISTS idx_news_source_registry_scope
+  ON news_source_registry(scope, source_key);
+
+CREATE INDEX IF NOT EXISTS idx_news_source_registry_family
+  ON news_source_registry(source_family);
+
+CREATE INDEX IF NOT EXISTS idx_news_source_registry_class
+  ON news_source_registry(source_class);
+
+CREATE INDEX IF NOT EXISTS idx_news_source_registry_verification_status
+  ON news_source_registry(verification_status);
+
 CREATE INDEX IF NOT EXISTS idx_news_items_rank_scope
   ON news_items(scope, rank_score DESC, last_seen_at DESC);
 
@@ -269,6 +348,15 @@ CREATE INDEX IF NOT EXISTS idx_news_clusters_scope_score
 
 CREATE INDEX IF NOT EXISTS idx_news_clusters_key
   ON news_clusters(cluster_key);
+
+CREATE INDEX IF NOT EXISTS idx_local_events_scope_time
+  ON local_events(scope, status, last_seen_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_local_events_key
+  ON local_events(event_key);
+
+CREATE INDEX IF NOT EXISTS idx_local_events_expires_at
+  ON local_events(expires_at);
 
 CREATE INDEX IF NOT EXISTS idx_news_source_health_source_observed
   ON news_source_health(source_id, observed_at DESC);

@@ -1,0 +1,30 @@
+{
+  "airports": [
+    {
+      "airport_code": "SEA",
+      "airport_name": "Seattle-Tacoma Intl",
+      "location": "Seattle, WA",
+      "status": "Ground Delay",
+      "reason": "Low ceilings",
+      "average_delay": "45 minutes",
+      "max_delay": "1 hour and 12 minutes",
+      "delay_minutes": 45,
+      "updated_at": "2026-05-05T23:10:00Z",
+      "start_time": "2026-05-05T22:50:00Z",
+      "end_time": "2026-05-06T01:00:00Z",
+      "weather": "Low clouds",
+      "temperature_f": "54 F",
+      "wind": "Southwest at 12 kt",
+      "source_url": "https://www.faa.gov/airport-status/SEA"
+    },
+    {
+      "airport_code": "SFO",
+      "airport_name": "San Francisco Intl",
+      "location": "San Francisco, CA",
+      "status": "Ground Stop",
+      "reason": "Thunderstorms",
+      "updated_at": "2026-05-05T23:05:00Z",
+      "source_url": "https://www.faa.gov/airport-status/SFO"
+    }
+  ]
+}

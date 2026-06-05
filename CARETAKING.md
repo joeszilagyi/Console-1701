@@ -1,5 +1,21 @@
 # Caretaking Log
 
+## 2026-06-05 09:17 PDT - LOCAL event correlation and privacy ranking follow-up
+
+- Finished the interrupted LOCAL recent-signal follow-up by correcting a score-accounting bug in
+  `apply_local_event_ranking_adjustments` so event bonuses and penalties are no longer added twice
+  after being stored in ranking factors.
+- Extended SPD blotter and SFD Fire 911 privacy evidence so stored rows now carry explicit
+  `overdose_related` and `privacy_category` fields alongside the existing low-acuity redaction
+  signals.
+- Added direct ranking regression coverage for social-only and cross-source privacy suppression, and
+  extended parser/ingest tests to assert the new privacy evidence fields.
+- Updated BACKLOG status text so the LOCAL privacy-redaction entry reflects the implemented SPD/SFD
+  parser coverage and current ranking behavior instead of stale pending notes.
+- Cleaned the remaining lint/import tail in the same recent-signal stack and reverified with
+  `./.venv/bin/ruff check console1701 tests` and `./.venv/bin/python -m pytest -q`
+  (`140 passed`).
+
 ## 2026-05-12 07:41 PDT - recent-signal source transition history
 
 - Extended recent-signal source status payloads so each source now carries short recent fetch-run

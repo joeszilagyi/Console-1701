@@ -33,7 +33,14 @@ def _local_policy(config: dict[str, Any], source: dict[str, Any]) -> dict[str, A
         "source_class": source_class,
         "adapter": source.get("adapter") or source.get("parser"),
         "verification_status": source.get("verification_status"),
+        "official_status": source.get("official_status"),
+        "future_phase": source.get("future_phase"),
+        "expected_access_kind": source.get("expected_access_kind"),
+        "policy_risk": source.get("policy_risk"),
+        "parser_risk": source.get("parser_risk"),
+        "retention_sensitivity": source.get("retention_sensitivity"),
         "is_social_source": is_social,
+        "social_source_blocked": is_social and not bool(local_cfg.get("allow_social_sources")),
         "is_neighborhood_blog": is_neighborhood_blog,
     }
 
@@ -47,9 +54,10 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
     auth_cfg = source.get("auth") if isinstance(source.get("auth"), dict) else None
     auth_required = bool(auth_cfg)
     auth_configured = bool(auth_cfg and any(str(value).strip() for value in auth_cfg.values()))
-    homepage_allowed = bool(fetch_policy.get("allow_homepage_extractors"))
     is_local_fixture = url.startswith("file://")
     uses_homepage = kind in NEWS_HOMEPAGE_SOURCE_KINDS
+    homepage_allowed = bool(fetch_policy.get("allow_homepage_extractors"))
+    homepage_extractor_blocked = uses_homepage and not homepage_allowed
     local_policy = _local_policy(config, source)
 
     if is_local_fixture:
@@ -71,7 +79,7 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
         notes.append("Source is disabled.")
     if auth_required and not auth_configured:
         notes.append("Auth is declared but no credential material is configured.")
-    if uses_homepage and not homepage_allowed:
+    if homepage_extractor_blocked:
         notes.append("Homepage extraction is disabled by config.")
     if not is_local_fixture:
         notes.append("Fixture phase blocks non-file URLs from ingest.")
@@ -100,13 +108,21 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
         "source_class": source.get("source_class"),
         "adapter": source.get("adapter") or source.get("parser"),
         "verification_status": source.get("verification_status"),
+        "official_status": source.get("official_status"),
+        "future_phase": source.get("future_phase"),
+        "expected_access_kind": source.get("expected_access_kind"),
+        "policy_risk": source.get("policy_risk"),
+        "retention_sensitivity": source.get("retention_sensitivity"),
+        "parser_risk": source.get("parser_risk"),
         "enabled": bool(source.get("enabled")),
         "scope_enabled": bool(scope_cfg.get("enabled")),
         "auth_required": auth_required,
         "auth_configured": auth_configured,
         "homepage_extractor_allowed": homepage_allowed,
         "uses_homepage_extractor": uses_homepage,
+        "homepage_extractor_blocked": homepage_extractor_blocked,
         "robots_state": robots_state,
+        "social_source_blocked": bool(local_policy and local_policy.get("social_source_blocked")),
         "local": local_policy,
         "notes": notes,
     }
