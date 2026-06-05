@@ -119,6 +119,10 @@
             <summary>Audit trail</summary>
             <div class="news-evidence-grid">
               <div><span>Scope</span><strong>{{ source.scope }}</strong></div>
+              <div><span>Family</span><strong>{{ source.source_family or "unknown" }}</strong></div>
+              <div><span>Class</span><strong>{{ source.source_class or "unknown" }}</strong></div>
+              <div><span>Verification</span><strong>{{ source.verification_status or "unknown" }}</strong></div>
+              <div><span>Access</span><strong>{{ source.expected_access_kind or "unknown" }}</strong></div>
               <div><span>Policy</span><strong>{{ policy.policy_state or "unknown" }}</strong></div>
               <div><span>Raw health</span><strong>{{ source.raw_health_state or "none" }}</strong></div>
               <div><span>Fetch status</span><strong>{{ (source.latest_fetch_run or {}).get("status") or "never" }}</strong></div>

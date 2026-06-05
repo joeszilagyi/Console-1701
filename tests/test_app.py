@@ -278,6 +278,9 @@ news:
     assert "Source health" in scope_body
     assert "Local fixture" in scope_body
     assert "Audit trail" in scope_body
+    assert "Family" in scope_body
+    assert "Verification" in scope_body
+    assert "Access" in scope_body
     assert "Retention expiry" in scope_body
     assert "Fetch run" in scope_body
     assert "Policy" in scope_body
