@@ -1,5 +1,18 @@
 # Caretaking Log
 
+## 2026-06-05 14:47 PDT - source audit metadata follow-up
+
+- Expanded `console-1701 news-sources` so it now prints registry metadata for source family, class,
+  verification status, and expected access kind alongside the existing policy and health details.
+- Surfaced the same metadata in the scope-page source audit drawers so the browser and CLI now show
+  matching audit context for the configured recent-signal sources.
+- Updated README, CLI help, and BACKLOG wording so the source-audit workflow and remaining
+  retention/config walkthrough gaps are documented in one place instead of being left as stale
+  pending notes.
+- Verified the touched paths with `./.venv/bin/ruff check console1701/cli.py` and
+  `./.venv/bin/python -m pytest -q tests/test_news_ingest.py -k "news_sources_command_reports_policy_and_health"`
+  plus `./.venv/bin/python -m pytest -q tests/test_app.py -k "news_scope_page_and_api_render_fixture_backed_state"`.
+
 ## 2026-06-05 14:44 PDT - recent-signal severity and topic-repetition follow-up
 
 - Split LOCAL ranking into explicit source-severity and topic-repetition signals so official
