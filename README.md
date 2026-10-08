@@ -8,6 +8,9 @@ LLM etc after this.
 
 # console-1701
 
+Pull requests and pushes to `main` run a read-only Python 3.11 GitHub Actions check with Ruff and
+pytest; this workflow does not deploy or enable news ingestion.
+
 `console-1701` is a local-only homepage for a Debian laptop. It scans the physical host first, then configured local repos, selected logs, and durable SQLite history. It turns those facts into plain-English operational readouts with evidence underneath.
 
 Main goal:

@@ -1,5 +1,19 @@
 # Caretaking Log
 
+## 2026-10-08 10:41 PDT - add a read-only pull-request CI check
+
+- Selected `.github/workflows/ci.yml` after the first official HTTP ingest slice: GitHub had no
+  workflow or automated check, so the next feature expansion would still rely only on local tests.
+- Added one GitHub-hosted Python 3.11 job for Ruff and pytest on PRs and pushes to `main`. Its token
+  has read-only repository permission, checkout does not persist credentials, and it performs no
+  application deployment, source fetching, or production state access.
+- The existing `main-protection` ruleset still targets no branch at this commit. After the new job
+  passes on its PR and lands on `main`, target the default branch, preserve current merge-commit
+  history by dropping its dormant linear-history rule, and require the `tests-and-lint` check.
+- The first GitHub run exposed a preexisting test that assumed Pacific local time; the application
+  intentionally formats timestamps in the host's local timezone. Corrected the assertion to
+  compare against the runner's local-time conversion, preserving the no-suffix contract.
+
 ## 2026-10-08 10:38 PDT - explicit official-feed boundary and first NWS transport
 
 - Selected the foundational live-ingest blocker: the backlog called for public official feeds but

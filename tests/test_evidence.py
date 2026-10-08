@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 from console1701.db import connect_db, init_db, utc_now
 from console1701.evidence import get_recent_events, get_repo_cards, get_system_summary
 
@@ -152,4 +154,5 @@ def test_system_summary_formats_last_scan_without_timezone_suffix(tmp_path):
 
     summary = get_system_summary(conn)
 
-    assert summary["last_scan_display"] == "2026-04-28 06:55:01"
+    expected_local_time = datetime.fromisoformat("2026-04-28T06:55:01-07:00").astimezone()
+    assert summary["last_scan_display"] == expected_local_time.strftime("%Y-%m-%d %H:%M:%S")
