@@ -165,6 +165,16 @@ def build_rank_result(
     repeat_bonus = min(max(0, repeat_count), 5)
     health_confidence = HEALTH_CONFIDENCE_BOOST.get(str(latest_health_state or "").lower(), 0)
     local_signal = _local_signal_factors(item)
+    regional_seismic_boost = 0
+    if str(source.get("scope") or "").upper() == "REGIONAL":
+        item_evidence = item.get("evidence") if isinstance(item.get("evidence"), dict) else {}
+        earthquake = item_evidence.get("usgs_earthquake")
+        if isinstance(earthquake, dict):
+            seismic_ranking = earthquake.get("ranking")
+            if isinstance(seismic_ranking, dict):
+                regional_seismic_boost = min(
+                    55, max(0, _int_value(seismic_ranking.get("regional_seismic_weight")))
+                )
 
     factors = {
         "source_priority": source_priority,
@@ -175,6 +185,7 @@ def build_rank_result(
         "tag_bonus": tag_bonus,
         "repeat_observation_bonus": repeat_bonus,
         "source_health_confidence": health_confidence,
+        "regional_seismic_boost": regional_seismic_boost,
         **local_signal["factors"],
     }
     score = sum(factors.values())
@@ -195,6 +206,8 @@ def build_rank_result(
         reasons.append(
             f"Source health contributes {health_confidence} from state {latest_health_state}."
         )
+    if regional_seismic_boost:
+        reasons.append(f"REGIONAL USGS seismic evidence adds {regional_seismic_boost}.")
     reasons.extend(local_signal["reasons"])
 
     return {

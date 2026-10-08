@@ -169,6 +169,8 @@ LOCAL registry seeds known source metadata for disabled official, blog, and soci
 Fixture parsers include LOCAL SFD, AlertSeattle, NWS, WSDOT, Metro, City Light, FAA/SEA, and local-blog evidence
 LOCAL ranking consumes parser evidence for official alerts, explicit source severity, public impact,
 transit, utility, airport, topic repetition, and privacy
+REGIONAL USGS GeoJSON fixture parsing now filters by Washington-area coordinate bounds and
+magnitude, preserving seismic evidence and an explainable regional ranking factor
 Source audit surfaces derive disabled / configured_never_run / healthy / stale / parser_failed /
 policy_blocked / auth_required states without fetching
 `console-1701 news-sources` also prints source family, class, verification status, and expected

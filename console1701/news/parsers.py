@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
-from urllib.parse import quote, urljoin
+from urllib.parse import quote, urljoin, urlsplit
 
 from console1701.news.normalize import (
     MAX_DESCRIPTION_LENGTH,
@@ -107,6 +109,8 @@ def parse_fixture_items(
 
     if parser_name == "nws_alerts_json":
         return _parse_nws_alerts_json(source, payload_text)
+    if parser_name == "usgs_earthquake_geojson":
+        return _parse_usgs_earthquake_geojson(source, payload_text)
     if parser_name == "alertseattle_rss":
         return _parse_alertseattle_rss_feed(source, payload_text)
     if parser_name == "metro_rss":
@@ -204,6 +208,161 @@ def _parse_json_items(source: dict[str, Any], payload_text: str) -> list[dict[st
         if not isinstance(item, dict):
             raise NewsParserError(f"JSON item {index} must be an object.")
         normalized.append(_normalize_item(source, item, index=index))
+    return normalized
+
+
+def _usgs_number(value: Any) -> float | None:
+    if isinstance(value, bool) or value is None:
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if math.isfinite(number) else None
+
+
+def _usgs_filter(source: dict[str, Any]) -> dict[str, Any]:
+    defaults = {
+        "min_longitude": -130.0,
+        "max_longitude": -116.5,
+        "min_latitude": 45.0,
+        "max_latitude": 50.0,
+        "min_magnitude": 3.0,
+    }
+    values: dict[str, float] = {}
+    for key, default in defaults.items():
+        value = _usgs_number(source.get(key, default))
+        if value is None:
+            raise NewsParserError(f"USGS source {key} must be a finite number.")
+        values[key] = value
+    if not (
+        -180 <= values["min_longitude"] < values["max_longitude"] <= 180
+        and -90 <= values["min_latitude"] < values["max_latitude"] <= 90
+        and values["min_magnitude"] >= 0
+    ):
+        raise NewsParserError("USGS source coordinate bounds or magnitude threshold are invalid.")
+    return values
+
+
+def _usgs_timestamp(value: Any) -> str | None:
+    milliseconds = _usgs_number(value)
+    if milliseconds is None:
+        return None
+    try:
+        return datetime.fromtimestamp(milliseconds / 1000, tz=UTC).isoformat(
+            timespec="seconds"
+        )
+    except (ValueError, OverflowError, OSError):
+        return None
+
+
+def _parse_usgs_earthquake_geojson(
+    source: dict[str, Any], payload_text: str
+) -> list[dict[str, Any]]:
+    try:
+        payload = json.loads(payload_text)
+    except json.JSONDecodeError as exc:
+        raise NewsParserError(f"Malformed USGS GeoJSON fixture: {exc}") from exc
+    if not isinstance(payload, dict) or payload.get("type") != "FeatureCollection":
+        raise NewsParserError("USGS fixture must be a GeoJSON FeatureCollection.")
+    features = payload.get("features")
+    if not isinstance(features, list):
+        raise NewsParserError("USGS fixture must contain a features list.")
+    geo_filter = _usgs_filter(source)
+    normalized: list[dict[str, Any]] = []
+    for index, feature in enumerate(features):
+        if not isinstance(feature, dict) or feature.get("type") != "Feature":
+            raise NewsParserError(f"USGS feature {index} must be a GeoJSON Feature.")
+        properties = feature.get("properties")
+        geometry = feature.get("geometry")
+        if not isinstance(properties, dict) or not isinstance(geometry, dict):
+            raise NewsParserError(f"USGS feature {index} is missing properties or geometry.")
+        coords = geometry.get("coordinates")
+        if geometry.get("type") != "Point" or not isinstance(coords, list) or len(coords) < 2:
+            raise NewsParserError(f"USGS feature {index} must have Point coordinates.")
+        longitude = _usgs_number(coords[0])
+        latitude = _usgs_number(coords[1])
+        magnitude = _usgs_number(properties.get("mag"))
+        if longitude is None or latitude is None or magnitude is None:
+            continue
+        if not (
+            geo_filter["min_longitude"] <= longitude <= geo_filter["max_longitude"]
+            and geo_filter["min_latitude"] <= latitude <= geo_filter["max_latitude"]
+            and magnitude >= geo_filter["min_magnitude"]
+        ):
+            continue
+        published_at = _usgs_timestamp(properties.get("time"))
+        if published_at is None:
+            raise NewsParserError(f"USGS feature {index} has no valid event time.")
+        url = str(properties.get("url") or "")
+        try:
+            parts = urlsplit(url)
+        except ValueError as exc:
+            raise NewsParserError(f"USGS feature {index} has an invalid event URL.") from exc
+        if parts.scheme != "https" or parts.hostname != "earthquake.usgs.gov":
+            raise NewsParserError(f"USGS feature {index} has no official HTTPS event URL.")
+        place = bounded_text(properties.get("place"), max_chars=180) or "Washington region"
+        title = bounded_text(properties.get("title"), max_chars=MAX_TITLE_LENGTH)
+        title = title or f"M {magnitude:.1f} - {place}"
+        felt = _int_value(properties.get("felt")) or 0
+        alert = bounded_text(properties.get("alert"), max_chars=32)
+        depth_km = _usgs_number(coords[2]) if len(coords) > 2 else None
+        magnitude_weight = min(35, max(0, round((magnitude - 2.5) * 8)))
+        felt_weight = min(10, max(0, felt // 10))
+        alert_weight = {"red": 30, "orange": 20, "yellow": 10, "green": 3}.get(
+            str(alert or "").lower(), 0
+        )
+        seismic_weight = min(55, magnitude_weight + felt_weight + alert_weight)
+        item = _normalize_item(
+            source,
+            {
+                "title": title,
+                "url": url,
+                "canonical_url": url,
+                "description": f"Magnitude {magnitude:.1f} earthquake near {place}.",
+                "published_at": published_at,
+                "tags": _unique_texts(
+                    [
+                        "official",
+                        "usgs",
+                        "earthquake",
+                        "seismic",
+                        "regional",
+                        "public-impact" if magnitude >= 4.5 or felt >= 10 else None,
+                        "tsunami" if properties.get("tsunami") == 1 else None,
+                    ],
+                    max_chars=64,
+                ),
+            },
+            index=index,
+        )
+        item["evidence"]["usgs_earthquake"] = {
+            "id": bounded_text(feature.get("id"), max_chars=120),
+            "magnitude": magnitude,
+            "magnitude_type": bounded_text(properties.get("magType"), max_chars=32),
+            "place": place,
+            "depth_km": depth_km,
+            "longitude": longitude,
+            "latitude": latitude,
+            "time": published_at,
+            "updated": _usgs_timestamp(properties.get("updated")),
+            "felt": felt,
+            "cdi": _usgs_number(properties.get("cdi")),
+            "mmi": _usgs_number(properties.get("mmi")),
+            "alert": alert,
+            "tsunami": properties.get("tsunami") == 1,
+            "significance": _int_value(properties.get("sig")),
+            "status": bounded_text(properties.get("status"), max_chars=32),
+            "source_url": url,
+            "filter": {**geo_filter, "matched": True},
+            "ranking": {
+                "magnitude_weight": magnitude_weight,
+                "felt_weight": felt_weight,
+                "alert_weight": alert_weight,
+                "regional_seismic_weight": seismic_weight,
+            },
+        }
+        normalized.append(item)
     return normalized
 
 

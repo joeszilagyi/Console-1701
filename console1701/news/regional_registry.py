@@ -118,6 +118,7 @@ REGIONAL_SOURCE_REGISTRY: tuple[RegionalSourceRegistryEntry, ...] = (
         kind="api_json",
         raw_url="https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php",
         homepage_url="https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php",
+        parser="usgs_earthquake_geojson",
         priority=90,
         interval_minutes=5,
         official_status="official",

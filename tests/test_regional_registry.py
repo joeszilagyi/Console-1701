@@ -35,6 +35,9 @@ def test_regional_source_registry_is_disabled_and_validated():
     assert summary["source_count"] == len(entries)
     assert summary["source_class_counts"]["official_transport"] >= 1
     assert summary["verification_status_counts"]["official_page_seen"] >= 1
+    assert get_regional_source_registry_entry("usgs_eq_geojson")["parser"] == (
+        "usgs_earthquake_geojson"
+    )
 
 
 def test_regional_registry_defaults_can_seed_minimal_config(tmp_path):

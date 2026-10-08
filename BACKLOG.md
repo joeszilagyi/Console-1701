@@ -633,7 +633,9 @@ not perform network calls and must be safe for pytest.
 Current state: the registry-backed RSS parser now accepts `regional_news_rss`, and a regional scan
 regression reuses the existing RSS fixture corpus to prove the REGIONAL ingest path. The shared
 local fixture corpus also now exercises REGIONAL NWS and WSDOT ingest paths. Dedicated regional
-fixture files for the remaining Washington sources are still pending.
+USGS earthquake GeoJSON fixture and parser now cover Washington-area coordinate and magnitude
+filtering, event evidence, and a capped seismic ranking factor. Dedicated regional fixtures for
+the remaining Washington sources are still pending.
 
 ### NWS Alert Parser For Washington
 
@@ -690,11 +692,18 @@ behavior. Keep the source disabled until verification is complete.
 
 ### USGS Earthquake GeoJSON Parser
 
-Status: not implemented.
+Status: partially implemented.
 
 Build a fixture-first parser for USGS earthquake GeoJSON filtered to Washington, Puget Sound,
 Cascadia, and configured radius/magnitude rules. Preserve event id, magnitude, depth, place, time,
 felt/intensity fields where present, source URL, bounding basis, and seismic ranking evidence.
+
+Current state: the REGIONAL registry now selects a dedicated `usgs_earthquake_geojson` parser. A
+synthetic fixture covers Washington-area events, out-of-region exclusion, and magnitude threshold
+exclusion. The parser preserves USGS ids, magnitude/depth/place/time, felt and intensity measures,
+official event URL, filter bounds, and a capped seismic score. Configurable geographic bounds and
+minimum magnitude are supported. Radius-based geography, source-feed verification, and live ingest
+remain pending.
 
 ### USGS Water/Hydrology Fixture Parser
 
@@ -768,12 +777,16 @@ jurisdiction. Do not use LLMs, embeddings, or hidden cloud calls.
 
 ### REGIONAL Deterministic Ranking
 
-Status: not implemented.
+Status: partially implemented.
 
 Implement explainable REGIONAL ranking with recency, official severity, source diversity, temporal
 proximity, public impact, geographic relevance, active alert state, source priority, cluster size,
 privacy penalty, duplicate-family penalty, stale-source penalty, low-confidence penalty, and
 out-of-region penalty. Store score features and ranking reasons in JSON evidence.
+
+Current state: shared deterministic ranking now stores an explicit capped
+`regional_seismic_boost` for registry-backed USGS earthquake fixtures. The broader REGIONAL
+convergence, geography, source-diversity, privacy, and stale-source model remains pending.
 
 ### REGIONAL Privacy And Public-Impact Rules
 
@@ -852,11 +865,15 @@ Per-source signoff templates and endpoint-specific walkthroughs still need a ded
 
 ### Tests For No Page-Load External Fetches
 
-Status: not implemented.
+Status: partially implemented.
 
 Add tests proving GET routes and page renders read SQLite/config only and never call REGIONAL
 network fetchers. Include disabled/not configured/stale/failing/policy-blocked/parser-failed state
 tests for REGIONAL and SYSTEM source health.
+
+Current state: the shared GET-route regression now renders REGIONAL and reads its scope API with
+an enabled source pointing at a missing fixture. It proves page/API reads stay SQLite/config only
+and do not invoke ingest. The full REGIONAL/SYSTEM source-state matrix remains pending.
 
 ## NATIONAL United States Recent Signal Layer
 
