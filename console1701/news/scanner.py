@@ -675,7 +675,7 @@ def _ingest_source(
                 )
                 return 0
             text = response.text or ""
-            success_message = "Official Washington NWS alerts ingest succeeded."
+            success_message = f"Official {source['name']} ingest succeeded."
         else:
             text, path = load_fixture_text(
                 source,

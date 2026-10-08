@@ -38,6 +38,9 @@ def test_regional_source_registry_is_disabled_and_validated():
     assert get_regional_source_registry_entry("usgs_eq_geojson")["parser"] == (
         "usgs_earthquake_geojson"
     )
+    usgs = get_regional_source_registry_entry("usgs_eq_geojson")
+    assert usgs["raw_url"].endswith("/summary/2.5_day.geojson")
+    assert usgs["verification_status"] == "verified"
 
 
 def test_regional_registry_defaults_can_seed_minimal_config(tmp_path):

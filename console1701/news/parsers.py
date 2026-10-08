@@ -277,6 +277,8 @@ def _parse_usgs_earthquake_geojson(
         geometry = feature.get("geometry")
         if not isinstance(properties, dict) or not isinstance(geometry, dict):
             raise NewsParserError(f"USGS feature {index} is missing properties or geometry.")
+        if str(properties.get("type") or "earthquake").strip().lower() != "earthquake":
+            continue
         coords = geometry.get("coordinates")
         if geometry.get("type") != "Point" or not isinstance(coords, list) or len(coords) < 2:
             raise NewsParserError(f"USGS feature {index} must have Point coordinates.")
@@ -353,6 +355,7 @@ def _parse_usgs_earthquake_geojson(
             "tsunami": properties.get("tsunami") == 1,
             "significance": _int_value(properties.get("sig")),
             "status": bounded_text(properties.get("status"), max_chars=32),
+            "event_type": "earthquake",
             "source_url": url,
             "filter": {**geo_filter, "matched": True},
             "ranking": {
