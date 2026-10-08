@@ -3,7 +3,67 @@ from __future__ import annotations
 from datetime import datetime
 
 from console1701.db import connect_db, init_db, utc_now
-from console1701.evidence import get_recent_events, get_repo_cards, get_system_summary
+from console1701.evidence import (
+    _host_changes,
+    get_recent_events,
+    get_repo_cards,
+    get_system_summary,
+)
+
+
+def test_host_changes_identify_concrete_service_network_and_storage_transitions():
+    previous = {
+        "health_state": "OK",
+        "snapshot": {
+            "storage": {"root": {"use_percent": 84.0}},
+            "services": {
+                "failed_system": [{"unit": "old.service"}],
+                "failed_user": [],
+                "failed_system_count": 1,
+                "failed_user_count": 0,
+            },
+            "network": {
+                "default_route": {"dev": "eth0", "gateway": "192.0.2.1"},
+                "interfaces": [{"ifname": "lo"}, {"ifname": "eth0"}],
+                "dns": {"servers": ["192.0.2.53"]},
+            },
+        },
+    }
+    latest = {
+        "health_state": "OK",
+        "snapshot": {
+            "storage": {"root": {"use_percent": 86.0}},
+            "services": {
+                "failed_system": [{"unit": "new.service"}],
+                "failed_user": [],
+                "failed_system_count": 1,
+                "failed_user_count": 0,
+            },
+            "network": {
+                "default_route": {"dev": "eth1", "gateway": "192.0.2.254"},
+                "interfaces": [{"ifname": "lo"}, {"ifname": "eth1"}],
+                "dns": {"servers": ["198.51.100.53"]},
+            },
+        },
+    }
+
+    assert _host_changes(latest, previous) == [
+        "Root filesystem usage changed by +2.0 percentage points.",
+        "Root filesystem crossed the 85% warning threshold.",
+        "New failed services: system:new.service.",
+        "Recovered services: system:old.service.",
+        "Default route interface or gateway changed.",
+        "Network interfaces appeared: eth1.",
+        "Network interfaces disappeared: eth0.",
+        "DNS resolver set changed.",
+    ]
+
+
+def test_host_changes_fall_back_to_counts_for_older_service_snapshots():
+    previous = {"snapshot": {"services": {"failed_system_count": 0}, "network": {}}}
+    latest = {"snapshot": {"services": {"failed_system_count": 1}, "network": {}}}
+
+    assert _host_changes(latest, previous) == ["Failed service count changed from 0 to 1."]
 
 
 def test_repo_cards_prioritize_configured_importance(tmp_path):
@@ -86,7 +146,7 @@ def test_recent_events_summarize_codex_and_strip_timezone_markers(tmp_path):
             "blue",
             "CODEX_RUN",
             (
-                '2026-04-28T13:51:18.256520Z INFO session_loop{...}: '
+                "2026-04-28T13:51:18.256520Z INFO session_loop{...}: "
                 'codex_core::stream_events_utils: ToolCall: exec_command {"cmd":"ls"}'
             ),
             "",

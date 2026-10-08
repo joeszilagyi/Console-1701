@@ -50,7 +50,7 @@ def _repo_activity_time(card: dict[str, Any]) -> datetime | None:
 
     if snapshot.get("is_dirty"):
         scanned_at = _parse_timestamp(snapshot.get("scanned_at"))
-        dirty_age_hours = ((snapshot.get("path_clusters") or {}).get("dirty_age_hours"))
+        dirty_age_hours = (snapshot.get("path_clusters") or {}).get("dirty_age_hours")
         if scanned_at and dirty_age_hours is not None:
             try:
                 return scanned_at - timedelta(hours=float(dirty_age_hours))
@@ -164,6 +164,30 @@ def _safe_percent(value: Any) -> float | None:
         return None
 
 
+def _short_names(names: set[str]) -> str:
+    ordered = sorted(names)
+    return ", ".join(ordered[:3]) + (f" and {len(ordered) - 3} more" if len(ordered) > 3 else "")
+
+
+def _failed_unit_names(services: dict[str, Any]) -> set[str]:
+    names: set[str] = set()
+    for scope in ("system", "user"):
+        for item in services.get(f"failed_{scope}") or []:
+            if isinstance(item, dict) and isinstance(item.get("unit"), str) and item["unit"]:
+                names.add(f"{scope}:{item['unit']}")
+    return names
+
+
+def _interface_names(network: dict[str, Any]) -> set[str]:
+    return {
+        item["ifname"]
+        for item in network.get("interfaces") or []
+        if isinstance(item, dict)
+        and isinstance(item.get("ifname"), str)
+        and item["ifname"] not in {"", "lo"}
+    }
+
+
 def _host_changes(
     latest: dict[str, Any] | None,
     previous: dict[str, Any] | None,
@@ -183,15 +207,18 @@ def _host_changes(
         )
 
     latest_root = ((latest_snapshot.get("storage") or {}).get("root") or {}).get("use_percent")
-    previous_root = ((previous_snapshot.get("storage") or {}).get("root") or {}).get(
-        "use_percent"
-    )
+    previous_root = ((previous_snapshot.get("storage") or {}).get("root") or {}).get("use_percent")
     latest_root_percent = _safe_percent(latest_root)
     previous_root_percent = _safe_percent(previous_root)
     if latest_root_percent is not None and previous_root_percent is not None:
         delta = latest_root_percent - previous_root_percent
         if abs(delta) >= 1:
             changes.append(f"Root filesystem usage changed by {delta:+.1f} percentage points.")
+        for threshold, label in ((85, "warning"), (95, "critical")):
+            if previous_root_percent < threshold <= latest_root_percent:
+                changes.append(f"Root filesystem crossed the {threshold}% {label} threshold.")
+            elif latest_root_percent < threshold <= previous_root_percent:
+                changes.append(f"Root filesystem fell below the {threshold}% {label} threshold.")
 
     latest_services = latest_snapshot.get("services") or {}
     previous_services = previous_snapshot.get("services") or {}
@@ -201,13 +228,48 @@ def _host_changes(
     previous_failed = int(previous_services.get("failed_system_count") or 0) + int(
         previous_services.get("failed_user_count") or 0
     )
-    if latest_failed != previous_failed:
+    if all(
+        key in services
+        for services in (latest_services, previous_services)
+        for key in ("failed_system", "failed_user")
+    ):
+        latest_units = _failed_unit_names(latest_services)
+        previous_units = _failed_unit_names(previous_services)
+        newly_failed = latest_units - previous_units
+        recovered = previous_units - latest_units
+        if newly_failed:
+            changes.append(f"New failed services: {_short_names(newly_failed)}.")
+        if recovered:
+            changes.append(f"Recovered services: {_short_names(recovered)}.")
+    elif latest_failed != previous_failed:
         changes.append(f"Failed service count changed from {previous_failed} to {latest_failed}.")
 
-    latest_route = bool((latest_snapshot.get("network") or {}).get("default_route"))
-    previous_route = bool((previous_snapshot.get("network") or {}).get("default_route"))
-    if latest_route != previous_route:
+    latest_network = latest_snapshot.get("network") or {}
+    previous_network = previous_snapshot.get("network") or {}
+    latest_route = latest_network.get("default_route")
+    previous_route = previous_network.get("default_route")
+    if bool(latest_route) != bool(previous_route):
         changes.append("Default route appeared." if latest_route else "Default route disappeared.")
+    elif isinstance(latest_route, dict) and isinstance(previous_route, dict):
+        route_fields = ("dev", "gateway")
+        if any(latest_route.get(key) != previous_route.get(key) for key in route_fields):
+            changes.append("Default route interface or gateway changed.")
+
+    if "interfaces" in latest_network and "interfaces" in previous_network:
+        latest_interfaces = _interface_names(latest_network)
+        previous_interfaces = _interface_names(previous_network)
+        appeared = latest_interfaces - previous_interfaces
+        disappeared = previous_interfaces - latest_interfaces
+        if appeared:
+            changes.append(f"Network interfaces appeared: {_short_names(appeared)}.")
+        if disappeared:
+            changes.append(f"Network interfaces disappeared: {_short_names(disappeared)}.")
+
+    latest_dns = latest_network.get("dns") or {}
+    previous_dns = previous_network.get("dns") or {}
+    if "servers" in latest_dns and "servers" in previous_dns:
+        if set(latest_dns["servers"] or []) != set(previous_dns["servers"] or []):
+            changes.append("DNS resolver set changed.")
 
     latest_kernel = (latest_snapshot.get("kernel") or {}).get("release")
     previous_kernel = (previous_snapshot.get("kernel") or {}).get("release")
@@ -490,8 +552,7 @@ def get_system_summary(conn: sqlite3.Connection) -> dict[str, Any]:
     elif worst in {"orange", "yellow"}:
         system_state = "CAUTION"
     elif any(
-        card["interpretation"] and card["interpretation"]["severity"] == "blue"
-        for card in cards
+        card["interpretation"] and card["interpretation"]["severity"] == "blue" for card in cards
     ):
         system_state = "WORKING"
     elif not cards:

@@ -2498,17 +2498,17 @@ Safe implementation shape if explicitly approved later:
 
 Status: partially implemented for persisted host snapshots.
 
-Improve change detection:
+The latest/previous host-snapshot comparison now identifies interface appearances/disappearances,
+default-route interface or gateway changes, DNS resolver-set changes, newly failed and recovered
+system/user services, and root-filesystem crossings of the existing 85% warning and 95% critical
+thresholds. Older snapshots without per-unit lists retain the failed-count fallback. No new probes
+or external requests are involved.
 
-- Interface appeared/disappeared.
-- Default route changed.
-- DNS changed.
-- Failed service set changed.
-- Filesystem usage crossed threshold.
-- Kernel/OS/session changed.
-- Tool versions changed.
+Remaining work:
 
-Each change should link to the evidence section that proves it.
+- Kernel/OS/session and tool-version changes beyond the existing kernel comparison.
+- Link each change to the evidence section that proves it.
+- Broader filesystem threshold transitions beyond the root mount.
 
 ### Evidence UX
 

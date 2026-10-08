@@ -1,5 +1,16 @@
 # Caretaking Log
 
+## 2026-10-08 - concrete host changes since the previous scan
+
+- Selected the medium-priority persisted-host change summary because a same-count service swap,
+  route gateway change, DNS change, or interface replacement could otherwise be invisible on the
+  local page despite both snapshots containing the evidence.
+- Expanded the pure snapshot comparison to report those transitions and root usage crossing the
+  existing warning/critical thresholds. Older snapshots without failed-unit lists still use the
+  count fallback; no new command, network request, database table, or background poll was added.
+- Added synthetic before/after tests for the newly visible changes and legacy count fallback.
+  Remaining work is listed in BACKLOG, including per-change evidence links.
+
 ## 2026-10-08 12:54 PDT - local per-interface network details
 
 - Selected the high-priority per-interface network backlog item after confirming `/api/live`
