@@ -24,10 +24,12 @@ Verified 2026-10-08 for the first explicit official HTTP ingest slice.
 - Failure behavior: a malformed payload records `parser_failed`, oversized or failed requests
   record failure, and HTTP 429 records `rate_limited`. Each source fails soft. GET routes never
   invoke this transport; the separate news timer remains disabled by default.
-- Enablement: `news.enabled`, `local.enabled`, the LOCAL scope, the source, and
-  `news.fetch_policy.allow_official_http` must all be true. The transport additionally accepts only
-  the exact verified URL, parser, source id, scope, and kind. No production source is enabled by
-  this signoff or by the committed example config.
+- Enablement: `news.enabled`, `news.fetch_policy.allow_official_http`, and the selected scope and
+  source must all be true. LOCAL also requires `local.enabled` and source id
+  `nws_active_alerts_api`; REGIONAL requires `regional.enabled` and source id
+  `nws_active_alerts_wa`. The transport accepts only this exact verified URL, parser, kind, and
+  scope/id pair. If both scopes are selected, one upstream response is shared per scan. No
+  production source is enabled by this signoff or by the committed example config.
 - Operational smoke check, 2026-10-08 11:00 PDT: a one-time config in the console config directory
   enabled only this source for an explicit `news-scan`. The request returned HTTP 200, GeoJSON
   metadata of 8,185 bytes, and an ETag. The source recorded `success`/`healthy`, zero Seattle-area
@@ -36,3 +38,11 @@ Verified 2026-10-08 for the first explicit official HTTP ingest slice.
   was then disabled and removed; the stored source is disabled, the standing config was unchanged,
   and the separate news timer remains disabled. This does not validate HTTP 304 or live alert-item
   persistence, which require a later eligible unchanged response or a Seattle-relevant alert.
+- REGIONAL smoke check, 2026-10-08 11:11 PDT: a one-time REGIONAL-only config under the console
+  config directory enabled this same exact URL for one explicit command. It returned HTTP 200,
+  8,185 bytes, and an ETag; SQLite recorded two Washington alert items in two separate official-ID
+  event clusters, `success`/`healthy` state, and non-fixture evidence. An immediate repeat made no
+  request under the ten-minute interval. The temporary opt-in was disabled and removed, the stored
+  REGIONAL source is disabled, the standing config was unchanged, and the news timer is disabled.
+  Two equal alert headlines carried distinct official IDs, so they were not falsely merged.
+  A live HTTP 304 remains unobserved.

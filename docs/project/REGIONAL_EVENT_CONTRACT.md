@@ -39,5 +39,5 @@ cover stale, parser-failed, policy-blocked, never-run, disabled, and manual-revi
 This is deterministic identity matching for the three structured official fixture parsers, not the
 full cross-family REGIONAL convergence model. Time-window matching, counties beyond existing source
 fields, passes/ferries/ports/basins/volcanoes/AQI/public-health jurisdictions, syndicated-news
-handling, and broader privacy/public-impact policy remain in `BACKLOG.md`. No REGIONAL source is
-enabled for live HTTP ingest by this contract.
+handling, and broader privacy/public-impact policy remain in `BACKLOG.md`. The REGIONAL NWS source
+has an opt-in live path, but this event contract does not enable it or the news timer by default.

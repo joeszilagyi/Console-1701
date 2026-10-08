@@ -1,5 +1,22 @@
 # Caretaking Log
 
+## 2026-10-08 11:11 PDT - scoped REGIONAL NWS live path
+
+- Extended the exact verified Washington NWS URL allowlist to its disabled REGIONAL registry
+  identity; REGIONAL live requests require `regional.enabled` plus the existing news, scope,
+  source, and HTTP gates. No other URL or source family was added.
+- Found that independent LOCAL and REGIONAL fetching could double-request the same NWS endpoint.
+  Added per-scan response/error sharing, URL-level interval/backoff, and an unconditional first
+  response when an enabled scope has no prior live success. Each scope still parses and records
+  items, health, and event evidence independently.
+- Mocked regressions cover both policy gates, one request for dual-scope ingest and 304, shared
+  rate-limit failures, a newly enabled scope waiting for the URL interval, and a blocked LOCAL
+  source not throttling an allowed REGIONAL source.
+- A one-time REGIONAL-only operational scan returned HTTP 200, 8,185 bytes, and an ETag; it stored
+  two Washington NWS items in separate official-ID clusters. A repeat was interval-skipped.
+  Disabled and removed the temporary opt-in afterward; the standing config and disabled news
+  timer were not changed. Live 304 remains unobserved; USGS/WSDOT endpoint signoff is still next.
+
 ## 2026-10-08 11:00 PDT - first controlled live NWS scan
 
 - Selected the deployed NWS Washington alerts ingestion path for a one-time operational check.

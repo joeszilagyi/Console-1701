@@ -41,11 +41,15 @@ news stack.
 ## Official HTTP Boundary
 
 - The only supported live URL is documented in
-  `docs/project/NWS_WASHINGTON_ALERTS_SOURCE_VERIFICATION.md`. It remains disabled unless all news,
-  local, scope, source, and `allow_official_http` flags are true. Do not enable the news timer by
-  default.
+  `docs/project/NWS_WASHINGTON_ALERTS_SOURCE_VERIFICATION.md`. LOCAL requires `local.enabled`;
+  REGIONAL requires `regional.enabled`. Both also require news, their scope, source, and
+  `allow_official_http` flags. Do not enable the news timer by default.
 - Requests use HTTPS, a bounded timeout and response, an identifying User-Agent, no inherited
   proxy or cross-host redirect, conditional validators, per-source interval, and failure backoff.
+- If both scopes use the NWS URL, one response is shared within the explicit scan while item and
+  health evidence remains scope-specific. The URL-level interval/backoff gate prevents a newly
+  enabled scope from immediately issuing another request. A new scope without a prior live success
+  forces an unconditional response so a 304 cannot leave its initial item set empty.
 - Live ingest must not hold an SQLite write transaction across the network request. Raw responses
   must not be persisted. Tests must mock transport; no live network test belongs in pytest.
 - Add further live sources only after fixture coverage, explicit source signoff, allowlist review,
