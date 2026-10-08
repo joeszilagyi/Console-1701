@@ -52,6 +52,19 @@ whenever new ideas come up and are not completed immediately.
 - Pytest now uses temporary console state, and scans release the SQLite write transaction before
   running configured tests.
 
+## Host Operations Follow-Up
+
+### Failed x11vnc System Service
+
+Status: needs owner review; outside console-1701 service recovery.
+
+The 2026-10-08 live host snapshot remains `CAUTION` (score 85) because the unrelated system unit
+`x11vnc.service` is failed. Its recorded May 11 log says `-auth guess: failed for display=':0'`.
+Confirm whether this VNC service is still wanted before changing its configuration or state. If
+wanted, inspect its systemd unit and display/auth setup, then verify it starts cleanly; if retired,
+have the host owner disable it so the console reports host health accurately. Do not treat this as
+a console web-service or scanner failure.
+
 ## Scoped Recent Signal / News Ingestion
 
 Architecture reference:
