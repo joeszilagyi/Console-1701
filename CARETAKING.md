@@ -10,6 +10,9 @@
 - The existing `main-protection` ruleset still targets no branch at this commit. After the new job
   passes on its PR and lands on `main`, target the default branch, preserve current merge-commit
   history by dropping its dormant linear-history rule, and require the `tests-and-lint` check.
+- The first GitHub run exposed a preexisting test that assumed Pacific local time; the application
+  intentionally formats timestamps in the host's local timezone. Corrected the assertion to
+  compare against the runner's local-time conversion, preserving the no-suffix contract.
 
 ## 2026-10-08 10:38 PDT - explicit official-feed boundary and first NWS transport
 
