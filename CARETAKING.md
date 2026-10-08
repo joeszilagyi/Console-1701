@@ -1,5 +1,21 @@
 # Caretaking Log
 
+## 2026-10-08 10:38 PDT - explicit official-feed boundary and first NWS transport
+
+- Selected the foundational live-ingest blocker: the backlog called for public official feeds but
+  the standing local-only notes did not distinguish those opt-in requests from cloud services.
+  Clarified that only a separate explicit news command may request allowlisted official feeds;
+  page loads, host scans, tests, SaaS, telemetry, LLM, and arbitrary URLs remain outside the bound.
+- Verified the NWS Washington active-alert endpoint against NWS documentation and an HTTP HEAD
+  response (200, GeoJSON, ETag, no redirect). Recorded the source signoff and changed the disabled
+  registry seed to that exact area-filtered URL with verified status.
+- Added default-off `allow_official_http` and an exact-source allowlist. The first transport has a
+  bounded timeout/payload, no proxy inheritance or redirects, identifying User-Agent, conditional
+  requests, interval/backoff, rate-limit status, and fail-soft source health. It releases the SQLite
+  write transaction before network I/O and does not store raw responses.
+- Added mocked first-fetch, 304, throttling, 429, default-block, URL-allowlist, and payload-cap
+  tests. No production source or news timer was enabled.
+
 ## 2026-10-08 10:16 PDT - first REGIONAL USGS earthquake fixture slice
 
 - Selected the first unimplemented official earthquake parser in the REGIONAL backlog after the

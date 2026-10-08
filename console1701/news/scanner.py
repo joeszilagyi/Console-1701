@@ -11,6 +11,11 @@ from console1701.config import ensure_state_dirs, iter_news_sources, load_config
 from console1701.db import connect_db, init_db, json_dumps, json_loads, utc_now
 from console1701.news.local_registry import list_local_source_registry
 from console1701.news.normalize import cluster_key, content_hash, expires_at, url_hash
+from console1701.news.official_http import (
+    RateLimitedError,
+    fetch_official_text,
+    is_supported_official_source,
+)
 from console1701.news.parsers import (
     NewsIngestError,
     NewsParserError,
@@ -74,6 +79,7 @@ def run_news_scan(config_path: str | Path | None = None) -> dict[str, Any]:
     _sync_regional_source_registry(conn, synced_at=sync_time)
 
     scanned_sources = 0
+    skipped_sources = 0
     healthy_sources = 0
     item_count = 0
     errors: list[str] = []
@@ -114,6 +120,7 @@ def run_news_scan(config_path: str | Path | None = None) -> dict[str, Any]:
                 "configured_sources": len(configured_sources),
                 "stored_sources": upserted_sources,
                 "scanned_sources": 0,
+                "skipped_sources": 0,
                 "healthy_sources": 0,
                 "item_count": 0,
                 "errors": [],
@@ -126,6 +133,11 @@ def run_news_scan(config_path: str | Path | None = None) -> dict[str, Any]:
         for source in configured_sources:
             if not _source_is_enabled(config, source):
                 continue
+            if _is_allowed_live_source(config, source) and not _live_source_due(
+                conn, config, source
+            ):
+                skipped_sources += 1
+                continue
             scanned_sources += 1
             try:
                 stored = _ingest_source(conn, config, source, config_dir=config_dir)
@@ -133,6 +145,7 @@ def run_news_scan(config_path: str | Path | None = None) -> dict[str, Any]:
                 healthy_sources += 1
             except NewsIngestError as exc:
                 errors.append(f"{source['id']}: {exc}")
+            conn.commit()
         purge_now = utc_now()
         before_counts = _news_table_counts(conn)
         purge_summary = purge_news_retention(conn, config, now=purge_now)
@@ -155,6 +168,7 @@ def run_news_scan(config_path: str | Path | None = None) -> dict[str, Any]:
             "configured_sources": len(configured_sources),
             "stored_sources": upserted_sources,
             "scanned_sources": scanned_sources,
+            "skipped_sources": skipped_sources,
             "healthy_sources": healthy_sources,
             "item_count": item_count,
             "errors": errors,
@@ -420,10 +434,49 @@ def _source_is_enabled(config: dict[str, Any], source: dict[str, Any]) -> bool:
     return bool(scope_cfg.get("enabled")) and bool(source.get("enabled"))
 
 
+def _is_allowed_live_source(config: dict[str, Any], source: dict[str, Any]) -> bool:
+    fetch_policy = ((config.get("news") or {}).get("fetch_policy") or {})
+    return (
+        bool(fetch_policy.get("allow_official_http"))
+        and bool((config.get("local") or {}).get("enabled"))
+        and is_supported_official_source(source)
+    )
+
+
+def _live_source_due(
+    conn: sqlite3.Connection, config: dict[str, Any], source: dict[str, Any]
+) -> bool:
+    row = conn.execute(
+        """
+        SELECT r.started_at, r.status, r.evidence_json
+        FROM news_fetch_runs r JOIN news_sources s ON s.id = r.source_id
+        WHERE s.source_key = ? ORDER BY r.id DESC LIMIT 1
+        """,
+        (source["id"],),
+    ).fetchone()
+    if row is None:
+        return True
+    if json_loads(str(row["evidence_json"]), {}).get("fixture_only"):
+        return True
+    policy = ((config.get("news") or {}).get("fetch_policy") or {})
+    status = str(row["status"])
+    minutes = (
+        int(policy.get("default_backoff_minutes", 120))
+        if status not in {"success", "not_modified"}
+        else int(source.get("interval_minutes") or policy.get("default_interval_minutes", 30))
+    )
+    minutes = max(1, minutes)
+    try:
+        last_started = datetime.fromisoformat(str(row["started_at"])).astimezone(UTC)
+    except ValueError:
+        return True
+    return datetime.now(UTC) >= last_started + timedelta(minutes=minutes)
+
+
 def _policy_for_source(config: dict[str, Any], source: dict[str, Any]) -> dict[str, Any]:
     policy = evaluate_source_policy(config, source)
     policy["parser"] = source.get("parser")
-    policy["fixture_only"] = True
+    policy["fixture_only"] = str(source.get("url") or "").startswith("file://")
     return policy
 
 
@@ -515,17 +568,70 @@ def _ingest_source(
 
     try:
         policy = _policy_for_source(config, source)
-        text, path = load_fixture_text(
-            source,
-            config_dir=config_dir,
-            max_bytes=max_bytes,
-        )
+        is_live = _is_allowed_live_source(config, source)
+        fetch_evidence: dict[str, Any]
+        fetch_columns: dict[str, Any] = {}
+        if is_live:
+            etag, last_modified = _latest_http_validators(conn, source_id, before_run_id=run_id)
+            # A network request must never hold a SQLite write transaction open.
+            conn.commit()
+            fetch_policy = ((config.get("news") or {}).get("fetch_policy") or {})
+            response = fetch_official_text(
+                source,
+                user_agent=str(fetch_policy.get("user_agent")),
+                timeout_seconds=int(
+                    source.get("timeout_seconds") or fetch_policy.get("default_timeout_seconds", 10)
+                ),
+                max_bytes=max_bytes,
+                etag=etag,
+                last_modified=last_modified,
+            )
+            fetch_columns = {
+                "http_status": response.status_code,
+                "etag_sent": etag,
+                "etag_received": response.etag,
+                "last_modified_sent": last_modified,
+                "last_modified_received": response.last_modified,
+            }
+            fetch_evidence = {
+                "fixture_only": False,
+                "official_url": str(source["url"]),
+                "response_bytes": response.response_bytes,
+            }
+            if response.status_code == 304:
+                finished_at = utc_now()
+                _finish_fetch_run(
+                    conn, run_id, status="not_modified", finished_at=finished_at,
+                    item_count=0, evidence=fetch_evidence, **fetch_columns,
+                )
+                _insert_source_health(
+                    conn, source_id, observed_at=finished_at, state="healthy",
+                    last_success_at=finished_at, last_failure_at=None,
+                    message="Official feed unchanged (HTTP 304).", evidence=fetch_evidence,
+                    source=source,
+                )
+                return 0
+            text = response.text or ""
+            success_message = "Official Washington NWS alerts ingest succeeded."
+        else:
+            text, path = load_fixture_text(
+                source,
+                config_dir=config_dir,
+                max_bytes=max_bytes,
+            )
+            fetch_evidence = {"fixture_path": str(path), "fixture_only": True}
+            success_message = f"Fixture ingest succeeded for {path.name}."
         items = parse_fixture_items(source, text)
         stored_count = 0
         for item in items:
             evidence = dict(item.get("evidence") or {})
-            evidence["fixture_path"] = str(path)
-            evidence["fixture_size_bytes"] = len(text.encode("utf-8"))
+            if not is_live:
+                evidence["fixture_path"] = str(path)
+                evidence["fixture_size_bytes"] = len(text.encode("utf-8"))
+            else:
+                evidence["official_fetch"] = {
+                    "url": str(source["url"]), "http_status": response.status_code
+                }
             item["evidence"] = evidence
             _upsert_item(
                 conn,
@@ -545,7 +651,8 @@ def _ingest_source(
             status="success",
             finished_at=utc_now(),
             item_count=stored_count,
-            evidence={"fixture_path": str(path), "fixture_only": True},
+            evidence=fetch_evidence,
+            **fetch_columns,
         )
         _insert_source_health(
             conn,
@@ -554,8 +661,8 @@ def _ingest_source(
             state="healthy",
             last_success_at=utc_now(),
             last_failure_at=None,
-            message=f"Fixture ingest succeeded for {path.name}.",
-            evidence={"fixture_path": str(path), "item_count": stored_count},
+            message=success_message,
+            evidence={**fetch_evidence, "item_count": stored_count},
             source=source,
         )
         return stored_count
@@ -568,7 +675,14 @@ def _ingest_source(
             status="policy_blocked",
             error_class=type(exc).__name__,
             error_message=str(exc),
-            message="Source is outside the fixture-only ingest policy.",
+            message="Source is outside the explicit official HTTP allowlist or fixture policy.",
+        )
+        raise
+    except RateLimitedError as exc:
+        _record_source_failure(
+            conn, run_id, source_id, source,
+            status="rate_limited", error_class=type(exc).__name__,
+            error_message=str(exc), message=str(exc), http_status=429,
         )
         raise
     except PayloadTooLargeError as exc:
@@ -619,6 +733,7 @@ def _record_source_failure(
     error_class: str,
     error_message: str,
     message: str,
+    http_status: int | None = None,
 ) -> None:
     now = utc_now()
     _finish_fetch_run(
@@ -629,7 +744,8 @@ def _record_source_failure(
         item_count=0,
         error_class=error_class,
         error_message=error_message,
-        evidence={"fixture_only": True},
+        http_status=http_status,
+        evidence={"fixture_only": str(source.get("url") or "").startswith("file://")},
     )
     _insert_source_health(
         conn,
@@ -639,7 +755,10 @@ def _record_source_failure(
         last_success_at=_latest_health_timestamp(conn, source_id, "last_success_at"),
         last_failure_at=now,
         message=message,
-        evidence={"fixture_only": True, "error_class": error_class},
+        evidence={
+            "fixture_only": str(source.get("url") or "").startswith("file://"),
+            "error_class": error_class,
+        },
         source=source,
     )
 
@@ -660,6 +779,25 @@ def _latest_health_timestamp(conn: sqlite3.Connection, source_id: int, column: s
     return str(row[column]) if row[column] else None
 
 
+def _latest_http_validators(
+    conn: sqlite3.Connection, source_id: int, *, before_run_id: int
+) -> tuple[str | None, str | None]:
+    row = conn.execute(
+        """
+        SELECT COALESCE(etag_received, etag_sent) AS etag,
+               COALESCE(last_modified_received, last_modified_sent) AS last_modified
+        FROM news_fetch_runs
+        WHERE source_id = ? AND id < ? AND status IN ('success', 'not_modified')
+        ORDER BY id DESC LIMIT 1
+        """,
+        (source_id, before_run_id),
+    ).fetchone()
+    return (
+        (str(row["etag"]) if row and row["etag"] else None),
+        (str(row["last_modified"]) if row and row["last_modified"] else None),
+    )
+
+
 def _start_fetch_run(
     conn: sqlite3.Connection,
     source_id: int,
@@ -677,7 +815,10 @@ def _start_fetch_run(
         (
             source_id,
             started_at,
-            json_dumps({"fixture_only": True, "source_kind": source.get("kind")}),
+            json_dumps({
+                "fixture_only": str(source.get("url") or "").startswith("file://"),
+                "source_kind": source.get("kind"),
+            }),
         ),
     ).lastrowid
     return int(row_id)
@@ -693,6 +834,11 @@ def _finish_fetch_run(
     error_class: str | None = None,
     error_message: str | None = None,
     evidence: dict[str, Any] | None = None,
+    http_status: int | None = None,
+    etag_sent: str | None = None,
+    etag_received: str | None = None,
+    last_modified_sent: str | None = None,
+    last_modified_received: str | None = None,
 ) -> None:
     started = conn.execute(
         "SELECT started_at, evidence_json FROM news_fetch_runs WHERE id = ?",
@@ -715,7 +861,12 @@ def _finish_fetch_run(
             error_class = ?,
             error_message = ?,
             duration_ms = ?,
-            evidence_json = ?
+            evidence_json = ?,
+            http_status = ?,
+            etag_sent = ?,
+            etag_received = ?,
+            last_modified_sent = ?,
+            last_modified_received = ?
         WHERE id = ?
         """,
         (
@@ -726,6 +877,11 @@ def _finish_fetch_run(
             error_message,
             max(0, int((finished_dt - started_at).total_seconds() * 1000)),
             json_dumps(merged_evidence),
+            http_status,
+            etag_sent,
+            etag_received,
+            last_modified_sent,
+            last_modified_received,
             run_id,
         ),
     )
@@ -1597,7 +1753,7 @@ def _upsert_item(
     evidence["ingest"] = {
         "fetch_run_id": fetch_run_id,
         "seen_at": seen_at,
-        "fixture_only": True,
+        "fixture_only": bool(policy.get("fixture_only")),
         "source_health_state_at_ingest": latest_health_state or "unknown",
     }
     evidence["policy"] = {
@@ -1844,10 +2000,14 @@ def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
                 "item_count": 0,
                 "score": 0,
                 "tags": [],
+                "fixture_only": True,
             },
         )
         group["item_count"] += 1
         group["score"] += int(row["rank_score"])
+        group["fixture_only"] = group["fixture_only"] and bool(
+            (evidence.get("ingest") or {}).get("fixture_only", True)
+        )
         group["last_seen_at"] = max(group["last_seen_at"], str(row["last_seen_at"]))
         tags = json_loads(str(row["tags_json"]), [])
         group["tags"] = list(dict.fromkeys([*group["tags"], *tags]))
@@ -1872,7 +2032,7 @@ def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
                 group["item_count"],
                 group["score"],
                 json_dumps(group["tags"]),
-                json_dumps({"fixture_only": True}),
+                json_dumps({"fixture_only": group["fixture_only"]}),
             ),
         )
 

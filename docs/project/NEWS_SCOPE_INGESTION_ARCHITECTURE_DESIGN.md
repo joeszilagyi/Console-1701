@@ -909,6 +909,9 @@ Rules:
 Safeguards:
 
 - No external fetch unless `news.enabled` is true and the source is enabled.
+- The local-only rule means the UI, database, and host scanner remain local. A separate explicit
+  news ingest command may request allowlisted official public feeds only when a dedicated HTTP
+  opt-in is true. No SaaS/LLM/telemetry dependency or arbitrary URL fetching is implied.
 - No external fetch on page load.
 - No hidden LLM calls.
 - No telemetry.

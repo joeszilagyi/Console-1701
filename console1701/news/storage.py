@@ -698,9 +698,9 @@ def get_news_config_warnings(config: dict[str, Any]) -> list[str]:
         url = str(source.get("url") or "").strip()
         if source.get("enabled") and not url:
             warnings.append(f"{source_key} is enabled but has no URL configured.")
-        elif source.get("enabled") and not url.startswith("file://"):
+        elif source.get("enabled") and policy.get("policy_state") == "blocked_fixture_phase":
             warnings.append(
-                f"{source_key} is enabled but blocked in the current fixture-only ingest phase."
+                f"{source_key} is enabled but blocked by the official HTTP opt-in or allowlist."
             )
         if policy.get("auth_required") and not policy.get("auth_configured"):
             warnings.append(f"{source_key} declares auth, but no auth material is configured.")

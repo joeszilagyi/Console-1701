@@ -166,6 +166,7 @@ DEFAULT_NEWS_CONFIG: dict[str, Any] = {
         "default_backoff_minutes": 120,
         "max_response_bytes": 1048576,
         "user_agent": "console-1701 local recent-signal monitor",
+        "allow_official_http": False,
         "page_load_external_fetches": False,
         "respect_robots_txt": True,
         "allow_homepage_extractors": False,
@@ -765,6 +766,14 @@ def normalize_news_config(config: dict[str, Any]) -> None:
     fetch_policy["user_agent"] = _require_string(
         fetch_policy.get("user_agent", "console-1701 local recent-signal monitor"),
         "news.fetch_policy.user_agent",
+    )
+    if len(fetch_policy["user_agent"]) > 256 or any(
+        char in fetch_policy["user_agent"] for char in "\r\n"
+    ):
+        raise ConfigError("news.fetch_policy.user_agent must be one line of at most 256 chars.")
+    fetch_policy["allow_official_http"] = _coerce_bool(
+        fetch_policy.get("allow_official_http", False),
+        "news.fetch_policy.allow_official_http",
     )
     fetch_policy["page_load_external_fetches"] = _coerce_bool(
         fetch_policy.get("page_load_external_fetches", False),

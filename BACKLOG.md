@@ -18,10 +18,12 @@ whenever new ideas come up and are not completed immediately.
 - The local delta image is displayed from `console1701/static/codex-alert-delta.png`.
 - Recent-signal/news support remains disabled by default: `news:` config validation rejects unsafe
   shapes, SQLite metadata tables exist, storage helpers expose disabled/not-configured states, and
-  explicit fixture-only ingest exists without live external fetching.
-- `console-1701 news-scan` now provides explicit local-fixture-only ingest for enabled `file://`
+  explicit fixture ingest exists, and one official HTTP source is available behind opt-in gates.
+- `console-1701 news-scan` provides explicit local-fixture ingest for enabled `file://`
   JSON/RSS/Atom/homepage sources, updates source health/fetch runs/items/clusters in SQLite, and
-  performs retention purge without network access.
+  performs retention purge even when news is disabled.
+- A first official HTTP path now exists for the exact verified Washington NWS alerts endpoint.
+  It remains disabled by default and requires explicit news, LOCAL, source, and HTTP opt-ins.
 - A disabled-by-default `local:` policy config now exists for Seattle-specific inclusion flags,
   hazard thresholds, and explicit social/neighborhood-blog allowances.
 - A static LOCAL source registry now seeds disabled metadata for core official, blog, and
@@ -121,9 +123,9 @@ must be blocked unless explicitly enabled and must record robots evidence when u
 is an operational courtesy, not a legal shield.
 
 Current state: source policy is recorded in `news_sources.policy_json`, surfaced in API/UI/CLI, and
-includes fixture-only/live-blocked basis, source kind, enablement, auth state, homepage-extractor
-allowance, and a robots placeholder state. Live robots fetch/decision evidence is still pending until
-real HTTP ingestion exists.
+includes fixture, allowlisted official HTTP, and blocked-live bases; source kind, enablement, auth
+state, homepage-extractor allowance, and a robots placeholder state. The NWS official API does not
+require robots checking; live homepage robots fetch/decision evidence is still pending.
 
 ### Retention Purge
 
@@ -185,16 +187,18 @@ derived config warnings.
 
 ### Official API/RSS First Live Ingest
 
-Status: not implemented.
+Status: partially implemented.
 
 After fixture ingest and tests exist, add explicit enabled HTTP fetch for safe official APIs/RSS only.
 Use timeouts, response size caps, per-source intervals, backoff, ETag/Last-Modified support, honest
 user agent, and fail-soft per-source behavior. Tests must use mocked HTTP or a local test server, not
 live network.
 
-Current state: API/RSS source definitions and fixture parsers exist, but the news scanner accepts
-only `file://` fixtures. No live HTTP fetch client, conditional requests, or production source
-enablement flow has been implemented. The earlier "implemented" label was incorrect.
+Current state: an allowlisted, explicit HTTPS client supports the verified Washington NWS active
+alerts endpoint only. It has bounded timeout/response size, a User-Agent, no redirects or inherited
+proxy, conditional ETag/Last-Modified requests, per-source interval/backoff, local SQLite evidence,
+and mocked transport tests. Default config and news timer remain disabled. General official RSS/API
+support and additional source verification remain pending.
 
 ### Homepage Extractor Later And Disabled
 
@@ -231,8 +235,8 @@ explain disabled-by-default behavior, page-load SQLite-only reads, explicit inge
 retention, source policy, and how to audit source health.
 
 Current state: README and CLI surfaces now mention `news-scan`, `news-sources`, page-load SQLite-only
-reads, and current fixture-only behavior. Config-specific walkthroughs, retention auditing details,
-and future live-ingest operational notes are still pending. README and CLI help now also describe the
+reads, and the current fixture-plus-NWS opt-in behavior. Config-specific walkthroughs and retention
+auditing details are still pending. README and CLI help now also describe the
 source-audit workflow with family/class/verification/access metadata, and the website audit drawers
 surface the same registry fields alongside policy and health. `docs/project/NEWS_OPERATIONAL_GUIDE.md`
 now captures the disabled-by-default operating notes, explicit ingest boundary, retention and purge
@@ -519,17 +523,16 @@ contract details now land in local-event payloads via `matching_contract` and
 
 ### LOCAL Official-Source Live Ingest Phase
 
-Status: not implemented.
+Status: partially implemented.
 
 After fixture parsing, correlation, ranking, retention, and tests exist, add opt-in live ingest for
 one safe official source at a time. First candidates are SFD Fire 911 Socrata, NWS alerts, King
 County Metro RSS, and WSDOT API. Keep every source disabled by default and require an explicit
 command. No page-load fetches.
 
-Current state: the fixture parsers, correlation, ranking, retention, and tests for the LOCAL scope
-already exist, but the explicit live ingest command path and per-source enablement flow are still
-absent. The first official-source live candidates remain SFD Fire 911 Socrata, NWS alerts, King
-County Metro RSS, and WSDOT API.
+Current state: the explicit `news-scan` path can fetch only the verified Washington NWS alerts URL
+when every opt-in gate is true. It remains off in the live config. SFD Fire 911, King County Metro,
+WSDOT, and other sources still require endpoint signoff and allowlist additions before live ingest.
 
 ### LOCAL News/Blog RSS Ingest Phase
 

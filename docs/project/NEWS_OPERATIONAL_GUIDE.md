@@ -13,8 +13,9 @@ news stack.
 
 ## Operational Commands
 
-- `console-1701 news-scan` runs the fixture-backed ingest path and records source state, purge
-  evidence, and item evidence in SQLite.
+- `console-1701 news-scan` runs fixture ingest and, only after explicit opt-in, the allowlisted
+  Washington NWS official HTTPS feed. It records source state, purge evidence, and item evidence in
+  SQLite. The web and host scanner never fetch this feed.
 - `console-1701 news-sources` prints the current source registry, source policy, and source-health
   metadata.
 
@@ -32,9 +33,17 @@ news stack.
   `rate_limited`, `unsupported`, and `manual_review_only`.
 - Surface source-health changes in the CLI and scope pages before enabling any live fetch path.
 
-## Future Live Ingest
+## Official HTTP Boundary
 
-- Add live ingest only after fixture coverage, explicit source policy, and timeout/backoff rules
-  exist for the source family.
+- The only supported live URL is documented in
+  `docs/project/NWS_WASHINGTON_ALERTS_SOURCE_VERIFICATION.md`. It remains disabled unless all news,
+  local, scope, source, and `allow_official_http` flags are true. Do not enable the news timer by
+  default.
+- Requests use HTTPS, a bounded timeout and response, an identifying User-Agent, no inherited
+  proxy or cross-host redirect, conditional validators, per-source interval, and failure backoff.
+- Live ingest must not hold an SQLite write transaction across the network request. Raw responses
+  must not be persisted. Tests must mock transport; no live network test belongs in pytest.
+- Add further live sources only after fixture coverage, explicit source signoff, allowlist review,
+  and timeout/backoff rules exist for that source.
 - Keep operational notes close to the code and backlog so the next pass can verify the current
   enablement boundary without reopening the design docs.
