@@ -69,13 +69,14 @@ a console web-service or scanner failure.
 
 ## GitHub Merge Gate
 
-Status: partially implemented.
+Status: implemented.
 
-A read-only GitHub Actions `tests-and-lint` job now runs pytest and Ruff for PRs and `main`. Once
-its first run passes and the workflow is merged, update the existing `main-protection` ruleset to
-target the default branch and require that check. The dormant linear-history rule conflicts with
-the project's merge-commit history; remove it if retaining merge commits. Verify effective rules
-through GitHub's branch-rules endpoint and prove the next PR displays a required passing check.
+A read-only GitHub Actions `tests-and-lint` job now runs pytest and Ruff for PRs and `main`. Its
+first PR run exposed and resolved a timezone-dependent test, and the rerun plus merged `main` push
+passed. The existing `main-protection` ruleset now targets the default branch, requires that check
+from the GitHub Actions app, requires PRs, and blocks deletion/force-push. Its dormant
+linear-history rule was removed to retain the project's merge-commit practice. GitHub's effective
+branch-rules endpoint returns the expected four rules for `main`.
 
 ## Scoped Recent Signal / News Ingestion
 
@@ -641,10 +642,11 @@ retention purge evidence. Use JSON-heavy columns and indexes for latest-by-scope
 source health, source family, geographic filters, and `expires_at` purge. Do not store full article
 bodies by default.
 
-Current state: the shared `news_source_registry` table now persists REGIONAL registry rows, and
-`get_news_storage_summary()` exposes a regional registry summary alongside the existing local
-summary. Dedicated `regional_events`, ranking partitions, geographic label indexes, and purge
-evidence tables are still pending.
+Current state: the shared `news_source_registry` table persists REGIONAL registry rows, and
+`get_news_storage_summary()` exposes a regional registry summary. REGIONAL official-ID events now
+use scoped `news_clusters` with member, family, geography, confidence, and ranking evidence, so a
+separate `regional_events` table is not required for this slice. Dedicated geography indexes and
+broader event-query/purge evidence remain pending.
 
 ### REGIONAL Fixture Pack
 
@@ -673,9 +675,10 @@ certainty, affected zones, counties, effective time, expiration time, source URL
 and official-alert ranking evidence.
 
 Current state: the existing NWS fixture parser now runs in REGIONAL scope through the registry-
-backed ingest path, and the REGIONAL regression covers the Washington alert fixture with the
-shared local test corpus. Dedicated Washington-only fixture files and broader county/zone
-coverage are still pending.
+backed ingest path. It now rejects alerts without Washington zone evidence or an explicit
+Washington area label; the disabled registry seed uses the documented `area=WA` endpoint. The
+REGIONAL regression covers in- and out-of-region fixture cases. Dedicated Washington-only fixture
+files and broader county/zone coverage remain pending.
 
 ### WSDOT Traveler API Fixture Parser
 
@@ -794,12 +797,18 @@ Scope-specific regional feed curation and duplication handling are still pending
 
 ### REGIONAL Deterministic Event Correlation
 
-Status: not implemented.
+Status: partially implemented.
 
 Implement deterministic REGIONAL event matching by source family, time window, normalized title
 tokens, event type, county, city, route, mountain pass, ferry route, airport, port, river basin,
 weather zone, fire incident name, volcano, seismic region, AQI station, and public-health
 jurisdiction. Do not use LLMs, embeddings, or hidden cloud calls.
+
+Current state: USGS, NWS, and WSDOT fixtures match updates by their official event IDs into scoped
+clusters. The item/cluster contract stores geography basis, matching tokens, confidence, member
+IDs, and source families; unverified headlines remain isolated by URL. This prevents title-only
+false convergence. Cross-family semantic/time-window matching and the remaining regional token
+families are still pending; see `docs/project/REGIONAL_EVENT_CONTRACT.md`.
 
 ### REGIONAL Deterministic Ranking
 
@@ -811,8 +820,10 @@ privacy penalty, duplicate-family penalty, stale-source penalty, low-confidence 
 out-of-region penalty. Store score features and ranking reasons in JSON evidence.
 
 Current state: shared deterministic ranking now stores an explicit capped
-`regional_seismic_boost` for registry-backed USGS earthquake fixtures. The broader REGIONAL
-convergence, geography, source-diversity, privacy, and stale-source model remains pending.
+`regional_seismic_boost` for registry-backed USGS earthquake fixtures. It now also records
+geography, public-impact, low-confidence, and privacy terms plus recalculated event-size,
+distinct-family, and duplicate-family factors. Broader cross-family matching, nuanced stale-source
+and out-of-region penalties, and sensitivity policy remain pending.
 
 ### REGIONAL Privacy And Public-Impact Rules
 
@@ -825,31 +836,46 @@ facility, or regional labels unless official public-impact evidence requires mor
 
 ### REGIONAL UI Disabled States
 
-Status: not implemented.
+Status: partially implemented.
 
 Replace REGIONAL placeholders only after storage/config support exists. Show honest states for
 disabled, not configured, configured but disabled, never scanned, stale, policy blocked, parser
 failed, social disabled, homepage extraction disabled, and manual-review-only sources. Do not show
 fake headlines.
 
+Current state: the shared REGIONAL page and SQLite-backed API render honest source state, items,
+clusters, and evidence drawers. A REGIONAL regression covers disabled, never-run, stale,
+parser-failed, policy-blocked, and manual-review states without fetching. The full state matrix and
+scope-specific presentation remain pending.
+
 ### REGIONAL Source Health States
 
-Status: not implemented.
+Status: partially implemented.
 
 Implement source health states for REGIONAL: `disabled`, `not_configured`,
 `configured_never_run`, `healthy`, `stale`, `failing`, `parser_failed`, `policy_blocked`,
 `robots_blocked`, `auth_required`, `rate_limited`, `unsupported`, and `manual_review_only`. Surface
 these states in SYSTEM later and summarize them on REGIONAL.
 
+Current state: the shared source-health derivation and REGIONAL page/API surface the listed states.
+The REGIONAL matrix regression covers the common disabled/never-run/stale/parser-failed/
+policy-blocked/manual-review cases. Explicit REGIONAL robots, auth, rate-limit, and unsupported
+state regressions remain pending.
+
 ### REGIONAL Evidence Drawer Contract
 
-Status: not implemented.
+Status: partially implemented.
 
 Define and test evidence payloads for REGIONAL items and events. Include source ids, names,
 families, classes, item URLs, canonical URLs, official flags, published times, first/last seen,
 fetch run ids, parser names, source health, ranking features, geographic match basis, public impact
 basis, source diversity basis, privacy redaction decision, retention expiration, matching tokens,
 event type, event confidence, and policy notes.
+
+Current state: item evidence now carries official-ID matching, geography basis, public-impact and
+privacy basis, source metadata, ranking, ingest, policy, and retention. Cluster evidence carries
+members, source-family counts, corroboration, and score. The existing drawers expose that JSON.
+Scope-specific display design and full public-impact/privacy explanation remain pending.
 
 ### REGIONAL Official-Source Live Ingest Phase
 

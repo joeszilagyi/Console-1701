@@ -696,6 +696,72 @@ news:
     assert "forced parser failure" in body.lower()
 
 
+def test_regional_scope_source_health_matrix_is_visible_without_fetch(tmp_path, monkeypatch):
+    db_path = _use_temp_state(monkeypatch, tmp_path)
+    config_path = tmp_path / "config.yml"
+    config_path.write_text(
+        """
+paths: {repo_roots: [], explicit_repos: []}
+logs: []
+projects: []
+news:
+  enabled: true
+  scopes:
+    REGIONAL:
+      enabled: true
+      sources:
+        - {id: regional_stale, name: Stale, kind: local_file_json, enabled: true,
+           url: 'file:///tmp/regional-stale.json'}
+        - {id: regional_failed, name: Parser failed, kind: local_file_json, enabled: true,
+           url: 'file:///tmp/regional-failed.json'}
+        - {id: regional_blocked, name: Blocked, kind: rss, enabled: true,
+           url: 'https://example.invalid/regional.rss'}
+        - {id: regional_waiting, name: Waiting, kind: local_file_json, enabled: true,
+           url: 'file:///tmp/regional-waiting.json'}
+        - {id: regional_disabled, name: Disabled, kind: local_file_json, enabled: false,
+           url: 'file:///tmp/regional-disabled.json'}
+        - {id: regional_manual, name: Manual, kind: rss, adapter: manual_review_only,
+           enabled: true, url: 'file:///tmp/regional-manual.rss'}
+""".strip() + "\n",
+        encoding="utf-8",
+    )
+    with connect_db(db_path) as conn:
+        init_db(conn)
+        stale_id = _insert_news_source(
+            conn, "regional_stale", scope="REGIONAL", name="Stale",
+            url="file:///tmp/regional-stale.json",
+        )
+        failed_id = _insert_news_source(
+            conn, "regional_failed", scope="REGIONAL", name="Parser failed",
+            url="file:///tmp/regional-failed.json",
+        )
+        _insert_news_source_health(
+            conn, stale_id, observed_at="2020-01-01T00:00:00+00:00", state="healthy",
+            stale_after="2020-01-01T00:00:00+00:00",
+            last_success_at="2020-01-01T00:00:00+00:00",
+        )
+        _insert_news_source_health(
+            conn, failed_id, observed_at="2026-10-08T00:00:00+00:00",
+            state="parser_failed", last_failure_at="2026-10-08T00:00:00+00:00",
+            message="REGIONAL parser failed",
+        )
+
+    router = build_router(str(config_path))
+    page = _route_endpoint(router, "/{scope}")(_request("/REGIONAL"), "REGIONAL")
+    scope = _route_endpoint(router, "/api/news/scopes/{scope}")("REGIONAL", 8)
+    states = scope["state"]["source_state_counts"]
+
+    assert page.status_code == 200
+    assert scope["state"]["state"] == "failing"
+    assert states["stale"] == 1
+    assert states["parser_failed"] == 1
+    assert states["policy_blocked"] == 1
+    assert states["configured_never_run"] == 1
+    assert states["disabled"] == 1
+    assert states["manual_review_only"] == 1
+    assert "REGIONAL parser failed" in page.body.decode()
+
+
 def test_local_scope_ui_shows_social_and_homepage_disabled_states(tmp_path, monkeypatch):
     _use_temp_state(monkeypatch, tmp_path)
     config_path = tmp_path / "config.yml"

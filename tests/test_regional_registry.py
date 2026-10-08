@@ -67,10 +67,10 @@ def test_regional_registry_defaults_can_seed_minimal_config(tmp_path):
     assert source["source_family"] == "nws"
     assert source["source_class"] == "official_weather_hazard"
     assert source["adapter"] == "official_api_json"
-    assert source["verification_status"] == "official_page_seen"
+    assert source["verification_status"] == "verified"
     assert source["official_status"] == "official"
     assert source["future_phase"] == "R1"
-    assert source["expected_access_kind"] == "official JSON API"
+    assert source["expected_access_kind"] == "documented official Washington GeoJSON alerts API"
 
 
 def test_regional_registry_is_persisted_in_sqlite_news_scan(tmp_path):

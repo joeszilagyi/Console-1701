@@ -1474,7 +1474,16 @@ def _normalize_nws_alert(
 
 
 def _nws_alert_matches_scope(source: dict[str, Any], properties: dict[str, Any]) -> bool:
-    if str(source.get("scope") or "").upper() != "LOCAL":
+    scope = str(source.get("scope") or "").upper()
+    if scope == "REGIONAL":
+        affected_zones = _string_list(properties.get("affectedZones"), max_chars=240)
+        geocode = properties.get("geocode") if isinstance(properties.get("geocode"), dict) else {}
+        ugc = _string_list(geocode.get("UGC"), max_chars=32)
+        zone_text = " ".join([*affected_zones, *ugc]).upper()
+        return bool(re.search(r"\bWA[ZC]\d{3}\b", zone_text)) or (
+            "washington" in str(properties.get("areaDesc") or "").lower()
+        )
+    if scope != "LOCAL":
         return True
     evidence = _nws_filter_evidence(source, properties)
     return bool(evidence["matched_keywords"] or evidence["matched_zone_ids"])

@@ -175,6 +175,8 @@ LOCAL ranking consumes parser evidence for official alerts, explicit source seve
 transit, utility, airport, topic repetition, and privacy
 REGIONAL USGS GeoJSON fixture parsing now filters by Washington-area coordinate bounds and
 magnitude, preserving seismic evidence and an explainable regional ranking factor
+REGIONAL NWS, WSDOT, and USGS fixture items use official-ID event keys; isolated headlines do not
+claim corroboration, and source-family/health evidence is visible in scoped clusters
 Source audit surfaces derive disabled / configured_never_run / healthy / stale / parser_failed /
 policy_blocked / auth_required states without fetching
 `console-1701 news-sources` also prints source family, class, verification status, and expected
@@ -182,6 +184,7 @@ access kind so registry-backed sources can be audited without opening the databa
 Source verification workflow: `docs/project/NEWS_SOURCE_VERIFICATION_WORKFLOW.md`
 Operational guide: `docs/project/NEWS_OPERATIONAL_GUIDE.md`
 First official HTTP source signoff: `docs/project/NWS_WASHINGTON_ALERTS_SOURCE_VERIFICATION.md`
+REGIONAL event matching contract: `docs/project/REGIONAL_EVENT_CONTRACT.md`
 Scope-specific source verification workflow docs now cover REGIONAL, NATIONAL, GLOBAL, ORBITAL,
 and Solar System and Beyond verification notes
 Stored item detail includes source, policy, ranking, retention, privacy, and local-event evidence
