@@ -186,8 +186,25 @@ def _public_ip_from_local_address(address: str | None) -> str | None:
     return address if parsed.is_global else None
 
 
+def _wireless_links() -> dict[str, dict[str, float | None]]:
+    links: dict[str, dict[str, float | None]] = {}
+    for line in _read_text("/proc/net/wireless").splitlines()[2:]:
+        if ":" not in line:
+            continue
+        name, values = line.split(":", 1)
+        fields = values.split()
+        if len(fields) < 3:
+            continue
+        links[name.strip()] = {
+            "quality": _safe_float(fields[1]),
+            "signal_dbm": _safe_float(fields[2]),
+        }
+    return links
+
+
 def _net_dev() -> dict[str, Any]:
     interfaces = []
+    wireless_links = _wireless_links()
     for line in _read_text("/proc/net/dev").splitlines()[2:]:
         if ":" not in line:
             continue
@@ -196,9 +213,18 @@ def _net_dev() -> dict[str, Any]:
         fields = rest.split()
         if len(fields) < 16:
             continue
+        speed_text = _read_text(f"/sys/class/net/{iface_name}/speed", SYSFS_VALUE_MAX_CHARS).strip()
+        speed_value = _safe_int(speed_text, default=-1)
+        duplex = _read_text(
+            f"/sys/class/net/{iface_name}/duplex", SYSFS_VALUE_MAX_CHARS
+        ).strip().lower()
         interfaces.append(
             {
                 "name": iface_name,
+                "ipv4_address": _interface_ipv4(iface_name) if iface_name != "lo" else None,
+                "speed_mbps": speed_value if speed_value > 0 else None,
+                "duplex": duplex if duplex in {"full", "half"} else None,
+                "wireless": wireless_links.get(iface_name),
                 "rx_bytes": _safe_int(fields[0]),
                 "rx_packets": _safe_int(fields[1]),
                 "rx_errors": _safe_int(fields[2]),
@@ -225,7 +251,7 @@ def _net_dev() -> dict[str, Any]:
         None,
     )
     primary = next((iface for iface in interfaces if iface["name"] == primary_name), None)
-    lan_ip = _interface_ipv4(primary_name)
+    lan_ip = primary.get("ipv4_address") if primary else None
     return {
         "interfaces": interfaces,
         "primary_interface": primary_name,
