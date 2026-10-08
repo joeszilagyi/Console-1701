@@ -163,7 +163,8 @@ Disabled by default
 Explicit command path only
 Page loads read SQLite and config only
 No hidden fetch on GET routes
-Fixture-only ingest for enabled file:// JSON/RSS/Atom/homepage sources
+Fixture ingest for enabled file:// JSON/RSS/Atom/homepage sources
+One separately opted-in official HTTPS source: Washington NWS active alerts; disabled by default
 LOCAL Seattle policy config defaults to disabled and gates social/neighborhood-blog sources
 LOCAL registry seeds known source metadata for disabled official, blog, and social candidates
 Fixture parsers include LOCAL SFD, AlertSeattle, NWS, WSDOT, Metro, City Light, FAA/SEA, and local-blog evidence
@@ -177,6 +178,7 @@ policy_blocked / auth_required states without fetching
 access kind so registry-backed sources can be audited without opening the database
 Source verification workflow: `docs/project/NEWS_SOURCE_VERIFICATION_WORKFLOW.md`
 Operational guide: `docs/project/NEWS_OPERATIONAL_GUIDE.md`
+First official HTTP source signoff: `docs/project/NWS_WASHINGTON_ALERTS_SOURCE_VERIFICATION.md`
 Scope-specific source verification workflow docs now cover REGIONAL, NATIONAL, GLOBAL, ORBITAL,
 and Solar System and Beyond verification notes
 Stored item detail includes source, policy, ranking, retention, privacy, and local-event evidence
@@ -345,7 +347,7 @@ Hard defaults:
 ```text
 Bind only to 127.0.0.1
 Use port 1701
-No cloud calls
+No cloud service or telemetry calls; separately opted-in official public-feed fetches only
 No telemetry
 No OpenAI or LLM API calls
 No GitHub API calls

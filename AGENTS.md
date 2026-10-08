@@ -10,6 +10,10 @@ Keep the local-only safety envelope intact:
 - Do not add cloud calls, telemetry, hidden LLM calls, GitHub API calls, automatic git fetches,
   destructive commands, sudo, package installation, or writes outside console-1701 state/config
   paths.
+- The only permitted outbound app requests are explicitly enabled, allowlisted public official
+  news feeds from the separate `news-scan` command. They must never run during page loads, host
+  scans, or tests; keep them disabled by default and store results locally. This is not permission
+  for SaaS, LLM, telemetry, social, homepage crawling, or arbitrary configured URLs.
 - Treat host probes as read-only and timeout-protected.
 - Preserve existing repo scan behavior while keeping the Debian machine as the homepage focus.
 - The repo-root `Upkeeper.sh` symlink is off limits: do not read it, follow it, execute it, edit it,

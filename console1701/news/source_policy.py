@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from console1701.config import LOCAL_SOCIAL_SOURCE_FAMILIES, NEWS_HOMEPAGE_SOURCE_KINDS
+from console1701.news.official_http import is_supported_official_source
 
 
 def _local_policy(config: dict[str, Any], source: dict[str, Any]) -> dict[str, Any] | None:
@@ -55,6 +56,11 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
     auth_required = bool(auth_cfg)
     auth_configured = bool(auth_cfg and any(str(value).strip() for value in auth_cfg.values()))
     is_local_fixture = url.startswith("file://")
+    is_allowed_official_http = (
+        bool(fetch_policy.get("allow_official_http"))
+        and bool((config.get("local") or {}).get("enabled"))
+        and is_supported_official_source(source)
+    )
     uses_homepage = kind in NEWS_HOMEPAGE_SOURCE_KINDS
     homepage_allowed = bool(fetch_policy.get("allow_homepage_extractors"))
     homepage_extractor_blocked = uses_homepage and not homepage_allowed
@@ -64,6 +70,10 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
         policy_state = "allowed_fixture_only"
         basis = "local_fixture_only"
         robots_state = "not_applicable_local_file"
+    elif is_allowed_official_http:
+        policy_state = "allowed_official_http"
+        basis = "explicit_official_https"
+        robots_state = "not_applicable_official_api"
     else:
         policy_state = "blocked_fixture_phase"
         basis = "future_live_fetch"
@@ -81,8 +91,10 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
         notes.append("Auth is declared but no credential material is configured.")
     if homepage_extractor_blocked:
         notes.append("Homepage extraction is disabled by config.")
-    if not is_local_fixture:
-        notes.append("Fixture phase blocks non-file URLs from ingest.")
+    if not is_local_fixture and not is_allowed_official_http:
+        notes.append("Official HTTP opt-in or endpoint allowlist blocks this URL from ingest.")
+    if is_allowed_official_http:
+        notes.append("Explicit news-scan only; no page-load or host-scan fetch.")
     if uses_homepage and is_local_fixture:
         notes.append("Homepage selectors are being tested against a local fixture only.")
     if local_policy:

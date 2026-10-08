@@ -461,7 +461,7 @@ news:
     assert response.status_code == 200
     assert "Config warnings" in body
     assert "LOCAL is enabled, but no sources are configured for it." in body
-    assert "blocked_remote is enabled but blocked in the current fixture-only ingest phase." in body
+    assert "blocked_remote is enabled but blocked by the official HTTP opt-in or allowlist." in body
     assert "LOCAL is enabled, but no sources are configured for it." in summary["config_warnings"]
 
 
@@ -815,6 +815,39 @@ news:
     assert regional_scope["state"]["state"] == "configured_never_run"
     assert sources[0]["source_key"] == "missing_fixture"
     assert sources[0]["latest_fetch_run"] is None
+
+
+def test_enabled_official_http_source_is_never_fetched_on_get(tmp_path, monkeypatch):
+    _use_temp_state(monkeypatch, tmp_path)
+    config_path = tmp_path / "config.yml"
+    config_path.write_text(
+        """
+paths: {repo_roots: [], explicit_repos: []}
+logs: []
+projects: []
+local: {enabled: true}
+news:
+  enabled: true
+  fetch_policy: {allow_official_http: true}
+  scopes:
+    LOCAL:
+      enabled: true
+      sources:
+        - id: nws_active_alerts_api
+          enabled: true
+""".strip() + "\n",
+        encoding="utf-8",
+    )
+    router = build_router(str(config_path))
+
+    def unexpected_fetch(*args, **kwargs):
+        raise AssertionError("GET route attempted official HTTP fetch")
+
+    monkeypatch.setattr("console1701.news.scanner.fetch_official_text", unexpected_fetch)
+    assert _route_endpoint(router, "/")(_request("/")).status_code == 200
+    assert _route_endpoint(router, "/{scope}")(_request("/LOCAL"), "LOCAL").status_code == 200
+    scope = _route_endpoint(router, "/api/news/scopes/{scope}")("LOCAL", 8)
+    assert scope["state"]["state"] == "configured_never_run"
 
 
 def test_root_page_renders_codex_terminal_action_for_host_penalty(tmp_path, monkeypatch):

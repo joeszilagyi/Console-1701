@@ -68,10 +68,10 @@ def test_local_registry_defaults_can_seed_minimal_config(tmp_path):
     assert source["source_family"] == "nws"
     assert source["source_class"] == "official_weather_hazard"
     assert source["adapter"] == "official_api_json"
-    assert source["verification_status"] == "candidate_needs_verification"
+    assert source["verification_status"] == "verified"
     assert source["official_status"] == "official"
     assert source["future_phase"] == "L6"
-    assert source["expected_access_kind"] == "documented official JSON API"
+    assert source["expected_access_kind"] == "documented official Washington GeoJSON alerts API"
     assert "Official active hazard alerts" in source["evidence_notes"][1]
 
 

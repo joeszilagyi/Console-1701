@@ -10,6 +10,7 @@ import console1701.config as config_module
 from console1701.cli import main
 from console1701.config import load_config
 from console1701.db import connect_db, init_db, json_loads
+from console1701.news.official_http import OfficialFetchResult, RateLimitedError
 from console1701.news.parsers import parse_fixture_items
 from console1701.news.scanner import purge_news_retention, run_news_scan
 from console1701.news.storage import get_news_sources_status
@@ -66,6 +67,134 @@ def test_parse_fixture_items_support_json_rss_atom_and_homepage():
     assert atom_items[0]["tags"] == ["orbital", "forecast"]
     assert len(homepage_items) == 2
     assert homepage_items[0]["url"] == "https://news.example.test/port/cruise-terminal-plan"
+
+
+def _nws_live_config(path: Path, *, allow_http: bool) -> Path:
+    return _write_config(
+        path,
+        f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        local: {{enabled: true}}
+        news:
+          enabled: true
+          fetch_policy: {{allow_official_http: {str(allow_http).lower()}}}
+          scopes:
+            LOCAL:
+              enabled: true
+              sources:
+                - id: nws_active_alerts_api
+                  enabled: true
+        """,
+    )
+
+
+def test_official_http_requires_explicit_opt_in_and_never_fetches_by_default(
+    tmp_path, monkeypatch
+):
+    config_path = _nws_live_config(tmp_path / "blocked.yml", allow_http=False)
+
+    def unexpected_fetch(*args, **kwargs):
+        raise AssertionError("HTTP must remain disabled")
+
+    monkeypatch.setattr("console1701.news.scanner.fetch_official_text", unexpected_fetch)
+    result = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        run = conn.execute("SELECT status FROM news_fetch_runs ORDER BY id DESC LIMIT 1").fetchone()
+
+    assert result["status"] == "partial"
+    assert result["scanned_sources"] == 1
+    assert run["status"] == "policy_blocked"
+
+
+def test_official_nws_fetch_conditional_request_and_interval(tmp_path, monkeypatch):
+    config_path = _nws_live_config(tmp_path / "live.yml", allow_http=True)
+    fixture = (FIXTURE_DIR / "local_nws_alerts.json").read_text()
+    calls: list[dict] = []
+
+    def fake_fetch(source, **kwargs):
+        calls.append(kwargs)
+        if len(calls) == 1:
+            return OfficialFetchResult(
+                fixture, 200, '"nws-v1"', "Wed, 08 Oct 2026 17:00:00 GMT", len(fixture)
+            )
+        return OfficialFetchResult(None, 304, '"nws-v1"', "Wed, 08 Oct 2026 17:00:00 GMT", 0)
+
+    monkeypatch.setattr("console1701.news.scanner.fetch_official_text", fake_fetch)
+    first = run_news_scan(config_path)
+    skipped = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        first_run = conn.execute(
+            "SELECT status, http_status, etag_received, evidence_json FROM news_fetch_runs "
+            "ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+        source = conn.execute("SELECT policy_json FROM news_sources WHERE source_key = ?", (
+            "nws_active_alerts_api",)).fetchone()
+        conn.execute(
+            "UPDATE news_fetch_runs SET started_at = '2026-01-01T00:00:00+00:00' "
+            "WHERE source_id = (SELECT id FROM news_sources WHERE source_key = ?)",
+            ("nws_active_alerts_api",),
+        )
+        conn.commit()
+    unchanged = run_news_scan(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        latest = conn.execute(
+            "SELECT status, http_status, etag_sent FROM news_fetch_runs ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+        item_count = conn.execute("SELECT COUNT(*) FROM news_items").fetchone()[0]
+        item_evidence = json_loads(conn.execute(
+            "SELECT evidence_json FROM news_items LIMIT 1"
+        ).fetchone()[0], {})
+        cluster_evidence = json_loads(conn.execute(
+            "SELECT evidence_json FROM news_clusters LIMIT 1"
+        ).fetchone()[0], {})
+
+    assert first["status"] == "complete"
+    assert first["item_count"] == 1
+    assert skipped["skipped_sources"] == 1
+    assert skipped["scanned_sources"] == 0
+    assert len(calls) == 2
+    assert first_run["status"] == "success"
+    assert first_run["http_status"] == 200
+    assert first_run["etag_received"] == '"nws-v1"'
+    assert "High Wind Warning" not in str(first_run["evidence_json"])
+    assert json_loads(source["policy_json"], {})["policy_state"] == "allowed_official_http"
+    assert calls[1]["etag"] == '"nws-v1"'
+    assert unchanged["item_count"] == 0
+    assert latest["status"] == "not_modified"
+    assert latest["http_status"] == 304
+    assert latest["etag_sent"] == '"nws-v1"'
+    assert item_count == 1
+    assert item_evidence["ingest"]["fixture_only"] is False
+    assert cluster_evidence["fixture_only"] is False
+
+
+def test_official_nws_rate_limit_records_health_and_backs_off(tmp_path, monkeypatch):
+    config_path = _nws_live_config(tmp_path / "limited.yml", allow_http=True)
+    calls = 0
+
+    def limited_fetch(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        raise RateLimitedError("Official feed returned HTTP 429; backoff applies.")
+
+    monkeypatch.setattr("console1701.news.scanner.fetch_official_text", limited_fetch)
+    first = run_news_scan(config_path)
+    second = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        run = conn.execute("SELECT status FROM news_fetch_runs ORDER BY id DESC LIMIT 1").fetchone()
+        health = conn.execute(
+            "SELECT state FROM news_source_health ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+
+    assert first["status"] == "partial"
+    assert first["scanned_sources"] == 1
+    assert second["skipped_sources"] == 1
+    assert calls == 1
+    assert run["status"] == "rate_limited"
+    assert health["state"] == "rate_limited"
 
 
 def test_parse_nws_alert_fixture_filters_local_alerts_and_preserves_evidence():
