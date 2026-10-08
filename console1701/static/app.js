@@ -593,31 +593,23 @@ function updateCpuRamSensor(live, cpu) {
   const memoryUsed = live.memory?.used_percent;
   const memoryPressure = pressureAvg10(live.pressure?.memory);
   const cpuPressure = pressureAvg10(live.cpu?.pressure);
-  const critical =
-    (cpu !== null && cpu >= 90) ||
-    (loadRatio !== null && loadRatio >= 1.5) ||
-    (memoryAvailable !== null && memoryAvailable !== undefined && memoryAvailable < 5) ||
-    (memoryPressure !== null && memoryPressure >= 30);
-  const warning =
-    critical ||
-    (cpu !== null && cpu >= 75) ||
-    (loadRatio !== null && loadRatio >= 1) ||
-    (memoryAvailable !== null && memoryAvailable !== undefined && memoryAvailable < 15) ||
-    (memoryPressure !== null && memoryPressure >= 10) ||
-    (cpuPressure !== null && cpuPressure >= 20);
-
-  let message = "Green: CPU <75%, load/core <1, and MemAvailable >=15%.";
-  if (critical) {
+  const decision = ConsoleLiveRules.cpuRam({ cpu, loadPerCore: loadRatio, memoryAvailable, memoryPsi: memoryPressure, cpuPsi: cpuPressure });
+  const limits = decision.thresholds;
+  let message = `Green: CPU <${limits.cpu.warning}%, load/core <${limits.loadPerCore.warning}, MemAvailable >=${limits.memoryAvailable.warningBelow}%, memory PSI <${limits.memoryPsi.warning}%, CPU PSI <${limits.cpuPsi.warning}%.`;
+  if (decision.state === "critical") {
     message = `Red: CPU ${formatPercent(cpu)}, load/core ${loadRatio?.toFixed(2) ?? "--"}, MemAvailable ${formatPercent(memoryAvailable, 1)}.`;
-  } else if (warning) {
+  } else if (decision.state === "warning") {
     message = `Yellow: CPU ${formatPercent(cpu)}, load/core ${loadRatio?.toFixed(2) ?? "--"}, MemAvailable ${formatPercent(memoryAvailable, 1)}.`;
+  }
+  if (decision.state !== "ok") {
+    message += ` Limits: CPU ${limits.cpu.warning}/${limits.cpu.critical}%, load/core ${limits.loadPerCore.warning}/${limits.loadPerCore.critical}, MemAvailable below ${limits.memoryAvailable.warningBelow}/${limits.memoryAvailable.criticalBelow}%, memory PSI ${limits.memoryPsi.warning}/${limits.memoryPsi.critical}%, CPU PSI ${limits.cpuPsi.warning}% (warning/critical where paired).`;
   }
 
   setLiveText("cpu-percent-inline", formatPercent(cpu));
   setLiveText("mem-used-inline", formatPercent(memoryUsed, 1));
   setLiveText("load-ratio", loadRatio === null ? "--" : `${loadRatio.toFixed(2)}x`);
   setLiveBar("load", loadRatio === null ? 0 : loadRatio * 100);
-  setSensorState("cpu-ram", critical ? "critical" : warning ? "warning" : "ok", message);
+  setSensorState("cpu-ram", decision.state, message);
 }
 
 function updateFilesystemSensor(live) {
@@ -626,27 +618,23 @@ function updateFilesystemSensor(live) {
   const rootUsed = root?.used_percent;
   const homeUsed = home?.used_percent;
   const ioPressure = pressureAvg10(live.pressure?.io);
-  const critical =
-    (rootUsed !== null && rootUsed !== undefined && rootUsed >= 95) ||
-    (homeUsed !== null && homeUsed !== undefined && homeUsed >= 95) ||
-    (ioPressure !== null && ioPressure >= 30);
-  const warning =
-    critical ||
-    (rootUsed !== null && rootUsed !== undefined && rootUsed >= 85) ||
-    (homeUsed !== null && homeUsed !== undefined && homeUsed >= 90) ||
-    (ioPressure !== null && ioPressure >= 10);
-  let message = "Green: root <85%, home <90%, and I/O PSI avg10 <10%.";
-  if (critical) {
+  const decision = ConsoleLiveRules.filesystem({ rootUsed, homeUsed, ioPsi: ioPressure });
+  const limits = decision.thresholds;
+  let message = `Green: root <${limits.rootUsed.warning}%, home <${limits.homeUsed.warning}%, and I/O PSI avg10 <${limits.ioPsi.warning}%.`;
+  if (decision.state === "critical") {
     message = `Red: root ${formatPercent(rootUsed, 1)}, home ${formatPercent(homeUsed, 1)}, I/O pressure ${formatPercent(ioPressure, 1)}.`;
-  } else if (warning) {
+  } else if (decision.state === "warning") {
     message = `Yellow: root ${formatPercent(rootUsed, 1)}, home ${formatPercent(homeUsed, 1)}, I/O pressure ${formatPercent(ioPressure, 1)}.`;
+  }
+  if (decision.state !== "ok") {
+    message += ` Limits (warning/critical): root ${limits.rootUsed.warning}/${limits.rootUsed.critical}%, home ${limits.homeUsed.warning}/${limits.homeUsed.critical}%, I/O PSI ${limits.ioPsi.warning}/${limits.ioPsi.critical}%.`;
   }
 
   setLiveText("fs-root-used-inline", formatPercent(rootUsed, 1));
   setLiveText("fs-home-used-inline", home ? formatPercent(homeUsed, 1) : "--");
   setLiveText("io-pressure", ioPressure === null ? "--" : `${ioPressure.toFixed(1)}%`);
   setLiveBar("io-pressure", ioPressure === null ? 0 : ioPressure);
-  setSensorState("filesystem", critical ? "critical" : warning ? "warning" : "ok", message);
+  setSensorState("filesystem", decision.state, message);
 }
 
 function thermalMax(live) {
