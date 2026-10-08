@@ -1,9 +1,69 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from pathlib import Path
 
-from console1701.news.parsers import parse_fixture_items
+import pytest
+
+from console1701.news.parsers import NewsParserError, parse_fixture_items
 from console1701.news.ranking import build_rank_result
+
+
+def test_parse_usgs_regional_geojson_filters_and_preserves_seismic_evidence() -> None:
+    source = {
+        "id": "usgs_eq_geojson",
+        "scope": "REGIONAL",
+        "kind": "api_json",
+        "parser": "usgs_earthquake_geojson",
+        "priority": 90,
+    }
+    fixture = (
+        Path(__file__).resolve().parent / "fixtures/news/regional_usgs_earthquakes.json"
+    ).read_text()
+    items = parse_fixture_items(source, fixture)
+
+    assert len(items) == 2
+    puget = next(item for item in items if "Seattle" in item["title"])
+    usgs = puget["evidence"]["usgs_earthquake"]
+    assert puget["source_published_at"] == "2026-05-05T17:00:00+00:00"
+    assert usgs["id"] == "wa-puget-001"
+    assert usgs["magnitude"] == 4.6
+    assert usgs["depth_km"] == 11.3
+    assert usgs["felt"] == 83
+    assert usgs["filter"]["min_magnitude"] == 3.0
+    assert usgs["ranking"]["regional_seismic_weight"] > 0
+    assert "public-impact" in puget["tags"]
+
+    ranking = build_rank_result(
+        source,
+        puget,
+        seen_at="2026-05-05T18:00:00+00:00",
+        combined_tags=puget["tags"],
+        latest_health_state="healthy",
+        repeat_count=0,
+    )
+    assert ranking["factors"]["regional_seismic_boost"] == usgs["ranking"][
+        "regional_seismic_weight"
+    ]
+    assert ranking["score"] == sum(ranking["factors"].values())
+
+    stricter = parse_fixture_items({**source, "min_magnitude": 4.0}, fixture)
+    assert len(stricter) == 1
+
+
+def test_usgs_regional_geojson_rejects_invalid_bounds_and_malformed_feed() -> None:
+    source = {
+        "id": "usgs_eq_geojson",
+        "scope": "REGIONAL",
+        "kind": "api_json",
+        "parser": "usgs_earthquake_geojson",
+        "min_latitude": 52,
+        "max_latitude": 45,
+    }
+    with pytest.raises(NewsParserError, match="bounds or magnitude"):
+        parse_fixture_items(source, '{"type":"FeatureCollection","features":[]}')
+    with pytest.raises(NewsParserError, match="FeatureCollection"):
+        parse_fixture_items({**source, "min_latitude": 45, "max_latitude": 50}, "[]")
 
 
 def test_parse_spd_blotter_rss_feed_adds_preliminary_incident_evidence() -> None:

@@ -731,6 +731,52 @@ def test_run_news_scan_ingests_regional_wsdot_alert_fixture(tmp_path):
     )
 
 
+def test_run_news_scan_ingests_regional_usgs_earthquake_fixture(tmp_path):
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        news:
+          enabled: true
+          scopes:
+            REGIONAL:
+              enabled: true
+              sources:
+                - id: usgs_eq_geojson
+                  enabled: true
+                  url: "{_file_url(FIXTURE_DIR / "regional_usgs_earthquakes.json")}"
+        """,
+    )
+
+    result = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        init_db(conn)
+        rows = conn.execute(
+            """
+            SELECT i.title, i.evidence_json
+            FROM news_items i
+            JOIN news_sources s ON s.id = i.source_id
+            WHERE s.source_key = 'usgs_eq_geojson'
+            ORDER BY i.title
+            """
+        ).fetchall()
+
+    evidence_rows = [json_loads(str(row["evidence_json"]), {}) for row in rows]
+    assert result["status"] == "complete"
+    assert result["item_count"] == 2
+    assert len(rows) == 2
+    assert all(
+        evidence["storage"]["url"].startswith("https://earthquake.usgs.gov/")
+        for evidence in evidence_rows
+    )
+    assert all(evidence["source"]["scope"] == "REGIONAL" for evidence in evidence_rows)
+    assert all(
+        evidence["ranking"]["factors"]["regional_seismic_boost"] > 0
+        for evidence in evidence_rows
+    )
+
+
 def test_run_news_scan_ingests_gated_registry_backed_local_blog_fixture(tmp_path):
     blocked_config = _write_config(
         tmp_path / "blocked.yml",

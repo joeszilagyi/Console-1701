@@ -778,6 +778,14 @@ news:
           kind: local_file_json
           enabled: true
           url: "file:///tmp/console-1701-missing-news-fixture.json"
+    REGIONAL:
+      enabled: true
+      sources:
+        - id: missing_regional_fixture
+          name: Missing REGIONAL fixture
+          kind: api_json
+          enabled: true
+          url: "file:///tmp/console-1701-missing-regional-fixture.json"
 """.strip()
         + "\n",
         encoding="utf-8",
@@ -791,16 +799,20 @@ news:
 
     root = _route_endpoint(router, "/")(_request("/"))
     local_page = _route_endpoint(router, "/{scope}")(_request("/LOCAL"), "LOCAL")
+    regional_page = _route_endpoint(router, "/{scope}")(_request("/REGIONAL"), "REGIONAL")
     system_page = _route_endpoint(router, "/{scope}")(_request("/SYSTEM"), "SYSTEM")
     summary = _route_endpoint(router, "/api/news/summary")()
     scope = _route_endpoint(router, "/api/news/scopes/{scope}")("LOCAL", 8)
+    regional_scope = _route_endpoint(router, "/api/news/scopes/{scope}")("REGIONAL", 8)
     sources = _route_endpoint(router, "/api/news/sources")()
 
     assert root.status_code == 200
     assert local_page.status_code == 200
+    assert regional_page.status_code == 200
     assert system_page.status_code == 200
-    assert summary["source_state_counts"]["configured_never_run"] == 1
+    assert summary["source_state_counts"]["configured_never_run"] == 2
     assert scope["state"]["state"] == "configured_never_run"
+    assert regional_scope["state"]["state"] == "configured_never_run"
     assert sources[0]["source_key"] == "missing_fixture"
     assert sources[0]["latest_fetch_run"] is None
 

@@ -1,0 +1,65 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {"count": 4, "title": "Synthetic Washington earthquake fixture"},
+  "features": [
+    {
+      "type": "Feature",
+      "id": "wa-puget-001",
+      "properties": {
+        "mag": 4.6,
+        "place": "12 km NW of Seattle, Washington",
+        "time": 1778000400000,
+        "updated": 1778004000000,
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/wa-puget-001",
+        "title": "M 4.6 - 12 km NW of Seattle, Washington",
+        "felt": 83,
+        "cdi": 4.2,
+        "mmi": 4.0,
+        "alert": "yellow",
+        "tsunami": 0,
+        "sig": 456,
+        "magType": "mw",
+        "status": "reviewed"
+      },
+      "geometry": {"type": "Point", "coordinates": [-122.45, 47.65, 11.3]}
+    },
+    {
+      "type": "Feature",
+      "id": "wa-spokane-002",
+      "properties": {
+        "mag": 3.2,
+        "place": "20 km SE of Spokane, Washington",
+        "time": 1778000400000,
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/wa-spokane-002",
+        "felt": 2,
+        "tsunami": 0,
+        "sig": 120,
+        "magType": "ml",
+        "status": "automatic"
+      },
+      "geometry": {"type": "Point", "coordinates": [-117.2, 47.5, 6.8]}
+    },
+    {
+      "type": "Feature",
+      "id": "ca-out-of-region-003",
+      "properties": {
+        "mag": 5.1,
+        "place": "Northern California",
+        "time": 1778000400000,
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ca-out-of-region-003"
+      },
+      "geometry": {"type": "Point", "coordinates": [-121.9, 38.1, 10.0]}
+    },
+    {
+      "type": "Feature",
+      "id": "wa-below-threshold-004",
+      "properties": {
+        "mag": 1.8,
+        "place": "Near Seattle, Washington",
+        "time": 1778000400000,
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/wa-below-threshold-004"
+      },
+      "geometry": {"type": "Point", "coordinates": [-122.3, 47.6, 4.0]}
+    }
+  ]
+}

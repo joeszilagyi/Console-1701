@@ -1,5 +1,23 @@
 # Caretaking Log
 
+## 2026-10-08 10:16 PDT - first REGIONAL USGS earthquake fixture slice
+
+- Selected the first unimplemented official earthquake parser in the REGIONAL backlog after the
+  operational recovery and GitHub catch-up. The USGS GeoJSON summary contract documents feature
+  ids, magnitude, place, millisecond event time, official URL, felt/intensity fields, and point
+  coordinates; this implementation uses a synthetic local fixture with that shape.
+- Added `usgs_earthquake_geojson` to the REGIONAL registry and parser dispatch. The parser applies
+  configurable coordinate bounds and minimum magnitude, preserves event, geography, source, and
+  public-impact evidence, and rejects malformed feed shape or non-USGS event URLs.
+- Added a capped `regional_seismic_boost` to stored deterministic ranking factors and reasons.
+  This first factor does not claim to implement full REGIONAL event convergence or live ingest.
+- Added parser, filter, registry, and SQLite ingest regressions. The fixture excludes one
+  out-of-region earthquake and one below the magnitude threshold; no external fetch occurs.
+- Extended the shared GET-route regression to render REGIONAL and read its scope API with a missing
+  fixture path, proving that enabled REGIONAL sources do not trigger ingest on page load.
+- Updated README and BACKLOG to mark the parser and REGIONAL ranking partially implemented while
+  keeping radius-based geography, other regional fixtures, full ranking, and live ingest pending.
+
 ## 2026-10-08 10:11 PDT - recover live console and bound scan history
 
 - Selected the running console installation and its scheduled test loop for recovery after a
