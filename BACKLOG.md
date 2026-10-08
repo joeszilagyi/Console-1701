@@ -67,6 +67,16 @@ wanted, inspect its systemd unit and display/auth setup, then verify it starts c
 have the host owner disable it so the console reports host health accurately. Do not treat this as
 a console web-service or scanner failure.
 
+## GitHub Merge Gate
+
+Status: partially implemented.
+
+A read-only GitHub Actions `tests-and-lint` job now runs pytest and Ruff for PRs and `main`. Once
+its first run passes and the workflow is merged, update the existing `main-protection` ruleset to
+target the default branch and require that check. The dormant linear-history rule conflicts with
+the project's merge-commit history; remove it if retaining merge commits. Verify effective rules
+through GitHub's branch-rules endpoint and prove the next PR displays a required passing check.
+
 ## Scoped Recent Signal / News Ingestion
 
 Architecture reference:
