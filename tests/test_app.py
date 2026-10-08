@@ -189,7 +189,8 @@ def test_root_page_renders_html(tmp_path, monkeypatch):
     assert response.status_code == 200
     assert response.media_type == "text/html"
     assert "console-1701" in body
-    assert "/static/app.js?v=machine-console-14" in body
+    assert "/static/live_rules.js?v=machine-console-1" in body
+    assert "/static/app.js?v=machine-console-15" in body
     assert "/static/app.css?v=machine-console-17" in body
     assert 'id="news-scan-button"' in body
     assert 'data-active-scope="OVERVIEW"' in body

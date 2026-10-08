@@ -1,5 +1,17 @@
 # Caretaking Log
 
+## 2026-10-08 12:22 PDT - shared live sensor threshold rules
+
+- Selected the high-priority live threshold task because CPU/RAM and filesystem decisions were
+  hard-coded in `static/app.js`, making boundary behavior difficult to test independently.
+- Moved those decisions and conservative limits into pure `static/live_rules.js`; the browser uses
+  the returned state and derives green/help threshold text from the same values. The app still
+  polls local `/api/live` and makes no new network calls or state writes.
+- Added isolated Node-backed pytest boundary cases for each warning/critical cutoff, missing and
+  invalid values, and script load order. Node is optional at runtime and no package is installed.
+- Updated BACKLOG to mark the shared-module implementation complete while leaving optional
+  user-configurable overrides deferred pending a concrete validation contract.
+
 ## 2026-10-08 12:13 PDT - public REGIONAL WSDOT highway alerts
 
 - Selected the blocked WSDOT live-feed path. Official WSDOT docs show that its JSON Highway Alerts

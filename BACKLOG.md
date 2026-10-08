@@ -2395,17 +2395,19 @@ Constraints:
 
 ### Configurable Sensor Thresholds
 
-Status: not implemented.
+Status: implemented as a shared deterministic rules module; user-configurable overrides remain
+deferred until a concrete need and validation contract are defined.
 
-Move hard-coded live threshold rules from `static/app.js` into config or a shared deterministic
-rules module. Keep defaults conservative:
+The CPU/RAM and filesystem/pressure decisions now live in `static/live_rules.js`, loaded before
+`app.js`. The UI derives state and its threshold help text from that one module; isolated boundary
+tests exercise its output without actual host metrics. Defaults remain conservative:
 
 - Filesystem: root warning `>=85%`, critical `>=95%`; home warning `>=90%`, critical `>=95%`.
 - CPU/RAM: CPU warning `>=75%`, critical `>=90%`; load/core warning `>=1`, critical `>=1.5`;
   MemAvailable warning `<15%`, critical `<5%`; memory PSI avg10 warning `>=10%`, critical `>=30%`.
 - Network: route/address/carrier/error derived, not bandwidth-capacity derived.
 
-Acceptance shape:
+Completed acceptance:
 
 - Threshold values appear in evidence or help text.
 - Tests cover the rule output independent of actual host metrics.
