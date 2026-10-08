@@ -26,14 +26,6 @@ def _file_url(path: Path) -> str:
     return f"file://{path.resolve()}"
 
 
-@pytest.fixture(autouse=True)
-def _isolated_console_state(monkeypatch, tmp_path):
-    state_dir = tmp_path / "state"
-    monkeypatch.setattr(config_module, "DEFAULT_STATE_DIR", state_dir)
-    monkeypatch.setattr(config_module, "DEFAULT_DB_PATH", state_dir / "console.sqlite")
-    monkeypatch.setattr(config_module, "DEFAULT_HANDOFF_DIR", state_dir / "handoffs")
-
-
 def test_parse_fixture_items_support_json_rss_atom_and_homepage():
     json_source = {
         "id": "json",

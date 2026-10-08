@@ -10,6 +10,7 @@ from console1701.adapters import IGNORE_DIR_NAMES, safe_repo_name
 from console1701.config import ensure_state_dirs, load_config, project_for_path
 from console1701.db import connect_db, init_db, json_dumps, utc_now
 from console1701.git_probe import probe_repo
+from console1701.history import history_cutoff, prune_history_batch, record_history_prune
 from console1701.interpreter import interpret_all_repos
 from console1701.log_probe import probe_configured_logs
 from console1701.system_probe import probe_system
@@ -316,6 +317,10 @@ def run_scan(config_path: str | Path | None = None) -> dict[str, Any]:
                 }
             insert_repo_snapshot(conn, int(repo["id"]), scanned_at, snapshot)
             if not snapshot.get("scan_error"):
+                # Configured test commands run in a child process. Release the
+                # scanner's write transaction before launching them so a test
+                # suite can open its own SQLite connection without deadlocking.
+                conn.commit()
                 test_snapshot = build_test_snapshot(repo, snapshot, config)
                 insert_test_snapshot(conn, int(repo["id"]), scanned_at, test_snapshot)
             repos_scanned += 1
@@ -323,6 +328,14 @@ def run_scan(config_path: str | Path | None = None) -> dict[str, Any]:
 
         insert_log_events(conn, probe_configured_logs(config))
         interpret_all_repos(conn, config)
+        retention_days = int(sqlite_cfg.get("history_retention_days", 90))
+        cutoff = history_cutoff(utc_now(), retention_days)
+        deleted = prune_history_batch(
+            conn,
+            cutoff,
+            batch_size=int(sqlite_cfg.get("history_prune_batch_size", 1000)),
+        )
+        record_history_prune(conn, cutoff=cutoff, deleted=deleted)
         conn.execute(
             """
             UPDATE scan_runs

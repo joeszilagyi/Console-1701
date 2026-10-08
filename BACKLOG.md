@@ -47,6 +47,10 @@ whenever new ideas come up and are not completed immediately.
 - OVERVIEW, LOCAL, REGIONAL, NATIONAL, GLOBAL, ORBITAL, and SYSTEM now render real
   disabled/not-configured/source-backed recent-signal panels instead of placeholder bays.
 - `console-1701 news-sources` lists configured source policy and health state without fetching.
+- General scan history now has 90-day bounded retention, a preview/apply maintenance command, and
+  an automatic small prune on each scan. The latest host and per-repo evidence is preserved.
+- Pytest now uses temporary console state, and scans release the SQLite write transaction before
+  running configured tests.
 
 ## Scoped Recent Signal / News Ingestion
 
@@ -168,12 +172,16 @@ derived config warnings.
 
 ### Official API/RSS First Live Ingest
 
-Status: implemented.
+Status: not implemented.
 
 After fixture ingest and tests exist, add explicit enabled HTTP fetch for safe official APIs/RSS only.
 Use timeouts, response size caps, per-source intervals, backoff, ETag/Last-Modified support, honest
 user agent, and fail-soft per-source behavior. Tests must use mocked HTTP or a local test server, not
 live network.
+
+Current state: API/RSS source definitions and fixture parsers exist, but the news scanner accepts
+only `file://` fixtures. No live HTTP fetch client, conditional requests, or production source
+enablement flow has been implemented. The earlier "implemented" label was incorrect.
 
 ### Homepage Extractor Later And Disabled
 

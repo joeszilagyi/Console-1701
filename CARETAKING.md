@@ -1,5 +1,37 @@
 # Caretaking Log
 
+## 2026-10-08 10:11 PDT - recover live console and bound scan history
+
+- Selected the running console installation and its scheduled test loop for recovery after a
+  four-month gap. The May 11 web process returned HTTP 500 for `/` because old Python code was
+  rendering newer templates; `/api/news/summary` was absent from that process. Scheduled scans
+  had reported the same three SQLite lock failures since June 5.
+- Created and integrity-checked a consistent 2,091,438,080-byte SQLite backup under
+  `~/.local/state/console-1701/backups/` and preserved the local config there before maintenance.
+- Added a suite-wide temporary-state fixture and committed the scanner's write transaction before
+  executing repo tests. A regression proves a second SQLite writer can start at that point.
+- Added 90-day scan-history retention for host, repo, test, interpretation, log, and scan-run rows.
+  The latest host and per-repo evidence survives the cutoff. Normal scans prune a bounded batch;
+  `prune-history` previews or applies all batches and can compact the database. Attention, handoff,
+  and news retention remain separate.
+- Stopped the web service and scan timer, removed expired rows after backing up, and vacuumed the
+  database from 2,091,438,080 to 773,484,544 bytes. SQLite `PRAGMA quick_check` returned `ok`.
+  Reinstalled current systemd units, restarted the web service and scan timer, and left the news
+  timer disabled. The homepage, health, host, news summary, and LOCAL scope routes returned 200.
+- Removed the missing `~/wiki` root, explicit repo, log, and project entries from the active and
+  default config. The final live scan completed six repos with no warnings and recorded 159 passing
+  tests in 2.626 seconds. Its previously red test-failure attention item resolved.
+- Corrected the backlog's false claim that live API/RSS ingest exists. The news scanner still
+  accepts only `file://` fixture inputs.
+- During the initial diagnostic run before isolation was repaired, an existing test touched the
+  live database and the scheduled disabled-news purge removed 49 expired fetch runs, four expired
+  items, 58 expired health rows, and three expired local events. Those rows predated their configured
+  retention cutoffs. The backup was taken after this event; no speculative restoration was made.
+  The suite now redirects every test to temporary state.
+- Verification: `159 passed`, Ruff clean, `git diff --check` clean, SQLite quick check `ok`, live
+  scan complete with no errors, and current HTTP routes 200. The off-limits `Upkeeper.sh` symlink
+  was not opened or modified.
+
 ## 2026-06-05 16:00 PDT - LOCAL source-health state follow-up
 
 - Extended LOCAL source-health resolution so `rate_limited`, `robots_blocked`, and `unsupported`
