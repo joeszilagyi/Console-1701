@@ -27,6 +27,7 @@ def test_regional_source_registry_is_disabled_and_validated():
 
     assert "nws_active_alerts_wa" in keys
     assert "wsdot_traveler_api" in keys
+    assert "wsdot_highway_alerts_rss" in keys
     assert "usgs_eq_geojson" in keys
     assert len(keys) == len(entries)
     assert all(entry["scope"] == "REGIONAL" for entry in entries)
@@ -41,6 +42,10 @@ def test_regional_source_registry_is_disabled_and_validated():
     usgs = get_regional_source_registry_entry("usgs_eq_geojson")
     assert usgs["raw_url"].endswith("/summary/2.5_day.geojson")
     assert usgs["verification_status"] == "verified"
+    wsdot_rss = get_regional_source_registry_entry("wsdot_highway_alerts_rss")
+    assert wsdot_rss["raw_url"] == "https://www.wsdot.wa.gov/traffic/api/HighwayAlerts/rss.aspx"
+    assert wsdot_rss["verification_status"] == "verified"
+    assert wsdot_rss["enabled"] is False
 
 
 def test_regional_registry_defaults_can_seed_minimal_config(tmp_path):

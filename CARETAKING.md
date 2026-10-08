@@ -1,5 +1,26 @@
 # Caretaking Log
 
+## 2026-10-08 12:13 PDT - public REGIONAL WSDOT highway alerts
+
+- Selected the blocked WSDOT live-feed path. Official WSDOT docs show that its JSON Highway Alerts
+  API needs an access code; the same official index links a public no-auth RSS feed. Verified the
+  exact HTTPS RSS URL with a bounded no-redirect request: HTTP 200, `application/rss+xml`, 154,671
+  bytes, 189 items, no validators. Kept the JSON API candidate disabled rather than inventing a
+  credential or using an unverified endpoint.
+- Added a separate disabled-by-default REGIONAL RSS registry entry and exact scope/id/URL/kind/parser
+  allowlist. Its parser requires the official channel, numeric unique IDs, matching WSDOT link
+  `refnum`, and update timestamps; removes embedded markup, bounds text, retains route/impact
+  evidence, and uses official IDs for deterministic event clusters. An empty/malformed snapshot
+  fails soft instead of retiring all active alerts.
+- Added only this source to the on-machine 30-minute news config/timer. Explicit `news-scan`
+  fetched and stored 189 REGIONAL items, with healthy source status; LOCAL page showed a WSDOT item
+  under clearly labeled REGIONAL context and WSDOT source health. LOCAL WSDOT stays off because
+  the RSS does not provide trustworthy Seattle-specific geography. Legacy per-alert links redirect
+  to WSDOT's general alerts page, so a link-quality follow-up remains in BACKLOG.
+- Added synthetic RSS, transport-policy, parser, event-ID, interval, and registry regressions.
+  Ruff and 193 pytest tests passed. Repository defaults/new installs remain disabled; no external
+  fetch runs during page loads or tests.
+
 ## 2026-10-08 11:51 PDT - live LOCAL page and snapshot lifecycle
 
 - Selected the already verified LOCAL/REGIONAL Washington NWS alert and REGIONAL USGS earthquake

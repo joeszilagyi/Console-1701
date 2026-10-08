@@ -279,6 +279,102 @@ def test_official_nws_rate_limit_records_health_and_backs_off(tmp_path, monkeypa
     assert health["state"] == "rate_limited"
 
 
+def test_regional_wsdot_rss_live_ingest_uses_official_ids_and_interval(tmp_path, monkeypatch):
+    config_path = _write_config(
+        tmp_path / "wsdot.yml",
+        """
+        paths: {repo_roots: [], explicit_repos: []}
+        regional: {enabled: true}
+        news:
+          enabled: true
+          fetch_policy: {allow_official_http: true}
+          scopes:
+            REGIONAL:
+              enabled: true
+              sources:
+                - id: wsdot_highway_alerts_rss
+                  enabled: true
+        """,
+    )
+    payload = (FIXTURE_DIR / "regional_wsdot_highway_alerts.rss").read_text()
+    calls = []
+
+    def fake_fetch(source, **kwargs):
+        calls.append((source["url"], kwargs))
+        return OfficialFetchResult(payload, 200, None, None, len(payload))
+
+    monkeypatch.setattr("console1701.news.scanner.fetch_official_text", fake_fetch)
+    first = run_news_scan(config_path)
+    skipped = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        rows = conn.execute(
+            "SELECT status, evidence_json FROM news_items ORDER BY id"
+        ).fetchall()
+        clusters = conn.execute(
+            "SELECT cluster_key FROM news_clusters WHERE scope = 'REGIONAL'"
+        ).fetchall()
+
+    assert first["status"] == "complete"
+    assert first["item_count"] == 2
+    assert skipped["scanned_sources"] == 0
+    assert skipped["skipped_sources"] == 1
+    assert len(calls) == 1
+    assert calls[0][0] == "https://www.wsdot.wa.gov/traffic/api/HighwayAlerts/rss.aspx"
+    assert all(row["status"] == "active" for row in rows)
+    evidence = [json_loads(row["evidence_json"], {}) for row in rows]
+    assert [row["wsdot_alert"]["alert_id"] for row in evidence] == ["718142", "718143"]
+    assert all(row["regional_event"]["matching_basis"] == "official_wsdot_alert_id"
+               for row in evidence)
+    assert len({row["regional_event"]["event_key"] for row in evidence}) == 2
+    assert len(clusters) == 2
+
+
+def test_wsdot_empty_rss_does_not_retire_prior_live_snapshot(tmp_path, monkeypatch):
+    config_path = _write_config(
+        tmp_path / "wsdot-empty.yml",
+        """
+        paths: {repo_roots: [], explicit_repos: []}
+        regional: {enabled: true}
+        news:
+          enabled: true
+          fetch_policy: {allow_official_http: true}
+          scopes:
+            REGIONAL:
+              enabled: true
+              sources:
+                - id: wsdot_highway_alerts_rss
+                  enabled: true
+        """,
+    )
+    payload = (FIXTURE_DIR / "regional_wsdot_highway_alerts.rss").read_text()
+    empty = '<rss><channel><title>WA State Highway Alerts</title></channel></rss>'
+    responses = [
+        OfficialFetchResult(payload, 200, None, None, len(payload)),
+        OfficialFetchResult(empty, 200, None, None, len(empty)),
+    ]
+    monkeypatch.setattr(
+        "console1701.news.scanner.fetch_official_text",
+        lambda source, **kwargs: responses.pop(0),
+    )
+    assert run_news_scan(config_path)["status"] == "complete"
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        earlier = (datetime.now(UTC) - timedelta(hours=3)).isoformat(timespec="seconds")
+        conn.execute("UPDATE news_fetch_runs SET started_at = ?", (earlier,))
+        conn.commit()
+    assert run_news_scan(config_path)["status"] == "partial"
+    with connect_db(config["_db_path"]) as conn:
+        active = conn.execute(
+            "SELECT COUNT(*) FROM news_items WHERE status = 'active'"
+        ).fetchone()[0]
+        latest = conn.execute(
+            "SELECT status FROM news_fetch_runs ORDER BY id DESC LIMIT 1"
+        ).fetchone()["status"]
+    assert active == 2
+    assert latest == "parser_failed"
+
+
 def test_parse_nws_alert_fixture_filters_local_alerts_and_preserves_evidence():
     source = {
         "id": "nws_active_alerts_api",

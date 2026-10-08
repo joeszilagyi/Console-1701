@@ -167,9 +167,9 @@ Explicit command path only
 Page loads read SQLite and config only
 No hidden fetch on GET routes
 Fixture ingest for enabled file:// JSON/RSS/Atom/homepage sources
-Two separately opted-in official HTTPS URLs: Washington NWS active alerts for LOCAL/REGIONAL, and
-USGS M2.5+ past-day earthquake GeoJSON for REGIONAL; all are disabled by default, and the NWS scopes
-share one request per scan
+Three separately opted-in official HTTPS URLs: Washington NWS active alerts for LOCAL/REGIONAL,
+USGS M2.5+ past-day earthquake GeoJSON for REGIONAL, and WSDOT Highway Alerts RSS for REGIONAL;
+all are disabled by default, and the NWS scopes share one request per scan
 LOCAL Seattle policy config defaults to disabled and gates social/neighborhood-blog sources
 LOCAL registry seeds known source metadata for disabled official, blog, and social candidates
 Fixture parsers include LOCAL SFD, AlertSeattle, NWS, WSDOT, Metro, City Light, FAA/SEA, and local-blog evidence
@@ -179,11 +179,15 @@ REGIONAL USGS GeoJSON fixture parsing now filters by Washington-area coordinate 
 magnitude, preserving seismic evidence and an explainable regional ranking factor
 REGIONAL NWS, WSDOT, and USGS fixture items use official-ID event keys; isolated headlines do not
 claim corroboration, and source-family/health evidence is visible in scoped clusters
-On this machine, the standing config explicitly opts in to LOCAL/REGIONAL NWS and REGIONAL USGS,
+On this machine, the standing config explicitly opts in to LOCAL/REGIONAL NWS, REGIONAL USGS,
+and REGIONAL WSDOT RSS,
 and the separate 30-minute news timer is enabled. The LOCAL page includes labeled REGIONAL
 context and source health; LOCAL/REGIONAL panels refresh from SQLite every 60 seconds while visible.
 Successful HTTP 200 snapshots retire missing active items, while 304 and failed scans preserve
 the prior snapshot. Repository defaults and new installs still leave all live feeds disabled.
+WSDOT's separate JSON API requires an access code and is not enabled; its public RSS feed is used
+without a credential. The RSS feed is statewide, so WSDOT items are marked REGIONAL rather than
+presented as Seattle-specific LOCAL alerts.
 Source audit surfaces derive disabled / configured_never_run / healthy / stale / parser_failed /
 policy_blocked / auth_required states without fetching
 `console-1701 news-sources` also prints source family, class, verification status, and expected

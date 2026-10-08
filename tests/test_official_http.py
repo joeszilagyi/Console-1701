@@ -7,11 +7,12 @@ import pytest
 from console1701.news.official_http import (
     NWS_WASHINGTON_ALERTS_URL,
     USGS_REGIONAL_EARTHQUAKES_URL,
+    WSDOT_HIGHWAY_ALERTS_RSS_URL,
     RateLimitedError,
     fetch_official_text,
     is_supported_official_source,
 )
-from console1701.news.parsers import PayloadTooLargeError, UnsupportedSourceError
+from console1701.news.parsers import NewsIngestError, PayloadTooLargeError, UnsupportedSourceError
 
 
 def _source() -> dict:
@@ -32,6 +33,17 @@ def _usgs_source() -> dict:
         "kind": "api_json",
         "parser": "usgs_earthquake_geojson",
         "url": USGS_REGIONAL_EARTHQUAKES_URL,
+        "verification_status": "verified",
+    }
+
+
+def _wsdot_source() -> dict:
+    return {
+        "id": "wsdot_highway_alerts_rss",
+        "scope": "REGIONAL",
+        "kind": "rss",
+        "parser": "wsdot_highway_alerts_rss",
+        "url": WSDOT_HIGHWAY_ALERTS_RSS_URL,
         "verification_status": "verified",
     }
 
@@ -112,6 +124,53 @@ def test_official_http_requires_exact_verified_usgs_feed(monkeypatch):
     assert result.status_code == 200
     assert result.last_modified == "today"
     assert observed == {"url": USGS_REGIONAL_EARTHQUAKES_URL, "accept": "application/json"}
+
+
+def test_official_http_requires_exact_wsdot_rss_and_rss_content_type(monkeypatch):
+    source = _wsdot_source()
+    assert is_supported_official_source(source)
+    for changed in (
+        {"scope": "LOCAL"},
+        {"id": "wsdot_traveler_api"},
+        {"url": "https://www.wsdot.wa.gov/traffic/api/HighwayAlerts/rss.aspx?x=1"},
+        {"kind": "api_json"},
+        {"parser": "generic_json_items"},
+        {"verification_status": "official_page_seen"},
+        {"auth": {"code": "secret"}},
+    ):
+        assert not is_supported_official_source({**source, **changed})
+
+    observed = {}
+
+    class _RssResponse(_Response):
+        headers = {"Content-Type": "application/rss+xml; charset=utf-8"}
+
+    class _Opener:
+        def open(self, request, *, timeout):
+            observed["url"] = request.full_url
+            observed["accept"] = request.get_header("Accept")
+            return _RssResponse(b"<rss/>")
+
+    monkeypatch.setattr("console1701.news.official_http.build_opener", lambda *handlers: _Opener())
+    result = fetch_official_text(
+        source, user_agent="console-1701 test", timeout_seconds=5, max_bytes=100
+    )
+    assert result.text == "<rss/>"
+    assert observed == {"url": WSDOT_HIGHWAY_ALERTS_RSS_URL, "accept": "application/rss+xml"}
+
+    class _WrongTypeResponse(_RssResponse):
+        headers = {"Content-Type": "text/html"}
+
+    class _WrongTypeOpener:
+        def open(self, request, *, timeout):
+            return _WrongTypeResponse(b"<rss/>")
+
+    monkeypatch.setattr(
+        "console1701.news.official_http.build_opener", lambda *handlers: _WrongTypeOpener()
+    )
+    with pytest.raises(NewsIngestError, match="content type"):
+        fetch_official_text(source, user_agent="console-1701 test", timeout_seconds=5,
+                            max_bytes=100)
 
 
 def test_official_http_is_bounded_and_sends_conditional_headers(monkeypatch):

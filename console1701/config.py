@@ -51,6 +51,7 @@ REGIONAL_ADAPTER_TYPES = {
     "generic_json_items",
     "manual_review_only",
     "official_api_json",
+    "official_rss",
     "rss",
     "rss_atom",
     "source_health_probe_only",
