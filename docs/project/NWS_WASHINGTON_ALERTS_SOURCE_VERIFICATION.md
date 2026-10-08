@@ -28,3 +28,11 @@ Verified 2026-10-08 for the first explicit official HTTP ingest slice.
   `news.fetch_policy.allow_official_http` must all be true. The transport additionally accepts only
   the exact verified URL, parser, source id, scope, and kind. No production source is enabled by
   this signoff or by the committed example config.
+- Operational smoke check, 2026-10-08 11:00 PDT: a one-time config in the console config directory
+  enabled only this source for an explicit `news-scan`. The request returned HTTP 200, GeoJSON
+  metadata of 8,185 bytes, and an ETag. The source recorded `success`/`healthy`, zero Seattle-area
+  matching items, and a retention purge with zero deletions. An immediate second command skipped
+  the source under its ten-minute interval and created no second fetch run. The temporary opt-in
+  was then disabled and removed; the stored source is disabled, the standing config was unchanged,
+  and the separate news timer remains disabled. This does not validate HTTP 304 or live alert-item
+  persistence, which require a later eligible unchanged response or a Seattle-relevant alert.

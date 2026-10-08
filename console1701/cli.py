@@ -99,10 +99,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     news_scan_parser = subparsers.add_parser(
         "news-scan",
-        help="Ingest configured local recent-signal fixtures once",
+        help="Ingest configured recent-signal sources once",
         description=(
-            "Run one explicit recent-signal ingest pass. The current phase accepts only enabled "
-            "local file fixtures and never makes network calls."
+            "Run one explicit recent-signal ingest pass. Local fixtures are supported; an "
+            "allowlisted official HTTPS source may be fetched only with every required config "
+            "opt-in. Page loads and host scans never fetch news."
         ),
     )
     _add_config_arg(news_scan_parser)

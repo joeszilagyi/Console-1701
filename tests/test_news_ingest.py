@@ -7,7 +7,7 @@ from textwrap import dedent
 import pytest
 
 import console1701.config as config_module
-from console1701.cli import main
+from console1701.cli import build_parser, main
 from console1701.config import load_config
 from console1701.db import connect_db, init_db, json_loads
 from console1701.news.official_http import OfficialFetchResult, RateLimitedError
@@ -1471,6 +1471,16 @@ def test_parse_fixture_items_bounds_text_lengths():
     assert len(items[0]["title"]) == 280
     assert len(items[0]["description"]) == 1200
     assert items[0]["source_published_at"] == "2026-05-05T18:05:00+00:00"
+
+
+def test_cli_news_scan_help_discloses_conditional_network_access(capsys):
+    with pytest.raises(SystemExit) as exit_info:
+        build_parser().parse_args(["news-scan", "--help"])
+
+    assert exit_info.value.code == 0
+    help_text = capsys.readouterr().out
+    assert "allowlisted official HTTPS source may be fetched" in help_text
+    assert "Page loads and host scans never fetch news" in help_text
 
 
 def test_cli_news_scan_command_prints_summary(tmp_path, capsys):

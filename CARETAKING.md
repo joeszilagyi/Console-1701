@@ -1,5 +1,19 @@
 # Caretaking Log
 
+## 2026-10-08 11:00 PDT - first controlled live NWS scan
+
+- Selected the deployed NWS Washington alerts ingestion path for a one-time operational check.
+  The standing web config and disabled news timer were left unchanged; a temporary console-config
+  file explicitly enabled only the verified NWS source for `news-scan`.
+- The fetch returned HTTP 200 with 8,185 bytes and an ETag. SQLite recorded one successful fetch
+  run, healthy source state, zero Seattle-area matching items, and zero retention deletions. A
+  second immediate command skipped the source under its ten-minute interval without another fetch.
+- Disabled the temporary opt-ins, persisted the source as disabled, then removed the temporary
+  file. The source remains off in the standing config; no live REGIONAL source was enabled.
+- Found `news-scan --help` still claimed the command never makes network calls. Corrected its
+  description to state the explicit allowlisted-HTTPS behavior. HTTP 304 and a live matching alert
+  are not yet observed; the backlog and source signoff retain that limit.
+
 ## 2026-10-08 10:49 PDT - effective GitHub gate and REGIONAL event contract
 
 - After PR #18's `tests-and-lint` check passed and the merged `main` push passed, updated the
