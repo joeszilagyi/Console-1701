@@ -15,15 +15,20 @@ NWS_WASHINGTON_ALERTS_URL = "https://api.weather.gov/alerts/active?area=WA"
 USGS_REGIONAL_EARTHQUAKES_URL = (
     "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson"
 )
-OFFICIAL_JSON_SOURCES = {
+WSDOT_HIGHWAY_ALERTS_RSS_URL = "https://www.wsdot.wa.gov/traffic/api/HighwayAlerts/rss.aspx"
+OFFICIAL_SOURCES = {
     ("LOCAL", "nws_active_alerts_api"): (
-        NWS_WASHINGTON_ALERTS_URL, "nws_alerts_json", "application/geo+json"
+        NWS_WASHINGTON_ALERTS_URL, "api_json", "nws_alerts_json", "application/geo+json"
     ),
     ("REGIONAL", "nws_active_alerts_wa"): (
-        NWS_WASHINGTON_ALERTS_URL, "nws_alerts_json", "application/geo+json"
+        NWS_WASHINGTON_ALERTS_URL, "api_json", "nws_alerts_json", "application/geo+json"
     ),
     ("REGIONAL", "usgs_eq_geojson"): (
-        USGS_REGIONAL_EARTHQUAKES_URL, "usgs_earthquake_geojson", "application/json"
+        USGS_REGIONAL_EARTHQUAKES_URL, "api_json", "usgs_earthquake_geojson",
+        "application/json"
+    ),
+    ("REGIONAL", "wsdot_highway_alerts_rss"): (
+        WSDOT_HIGHWAY_ALERTS_RSS_URL, "rss", "wsdot_highway_alerts_rss", "application/rss+xml"
     ),
 }
 MAX_HTTP_BYTES = 4 * 1024 * 1024
@@ -50,11 +55,11 @@ class _NoRedirect(HTTPRedirectHandler):
 
 def is_supported_official_source(source: dict[str, Any]) -> bool:
     """Only verified scope/source/URL/parser combinations are eligible for live ingest."""
-    spec = OFFICIAL_JSON_SOURCES.get((source.get("scope"), source.get("id")))
+    spec = OFFICIAL_SOURCES.get((source.get("scope"), source.get("id")))
     return (
         spec is not None
-        and source.get("kind") == "api_json"
-        and source.get("parser") == spec[1]
+        and source.get("kind") == spec[1]
+        and source.get("parser") == spec[2]
         and source.get("url") == spec[0]
         and source.get("verification_status") == "verified"
         and not source.get("auth")
@@ -90,11 +95,11 @@ def fetch_official_text(
     last_modified: str | None = None,
 ) -> OfficialFetchResult:
     if not is_supported_official_source(source):
-        raise UnsupportedSourceError("Source is outside the verified official JSON allowlist.")
+        raise UnsupportedSourceError("Source is outside the verified official feed allowlist.")
     timeout = min(MAX_HTTP_TIMEOUT_SECONDS, max(1, int(timeout_seconds)))
     limit = min(MAX_HTTP_BYTES, max(1, int(max_bytes)))
-    spec = OFFICIAL_JSON_SOURCES[(source["scope"], source["id"])]
-    headers = {"Accept": spec[2], "User-Agent": user_agent}
+    spec = OFFICIAL_SOURCES[(source["scope"], source["id"])]
+    headers = {"Accept": spec[3], "User-Agent": user_agent}
     if etag and _bounded_header({"ETag": etag}, "ETag"):
         headers["If-None-Match"] = etag
     if last_modified and _bounded_header({"Last-Modified": last_modified}, "Last-Modified"):
@@ -108,12 +113,12 @@ def fetch_official_text(
             if status != 200:
                 raise NewsIngestError(f"Official feed returned HTTP {status}.")
             content_type = str(response.headers.get("Content-Type") or "").lower()
-            if content_type.split(";", 1)[0].strip() not in {
-                "application/geo+json",
-                "application/json",
-                "application/ld+json",
-            }:
-                raise NewsIngestError("Official feed did not return JSON content.")
+            allowed_types = (
+                {"application/rss+xml"} if source["kind"] == "rss"
+                else {"application/geo+json", "application/json", "application/ld+json"}
+            )
+            if content_type.split(";", 1)[0].strip() not in allowed_types:
+                raise NewsIngestError("Official feed returned an unexpected content type.")
             payload = response.read(limit + 1)
             if len(payload) > limit:
                 raise PayloadTooLargeError(f"Official feed exceeds {limit} bytes.")

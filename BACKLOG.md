@@ -18,7 +18,7 @@ whenever new ideas come up and are not completed immediately.
 - The local delta image is displayed from `console1701/static/codex-alert-delta.png`.
 - Recent-signal/news support remains disabled by default: `news:` config validation rejects unsafe
   shapes, SQLite metadata tables exist, storage helpers expose disabled/not-configured states, and
-  explicit fixture ingest exists, and two exact official HTTP URLs are available behind opt-in
+  explicit fixture ingest exists, and three exact official HTTPS feed URLs are available behind opt-in
   gates.
 - `console-1701 news-scan` provides explicit local-fixture ingest for enabled `file://`
   JSON/RSS/Atom/homepage sources, updates source health/fetch runs/items/clusters in SQLite, and
@@ -28,6 +28,9 @@ whenever new ideas come up and are not completed immediately.
   and HTTP opt-ins. The two scopes share one upstream request per scan.
 - REGIONAL USGS earthquake GeoJSON now has an exact-URL opt-in live path with M2.5+ past-day feed
   signoff, regional/magnitude filtering, and the same disabled-by-default policy.
+- REGIONAL WSDOT Highway Alerts RSS has an exact-URL opt-in live path using the public official
+  feed, numeric alert IDs, bounded sanitized headlines, and source-specific snapshot retirement.
+  WSDOT's separate JSON API still requires an access code and remains disabled.
 - A disabled-by-default `local:` policy config now exists for Seattle-specific inclusion flags,
   hazard thresholds, and explicit social/neighborhood-blog allowances.
 - A static LOCAL source registry now seeds disabled metadata for core official, blog, and
@@ -702,8 +705,10 @@ ranking evidence.
 
 Current state: the existing WSDOT travel-alert parser now runs in REGIONAL scope through the
 registry-backed ingest path, and the regional regression exercises the shared local travel-alert
-fixture corpus. Dedicated Washington corridor fixture files and broader route coverage are still
-pending.
+fixture corpus. A separate public official Highway Alerts RSS parser now reads statewide active
+alerts and preserves numeric alert IDs, route/impact evidence, and update times. The RSS source is
+live behind exact-url opt-ins; the access-code JSON API remains disabled. Dedicated Washington
+corridor fixture files and broader route coverage are still pending.
 
 ### WSF Bulletin/API Fixture Parser
 
@@ -902,14 +907,21 @@ every source disabled by default and require an explicit command. No page-load f
 Current state: the exact verified NWS Washington alert endpoint is available behind news,
 REGIONAL policy, scope, source, and HTTP opt-ins. A controlled explicit scan returned HTTP 200 and
 persisted two Washington alert items with official-ID event evidence; an immediate repeat was
-interval-skipped. On this machine the standing config now opts in to LOCAL/REGIONAL NWS and
-REGIONAL USGS at 30-minute intervals, with the separate news timer enabled. LOCAL and REGIONAL
+interval-skipped. On this machine the standing config now opts in to LOCAL/REGIONAL NWS,
+REGIONAL USGS, and REGIONAL WSDOT RSS at 30-minute intervals, with the separate news timer enabled. LOCAL and REGIONAL
 share one NWS request per scan. Successful HTTP 200 snapshots now retire absent active items;
 304 and failed scans preserve the prior snapshot. The LOCAL page shows labeled REGIONAL context,
 feed health, and a 60-second SQLite-only refresh. The verified USGS M2.5+ past-day feed returned
-HTTP 200 and healthy state but no in-region events at activation. Repository defaults and new
-installs remain off. WSDOT and county feeds still require endpoint-specific signoff
-and allowlist work before live ingest.
+HTTP 200 and healthy state but no in-region events at activation. The official public WSDOT
+Highway Alerts RSS returned HTTP 200 with 189 statewide current items and a healthy source state;
+it is REGIONAL only because the RSS lacks reliable Seattle-specific location fields. Repository
+defaults and new installs remain off. The WSDOT access-code JSON API and county feeds still
+require separate authorization or endpoint-specific signoff before live ingest.
+
+WSDOT follow-up: its legacy per-alert RSS links currently redirect to a general alert page.
+Investigate an official stable alert-specific link without arbitrary crawling; preserve the numeric
+WSDOT ID for identity in the meantime. Do not enable LOCAL WSDOT until a defensible Seattle-area
+geography filter is tested against real source fields or clearly documented text evidence.
 
 ### REGIONAL News RSS Ingest Phase
 

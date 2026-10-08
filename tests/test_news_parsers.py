@@ -10,6 +10,37 @@ from console1701.news.parsers import NewsParserError, parse_fixture_items
 from console1701.news.ranking import build_rank_result
 
 
+def test_wsdot_official_rss_preserves_ids_and_strips_embedded_markup() -> None:
+    source = {
+        "id": "wsdot_highway_alerts_rss",
+        "scope": "REGIONAL",
+        "kind": "rss",
+        "parser": "wsdot_highway_alerts_rss",
+        "url": "https://www.wsdot.wa.gov/traffic/api/HighwayAlerts/rss.aspx",
+    }
+    fixture = (
+        Path(__file__).resolve().parent / "fixtures/news/regional_wsdot_highway_alerts.rss"
+    ).read_text()
+    items = parse_fixture_items(source, fixture)
+
+    assert len(items) == 2
+    assert [item["evidence"]["wsdot_alert"]["alert_id"] for item in items] == [
+        "718142", "718143"
+    ]
+    assert items[0]["source_published_at"] == "2026-10-08T14:17:47+00:00"
+    assert items[0]["url"].startswith("https://www.wsdot.wa.gov/")
+    assert "<" not in items[0]["title"] + (items[0]["description"] or "")
+    assert items[0]["evidence"]["wsdot_alert"]["priority"] == "High"
+    assert "I-5" in items[0]["evidence"]["wsdot_alert"]["route_tokens"]
+
+    with pytest.raises(NewsParserError, match="invalid identity"):
+        parse_fixture_items(source, fixture.replace("refnum=718142", "refnum=999999"))
+    with pytest.raises(NewsParserError, match="no alert rows"):
+        parse_fixture_items(
+            source, '<rss><channel><title>WA State Highway Alerts</title></channel></rss>'
+        )
+
+
 def test_parse_usgs_regional_geojson_filters_and_preserves_seismic_evidence() -> None:
     source = {
         "id": "usgs_eq_geojson",

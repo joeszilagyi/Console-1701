@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
-from urllib.parse import quote, urljoin, urlsplit
+from urllib.parse import parse_qs, quote, urljoin, urlsplit
 
 from console1701.news.normalize import (
     MAX_DESCRIPTION_LENGTH,
@@ -111,6 +111,8 @@ def parse_fixture_items(
         return _parse_nws_alerts_json(source, payload_text)
     if parser_name == "usgs_earthquake_geojson":
         return _parse_usgs_earthquake_geojson(source, payload_text)
+    if parser_name == "wsdot_highway_alerts_rss":
+        return _parse_wsdot_highway_alerts_rss(source, payload_text)
     if parser_name == "alertseattle_rss":
         return _parse_alertseattle_rss_feed(source, payload_text)
     if parser_name == "metro_rss":
@@ -637,6 +639,79 @@ def _parse_wsdot_travel_alerts_json(
         if not _wsdot_alert_matches_scope(source, row):
             continue
         normalized.append(_normalize_wsdot_alert(source, row, index=index))
+    return normalized
+
+
+class _WsdotPlainText(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.parts: list[str] = []
+
+    def handle_data(self, data: str) -> None:
+        self.parts.append(data)
+
+
+def _wsdot_plain_text(value: str | None) -> str:
+    parser = _WsdotPlainText()
+    parser.feed(value or "")
+    return " ".join(" ".join(parser.parts).split())
+
+
+def _parse_wsdot_highway_alerts_rss(
+    source: dict[str, Any], payload_text: str
+) -> list[dict[str, Any]]:
+    try:
+        root = ET.fromstring(payload_text)
+    except ET.ParseError as exc:
+        raise NewsParserError(f"Malformed WSDOT RSS: {exc}") from exc
+    channel = root.find("./channel") if _local_name(root.tag) == "rss" else None
+    if channel is None or _element_text(channel.find("./title")) != "WA State Highway Alerts":
+        raise NewsParserError("WSDOT RSS must contain the official Highway Alerts channel.")
+    rows = channel.findall("./item")
+    if not rows:
+        raise NewsParserError("WSDOT RSS has no alert rows; keep the prior snapshot.")
+    normalized: list[dict[str, Any]] = []
+    seen_ids: set[str] = set()
+    for index, element in enumerate(rows):
+        alert_id = str(_element_text(element.find("./guid")) or "")
+        title = _wsdot_plain_text(_element_text(element.find("./title")))
+        description = _wsdot_plain_text(_element_text(element.find("./description")))
+        updated = _element_text(element.find("./{http://www.w3.org/2005/Atom}updated"))
+        raw_link = str(_element_text(element.find("./link")) or "")
+        try:
+            parts = urlsplit(raw_link)
+        except ValueError as exc:
+            raise NewsParserError(f"WSDOT RSS alert row {index} has an invalid URL.") from exc
+        refnum = parse_qs(parts.query).get("refnum", [])
+        if (
+            not alert_id.isdigit() or len(alert_id) > 12 or alert_id in seen_ids
+            or not title or not normalize_timestamp(updated)
+            or parts.scheme not in {"http", "https"}
+            or parts.hostname != "www.wsdot.wa.gov"
+            or parts.path.lower() != "/traffic/trafficalerts/default.aspx"
+            or refnum != [alert_id]
+        ):
+            raise NewsParserError(f"WSDOT RSS alert row {index} has invalid identity or fields.")
+        seen_ids.add(alert_id)
+        official_link = normalize_url(parts._replace(scheme="https").geturl())
+        priority_match = re.search(r"\b(highest|high|medium|low) impact\b", description, re.I)
+        item = _normalize_wsdot_alert(
+            source,
+            {
+                "AlertID": alert_id,
+                "Headline": title,
+                "Description": description,
+                "LastUpdatedTime": updated,
+                "url": official_link,
+                "Priority": priority_match.group(1).title() if priority_match else None,
+            },
+            index=index,
+        )
+        item["evidence"]["wsdot_alert"]["feed_url"] = str(source.get("url") or "")
+        item["evidence"]["wsdot_alert"]["link_note"] = (
+            "WSDOT's per-alert legacy link currently redirects to its general alerts page."
+        )
+        normalized.append(item)
     return normalized
 
 

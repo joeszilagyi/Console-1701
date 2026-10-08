@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:a10="http://www.w3.org/2005/Atom" version="2.0">
+  <channel>
+    <title>WA State Highway Alerts</title>
+    <link>https://www.wsdot.wa.gov/traffic/api/HighwayAlerts/rss.aspx</link>
+    <description>Highway Alerts</description>
+    <item>
+      <guid isPermaLink="false">718142</guid>
+      <link>http://www.wsdot.wa.gov/traffic/trafficalerts/default.aspx?refnum=718142&amp;action=2</link>
+      <title>Northbound I-5 lane closed near Everett &lt;a href="https://wsdot.wa.gov/"&gt;more&lt;/a&gt;</title>
+      <description>&lt;div&gt;High Impact&lt;/div&gt;&lt;div&gt;Northbound I-5 lane closed near Everett.&lt;/div&gt;</description>
+      <a10:updated>2026-10-08T07:17:47-07:00</a10:updated>
+    </item>
+    <item>
+      <guid isPermaLink="false">718143</guid>
+      <link>http://www.wsdot.wa.gov/traffic/trafficalerts/default.aspx?refnum=718143&amp;action=2</link>
+      <title>Northbound I-5 lane closed near Everett</title>
+      <description>&lt;div&gt;Medium Impact&lt;/div&gt;&lt;div&gt;Northbound I-5 lane closed near Everett.&lt;/div&gt;</description>
+      <a10:updated>2026-10-08T07:20:00-07:00</a10:updated>
+    </item>
+  </channel>
+</rss>

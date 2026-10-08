@@ -80,7 +80,9 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
     elif is_allowed_official_http:
         policy_state = "allowed_official_http"
         basis = "explicit_official_https"
-        robots_state = "not_applicable_official_api"
+        robots_state = (
+            "not_applicable_official_feed" if kind == "rss" else "not_applicable_official_api"
+        )
     else:
         policy_state = "blocked_fixture_phase"
         basis = "future_live_fetch"
