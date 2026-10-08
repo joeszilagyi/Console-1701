@@ -179,10 +179,11 @@ REGIONAL USGS GeoJSON fixture parsing now filters by Washington-area coordinate 
 magnitude, preserving seismic evidence and an explainable regional ranking factor
 REGIONAL NWS, WSDOT, and USGS fixture items use official-ID event keys; isolated headlines do not
 claim corroboration, and source-family/health evidence is visible in scoped clusters
-The REGIONAL NWS source also passed one controlled live scan with two stored Washington alerts;
-the temporary opt-in was removed and the news timer remains disabled
-The REGIONAL USGS source passed one controlled live scan with no currently matching in-region
-events; its temporary opt-in was also removed
+On this machine, the standing config explicitly opts in to LOCAL/REGIONAL NWS and REGIONAL USGS,
+and the separate 30-minute news timer is enabled. The LOCAL page includes labeled REGIONAL
+context and source health; LOCAL/REGIONAL panels refresh from SQLite every 60 seconds while visible.
+Successful HTTP 200 snapshots retire missing active items, while 304 and failed scans preserve
+the prior snapshot. Repository defaults and new installs still leave all live feeds disabled.
 Source audit surfaces derive disabled / configured_never_run / healthy / stale / parser_failed /
 policy_blocked / auth_required states without fetching
 `console-1701 news-sources` also prints source family, class, verification status, and expected

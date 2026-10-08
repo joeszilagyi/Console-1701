@@ -551,8 +551,9 @@ command. No page-load fetches.
 
 Current state: the explicit `news-scan` path can fetch only the verified Washington NWS alerts URL
 when every opt-in gate is true. One controlled command successfully fetched that source and a
-second immediate command was skipped by the interval gate. The temporary opt-in was removed and it
-remains off in the live config. SFD Fire 911, King County Metro, WSDOT, and other sources still
+second immediate command was skipped by the interval gate. On this machine the standing config now
+opts in to this source at a 30-minute interval and the separate news timer runs every 30 minutes;
+new installs remain off by default. SFD Fire 911, King County Metro, WSDOT, and other sources still
 require endpoint signoff and allowlist additions before live ingest.
 
 ### LOCAL News/Blog RSS Ingest Phase
@@ -901,10 +902,13 @@ every source disabled by default and require an explicit command. No page-load f
 Current state: the exact verified NWS Washington alert endpoint is available behind news,
 REGIONAL policy, scope, source, and HTTP opt-ins. A controlled explicit scan returned HTTP 200 and
 persisted two Washington alert items with official-ID event evidence; an immediate repeat was
-interval-skipped. The temporary opt-in was removed and the news timer stays disabled. LOCAL and
-REGIONAL share one request per scan if both are configured. The verified USGS M2.5+ past-day feed
-is now also opt-in: a controlled scan returned HTTP 200, healthy state, and zero in-region events;
-the temporary opt-in was removed. WSDOT and county feeds still require endpoint-specific signoff
+interval-skipped. On this machine the standing config now opts in to LOCAL/REGIONAL NWS and
+REGIONAL USGS at 30-minute intervals, with the separate news timer enabled. LOCAL and REGIONAL
+share one NWS request per scan. Successful HTTP 200 snapshots now retire absent active items;
+304 and failed scans preserve the prior snapshot. The LOCAL page shows labeled REGIONAL context,
+feed health, and a 60-second SQLite-only refresh. The verified USGS M2.5+ past-day feed returned
+HTTP 200 and healthy state but no in-region events at activation. Repository defaults and new
+installs remain off. WSDOT and county feeds still require endpoint-specific signoff
 and allowlist work before live ingest.
 
 ### REGIONAL News RSS Ingest Phase

@@ -1,5 +1,23 @@
 # Caretaking Log
 
+## 2026-10-08 11:51 PDT - live LOCAL page and snapshot lifecycle
+
+- Selected the already verified LOCAL/REGIONAL Washington NWS alert and REGIONAL USGS earthquake
+  sources. Corrected a live-snapshot lifecycle gap before scheduling them: after a successful HTTP
+  200, items absent from that source's current parsed snapshot become inactive with retirement
+  evidence, their active clusters are rebuilt, and orphaned LOCAL events become inactive. HTTP 304
+  and failed parses leave the prior snapshot intact; reappearing items reactivate by URL identity.
+- Added explicitly labeled REGIONAL items and source health to the LOCAL page, a 60-second
+  SQLite-only visible-page refresh, and an accurate "Prior health at ingest" evidence label.
+  Page loads still never fetch official feeds.
+- Enabled only the three exact allowlisted sources in this machine's untracked standing config,
+  each at a 30-minute interval aligned to the separately enabled 30-minute news timer. The first
+  explicit scan found zero Seattle-matching NWS alerts, two REGIONAL NWS advisories, and zero
+  in-region USGS earthquakes; all source states were healthy. Other candidate feeds stay off.
+- Added lifecycle and page-render tests; Ruff and the full pytest suite passed (190 tests).
+  Verified the running LOCAL page and next news timer firing. Repository defaults/new installs
+  remain disabled; WSDOT and county endpoint signoff remains pending.
+
 ## 2026-10-08 11:20 PDT - first distinct REGIONAL USGS live feed
 
 - Verified USGS's documented M2.5+ past-day GeoJSON summary endpoint and its live shape (HTTP 200,

@@ -1,5 +1,5 @@
 [Unit]
-Description=console-1701 recent-signal fixture ingest
+Description=console-1701 explicitly enabled recent-signal ingest
 
 [Service]
 Type=oneshot

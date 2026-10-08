@@ -189,7 +189,7 @@ def test_root_page_renders_html(tmp_path, monkeypatch):
     assert response.status_code == 200
     assert response.media_type == "text/html"
     assert "console-1701" in body
-    assert "/static/app.js?v=machine-console-13" in body
+    assert "/static/app.js?v=machine-console-14" in body
     assert "/static/app.css?v=machine-console-17" in body
     assert 'id="news-scan-button"' in body
     assert 'data-active-scope="OVERVIEW"' in body
@@ -881,6 +881,45 @@ news:
     assert regional_scope["state"]["state"] == "configured_never_run"
     assert sources[0]["source_key"] == "missing_fixture"
     assert sources[0]["latest_fetch_run"] is None
+
+
+def test_local_page_shows_persisted_regional_context_without_fetching(tmp_path, monkeypatch):
+    _use_temp_state(monkeypatch, tmp_path)
+    config_path = tmp_path / "config.yml"
+    config_path.write_text(
+        f"""
+paths: {{repo_roots: [], explicit_repos: []}}
+logs: []
+projects: []
+local: {{enabled: true}}
+news:
+  enabled: true
+  scopes:
+    LOCAL:
+      enabled: true
+    REGIONAL:
+      enabled: true
+      sources:
+        - id: nws_active_alerts_wa
+          enabled: true
+          url: "file://{FIXTURE_DIR / 'local_nws_alerts.json'}"
+""".strip() + "\n",
+        encoding="utf-8",
+    )
+    assert run_news_scan(config_path)["status"] == "complete"
+
+    def unexpected_scan(*args, **kwargs):
+        raise AssertionError("LOCAL GET must not scan")
+
+    monkeypatch.setattr(api_module, "run_news_scan", unexpected_scan)
+    router = build_router(str(config_path))
+    body = _route_endpoint(router, "/{scope}")(_request("/LOCAL"), "LOCAL").body.decode()
+    assert "REGIONAL context · not LOCAL alerts" in body
+    assert "High Wind Warning issued May 5 for Seattle" in body
+    assert "Official source health" in body
+    assert "Full REGIONAL view" in body
+    assert "data-news-auto-refresh" in body
+    assert "Prior health at ingest" in body
 
 
 def test_enabled_official_http_source_is_never_fetched_on_get(tmp_path, monkeypatch):
