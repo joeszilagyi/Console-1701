@@ -93,7 +93,23 @@ def run_news_scan(config_path: str | Path | None = None) -> dict[str, Any]:
         conn.commit()
 
         if not bool((config.get("news") or {}).get("enabled")):
-            return {
+            purge_now = utc_now()
+            before_counts = _news_table_counts(conn)
+            purge_summary = purge_news_retention(conn, config, now=purge_now)
+            after_counts = _news_table_counts(conn)
+            _record_news_runtime_state(
+                conn,
+                "news.last_purge",
+                {
+                    "observed_at": purge_now,
+                    "summary": purge_summary,
+                    "before_counts": before_counts,
+                    "after_counts": after_counts,
+                    "cutoffs": _retention_cutoffs(config, purge_now),
+                    "retention": (config.get("news") or {}).get("retention") or {},
+                },
+            )
+            result = {
                 "status": "disabled",
                 "configured_sources": len(configured_sources),
                 "stored_sources": upserted_sources,
@@ -103,6 +119,9 @@ def run_news_scan(config_path: str | Path | None = None) -> dict[str, Any]:
                 "errors": [],
                 "purged": purge_summary,
             }
+            _record_news_runtime_state(conn, "news.last_scan_result", result)
+            conn.commit()
+            return result
 
         for source in configured_sources:
             if not _source_is_enabled(config, source):

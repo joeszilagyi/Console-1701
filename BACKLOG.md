@@ -47,6 +47,10 @@ whenever new ideas come up and are not completed immediately.
 - OVERVIEW, LOCAL, REGIONAL, NATIONAL, GLOBAL, ORBITAL, and SYSTEM now render real
   disabled/not-configured/source-backed recent-signal panels instead of placeholder bays.
 - `console-1701 news-sources` lists configured source policy and health state without fetching.
+- General scan history now has 90-day bounded retention, a preview/apply maintenance command, and
+  an automatic small prune on each scan. The latest host and per-repo evidence is preserved.
+- Pytest now uses temporary console state, and scans release the SQLite write transaction before
+  running configured tests.
 
 ## Scoped Recent Signal / News Ingestion
 
@@ -133,8 +137,9 @@ Current state: fixture ingest now stores explicit ranking factors and reasons in
 source priority, recency, freshness, official-tag boost, scope priority, repeat observations, tag
 density, prior source-health confidence, source-provided severity, and topic repetition. Event
 merging now records the topic-repetition contract alongside the existing cluster-size and
-cross-source signals. Broader source-family weighting and future scope-specific severity
-normalization remain pending.
+cross-source signals. LOCAL event-correlation now also applies a capped, explainable
+`local_source_family_boost` for trusted official and local-news families. Future
+scope-specific severity normalization remains pending.
 
 ### Scope Page UI
 
@@ -167,12 +172,16 @@ derived config warnings.
 
 ### Official API/RSS First Live Ingest
 
-Status: implemented.
+Status: not implemented.
 
 After fixture ingest and tests exist, add explicit enabled HTTP fetch for safe official APIs/RSS only.
 Use timeouts, response size caps, per-source intervals, backoff, ETag/Last-Modified support, honest
 user agent, and fail-soft per-source behavior. Tests must use mocked HTTP or a local test server, not
 live network.
+
+Current state: API/RSS source definitions and fixture parsers exist, but the news scanner accepts
+only `file://` fixtures. No live HTTP fetch client, conditional requests, or production source
+enablement flow has been implemented. The earlier "implemented" label was incorrect.
 
 ### Homepage Extractor Later And Disabled
 
@@ -471,9 +480,10 @@ SYSTEM later and summarize them on LOCAL.
 
 Current state: API/UI/CLI source summaries now derive `disabled`, `configured_never_run`,
 `healthy`, `stale`, `failing`, `parser_failed`, `policy_blocked`, `social_disabled`,
-`homepage_disabled`, and `auth_required` from config, policy, fetch runs, and latest health rows.
-Live-fetch-only states such as `robots_blocked`, `rate_limited`, and richer unsupported/manual-review
-variants remain pending until HTTP ingest exists.
+`homepage_disabled`, `auth_required`, `manual_review_only`, `rate_limited`, `robots_blocked`,
+and `unsupported` from config, policy, fetch runs, and latest health rows. Remaining live-fetch-
+specific robots and rate-limit evidence still needs actual HTTP ingest before it can be populated
+from real network responses.
 
 ### LOCAL Evidence Drawer Contract
 

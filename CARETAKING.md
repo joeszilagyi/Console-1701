@@ -1,5 +1,130 @@
 # Caretaking Log
 
+## 2026-10-08 10:11 PDT - recover live console and bound scan history
+
+- Selected the running console installation and its scheduled test loop for recovery after a
+  four-month gap. The May 11 web process returned HTTP 500 for `/` because old Python code was
+  rendering newer templates; `/api/news/summary` was absent from that process. Scheduled scans
+  had reported the same three SQLite lock failures since June 5.
+- Created and integrity-checked a consistent 2,091,438,080-byte SQLite backup under
+  `~/.local/state/console-1701/backups/` and preserved the local config there before maintenance.
+- Added a suite-wide temporary-state fixture and committed the scanner's write transaction before
+  executing repo tests. A regression proves a second SQLite writer can start at that point.
+- Added 90-day scan-history retention for host, repo, test, interpretation, log, and scan-run rows.
+  The latest host and per-repo evidence survives the cutoff. Normal scans prune a bounded batch;
+  `prune-history` previews or applies all batches and can compact the database. Attention, handoff,
+  and news retention remain separate.
+- Stopped the web service and scan timer, removed expired rows after backing up, and vacuumed the
+  database from 2,091,438,080 to 773,484,544 bytes. SQLite `PRAGMA quick_check` returned `ok`.
+  Reinstalled current systemd units, restarted the web service and scan timer, and left the news
+  timer disabled. The homepage, health, host, news summary, and LOCAL scope routes returned 200.
+- Removed the missing `~/wiki` root, explicit repo, log, and project entries from the active and
+  default config. The final live scan completed six repos with no warnings and recorded 159 passing
+  tests in 2.626 seconds. Its previously red test-failure attention item resolved.
+- Corrected the backlog's false claim that live API/RSS ingest exists. The news scanner still
+  accepts only `file://` fixture inputs.
+- During the initial diagnostic run before isolation was repaired, an existing test touched the
+  live database and the scheduled disabled-news purge removed 49 expired fetch runs, four expired
+  items, 58 expired health rows, and three expired local events. Those rows predated their configured
+  retention cutoffs. The backup was taken after this event; no speculative restoration was made.
+  The suite now redirects every test to temporary state.
+- Verification: `159 passed`, Ruff clean, `git diff --check` clean, SQLite quick check `ok`, live
+  scan complete with no errors, and current HTTP routes 200. The off-limits `Upkeeper.sh` symlink
+  was not opened or modified.
+
+## 2026-06-05 16:00 PDT - LOCAL source-health state follow-up
+
+- Extended LOCAL source-health resolution so `rate_limited`, `robots_blocked`, and `unsupported`
+  states are now classified explicitly instead of falling through to the generic
+  `configured_never_run` bucket.
+- Updated the LOCAL and SYSTEM source-state summaries so the new blocking states contribute to the
+  failing counts and are visible in the scope readouts.
+- Added regression coverage for the new health-state vocabulary and kept the local-only safety
+  envelope intact: no live fetch changes, no network calls from the application itself, and no
+  changes to the off-limits `Upkeeper.sh` file.
+
+## 2026-06-05 15:54 PDT - LOCAL source-family weighting follow-up
+
+- Added a capped `local_source_family_boost` to LOCAL event-correlation ranking so trusted
+  official and local-news families contribute an explicit, explainable score term alongside the
+  existing diversity and privacy adjustments.
+- Covered the new factor with a direct ranking regression and a registry-backed NWS ingest
+  assertion so the stored evidence path and the helper contract stay aligned.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
+## 2026-06-05 15:47 PDT - news item-detail adapter fallback follow-up
+
+- Aligned the item-detail `source.adapter` fallback with the evidence block so both use the same
+  adapter-derived value when the source policy does not carry one explicitly.
+- Kept the item-detail API regression covered with the same focused tests and reverified the full
+  suite after the payload shape cleanup.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
+## 2026-06-05 15:46 PDT - news item-detail adapter follow-up
+
+- Restored the missing `source_adapter` argument when `get_news_item_detail` calls the shared
+  source-state resolver, which was causing `/api/news/items/{item_id}` lookups to fail.
+- Made the item-detail payload self-consistent by surfacing the resolved adapter in the source
+  evidence block as well as the top-level source object.
+- Extended the item-detail regression so the API now locks in the adapter field alongside the
+  existing source-key and health evidence checks.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
+## 2026-06-05 15:41 PDT - dev_server python-venv failure follow-up
+
+- Wrapped the dev-server virtualenv creation step so it now reports a clear
+  `python3-venv`-style failure message instead of surfacing only the raw subprocess failure.
+- Added a temp-tree regression that simulates a broken `PYTHON_BIN` venv creation path and asserts
+  the helper exits with the new explicit error.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
+## 2026-06-05 15:40 PDT - install_user_service python preflight follow-up
+
+- Added a `PYTHON_BIN` override and explicit preflight to `scripts/install_user_service.sh` so the
+  installer fails fast with a clear message if Python 3 is missing.
+- Kept the explicit repo-local venv binary workflow from the previous pass and extended the
+  regression test to lock in the `PYTHON_BIN` contract alongside the existing service-install
+  behavior.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
+## 2026-06-05 15:39 PDT - disabled news-scan retention follow-up
+
+- Changed `run_news_scan` so a disabled recent-signal config still runs retention purge and records
+  `news.last_purge` / `news.last_scan_result` evidence instead of returning before cleanup.
+- Added a regression that seeds an expired item, disables ingest, and proves the disabled scan
+  still clears stale rows and persists the purge summary.
+- Rechecked the API wrapper behavior so `/api/news/scan` still reports `disabled` while the
+  underlying purge path runs.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
+## 2026-06-05 15:36 PDT - install_user_service venv binary follow-up
+
+- Removed activation-dependent `console-1701` and `python` calls from
+  `scripts/install_user_service.sh` in favor of explicit repo-local venv binaries.
+- Added preflight checks so the installer fails fast if the venv Python or CLI entry point is
+  missing or not runnable after installation.
+- Extended the systemd install-script regression test to lock in the explicit venv path contract
+  and the existing disabled-news-timer behavior.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
+## 2026-06-05 15:34 PDT - scan_once CLI validation follow-up
+
+- Hardened `scripts/scan_once.sh` so `--check` now verifies the resolved `console-1701`
+  executable actually runs `--version` before reporting success.
+- Added a runtime preflight so the scan helper fails with a clear message instead of trying to
+  launch a broken CLI entry point.
+- Added regression coverage for both the runnable and broken local CLI cases using a temp
+  project tree copy of the helper script.
+- Kept the local-only safety envelope intact: no live fetch changes, no network calls from the
+  application itself, and no changes to the off-limits `Upkeeper.sh` file.
+
 ## 2026-06-05 15:25 PDT - regional fixture pack follow-up
 
 - Updated the REGIONAL fixture pack note to reflect the concrete NWS, WSDOT, and regional RSS

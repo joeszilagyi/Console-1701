@@ -21,16 +21,16 @@ scan:
 sqlite:
   busy_timeout_ms: 5000
   journal_mode: "WAL"
+  history_retention_days: 90
+  history_prune_batch_size: 1000
 
 paths:
   repo_roots:
     - "~/projects"
-    - "~/wiki"
   explicit_repos:
     - "~/projects/console-1701/main"
     - "~/projects/ufo-records"
     - "~/projects/TCL"
-    - "~/wiki"
 
 ignore:
   paths:
@@ -48,10 +48,6 @@ ignore:
     - "**/archive/**"
 
 logs:
-  - name: "ufo-actions"
-    path: "~/wiki/ufo-actions.log"
-    type: "ufo_actions"
-    enabled: true
   - name: "codex"
     path: "~/.codex"
     type: "codex"
@@ -220,10 +216,4 @@ projects:
     role: "Time travel constraints library and adversarial theory project"
     category: "Theory/library project"
     importance: "high"
-    test_commands: []
-  - name: "wiki"
-    path: "~/wiki"
-    role: "Working area for prompts, article drafts, logs, country runs, and source machinery"
-    category: "Research workbench"
-    importance: "critical"
     test_commands: []

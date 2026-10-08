@@ -490,6 +490,100 @@ def test_news_scope_states_report_homepage_extraction_disabled(tmp_path):
     assert source_statuses[0]["health_message"] == "Homepage extraction is disabled by config."
 
 
+def test_news_scope_states_report_rate_limited_robots_blocked_and_unsupported_states(tmp_path):
+    conn = connect_db(tmp_path / "console.sqlite")
+    init_db(conn)
+    config = {
+        "news": {
+            "enabled": True,
+            "scopes": {
+                "LOCAL": {
+                    "enabled": True,
+                    "sources": [
+                        {
+                            "id": "rate_limited_fixture",
+                            "name": "Rate limited fixture",
+                            "scope": "LOCAL",
+                            "kind": "local_file_json",
+                            "enabled": True,
+                            "url": "file:///tmp/rate-limited.json",
+                        },
+                        {
+                            "id": "robots_blocked_fixture",
+                            "name": "Robots blocked fixture",
+                            "scope": "LOCAL",
+                            "kind": "local_file_json",
+                            "enabled": True,
+                            "url": "file:///tmp/robots-blocked.json",
+                        },
+                        {
+                            "id": "unsupported_fixture",
+                            "name": "Unsupported fixture",
+                            "scope": "LOCAL",
+                            "kind": "local_file_json",
+                            "enabled": True,
+                            "url": "file:///tmp/unsupported.json",
+                            "adapter": "unsupported",
+                        },
+                    ],
+                },
+            },
+        },
+        "local": {},
+    }
+    rate_limited_source_id = _insert_news_source(
+        conn,
+        "rate_limited_fixture",
+        scope="LOCAL",
+        name="Rate limited fixture",
+        url="file:///tmp/rate-limited.json",
+        enabled=True,
+    )
+    robots_blocked_source_id = _insert_news_source(
+        conn,
+        "robots_blocked_fixture",
+        scope="LOCAL",
+        name="Robots blocked fixture",
+        url="file:///tmp/robots-blocked.json",
+        enabled=True,
+    )
+    _insert_news_source_health(
+        conn,
+        rate_limited_source_id,
+        observed_at="2026-06-01T00:00:00+00:00",
+        state="rate_limited",
+        last_failure_at="2026-06-01T00:00:00+00:00",
+        message="fixture rate limit",
+    )
+    _insert_news_source_health(
+        conn,
+        robots_blocked_source_id,
+        observed_at="2026-06-01T00:05:00+00:00",
+        state="robots_blocked",
+        last_failure_at="2026-06-01T00:05:00+00:00",
+        message="fixture robots block",
+    )
+
+    scope_states = get_news_scope_states(conn, config)
+    source_statuses = get_news_sources_status(conn, config)
+    summary = get_news_storage_summary(conn, config)
+    statuses = {row["source_key"]: row for row in source_statuses}
+
+    assert scope_states["LOCAL"]["state"] == "failing"
+    assert scope_states["LOCAL"]["source_state_counts"].get("rate_limited") == 1
+    assert scope_states["LOCAL"]["source_state_counts"].get("robots_blocked") == 1
+    assert scope_states["LOCAL"]["source_state_counts"].get("unsupported") == 1
+    assert statuses["rate_limited_fixture"]["health_state"] == "rate_limited"
+    assert statuses["rate_limited_fixture"]["health_message"] == "fixture rate limit"
+    assert statuses["robots_blocked_fixture"]["health_state"] == "robots_blocked"
+    assert statuses["robots_blocked_fixture"]["health_message"] == "fixture robots block"
+    assert statuses["unsupported_fixture"]["health_state"] == "unsupported"
+    assert statuses["unsupported_fixture"]["health_message"] == (
+        "Source is configured in an unsupported way for this phase."
+    )
+    assert summary["failing_source_count"] == 3
+
+
 def test_news_system_scope_matrix_reports_stale_and_failing_states(tmp_path):
     conn = connect_db(tmp_path / "console.sqlite")
     init_db(conn)

@@ -193,8 +193,13 @@
       <div><span>Active items</span><strong>{{ state.active_item_count }}</strong></div>
       <div><span>Healthy</span><strong>{{ (state.source_state_counts or {}).get("healthy", 0) }}</strong></div>
       <div><span>Blocked</span><strong>{{ (state.source_state_counts or {}).get("policy_blocked", 0) }}</strong></div>
+      <div><span>Auth required</span><strong>{{ (state.source_state_counts or {}).get("auth_required", 0) }}</strong></div>
       <div><span>Social blocked</span><strong>{{ (state.source_state_counts or {}).get("social_disabled", 0) }}</strong></div>
       <div><span>Homepage blocked</span><strong>{{ (state.source_state_counts or {}).get("homepage_disabled", 0) }}</strong></div>
+      <div><span>Manual review</span><strong>{{ (state.source_state_counts or {}).get("manual_review_only", 0) }}</strong></div>
+      <div><span>Rate limited</span><strong>{{ (state.source_state_counts or {}).get("rate_limited", 0) }}</strong></div>
+      <div><span>Robots blocked</span><strong>{{ (state.source_state_counts or {}).get("robots_blocked", 0) }}</strong></div>
+      <div><span>Unsupported</span><strong>{{ (state.source_state_counts or {}).get("unsupported", 0) }}</strong></div>
       <div><span>Parser failed</span><strong>{{ (state.source_state_counts or {}).get("parser_failed", 0) }}</strong></div>
       <div><span>Awaiting run</span><strong>{{ (state.source_state_counts or {}).get("configured_never_run", 0) }}</strong></div>
     </div>

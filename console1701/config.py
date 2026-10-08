@@ -200,14 +200,15 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "sqlite": {
         "busy_timeout_ms": 5000,
         "journal_mode": "WAL",
+        "history_retention_days": 90,
+        "history_prune_batch_size": 1000,
     },
     "paths": {
-        "repo_roots": ["~/projects", "~/wiki"],
+        "repo_roots": ["~/projects"],
         "explicit_repos": [
             "~/projects/console-1701/main",
             "~/projects/ufo-records",
             "~/projects/TCL",
-            "~/wiki",
         ],
     },
     "ignore": {
@@ -226,15 +227,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
             "**/archive/**",
         ]
     },
-    "logs": [
-        {
-            "name": "ufo-actions",
-            "path": "~/wiki/ufo-actions.log",
-            "type": "ufo_actions",
-            "enabled": True,
-        },
-        {"name": "codex", "path": "~/.codex", "type": "codex", "enabled": True},
-    ],
+    "logs": [{"name": "codex", "path": "~/.codex", "type": "codex", "enabled": True}],
     "test_policy": {
         "auto_run": True,
         "default_timeout_seconds": 120,
@@ -274,17 +267,6 @@ DEFAULT_CONFIG: dict[str, Any] = {
             "role": "Time travel constraints library and adversarial theory project",
             "category": "Theory/library project",
             "importance": "high",
-            "test_commands": [],
-        },
-        {
-            "name": "wiki",
-            "path": "~/wiki",
-            "role": (
-                "Working area for prompts, article drafts, logs, country runs, "
-                "and source machinery"
-            ),
-            "category": "Research workbench",
-            "importance": "critical",
             "test_commands": [],
         },
     ],
@@ -372,6 +354,20 @@ def normalize_config(config: dict[str, Any]) -> None:
         else:
             normalized_allow.append(value)
     policy["allow_repos"] = normalized_allow
+
+    sqlite_cfg = _require_mapping(config.setdefault("sqlite", {}), "sqlite")
+    sqlite_cfg["history_retention_days"] = _coerce_int(
+        sqlite_cfg.get("history_retention_days", 90),
+        "sqlite.history_retention_days",
+        minimum=1,
+    )
+    sqlite_cfg["history_prune_batch_size"] = _coerce_int(
+        sqlite_cfg.get("history_prune_batch_size", 1000),
+        "sqlite.history_prune_batch_size",
+        minimum=1,
+    )
+    if sqlite_cfg["history_prune_batch_size"] > 10000:
+        raise ConfigError("sqlite.history_prune_batch_size must be at most 10000.")
 
     normalize_local_config(config)
     normalize_regional_config(config)

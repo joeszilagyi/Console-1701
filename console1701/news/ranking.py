@@ -41,6 +41,21 @@ LOCAL_SEVERITY_LABEL_BOOST = {
     "unknown": 0,
 }
 
+LOCAL_SOURCE_FAMILY_WEIGHT = {
+    "alertseattle": 10,
+    "city_light": 8,
+    "faa": 8,
+    "local_news": 3,
+    "metro": 8,
+    "nws": 10,
+    "regional_news": 2,
+    "sfd": 7,
+    "spd": 6,
+    "usgs": 9,
+    "west_seattle_blog": 4,
+    "wsdot": 8,
+}
+
 
 def _local_event_families(local_event: dict[str, Any] | None) -> list[str]:
     raw_families = local_event.get("families") if isinstance(local_event, dict) else []
@@ -68,6 +83,18 @@ def _severity_boost_from_payload(payload: dict[str, Any] | None) -> int:
         or ""
     ).lower().strip()
     return LOCAL_SEVERITY_LABEL_BOOST.get(label, 0)
+
+
+def _source_family_weight(families: list[str]) -> tuple[int, list[str]]:
+    boost = 0
+    contributing_families: list[str] = []
+    for family in families:
+        family_boost = LOCAL_SOURCE_FAMILY_WEIGHT.get(family, 0)
+        if family_boost <= 0:
+            continue
+        boost += family_boost
+        contributing_families.append(family)
+    return min(12, boost), contributing_families
 
 
 def _apply_local_privacy_ranking_adjustments(
@@ -215,6 +242,7 @@ def apply_local_event_ranking_adjustments(
     if source_diversity_score > 1:
         source_diversity_bonus = min(12, (source_diversity_score - 1) * 3)
 
+    source_family_boost, weighted_families = _source_family_weight(families)
     topic_repetition_bonus = int(local_event.get("topic_repetition_score") or 0)
     cluster_size_bonus = 0
     if item_count > 1:
@@ -229,6 +257,7 @@ def apply_local_event_ranking_adjustments(
 
     factors["local_source_diversity_score"] = source_diversity_score
     factors["local_source_diversity_bonus"] = source_diversity_bonus
+    factors["local_source_family_boost"] = source_family_boost
     factors["local_cluster_size_bonus"] = cluster_size_bonus
     factors["local_topic_repetition_bonus"] = topic_repetition_bonus
     factors["local_duplicate_family_penalty"] = duplicate_family_penalty
@@ -249,6 +278,11 @@ def apply_local_event_ranking_adjustments(
         reasons.append(
             f"LOCAL event source diversity adds {source_diversity_bonus} "
             f"across {source_diversity_score} families."
+        )
+    if source_family_boost:
+        family_text = ", ".join(weighted_families)
+        reasons.append(
+            f"LOCAL source family weighting adds {source_family_boost} across {family_text}."
         )
     if cluster_size_bonus:
         reasons.append(

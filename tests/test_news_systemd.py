@@ -24,6 +24,13 @@ def test_install_script_installs_but_does_not_enable_news_timer():
         encoding="utf-8"
     )
 
+    assert 'PYTHON_BIN="${PYTHON_BIN:-python3}"' in script_text
+    assert 'if ! command -v "$PYTHON_BIN" >/dev/null 2>&1;' in script_text
+    assert 'VENV_PYTHON="$VENV_DIR/bin/python"' in script_text
+    assert 'CONSOLE_CLI="$VENV_DIR/bin/console-1701"' in script_text
+    assert ". .venv/bin/activate" not in script_text
+    assert '"$CONSOLE_CLI" init-config --config "$CONFIG_PATH"' in script_text
+    assert '"$CONSOLE_CLI" scan --config "$CONFIG_PATH"' in script_text
     assert "console-1701-news-scan.service" in script_text
     assert "console-1701-news-scan.timer" in script_text
     assert "enable --now console-1701-news-scan.timer" not in script_text

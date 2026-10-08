@@ -30,6 +30,7 @@ def test_apply_local_event_ranking_adjustments_keeps_score_equal_to_factor_sum()
     assert adjusted["factors"]["local_privacy_penalty"] == -20
     assert adjusted["factors"]["local_source_diversity_score"] == 2
     assert adjusted["factors"]["local_source_diversity_bonus"] == 3
+    assert adjusted["factors"]["local_source_family_boost"] == 9
     assert adjusted["factors"]["local_cluster_size_bonus"] == 4
     assert adjusted["factors"]["local_topic_repetition_bonus"] == 6
     assert adjusted["score"] == sum(int(value) for value in adjusted["factors"].values())
@@ -37,6 +38,7 @@ def test_apply_local_event_ranking_adjustments_keeps_score_equal_to_factor_sum()
         "Independent cross-source confirmation partially offsets privacy suppression."
         in adjusted["reasons"]
     )
+    assert "LOCAL source family weighting adds 9 across spd, local_news." in adjusted["reasons"]
     assert "LOCAL topic repetition adds 6 across 2 repeated tokens." in adjusted["reasons"]
 
 

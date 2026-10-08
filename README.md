@@ -111,6 +111,36 @@ Handoff packets:
 ~/.local/state/console-1701/handoffs/
 ```
 
+## History Retention And Recovery
+
+Host, repo, test, interpretation, log, and scan-run history is retained for 90 days by default.
+The latest host snapshot and the latest row for each repo/scope are kept even when older.
+Attention items and handoff packets remain durable; recent-signal/news rows use their own shorter
+retention settings. `sqlite.history_retention_days` and `sqlite.history_prune_batch_size` can be
+changed in the local config. Each normal scan prunes one bounded batch and records the result in
+the `history.last_prune` SQLite setting.
+
+Preview expired rows without deleting them:
+
+```bash
+console-1701 prune-history
+```
+
+For a full one-time cleanup, first make a consistent SQLite backup with the `sqlite3` `.backup`
+command, then stop the web service and scan timer. Run:
+
+```bash
+console-1701 prune-history --apply --all --vacuum
+```
+
+`--apply` deletes expired rows, `--all` finishes every batch, and `--vacuum` returns freed disk
+space. Restart the service and timer afterward. The backup should be kept outside the active
+database path. This maintenance command never prunes attention items, handoffs, or news rows.
+
+The pytest suite automatically uses a temporary console state directory. A scheduled scanner
+releases its SQLite write transaction before launching configured repo tests, so the tests cannot
+write to or wait on the production console database.
+
 ## How Scans Work
 
 The scanner is separate from the web app:
