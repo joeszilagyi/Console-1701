@@ -208,8 +208,10 @@ live network.
 Current state: an allowlisted, explicit HTTPS client supports the verified Washington NWS active
 alerts endpoint only. It has bounded timeout/response size, a User-Agent, no redirects or inherited
 proxy, conditional ETag/Last-Modified requests, per-source interval/backoff, local SQLite evidence,
-and mocked transport tests. Default config and news timer remain disabled. General official RSS/API
-support and additional source verification remain pending.
+and mocked transport tests. A one-time live smoke check returned HTTP 200, healthy source state,
+zero Seattle-area matching items, and a correct immediate interval skip; its opt-in was removed.
+Default config and news timer remain disabled. Live HTTP 304 and alert-item persistence remain
+unobserved; general official RSS/API support and additional source verification remain pending.
 
 ### Homepage Extractor Later And Disabled
 
@@ -542,8 +544,10 @@ County Metro RSS, and WSDOT API. Keep every source disabled by default and requi
 command. No page-load fetches.
 
 Current state: the explicit `news-scan` path can fetch only the verified Washington NWS alerts URL
-when every opt-in gate is true. It remains off in the live config. SFD Fire 911, King County Metro,
-WSDOT, and other sources still require endpoint signoff and allowlist additions before live ingest.
+when every opt-in gate is true. One controlled command successfully fetched that source and a
+second immediate command was skipped by the interval gate. The temporary opt-in was removed and it
+remains off in the live config. SFD Fire 911, King County Metro, WSDOT, and other sources still
+require endpoint signoff and allowlist additions before live ingest.
 
 ### LOCAL News/Blog RSS Ingest Phase
 

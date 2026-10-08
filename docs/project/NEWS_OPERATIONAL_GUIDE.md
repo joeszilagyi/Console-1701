@@ -18,6 +18,11 @@ news stack.
   SQLite. The web and host scanner never fetch this feed.
 - `console-1701 news-sources` prints the current source registry, source policy, and source-health
   metadata.
+- A one-off NWS smoke check can use a temporary config under the console config directory with
+  only `nws_active_alerts_api` enabled. Check the source policy before the command, then inspect
+  the fetch run, health, item count, and purge evidence afterward. Disable the source and all
+  opt-ins before removing the temporary file; leave the news timer off unless recurring ingest
+  has been explicitly requested. The 2026-10-08 first live check is recorded in the NWS signoff.
 
 ## Retention And Purge
 
