@@ -18,13 +18,16 @@ whenever new ideas come up and are not completed immediately.
 - The local delta image is displayed from `console1701/static/codex-alert-delta.png`.
 - Recent-signal/news support remains disabled by default: `news:` config validation rejects unsafe
   shapes, SQLite metadata tables exist, storage helpers expose disabled/not-configured states, and
-  explicit fixture ingest exists, and one official HTTP source is available behind opt-in gates.
+  explicit fixture ingest exists, and two exact official HTTP URLs are available behind opt-in
+  gates.
 - `console-1701 news-scan` provides explicit local-fixture ingest for enabled `file://`
   JSON/RSS/Atom/homepage sources, updates source health/fetch runs/items/clusters in SQLite, and
   performs retention purge even when news is disabled.
 - A first official HTTP path exists for the exact verified Washington NWS alerts endpoint in LOCAL
   and REGIONAL. It remains disabled by default and requires explicit news, scope-policy, source,
   and HTTP opt-ins. The two scopes share one upstream request per scan.
+- REGIONAL USGS earthquake GeoJSON now has an exact-URL opt-in live path with M2.5+ past-day feed
+  signoff, regional/magnitude filtering, and the same disabled-by-default policy.
 - A disabled-by-default `local:` policy config now exists for Seattle-specific inclusion flags,
   hazard thresholds, and explicit social/neighborhood-blog allowances.
 - A static LOCAL source registry now seeds disabled metadata for core official, blog, and
@@ -206,16 +209,15 @@ Use timeouts, response size caps, per-source intervals, backoff, ETag/Last-Modif
 user agent, and fail-soft per-source behavior. Tests must use mocked HTTP or a local test server, not
 live network.
 
-Current state: an allowlisted, explicit HTTPS client supports the verified Washington NWS active
-alerts endpoint only. It has bounded timeout/response size, a User-Agent, no redirects or inherited
-proxy, conditional ETag/Last-Modified requests, per-source interval/backoff, local SQLite evidence,
-and mocked transport tests. LOCAL and REGIONAL can use the same exact feed without duplicate
-requests in one scan; URL-level interval/backoff prevents a newly enabled second scope from
-immediately refetching it. Controlled LOCAL and REGIONAL smoke checks each returned HTTP 200 and
-healthy state; REGIONAL persisted two alert items, while LOCAL had zero Seattle-area matches.
-Both temporary opt-ins were removed; default config and news timer remain disabled. Live HTTP 304
-remains unobserved; general official RSS/API support and additional source verification remain
-pending.
+Current state: an allowlisted, explicit HTTPS client supports exactly two verified URLs: Washington
+NWS active alerts for LOCAL/REGIONAL and USGS M2.5+ past-day GeoJSON for REGIONAL. It has bounded
+timeout/response size, a User-Agent, no redirects or inherited proxy, conditional ETag/Last-Modified
+requests, URL-level interval/backoff, local SQLite evidence, and mocked transport tests. LOCAL and
+REGIONAL share the NWS response in one scan. Controlled NWS and USGS scans returned HTTP 200 and
+healthy state; REGIONAL NWS persisted two alerts, while LOCAL NWS and REGIONAL USGS had zero
+in-scope matches at their respective check times. Temporary opt-ins were removed; default config
+and news timer remain disabled. Live HTTP 304 remains unobserved; general official RSS/API support
+and further source verification remain pending.
 
 ### Homepage Extractor Later And Disabled
 
@@ -738,9 +740,11 @@ felt/intensity fields where present, source URL, bounding basis, and seismic ran
 Current state: the REGIONAL registry now selects a dedicated `usgs_earthquake_geojson` parser. A
 synthetic fixture covers Washington-area events, out-of-region exclusion, and magnitude threshold
 exclusion. The parser preserves USGS ids, magnitude/depth/place/time, felt and intensity measures,
-official event URL, filter bounds, and a capped seismic score. Configurable geographic bounds and
-minimum magnitude are supported. Radius-based geography, source-feed verification, and live ingest
-remain pending.
+official event URL, filter bounds, and a capped seismic score. It now excludes non-earthquake
+feature types before assigning earthquake identity. Configurable geographic bounds and minimum
+magnitude are supported, but live admission requires at least 2.5 because the signed-off feed has
+that floor. Exact-source verification and opt-in live ingest are complete; radius-based geography
+and a live in-region event observation remain pending.
 
 ### USGS Water/Hydrology Fixture Parser
 
@@ -898,8 +902,10 @@ Current state: the exact verified NWS Washington alert endpoint is available beh
 REGIONAL policy, scope, source, and HTTP opt-ins. A controlled explicit scan returned HTTP 200 and
 persisted two Washington alert items with official-ID event evidence; an immediate repeat was
 interval-skipped. The temporary opt-in was removed and the news timer stays disabled. LOCAL and
-REGIONAL share one request per scan if both are configured. WSDOT, USGS, and county feeds still
-require endpoint-specific signoff and allowlist work before live ingest.
+REGIONAL share one request per scan if both are configured. The verified USGS M2.5+ past-day feed
+is now also opt-in: a controlled scan returned HTTP 200, healthy state, and zero in-region events;
+the temporary opt-in was removed. WSDOT and county feeds still require endpoint-specific signoff
+and allowlist work before live ingest.
 
 ### REGIONAL News RSS Ingest Phase
 

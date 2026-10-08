@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from http.client import HTTPException
+from math import isfinite
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import HTTPRedirectHandler, HTTPSHandler, ProxyHandler, Request, build_opener
@@ -11,9 +12,19 @@ from urllib.request import HTTPRedirectHandler, HTTPSHandler, ProxyHandler, Requ
 from console1701.news.parsers import NewsIngestError, PayloadTooLargeError, UnsupportedSourceError
 
 NWS_WASHINGTON_ALERTS_URL = "https://api.weather.gov/alerts/active?area=WA"
-NWS_WASHINGTON_SOURCE_KEYS = {
-    ("LOCAL", "nws_active_alerts_api"),
-    ("REGIONAL", "nws_active_alerts_wa"),
+USGS_REGIONAL_EARTHQUAKES_URL = (
+    "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson"
+)
+OFFICIAL_JSON_SOURCES = {
+    ("LOCAL", "nws_active_alerts_api"): (
+        NWS_WASHINGTON_ALERTS_URL, "nws_alerts_json", "application/geo+json"
+    ),
+    ("REGIONAL", "nws_active_alerts_wa"): (
+        NWS_WASHINGTON_ALERTS_URL, "nws_alerts_json", "application/geo+json"
+    ),
+    ("REGIONAL", "usgs_eq_geojson"): (
+        USGS_REGIONAL_EARTHQUAKES_URL, "usgs_earthquake_geojson", "application/json"
+    ),
 }
 MAX_HTTP_BYTES = 4 * 1024 * 1024
 MAX_HTTP_TIMEOUT_SECONDS = 30
@@ -38,15 +49,28 @@ class _NoRedirect(HTTPRedirectHandler):
 
 
 def is_supported_official_source(source: dict[str, Any]) -> bool:
-    """Only the documented Washington alerts endpoint and its two scoped identities."""
+    """Only verified scope/source/URL/parser combinations are eligible for live ingest."""
+    spec = OFFICIAL_JSON_SOURCES.get((source.get("scope"), source.get("id")))
     return (
-        (source.get("scope"), source.get("id")) in NWS_WASHINGTON_SOURCE_KEYS
+        spec is not None
         and source.get("kind") == "api_json"
-        and source.get("parser") == "nws_alerts_json"
-        and source.get("url") == NWS_WASHINGTON_ALERTS_URL
+        and source.get("parser") == spec[1]
+        and source.get("url") == spec[0]
         and source.get("verification_status") == "verified"
         and not source.get("auth")
+        and (
+            source.get("id") != "usgs_eq_geojson"
+            or _usgs_feed_covers_threshold(source.get("min_magnitude", 3.0))
+        )
     )
+
+
+def _usgs_feed_covers_threshold(value: Any) -> bool:
+    try:
+        minimum = float(value)
+    except (TypeError, ValueError):
+        return False
+    return isfinite(minimum) and minimum >= 2.5
 
 
 def _bounded_header(headers: Any, name: str) -> str | None:
@@ -66,15 +90,16 @@ def fetch_official_text(
     last_modified: str | None = None,
 ) -> OfficialFetchResult:
     if not is_supported_official_source(source):
-        raise UnsupportedSourceError("Only the verified Washington NWS alerts URL is allowed.")
+        raise UnsupportedSourceError("Source is outside the verified official JSON allowlist.")
     timeout = min(MAX_HTTP_TIMEOUT_SECONDS, max(1, int(timeout_seconds)))
     limit = min(MAX_HTTP_BYTES, max(1, int(max_bytes)))
-    headers = {"Accept": "application/geo+json", "User-Agent": user_agent}
+    spec = OFFICIAL_JSON_SOURCES[(source["scope"], source["id"])]
+    headers = {"Accept": spec[2], "User-Agent": user_agent}
     if etag and _bounded_header({"ETag": etag}, "ETag"):
         headers["If-None-Match"] = etag
     if last_modified and _bounded_header({"Last-Modified": last_modified}, "Last-Modified"):
         headers["If-Modified-Since"] = last_modified
-    request = Request(NWS_WASHINGTON_ALERTS_URL, headers=headers, method="GET")
+    request = Request(spec[0], headers=headers, method="GET")
     # Do not honor environment proxies or follow redirects to an unapproved host.
     opener = build_opener(ProxyHandler({}), HTTPSHandler(), _NoRedirect())
     try:

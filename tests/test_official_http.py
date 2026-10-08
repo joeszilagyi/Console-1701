@@ -6,6 +6,7 @@ import pytest
 
 from console1701.news.official_http import (
     NWS_WASHINGTON_ALERTS_URL,
+    USGS_REGIONAL_EARTHQUAKES_URL,
     RateLimitedError,
     fetch_official_text,
     is_supported_official_source,
@@ -20,6 +21,17 @@ def _source() -> dict:
         "kind": "api_json",
         "parser": "nws_alerts_json",
         "url": NWS_WASHINGTON_ALERTS_URL,
+        "verification_status": "verified",
+    }
+
+
+def _usgs_source() -> dict:
+    return {
+        "id": "usgs_eq_geojson",
+        "scope": "REGIONAL",
+        "kind": "api_json",
+        "parser": "usgs_earthquake_geojson",
+        "url": USGS_REGIONAL_EARTHQUAKES_URL,
         "verification_status": "verified",
     }
 
@@ -65,6 +77,41 @@ def test_official_http_requires_exact_verified_nws_endpoint():
             {**source, "url": "https://example.org/alerts/active?area=WA"},
             user_agent="console-1701 test", timeout_seconds=5, max_bytes=100,
         )
+
+
+def test_official_http_requires_exact_verified_usgs_feed(monkeypatch):
+    source = _usgs_source()
+    assert is_supported_official_source(source)
+    for changed in (
+        {"scope": "GLOBAL"},
+        {"id": "usgs_earthquake_geojson"},
+        {"url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.geojson"},
+        {"parser": "generic_json_items"},
+        {"verification_status": "official_page_seen"},
+        {"auth": {"token": "not-allowed"}},
+        {"min_magnitude": 2.0},
+    ):
+        assert not is_supported_official_source({**source, **changed})
+
+    observed = {}
+
+    class _UsGsResponse(_Response):
+        headers = {"Content-Type": "application/json; charset=utf-8", "Last-Modified": "today"}
+
+    class _Opener:
+        def open(self, request, *, timeout):
+            observed["url"] = request.full_url
+            observed["accept"] = request.get_header("Accept")
+            return _UsGsResponse(b'{"type":"FeatureCollection","features":[]}')
+
+    monkeypatch.setattr("console1701.news.official_http.build_opener", lambda *handlers: _Opener())
+    result = fetch_official_text(
+        source, user_agent="console-1701 test", timeout_seconds=5, max_bytes=100
+    )
+
+    assert result.status_code == 200
+    assert result.last_modified == "today"
+    assert observed == {"url": USGS_REGIONAL_EARTHQUAKES_URL, "accept": "application/json"}
 
 
 def test_official_http_is_bounded_and_sends_conditional_headers(monkeypatch):

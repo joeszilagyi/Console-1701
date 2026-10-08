@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -49,6 +50,13 @@ def test_parse_usgs_regional_geojson_filters_and_preserves_seismic_evidence() ->
 
     stricter = parse_fixture_items({**source, "min_magnitude": 4.0}, fixture)
     assert len(stricter) == 1
+
+    non_earthquake = json.loads(fixture)
+    blast = json.loads(json.dumps(non_earthquake["features"][0]))
+    blast["id"] = "wa-quarry-blast"
+    blast["properties"]["type"] = "quarry blast"
+    non_earthquake["features"].append(blast)
+    assert len(parse_fixture_items(source, json.dumps(non_earthquake))) == 2
 
 
 def test_usgs_regional_geojson_rejects_invalid_bounds_and_malformed_feed() -> None:

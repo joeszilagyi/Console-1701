@@ -1,5 +1,22 @@
 # Caretaking Log
 
+## 2026-10-08 11:20 PDT - first distinct REGIONAL USGS live feed
+
+- Verified USGS's documented M2.5+ past-day GeoJSON summary endpoint and its live shape (HTTP 200,
+  JSON `FeatureCollection`, `Last-Modified`, no redirect). Replaced the REGIONAL registry's docs-page
+  placeholder with the exact feed URL and marked it verified; recorded endpoint, policy, filter,
+  retention, failure, and opt-in signoff separately.
+- Extended the official JSON allowlist only to REGIONAL `usgs_eq_geojson` at that URL. Live
+  admission rejects configured magnitudes below the feed's 2.5 floor. The existing parser now
+  excludes non-earthquake feature types before assigning earthquake event identity.
+- Mocked tests cover altered URL/source/parser/verification, regional/HTTP/threshold gates, JSON
+  transport, fixture event persistence, interval skip, and conditional `Last-Modified`/304. No live
+  network call was added to pytest.
+- A one-time explicit live scan returned HTTP 200, 19,438 bytes, healthy state, and zero events
+  matching current REGIONAL bounds/magnitude. Its immediate repeat was interval-skipped. Disabled
+  and removed the temporary opt-in afterward; the standing config and disabled news timer were
+  unchanged. Live 304 and a live in-region earthquake remain unobserved; WSDOT signoff is next.
+
 ## 2026-10-08 11:11 PDT - scoped REGIONAL NWS live path
 
 - Extended the exact verified Washington NWS URL allowlist to its disabled REGIONAL registry
