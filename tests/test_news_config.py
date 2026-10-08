@@ -276,7 +276,7 @@ def test_regional_defaults_can_seed_nws_source(tmp_path):
     assert source["source_family"] == "nws"
     assert source["source_class"] == "official_weather_hazard"
     assert source["adapter"] == "official_api_json"
-    assert source["verification_status"] == "official_page_seen"
+    assert source["verification_status"] == "verified"
 
 
 def test_local_rejects_neighborhood_blog_without_explicit_allowance(tmp_path):

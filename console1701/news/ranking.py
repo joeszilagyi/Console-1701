@@ -164,9 +164,15 @@ def build_rank_result(
     tag_bonus = min(len(combined_tags), 10)
     repeat_bonus = min(max(0, repeat_count), 5)
     health_confidence = HEALTH_CONFIDENCE_BOOST.get(str(latest_health_state or "").lower(), 0)
-    local_signal = _local_signal_factors(item)
+    scope = str(source.get("scope") or "").upper()
+    local_signal = _local_signal_factors(item) if scope == "LOCAL" else {
+        "factors": {}, "reasons": []
+    }
+    regional_signal = _regional_signal_factors(item) if scope == "REGIONAL" else {
+        "factors": {}, "reasons": []
+    }
     regional_seismic_boost = 0
-    if str(source.get("scope") or "").upper() == "REGIONAL":
+    if scope == "REGIONAL":
         item_evidence = item.get("evidence") if isinstance(item.get("evidence"), dict) else {}
         earthquake = item_evidence.get("usgs_earthquake")
         if isinstance(earthquake, dict):
@@ -187,6 +193,7 @@ def build_rank_result(
         "source_health_confidence": health_confidence,
         "regional_seismic_boost": regional_seismic_boost,
         **local_signal["factors"],
+        **regional_signal["factors"],
     }
     score = sum(factors.values())
     reasons = [
@@ -209,6 +216,7 @@ def build_rank_result(
     if regional_seismic_boost:
         reasons.append(f"REGIONAL USGS seismic evidence adds {regional_seismic_boost}.")
     reasons.extend(local_signal["reasons"])
+    reasons.extend(regional_signal["reasons"])
 
     return {
         "score": score,
@@ -216,6 +224,76 @@ def build_rank_result(
         "age_hours": age_hours,
         "reasons": reasons,
         "health_state": latest_health_state,
+    }
+
+
+def _regional_signal_factors(item: dict[str, Any]) -> dict[str, Any]:
+    evidence = item.get("evidence") if isinstance(item.get("evidence"), dict) else {}
+    contract = (
+        evidence.get("regional_event")
+        if isinstance(evidence.get("regional_event"), dict)
+        else {}
+    )
+    geography = contract.get("geography") if isinstance(contract.get("geography"), dict) else {}
+    nws = evidence.get("nws_alert") if isinstance(evidence.get("nws_alert"), dict) else {}
+    wsdot = evidence.get("wsdot_alert") if isinstance(evidence.get("wsdot_alert"), dict) else {}
+    privacy = evidence.get("privacy") if isinstance(evidence.get("privacy"), dict) else {}
+    nws_rank = nws.get("ranking") if isinstance(nws.get("ranking"), dict) else {}
+    wsdot_rank = wsdot.get("ranking") if isinstance(wsdot.get("ranking"), dict) else {}
+    public_impact = min(25, max(
+        _int_value(nws_rank.get("total_alert_weight")) // 2,
+        _int_value(wsdot_rank.get("public_impact_score")) // 2,
+        10 if "public-impact" in item.get("tags", []) else 0,
+    ))
+    factors = {
+        "regional_geography_bonus": 8 if geography.get("matched") else 0,
+        "regional_public_impact_bonus": public_impact,
+        "regional_low_confidence_penalty": -8 if contract.get("confidence") == "low" else 0,
+        "regional_privacy_penalty": -20 if privacy.get("low_acuity_private") else 0,
+    }
+    reasons = []
+    if factors["regional_geography_bonus"]:
+        reasons.append("REGIONAL official geography evidence adds 8.")
+    if public_impact:
+        reasons.append(f"REGIONAL public-impact evidence adds {public_impact}.")
+    if factors["regional_low_confidence_penalty"]:
+        reasons.append("REGIONAL isolated headline confidence subtracts 8.")
+    if factors["regional_privacy_penalty"]:
+        reasons.append("REGIONAL low-acuity privacy evidence subtracts 20.")
+    return {"factors": factors, "reasons": reasons}
+
+
+def apply_regional_cluster_ranking_adjustments(
+    ranking: dict[str, Any], *, family_count: int, same_family_count: int, item_count: int
+) -> dict[str, Any]:
+    factors = dict(ranking.get("factors") or {})
+    reasons = [
+        reason for reason in ranking.get("reasons") or []
+        if not str(reason).startswith("REGIONAL event ")
+    ]
+    for key in (
+        "regional_source_diversity_bonus",
+        "regional_cluster_size_bonus",
+        "regional_duplicate_family_penalty",
+    ):
+        factors.pop(key, None)
+    diversity_bonus = min(15, max(0, family_count - 1) * 5)
+    size_bonus = min(8, max(0, item_count - 1) * 2)
+    duplicate_penalty = -min(8, max(0, same_family_count - 1) * 2)
+    factors["regional_source_diversity_bonus"] = diversity_bonus
+    factors["regional_cluster_size_bonus"] = size_bonus
+    factors["regional_duplicate_family_penalty"] = duplicate_penalty
+    if diversity_bonus:
+        reasons.append(f"REGIONAL event independent families add {diversity_bonus}.")
+    if size_bonus:
+        reasons.append(f"REGIONAL event size adds {size_bonus}.")
+    if duplicate_penalty:
+        reasons.append(f"REGIONAL event same-family duplication subtracts {-duplicate_penalty}.")
+    return {
+        **ranking,
+        "score": sum(int(value) for value in factors.values()),
+        "factors": factors,
+        "reasons": reasons,
     }
 
 

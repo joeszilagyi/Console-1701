@@ -26,8 +26,10 @@ from console1701.news.parsers import (
 )
 from console1701.news.ranking import (
     apply_local_event_ranking_adjustments,
+    apply_regional_cluster_ranking_adjustments,
     build_rank_result,
 )
+from console1701.news.regional_contract import build_regional_event_contract
 from console1701.news.regional_registry import list_regional_source_registry
 from console1701.news.source_policy import evaluate_source_policy
 
@@ -1715,6 +1717,12 @@ def _upsert_item(
     combined_tags = list(dict.fromkeys([*(source.get("tags") or []), *(item.get("tags") or [])]))
     hashed_url = url_hash(str(item["canonical_url"] or item["url"]))
     cluster = cluster_key(str(item["title"]), hashed_url)
+    if str(source.get("scope") or "").upper() == "REGIONAL":
+        item_evidence = dict(item.get("evidence") or {})
+        contract = build_regional_event_contract(source, item, hashed_url=hashed_url)
+        item_evidence["regional_event"] = contract
+        item["evidence"] = item_evidence
+        cluster = str(contract["event_key"])
     retention_days = int(source.get("retention_days") or default_retention_days)
     expire_at = expires_at(seen_at, retention_days)
     existing = conn.execute(
@@ -1747,6 +1755,11 @@ def _upsert_item(
         "source_name": source["name"],
         "scope": source["scope"],
         "kind": source["kind"],
+        "source_family": source.get("source_family"),
+        "source_class": source.get("source_class"),
+        "official_status": source.get("official_status"),
+        "verification_status": source.get("verification_status"),
+        "parser": source.get("parser"),
         "priority": int(source.get("priority", 50)),
         "tags": source.get("tags") or [],
     }
@@ -1977,7 +1990,8 @@ def _latest_health_state_for_rank(conn: sqlite3.Connection, source_id: int) -> s
 def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
     rows = conn.execute(
         """
-        SELECT id, title, url_hash, last_seen_at, rank_score, tags_json, evidence_json
+        SELECT id, title, url_hash, first_seen_at, last_seen_at, rank_score,
+               tags_json, evidence_json
         FROM news_items
         WHERE scope = ? AND status = 'active'
         ORDER BY rank_score DESC, last_seen_at DESC, id DESC
@@ -1995,25 +2009,85 @@ def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
             {
                 "title": str(row["title"]),
                 "representative_item_id": int(row["id"]),
-                "first_seen_at": str(row["last_seen_at"]),
+                "first_seen_at": str(row["first_seen_at"]),
                 "last_seen_at": str(row["last_seen_at"]),
                 "item_count": 0,
                 "score": 0,
                 "tags": [],
                 "fixture_only": True,
+                "members": [],
+                "source_keys": [],
+                "families": [],
+                "event": evidence.get("regional_event"),
             },
         )
         group["item_count"] += 1
         group["score"] += int(row["rank_score"])
+        group["first_seen_at"] = min(group["first_seen_at"], str(row["first_seen_at"]))
         group["fixture_only"] = group["fixture_only"] and bool(
             (evidence.get("ingest") or {}).get("fixture_only", True)
         )
+        source = evidence.get("source") if isinstance(evidence.get("source"), dict) else {}
+        source_key = str(source.get("source_key") or "").strip()
+        family = str(source.get("source_family") or "").strip().lower()
+        if source_key and source_key not in group["source_keys"]:
+            group["source_keys"].append(source_key)
+        if family and family not in group["families"]:
+            group["families"].append(family)
+        group["members"].append({
+            "id": int(row["id"]),
+            "title": str(row["title"]),
+            "family": family,
+            "evidence": evidence,
+            "rank_score": int(row["rank_score"]),
+        })
         group["last_seen_at"] = max(group["last_seen_at"], str(row["last_seen_at"]))
         tags = json_loads(str(row["tags_json"]), [])
         group["tags"] = list(dict.fromkeys([*group["tags"], *tags]))
 
     conn.execute("DELETE FROM news_clusters WHERE scope = ?", (scope,))
     for key, group in grouped.items():
+        cluster_evidence: dict[str, Any] = {"fixture_only": group["fixture_only"]}
+        if scope == "REGIONAL":
+            family_counts: dict[str, int] = {}
+            for member in group["members"]:
+                family = member["family"] or "unknown"
+                family_counts[family] = family_counts.get(family, 0) + 1
+            group["score"] = 0
+            highest_score = -10**9
+            for member in group["members"]:
+                evidence = member["evidence"]
+                ranking = apply_regional_cluster_ranking_adjustments(
+                    evidence.get("ranking") or {},
+                    family_count=len(group["families"]),
+                    same_family_count=family_counts[member["family"] or "unknown"],
+                    item_count=group["item_count"],
+                )
+                evidence["ranking"] = ranking
+                score = int(ranking["score"])
+                group["score"] += score
+                if score > highest_score:
+                    highest_score = score
+                    group["representative_item_id"] = member["id"]
+                    group["title"] = member["title"]
+                conn.execute(
+                    "UPDATE news_items SET rank_score = ?, evidence_json = ? WHERE id = ?",
+                    (score, json_dumps(evidence), member["id"]),
+                )
+            cluster_evidence.update({
+                "event": group["event"],
+                "item_ids": [member["id"] for member in group["members"]],
+                "source_keys": group["source_keys"],
+                "families": group["families"],
+                "family_count": len(group["families"]),
+                "corroborated": len(group["families"]) >= 2,
+                "duplicate_family_counts": family_counts,
+                "ranking": {
+                    "score": group["score"],
+                    "source_diversity_bonus": min(15, max(0, len(group["families"]) - 1) * 5),
+                    "item_count": group["item_count"],
+                },
+            })
         conn.execute(
             """
             INSERT INTO news_clusters (
@@ -2032,7 +2106,7 @@ def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
                 group["item_count"],
                 group["score"],
                 json_dumps(group["tags"]),
-                json_dumps({"fixture_only": group["fixture_only"]}),
+                json_dumps(cluster_evidence),
             ),
         )
 

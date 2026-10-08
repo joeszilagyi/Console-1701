@@ -1,5 +1,23 @@
 # Caretaking Log
 
+## 2026-10-08 10:49 PDT - effective GitHub gate and REGIONAL event contract
+
+- After PR #18's `tests-and-lint` check passed and the merged `main` push passed, updated the
+  existing GitHub `main-protection` ruleset to target the default branch and require that check
+  from the GitHub Actions app. Kept PR, deletion, and non-fast-forward rules; removed the dormant
+  linear-history rule to preserve the repository's merge-commit practice. The effective branch
+  rules endpoint now reports all four intended rules for `main`.
+- Selected scoped `news_clusters` for REGIONAL events rather than adding a parallel table. USGS,
+  NWS, and WSDOT fixture items now carry stable official-ID event keys, structured geography,
+  confidence, matching, source, privacy, and public-impact evidence. Unverified RSS headlines are
+  isolated by source and URL instead of being merged on similar title text.
+- Rebuilds now record member IDs, source keys/families, duplicate-family counts, corroboration, and
+  explainable regional ranking adjustments. A repeated scan recalculates dynamic factors without
+  compounding them. REGIONAL NWS fixtures now require Washington zone/area evidence.
+- Added parser/event, duplicate-family, ranking-idempotence, and REGIONAL source-health matrix
+  regressions. Live REGIONAL ingest remains disabled and cross-family semantic/time-window matching
+  remains in BACKLOG.
+
 ## 2026-10-08 10:41 PDT - add a read-only pull-request CI check
 
 - Selected `.github/workflows/ci.yml` after the first official HTTP ingest slice: GitHub had no

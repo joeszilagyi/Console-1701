@@ -1,6 +1,30 @@
 from __future__ import annotations
 
-from console1701.news.ranking import apply_local_event_ranking_adjustments
+from console1701.news.ranking import (
+    apply_local_event_ranking_adjustments,
+    apply_regional_cluster_ranking_adjustments,
+)
+
+
+def test_regional_cluster_ranking_uses_independent_families_without_accumulating() -> None:
+    base = {
+        "score": 100,
+        "factors": {"source_priority": 100},
+        "age_hours": 0,
+        "reasons": ["Source priority contributes 100."],
+    }
+    first = apply_regional_cluster_ranking_adjustments(
+        base, family_count=2, same_family_count=1, item_count=3
+    )
+    again = apply_regional_cluster_ranking_adjustments(
+        first, family_count=2, same_family_count=1, item_count=3
+    )
+
+    assert first["factors"]["regional_source_diversity_bonus"] == 5
+    assert first["factors"]["regional_cluster_size_bonus"] == 4
+    assert first["factors"]["regional_duplicate_family_penalty"] == 0
+    assert first["score"] == again["score"] == sum(again["factors"].values())
+    assert first["reasons"] == again["reasons"]
 
 
 def test_apply_local_event_ranking_adjustments_keeps_score_equal_to_factor_sum() -> None:
