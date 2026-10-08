@@ -2414,18 +2414,18 @@ Completed acceptance:
 
 ### Per-Interface Network Details And Capacity
 
-Status: partially implemented.
+Status: implemented.
 
-Current live network readout shows LAN IP, gateway, WAN status, RX/TX rates, carrier, and
-interface errors/drops. It does not normalize throughput by link capacity.
+The live network readout retains LAN IP, gateway, WAN status, primary RX/TX rates, carrier, and
+interface errors/drops. Its expandable local interface list now shows every non-loopback interface,
+IPv4, state/carrier, sysfs speed and duplex when available, RX/TX/error rates, and directional
+throughput as a percentage of reported link capacity. Wi-Fi quality and signal level appear from
+`/proc/net/wireless` when available; they are raw local readings, not a synthetic percentage.
+Unknown or unsupported capacity is labeled as such. No external WAN/public-IP lookup was added.
 
-Future work:
-
-- Read `/sys/class/net/<iface>/speed` when available.
-- Show duplex where available.
-- Show all non-loopback interfaces in a compact live table.
-- Distinguish Wi-Fi link quality if available without sudo or new dependencies.
-- Keep WAN/public IP external lookup disabled by default.
+The primary ribbon bars remain visual rate traces, while the expandable per-interface rows provide
+capacity-relative percentages. If a future browser smoke runner is introduced, add an interaction
+test for the expandable list and its sample-to-sample rate updates.
 
 ### Stronger B2 Services/Systems Dashboard
 

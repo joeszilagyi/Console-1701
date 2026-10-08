@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>console-1701</title>
-    <link rel="stylesheet" href="/static/app.css?v=machine-console-17">
+    <link rel="stylesheet" href="/static/app.css?v=machine-console-18">
   </head>
   <body data-active-scope="{{ active_scope or 'LOCAL' }}">
     {% import "news_panels.html" as news_panels %}
@@ -145,6 +145,10 @@
               <em data-trend-state="net-tx">collecting</em>
             </div>
           </div>
+          <details class="network-interface-details">
+            <summary>Interfaces · local live</summary>
+            <div data-live-interface-list>Waiting for a live sample.</div>
+          </details>
         </div>
         <div class="ribbon-cell sensor-cell ribbon-cpu-ram" data-sensor-cell="cpu-ram">
           <span class="sensor-title"><span>CPU/RAM</span><i class="sensor-lamp" data-live-lamp="cpu-ram" aria-hidden="true"></i></span>
@@ -809,6 +813,6 @@
 
     <div id="toast" role="status" aria-live="polite"></div>
     <script src="/static/live_rules.js?v=machine-console-1"></script>
-    <script src="/static/app.js?v=machine-console-15"></script>
+    <script src="/static/app.js?v=machine-console-16"></script>
   </body>
 </html>

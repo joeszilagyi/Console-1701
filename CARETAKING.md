@@ -1,5 +1,16 @@
 # Caretaking Log
 
+## 2026-10-08 12:54 PDT - local per-interface network details
+
+- Selected the high-priority per-interface network backlog item after confirming `/api/live`
+  already collected every interface's counters but exposed only the primary link in the sensor UI.
+- Added local read-only sysfs speed/duplex, per-interface IPv4, and `/proc/net/wireless` quality
+  evidence to the live probe. An expandable INTERNAL network list shows every non-loopback link,
+  sample-to-sample RX/TX/errors, and capacity-relative throughput where speed is known.
+- Kept WAN lookup disabled, used DOM text nodes for interface data, added no service or package
+  dependency, and kept default page loads free of external requests. Added mocked probe tests and
+  a template assertion; BACKLOG now records this item as implemented.
+
 ## 2026-10-08 12:22 PDT - shared live sensor threshold rules
 
 - Selected the high-priority live threshold task because CPU/RAM and filesystem decisions were

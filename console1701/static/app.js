@@ -502,13 +502,9 @@ function cpuPercent(current, previous) {
   return Math.max(0, Math.min(100, ((totalDelta - idleDelta) / totalDelta) * 100));
 }
 
-function primaryNetworkRate(current, previous) {
-  const primaryName = current?.network?.primary_interface;
-  const currentIface = current?.network?.primary;
-  if (!primaryName || !currentIface || !previous) return { rx: 0, tx: 0, errors: 0 };
-  const previousIface = (previous.network?.interfaces || []).find((iface) => iface.name === primaryName);
+function interfaceNetworkRate(currentIface, previousIface, current, previous) {
+  if (!currentIface || !previousIface || !previous) return { rx: 0, tx: 0, errors: 0 };
   const seconds = Math.max(0.001, (current.monotonic_seconds || 0) - (previous.monotonic_seconds || 0));
-  if (!previousIface) return { rx: 0, tx: 0, errors: 0 };
   const currentErrors =
     (currentIface.rx_errors || 0) +
     (currentIface.tx_errors || 0) +
@@ -524,6 +520,49 @@ function primaryNetworkRate(current, previous) {
     tx: Math.max(0, (currentIface.tx_bytes - previousIface.tx_bytes) / seconds),
     errors: Math.max(0, (currentErrors - previousErrors) / seconds),
   };
+}
+
+function primaryNetworkRate(current, previous) {
+  const primaryName = current?.network?.primary_interface;
+  const currentIface = current?.network?.primary;
+  const previousIface = (previous?.network?.interfaces || []).find((iface) => iface.name === primaryName);
+  return interfaceNetworkRate(currentIface, previousIface, current, previous);
+}
+
+function renderNetworkInterfaces(live, previous) {
+  const container = document.querySelector("[data-live-interface-list]");
+  if (!container) return;
+  container.replaceChildren();
+  const interfaces = (live.network?.interfaces || []).filter((iface) => iface.name && iface.name !== "lo");
+  if (!interfaces.length) {
+    container.textContent = "No non-loopback interfaces detected.";
+    return;
+  }
+  for (const iface of interfaces) {
+    const prior = (previous?.network?.interfaces || []).find((item) => item.name === iface.name);
+    const rates = interfaceNetworkRate(iface, prior, live, previous);
+    const capacity = Number(iface.speed_mbps) > 0 ? Number(iface.speed_mbps) * 1_000_000 / 8 : null;
+    const utilization = (rate) => capacity ? ` (${(rate / capacity * 100).toFixed(1)}% link)` : "";
+    const row = document.createElement("div");
+    row.className = "network-interface-row";
+    const title = document.createElement("strong");
+    title.textContent = `${iface.name}${iface.name === live.network?.primary_interface ? " · primary" : ""}`;
+    const details = document.createElement("small");
+    const facts = [iface.ipv4_address || "no IPv4", iface.operstate || "state unknown"];
+    if (iface.carrier === "0") facts.push("carrier down");
+    if (capacity) facts.push(`${iface.speed_mbps} Mb/s${iface.duplex ? ` ${iface.duplex} duplex` : ""}`);
+    else facts.push("capacity unknown");
+    if (iface.wireless) {
+      const quality = iface.wireless.quality;
+      const signal = iface.wireless.signal_dbm;
+      facts.push(`Wi-Fi${quality == null ? "" : ` quality ${quality}`}${signal == null ? "" : ` · ${signal} dBm`}`);
+    }
+    details.textContent = facts.join(" · ");
+    const traffic = document.createElement("small");
+    traffic.textContent = `RX ${formatRate(rates.rx)}${utilization(rates.rx)} · TX ${formatRate(rates.tx)}${utilization(rates.tx)} · errors/drops ${rates.errors.toFixed(1)}/s`;
+    row.append(title, details, traffic);
+    container.append(row);
+  }
 }
 
 function pressureAvg10(pressure, kind = "some") {
@@ -705,6 +744,7 @@ async function updateLiveReadouts() {
     setLiveBar("fs-home", home?.used_percent || 0);
     updateSystemSensor(live);
     updateNetworkSensor(live, rates);
+    renderNetworkInterfaces(live, previousLive);
     updateCpuRamSensor(live, cpu);
     updateFilesystemSensor(live);
     updateLiveHistory(live, cpu, rates);

@@ -468,6 +468,32 @@ summary {
   min-height: 8.6rem;
 }
 
+.network-interface-details {
+  margin-top: 0.28rem;
+  color: #b8cbe0;
+  font-size: 0.76rem;
+}
+
+.network-interface-details summary {
+  cursor: pointer;
+}
+
+.network-interface-row {
+  padding: 0.34rem 0;
+  border-top: 1px solid rgba(184, 203, 224, 0.18);
+}
+
+.network-interface-row strong {
+  display: block;
+  color: var(--text);
+}
+
+.ribbon-cell .network-interface-row small {
+  overflow: visible;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .ribbon-button {
   color: inherit;
   text-align: left;

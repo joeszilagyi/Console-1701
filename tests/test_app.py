@@ -190,8 +190,8 @@ def test_root_page_renders_html(tmp_path, monkeypatch):
     assert response.media_type == "text/html"
     assert "console-1701" in body
     assert "/static/live_rules.js?v=machine-console-1" in body
-    assert "/static/app.js?v=machine-console-15" in body
-    assert "/static/app.css?v=machine-console-17" in body
+    assert "/static/app.js?v=machine-console-16" in body
+    assert "/static/app.css?v=machine-console-18" in body
     assert 'id="news-scan-button"' in body
     assert 'data-active-scope="OVERVIEW"' in body
     assert 'data-scope-nav="OVERVIEW"' in body
@@ -217,6 +217,7 @@ def test_root_page_renders_html(tmp_path, monkeypatch):
     assert "B4 Hardware" in internal_body
     assert 'data-sparkline="cpu"' in internal_body
     assert 'data-live="poll-policy"' in internal_body
+    assert "data-live-interface-list" in internal_body
     assert internal_body.index("Machine readout") < internal_body.index("Local work")
 
 
