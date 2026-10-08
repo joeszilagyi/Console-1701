@@ -789,7 +789,10 @@
         {% elif active_scope == "SYSTEM" %}
           {{ news_panels.render_system(news_summary, news_overview.sources) }}
         {% else %}
-          {{ news_panels.render_scope_page(news_scope_view) }}
+          {{ news_panels.render_scope_page(
+            news_scope_view,
+            news_overview['scope_views']['REGIONAL'] if active_scope == 'LOCAL' else none
+          ) }}
         {% endif %}
       {% endif %}
 
@@ -805,6 +808,6 @@
     </main>
 
     <div id="toast" role="status" aria-live="polite"></div>
-    <script src="/static/app.js?v=machine-console-13"></script>
+    <script src="/static/app.js?v=machine-console-14"></script>
   </body>
 </html>

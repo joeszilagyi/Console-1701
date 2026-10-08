@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from textwrap import dedent
 
@@ -168,6 +169,87 @@ def test_official_nws_fetch_conditional_request_and_interval(tmp_path, monkeypat
     assert item_count == 1
     assert item_evidence["ingest"]["fixture_only"] is False
     assert cluster_evidence["fixture_only"] is False
+
+
+def test_live_snapshot_retires_missing_items_only_after_successful_200(tmp_path, monkeypatch):
+    config_path = _nws_live_config(tmp_path / "snapshots.yml", allow_http=True)
+    fixture = (FIXTURE_DIR / "local_nws_alerts.json").read_text()
+    responses = [
+        OfficialFetchResult(fixture, 200, '"v1"', None, len(fixture)),
+        OfficialFetchResult(None, 304, '"v1"', None, 0),
+        OfficialFetchResult("{bad", 200, '"bad"', None, 4),
+        OfficialFetchResult('{"features": []}', 200, '"v2"', None, 16),
+        OfficialFetchResult(fixture, 200, '"v3"', None, len(fixture)),
+    ]
+    monkeypatch.setattr(
+        "console1701.news.scanner.fetch_official_text",
+        lambda source, **kwargs: responses.pop(0),
+    )
+    config = load_config(config_path)
+    observed = []
+    earlier = (datetime.now(UTC) - timedelta(hours=3)).isoformat(timespec="seconds")
+    for _ in range(5):
+        result = run_news_scan(config_path)
+        with connect_db(config["_db_path"]) as conn:
+            observed.append((
+                result["status"],
+                conn.execute(
+                    "SELECT COUNT(*) FROM news_items WHERE status = 'active'"
+                ).fetchone()[0],
+                conn.execute(
+                    "SELECT COUNT(*) FROM local_events WHERE status = 'active'"
+                ).fetchone()[0],
+            ))
+            conn.execute("UPDATE news_fetch_runs SET started_at = ?", (earlier,))
+            conn.commit()
+    with connect_db(config["_db_path"]) as conn:
+        item = conn.execute("SELECT status, evidence_json FROM news_items LIMIT 1").fetchone()
+        history = conn.execute(
+            "SELECT status FROM news_fetch_runs ORDER BY id"
+        ).fetchall()
+
+    assert observed == [
+        ("complete", 1, 1),
+        ("complete", 1, 1),
+        ("partial", 1, 1),
+        ("complete", 0, 0),
+        ("complete", 1, 1),
+    ]
+    assert [row["status"] for row in history] == [
+        "success", "not_modified", "parser_failed", "success", "success"
+    ]
+    assert item["status"] == "active"
+    assert json_loads(item["evidence_json"], {})["storage"]["status"] == "active"
+
+
+def test_live_snapshot_retirement_keeps_auditable_item(tmp_path, monkeypatch):
+    config_path = _nws_live_config(tmp_path / "retire.yml", allow_http=True)
+    fixture = (FIXTURE_DIR / "local_nws_alerts.json").read_text()
+    responses = [
+        OfficialFetchResult(fixture, 200, None, None, len(fixture)),
+        OfficialFetchResult('{"features": []}', 200, None, None, 16),
+    ]
+    monkeypatch.setattr(
+        "console1701.news.scanner.fetch_official_text",
+        lambda source, **kwargs: responses.pop(0),
+    )
+    run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        earlier = (datetime.now(UTC) - timedelta(hours=1)).isoformat(timespec="seconds")
+        conn.execute("UPDATE news_fetch_runs SET started_at = ?", (earlier,))
+        conn.commit()
+    run_news_scan(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        row = conn.execute("SELECT status, evidence_json FROM news_items").fetchone()
+        clusters = conn.execute("SELECT COUNT(*) FROM news_clusters").fetchone()[0]
+    storage = json_loads(row["evidence_json"], {})["storage"]
+    assert row["status"] == "inactive"
+    assert storage["status"] == "inactive"
+    assert storage["retired_reason"] == "not_in_latest_successful_snapshot"
+    assert storage["retired_by_fetch_run_id"] == 2
+    assert storage["retired_at"]
+    assert clusters == 0
 
 
 def test_official_nws_rate_limit_records_health_and_backs_off(tmp_path, monkeypatch):

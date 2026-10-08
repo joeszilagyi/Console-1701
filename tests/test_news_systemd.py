@@ -12,7 +12,7 @@ def test_news_systemd_units_exist_and_run_news_scan():
         project_root / "systemd" / "console-1701-news-scan.timer"
     ).read_text(encoding="utf-8")
 
-    assert "Description=console-1701 recent-signal fixture ingest" in service_text
+    assert "Description=console-1701 explicitly enabled recent-signal ingest" in service_text
     assert "ExecStart=__PROJECT_DIR__/.venv/bin/console-1701 news-scan" in service_text
     assert "Unit=console-1701-news-scan.service" in timer_text
     assert "WantedBy=timers.target" in timer_text

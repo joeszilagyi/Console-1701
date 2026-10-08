@@ -35,7 +35,7 @@
             <summary>Evidence</summary>
           <div class="news-evidence-grid">
             <div><span>Source</span><strong>{{ source.source_name or source.source_key or "unknown" }}</strong></div>
-            <div><span>Health</span><strong>{{ source_health.state or ingest.source_health_state_at_ingest or "unknown" }}</strong></div>
+            <div><span>Prior health at ingest</span><strong>{{ ingest.source_health_state_at_ingest or "unknown" }}</strong></div>
             <div><span>Fetch run</span><strong>{{ ingest.fetch_run_id or "unknown" }}</strong></div>
             <div><span>Seen</span><strong>{{ ingest.seen_at or item.last_seen_at }}</strong></div>
               <div><span>Policy</span><strong>{{ policy.policy_state or "unknown" }}</strong></div>
@@ -212,8 +212,8 @@
   </article>
 {%- endmacro %}
 
-{% macro render_scope_page(view) -%}
-  <section class="scope-dashboard" aria-label="{{ view['scope'] }} recent signal panels">
+{% macro render_scope_page(view, regional_context=none) -%}
+  <section class="scope-dashboard" aria-label="{{ view['scope'] }} recent signal panels"{% if view['scope'] in ['LOCAL', 'REGIONAL'] %} data-news-auto-refresh{% endif %}>
     {{ render_scope_state_card(view['state']) }}
 
     <article class="module news-panel news-panel-wide">
@@ -281,6 +281,30 @@
       </div>
       {{ render_source_list(view['sources'], "No sources are configured for this scope.") }}
     </article>
+
+    {% if regional_context %}
+      <article class="module news-panel news-panel-wide">
+        <div class="module-head">
+          <div>
+            <p class="module-kicker">REGIONAL context · not LOCAL alerts</p>
+            <h2>Washington and nearby signals</h2>
+          </div>
+          <a href="/REGIONAL">Full REGIONAL view</a>
+        </div>
+        {{ render_item_list(regional_context['items'], regional_context['state']['message']) }}
+      </article>
+
+      <article class="module news-panel news-panel-wide">
+        <div class="module-head">
+          <div>
+            <p class="module-kicker">REGIONAL feed status</p>
+            <h2>Official source health</h2>
+          </div>
+          <span class="module-code">{{ regional_context['state']['state'] }}</span>
+        </div>
+        {{ render_source_list(regional_context['sources'], regional_context['state']['message']) }}
+      </article>
+    {% endif %}
   </section>
 {%- endmacro %}
 

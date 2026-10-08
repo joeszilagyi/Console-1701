@@ -686,6 +686,7 @@ def _ingest_source(
             success_message = f"Fixture ingest succeeded for {path.name}."
         items = parse_fixture_items(source, text)
         stored_count = 0
+        seen_item_ids: set[int] = set()
         for item in items:
             evidence = dict(item.get("evidence") or {})
             if not is_live:
@@ -696,7 +697,7 @@ def _ingest_source(
                     "url": str(source["url"]), "http_status": response.status_code
                 }
             item["evidence"] = evidence
-            _upsert_item(
+            item_id = _upsert_item(
                 conn,
                 source_id,
                 source,
@@ -706,7 +707,12 @@ def _ingest_source(
                 default_retention_days=default_retention_days,
                 policy=policy,
             )
+            seen_item_ids.add(item_id)
             stored_count += 1
+        if is_live:
+            _retire_missing_live_items(
+                conn, source_id, seen_item_ids, fetch_run_id=run_id, retired_at=utc_now()
+            )
         _rebuild_scope_clusters(conn, str(source["scope"]))
         _finish_fetch_run(
             conn,
@@ -1774,7 +1780,7 @@ def _upsert_item(
     seen_at: str,
     default_retention_days: int,
     policy: dict[str, Any],
-) -> None:
+) -> int:
     combined_tags = list(dict.fromkeys([*(source.get("tags") or []), *(item.get("tags") or [])]))
     hashed_url = url_hash(str(item["canonical_url"] or item["url"]))
     cluster = cluster_key(str(item["title"]), hashed_url)
@@ -1929,7 +1935,7 @@ def _upsert_item(
                     (json_dumps(evidence), item_id),
                 )
 
-        return
+        return item_id
 
     item_id = int(existing["id"])
     conn.execute(
@@ -2005,6 +2011,67 @@ def _upsert_item(
                 """,
                 (json_dumps(evidence), item_id),
             )
+
+    return item_id
+
+
+def _retire_missing_live_items(
+    conn: sqlite3.Connection,
+    source_id: int,
+    seen_item_ids: set[int],
+    *,
+    fetch_run_id: int,
+    retired_at: str,
+) -> None:
+    """Reconcile a successful HTTP 200 snapshot without erasing its audit trail."""
+    rows = conn.execute(
+        "SELECT id, evidence_json FROM news_items WHERE source_id = ? AND status = 'active'",
+        (source_id,),
+    ).fetchall()
+    for row in rows:
+        item_id = int(row["id"])
+        if item_id in seen_item_ids:
+            continue
+        evidence = json_loads(str(row["evidence_json"]), {})
+        evidence["storage"] = {
+            **(evidence.get("storage") or {}),
+            "status": "inactive",
+            "retired_at": retired_at,
+            "retired_reason": "not_in_latest_successful_snapshot",
+            "retired_by_fetch_run_id": fetch_run_id,
+        }
+        conn.execute(
+            "UPDATE news_items SET status = 'inactive', evidence_json = ? WHERE id = ?",
+            (json_dumps(evidence), item_id),
+        )
+
+    # A LOCAL event may contain items from several sources. Retire it only when
+    # none of its linked items remains active; otherwise keep an active representative.
+    conn.execute(
+        """
+        UPDATE local_events
+        SET status = 'inactive'
+        WHERE status = 'active'
+          AND NOT EXISTS (
+            SELECT 1 FROM news_items
+            WHERE local_event_id = local_events.id AND status = 'active'
+          )
+        """
+    )
+    conn.execute(
+        """
+        UPDATE local_events
+        SET representative_item_id = (
+          SELECT id FROM news_items
+          WHERE local_event_id = local_events.id AND status = 'active'
+          ORDER BY rank_score DESC, id DESC LIMIT 1
+        )
+        WHERE status = 'active'
+          AND representative_item_id IN (
+            SELECT id FROM news_items WHERE status = 'inactive'
+          )
+        """
+    )
 
 
 def _latest_health_state(conn: sqlite3.Connection, source_id: int) -> str | None:

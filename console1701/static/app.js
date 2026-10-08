@@ -139,6 +139,26 @@ document.querySelector("#news-scan-button")?.addEventListener("click", async () 
   }
 });
 
+// Refresh stored LOCAL/REGIONAL panels while the page is visible. The GET route
+// reads SQLite only; the separate news-scan timer remains the sole feed fetcher.
+async function refreshNewsPanels() {
+  const panel = document.querySelector("[data-news-auto-refresh]");
+  if (!panel || document.hidden || panel.querySelector("details[open]")) return;
+  try {
+    const response = await fetch(window.location.pathname, { cache: "no-store" });
+    if (!response.ok) return;
+    const documentCopy = new DOMParser().parseFromString(await response.text(), "text/html");
+    const nextPanel = documentCopy.querySelector("[data-news-auto-refresh]");
+    if (nextPanel && !panel.querySelector("details[open]")) panel.replaceWith(nextPanel);
+  } catch (_error) {
+    // Keep the last locally stored view; the next interval will retry.
+  }
+}
+
+if (document.querySelector("[data-news-auto-refresh]")) {
+  window.setInterval(refreshNewsPanels, 60_000);
+}
+
 document.querySelectorAll("[data-scroll-target]").forEach((button) => {
   button.addEventListener("click", () => {
     const target = document.querySelector(button.dataset.scrollTarget || "");
