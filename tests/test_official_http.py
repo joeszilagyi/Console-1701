@@ -47,7 +47,12 @@ class _Response:
 def test_official_http_requires_exact_verified_nws_endpoint():
     source = _source()
     assert is_supported_official_source(source)
+    assert is_supported_official_source(
+        {**source, "scope": "REGIONAL", "id": "nws_active_alerts_wa"}
+    )
     for changed in (
+        {"scope": "REGIONAL"},
+        {"id": "nws_active_alerts_wa"},
         {"url": "https://api.weather.gov/alerts/active?area=OR"},
         {"url": "https://example.org/alerts/active?area=WA"},
         {"verification_status": "candidate_needs_verification"},

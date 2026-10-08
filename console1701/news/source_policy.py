@@ -56,9 +56,16 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
     auth_required = bool(auth_cfg)
     auth_configured = bool(auth_cfg and any(str(value).strip() for value in auth_cfg.values()))
     is_local_fixture = url.startswith("file://")
+    scope_policy_enabled = (
+        bool((config.get("local") or {}).get("enabled"))
+        if source.get("scope") == "LOCAL"
+        else bool((config.get("regional") or {}).get("enabled"))
+        if source.get("scope") == "REGIONAL"
+        else False
+    )
     is_allowed_official_http = (
         bool(fetch_policy.get("allow_official_http"))
-        and bool((config.get("local") or {}).get("enabled"))
+        and scope_policy_enabled
         and is_supported_official_source(source)
     )
     uses_homepage = kind in NEWS_HOMEPAGE_SOURCE_KINDS

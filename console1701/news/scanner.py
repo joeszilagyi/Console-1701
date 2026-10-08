@@ -12,6 +12,7 @@ from console1701.db import connect_db, init_db, json_dumps, json_loads, utc_now
 from console1701.news.local_registry import list_local_source_registry
 from console1701.news.normalize import cluster_key, content_hash, expires_at, url_hash
 from console1701.news.official_http import (
+    OfficialFetchResult,
     RateLimitedError,
     fetch_official_text,
     is_supported_official_source,
@@ -87,6 +88,7 @@ def run_news_scan(config_path: str | Path | None = None) -> dict[str, Any]:
     errors: list[str] = []
     configured_sources = iter_news_sources(config)
     upserted_sources = 0
+    live_fetch_cache: dict[str, OfficialFetchResult | NewsIngestError] = {}
     purge_summary: dict[str, int] = {
         "items": 0,
         "fetch_runs": 0,
@@ -132,17 +134,31 @@ def run_news_scan(config_path: str | Path | None = None) -> dict[str, Any]:
             conn.commit()
             return result
 
+        # A new consumer needs a body even if another scope already has an ETag.
+        force_full_live_urls = {
+            str(source["url"])
+            for source in configured_sources
+            if _source_is_enabled(config, source)
+            and _is_allowed_live_source(config, source)
+            and not _source_has_live_success(conn, str(source["id"]))
+        }
         for source in configured_sources:
             if not _source_is_enabled(config, source):
                 continue
-            if _is_allowed_live_source(config, source) and not _live_source_due(
-                conn, config, source
+            if (
+                _is_allowed_live_source(config, source)
+                and str(source["url"]) not in live_fetch_cache
+                and not _live_source_due(conn, config, source)
             ):
                 skipped_sources += 1
                 continue
             scanned_sources += 1
             try:
-                stored = _ingest_source(conn, config, source, config_dir=config_dir)
+                stored = _ingest_source(
+                    conn, config, source, config_dir=config_dir,
+                    live_fetch_cache=live_fetch_cache,
+                    force_full_live_fetch=str(source.get("url")) in force_full_live_urls,
+                )
                 item_count += stored
                 healthy_sources += 1
             except NewsIngestError as exc:
@@ -438,23 +454,44 @@ def _source_is_enabled(config: dict[str, Any], source: dict[str, Any]) -> bool:
 
 def _is_allowed_live_source(config: dict[str, Any], source: dict[str, Any]) -> bool:
     fetch_policy = ((config.get("news") or {}).get("fetch_policy") or {})
+    scope = str(source.get("scope") or "").upper()
+    scope_policy_enabled = (
+        bool((config.get("local") or {}).get("enabled")) if scope == "LOCAL"
+        else bool((config.get("regional") or {}).get("enabled")) if scope == "REGIONAL"
+        else False
+    )
     return (
         bool(fetch_policy.get("allow_official_http"))
-        and bool((config.get("local") or {}).get("enabled"))
+        and scope_policy_enabled
         and is_supported_official_source(source)
     )
+
+
+def _source_has_live_success(conn: sqlite3.Connection, source_key: str) -> bool:
+    row = conn.execute(
+        """
+        SELECT r.evidence_json
+        FROM news_fetch_runs r JOIN news_sources s ON s.id = r.source_id
+        WHERE s.source_key = ? AND r.status = 'success'
+        ORDER BY r.id DESC LIMIT 1
+        """,
+        (source_key,),
+    ).fetchone()
+    return bool(row and json_loads(str(row["evidence_json"]), {}).get("fixture_only") is False)
 
 
 def _live_source_due(
     conn: sqlite3.Connection, config: dict[str, Any], source: dict[str, Any]
 ) -> bool:
+    # Gate by exact URL so a newly enabled scope cannot refetch the shared NWS feed immediately.
     row = conn.execute(
         """
         SELECT r.started_at, r.status, r.evidence_json
         FROM news_fetch_runs r JOIN news_sources s ON s.id = r.source_id
-        WHERE s.source_key = ? ORDER BY r.id DESC LIMIT 1
+        WHERE s.url = ? AND r.status != 'policy_blocked'
+        ORDER BY r.id DESC LIMIT 1
         """,
-        (source["id"],),
+        (source["url"],),
     ).fetchone()
     if row is None:
         return True
@@ -554,6 +591,8 @@ def _ingest_source(
     source: dict[str, Any],
     *,
     config_dir: Path,
+    live_fetch_cache: dict[str, OfficialFetchResult | NewsIngestError],
+    force_full_live_fetch: bool,
 ) -> int:
     now = utc_now()
     source_id = _upsert_source(conn, config, source, now=now)
@@ -574,31 +613,53 @@ def _ingest_source(
         fetch_evidence: dict[str, Any]
         fetch_columns: dict[str, Any] = {}
         if is_live:
-            etag, last_modified = _latest_http_validators(conn, source_id, before_run_id=run_id)
-            # A network request must never hold a SQLite write transaction open.
-            conn.commit()
-            fetch_policy = ((config.get("news") or {}).get("fetch_policy") or {})
-            response = fetch_official_text(
-                source,
-                user_agent=str(fetch_policy.get("user_agent")),
-                timeout_seconds=int(
-                    source.get("timeout_seconds") or fetch_policy.get("default_timeout_seconds", 10)
-                ),
-                max_bytes=max_bytes,
-                etag=etag,
-                last_modified=last_modified,
+            url = str(source["url"])
+            shared_response = url in live_fetch_cache
+            etag, last_modified = (None, None) if force_full_live_fetch else (
+                _latest_http_validators(conn, source_id, before_run_id=run_id)
             )
+            if shared_response:
+                cached = live_fetch_cache[url]
+                if isinstance(cached, NewsIngestError):
+                    raise cached
+                response = cached
+            else:
+                # A network request must never hold a SQLite write transaction open.
+                conn.commit()
+                fetch_policy = ((config.get("news") or {}).get("fetch_policy") or {})
+                try:
+                    response = fetch_official_text(
+                        source,
+                        user_agent=str(fetch_policy.get("user_agent")),
+                        timeout_seconds=int(
+                            source.get("timeout_seconds")
+                            or fetch_policy.get("default_timeout_seconds", 10)
+                        ),
+                        max_bytes=max_bytes,
+                        etag=etag,
+                        last_modified=last_modified,
+                    )
+                except NewsIngestError as exc:
+                    live_fetch_cache[url] = exc
+                    raise
+                live_fetch_cache[url] = response
+            if response.status_code == 304 and force_full_live_fetch:
+                raise NewsIngestError(
+                    "Official feed returned HTTP 304 before every enabled scope had "
+                    "a live snapshot."
+                )
             fetch_columns = {
                 "http_status": response.status_code,
-                "etag_sent": etag,
+                "etag_sent": None if shared_response else etag,
                 "etag_received": response.etag,
-                "last_modified_sent": last_modified,
+                "last_modified_sent": None if shared_response else last_modified,
                 "last_modified_received": response.last_modified,
             }
             fetch_evidence = {
                 "fixture_only": False,
                 "official_url": str(source["url"]),
                 "response_bytes": response.response_bytes,
+                "shared_response": shared_response,
             }
             if response.status_code == 304:
                 finished_at = utc_now()

@@ -22,8 +22,9 @@ whenever new ideas come up and are not completed immediately.
 - `console-1701 news-scan` provides explicit local-fixture ingest for enabled `file://`
   JSON/RSS/Atom/homepage sources, updates source health/fetch runs/items/clusters in SQLite, and
   performs retention purge even when news is disabled.
-- A first official HTTP path now exists for the exact verified Washington NWS alerts endpoint.
-  It remains disabled by default and requires explicit news, LOCAL, source, and HTTP opt-ins.
+- A first official HTTP path exists for the exact verified Washington NWS alerts endpoint in LOCAL
+  and REGIONAL. It remains disabled by default and requires explicit news, scope-policy, source,
+  and HTTP opt-ins. The two scopes share one upstream request per scan.
 - A disabled-by-default `local:` policy config now exists for Seattle-specific inclusion flags,
   hazard thresholds, and explicit social/neighborhood-blog allowances.
 - A static LOCAL source registry now seeds disabled metadata for core official, blog, and
@@ -208,10 +209,13 @@ live network.
 Current state: an allowlisted, explicit HTTPS client supports the verified Washington NWS active
 alerts endpoint only. It has bounded timeout/response size, a User-Agent, no redirects or inherited
 proxy, conditional ETag/Last-Modified requests, per-source interval/backoff, local SQLite evidence,
-and mocked transport tests. A one-time live smoke check returned HTTP 200, healthy source state,
-zero Seattle-area matching items, and a correct immediate interval skip; its opt-in was removed.
-Default config and news timer remain disabled. Live HTTP 304 and alert-item persistence remain
-unobserved; general official RSS/API support and additional source verification remain pending.
+and mocked transport tests. LOCAL and REGIONAL can use the same exact feed without duplicate
+requests in one scan; URL-level interval/backoff prevents a newly enabled second scope from
+immediately refetching it. Controlled LOCAL and REGIONAL smoke checks each returned HTTP 200 and
+healthy state; REGIONAL persisted two alert items, while LOCAL had zero Seattle-area matches.
+Both temporary opt-ins were removed; default config and news timer remain disabled. Live HTTP 304
+remains unobserved; general official RSS/API support and additional source verification remain
+pending.
 
 ### Homepage Extractor Later And Disabled
 
@@ -883,12 +887,19 @@ Scope-specific display design and full public-impact/privacy explanation remain 
 
 ### REGIONAL Official-Source Live Ingest Phase
 
-Status: not implemented.
+Status: partially implemented.
 
 After fixtures, correlation, ranking, retention, source health, and tests exist, add opt-in live
 ingest for one safe official source at a time. First candidates are NWS alerts for Washington,
 WSDOT Traveler API, USGS earthquake GeoJSON, and King County Emergency News feed if valid. Keep
 every source disabled by default and require an explicit command. No page-load fetches.
+
+Current state: the exact verified NWS Washington alert endpoint is available behind news,
+REGIONAL policy, scope, source, and HTTP opt-ins. A controlled explicit scan returned HTTP 200 and
+persisted two Washington alert items with official-ID event evidence; an immediate repeat was
+interval-skipped. The temporary opt-in was removed and the news timer stays disabled. LOCAL and
+REGIONAL share one request per scan if both are configured. WSDOT, USGS, and county feeds still
+require endpoint-specific signoff and allowlist work before live ingest.
 
 ### REGIONAL News RSS Ingest Phase
 

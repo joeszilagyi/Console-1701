@@ -167,7 +167,8 @@ Explicit command path only
 Page loads read SQLite and config only
 No hidden fetch on GET routes
 Fixture ingest for enabled file:// JSON/RSS/Atom/homepage sources
-One separately opted-in official HTTPS source: Washington NWS active alerts; disabled by default
+One separately opted-in official HTTPS URL: Washington NWS active alerts for LOCAL and REGIONAL;
+both scoped sources are disabled by default and share one request per scan
 LOCAL Seattle policy config defaults to disabled and gates social/neighborhood-blog sources
 LOCAL registry seeds known source metadata for disabled official, blog, and social candidates
 Fixture parsers include LOCAL SFD, AlertSeattle, NWS, WSDOT, Metro, City Light, FAA/SEA, and local-blog evidence
@@ -177,6 +178,8 @@ REGIONAL USGS GeoJSON fixture parsing now filters by Washington-area coordinate 
 magnitude, preserving seismic evidence and an explainable regional ranking factor
 REGIONAL NWS, WSDOT, and USGS fixture items use official-ID event keys; isolated headlines do not
 claim corroboration, and source-family/health evidence is visible in scoped clusters
+The REGIONAL NWS source also passed one controlled live scan with two stored Washington alerts;
+the temporary opt-in was removed and the news timer remains disabled
 Source audit surfaces derive disabled / configured_never_run / healthy / stale / parser_failed /
 policy_blocked / auth_required states without fetching
 `console-1701 news-sources` also prints source family, class, verification status, and expected

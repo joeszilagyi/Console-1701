@@ -11,6 +11,10 @@ from urllib.request import HTTPRedirectHandler, HTTPSHandler, ProxyHandler, Requ
 from console1701.news.parsers import NewsIngestError, PayloadTooLargeError, UnsupportedSourceError
 
 NWS_WASHINGTON_ALERTS_URL = "https://api.weather.gov/alerts/active?area=WA"
+NWS_WASHINGTON_SOURCE_KEYS = {
+    ("LOCAL", "nws_active_alerts_api"),
+    ("REGIONAL", "nws_active_alerts_wa"),
+}
 MAX_HTTP_BYTES = 4 * 1024 * 1024
 MAX_HTTP_TIMEOUT_SECONDS = 30
 
@@ -34,10 +38,9 @@ class _NoRedirect(HTTPRedirectHandler):
 
 
 def is_supported_official_source(source: dict[str, Any]) -> bool:
-    """This first live slice permits exactly one documented public endpoint."""
+    """Only the documented Washington alerts endpoint and its two scoped identities."""
     return (
-        source.get("id") == "nws_active_alerts_api"
-        and source.get("scope") == "LOCAL"
+        (source.get("scope"), source.get("id")) in NWS_WASHINGTON_SOURCE_KEYS
         and source.get("kind") == "api_json"
         and source.get("parser") == "nws_alerts_json"
         and source.get("url") == NWS_WASHINGTON_ALERTS_URL
