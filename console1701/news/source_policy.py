@@ -215,6 +215,13 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
             gate_state = "policy_blocked"
         elif orbital_homepage_blocked:
             gate_state = "homepage_disabled"
+        elif source.get("id") == "swpc_aurora_json" and (
+            not source.get("aurora_locations") or any(
+                float(location.get("min_intensity", 0)) < 50
+                for location in source.get("aurora_locations") or []
+            )
+        ):
+            gate_state = "needs_scope_filter"
         elif orbital_class in {
             "official_satellite_catalog", "official_conjunction_awareness",
         }:

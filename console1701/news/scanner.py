@@ -556,6 +556,7 @@ def _fresh_live_orbital_items(
     if source.get("scope") != "ORBITAL" or source_key not in {
         "swpc_alerts_json", "swpc_noaa_scales_json",
         "swpc_kp_summary_json", "swpc_kp_1m_json", "swpc_boulder_k_json",
+        "swpc_aurora_json",
     }:
         return items
     fresh: list[dict[str, Any]] = []
@@ -577,6 +578,18 @@ def _fresh_live_orbital_items(
                 if period_kind == "current" else
                 now - timedelta(hours=1) <= published <= now + timedelta(hours=96)
                 if period_kind == "forecast" else False
+            )
+        elif source_key == "swpc_aurora_json":
+            forecast_text = (candidate.get("evidence") or {}).get(
+                "swpc_aurora", {}
+            ).get("forecast_time")
+            try:
+                forecast = datetime.fromisoformat(str(forecast_text)).astimezone(UTC)
+            except (TypeError, ValueError):
+                continue
+            keep = (
+                now - timedelta(hours=2) <= published <= now + timedelta(minutes=10)
+                and now - timedelta(hours=1) <= forecast <= now + timedelta(hours=3)
             )
         else:
             max_age = 6 if source_key == "swpc_kp_summary_json" else 1
