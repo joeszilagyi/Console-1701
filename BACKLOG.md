@@ -868,7 +868,7 @@ scope-specific presentation remain pending.
 
 ### REGIONAL Source Health States
 
-Status: partially implemented.
+Status: implemented.
 
 Implement source health states for REGIONAL: `disabled`, `not_configured`,
 `configured_never_run`, `healthy`, `stale`, `failing`, `parser_failed`, `policy_blocked`,
@@ -876,9 +876,10 @@ Implement source health states for REGIONAL: `disabled`, `not_configured`,
 these states in SYSTEM later and summarize them on REGIONAL.
 
 Current state: the shared source-health derivation and REGIONAL page/API surface the listed states.
-The REGIONAL matrix regression covers the common disabled/never-run/stale/parser-failed/
-policy-blocked/manual-review cases. Explicit REGIONAL robots, auth, rate-limit, and unsupported
-state regressions remain pending.
+The REGIONAL matrix regression covers disabled, never-run, stale, parser-failed, policy-blocked,
+manual-review, robots-blocked, auth-required, rate-limited, and unsupported states without fetching.
+Healthy and failing behavior is covered by the shared source and scope tests. Scope-specific visual
+presentation remains tracked under REGIONAL UI Disabled States.
 
 ### REGIONAL Evidence Drawer Contract
 
@@ -1002,20 +1003,30 @@ store full article bodies by default.
 
 ### NATIONAL Fixture Pack
 
-Status: not implemented.
+Status: partially implemented.
 
 Create local-only fixtures for NWS active alert JSON, NHC advisory/RSS data, USGS earthquake
 GeoJSON, CDC HAN, FDA recalls, FSIS Recall API, CPSC Recalls API, NHTSA recalls, CISA advisories,
 CISA KEV, FAA NAS status, Federal Register API, BLS releases, and national news RSS. Fixture ingest
 must not perform network calls and must be safe for pytest.
 
+Current state: `tests/fixtures/news/national_nws_alerts.json` covers two official active-alert
+features, including a U.S. territory and an untrusted instruction-link candidate. The other
+NATIONAL source-family fixtures listed above remain pending.
+
 ### NWS Active Alert Parser
 
-Status: not implemented.
+Status: implemented for fixture ingest.
 
 Build a fixture-first NWS active alert parser for NATIONAL scope. Preserve alert id, event type,
 severity, urgency, certainty, affected states/zones, effective time, expiration time, source URL,
 instruction URL, and official-alert ranking evidence.
+
+Current state: the shared `nws_alerts_json` parser handles NATIONAL fixtures and stores alert ID,
+event, severity, urgency, certainty, affected UGC-derived states or territories and zone URLs,
+effective/expiration timestamps, source URL, bounded instruction text, an official HTTPS
+weather.gov instruction link when present, and deterministic alert ranking evidence. Invalid or
+nonofficial instruction links remain absent. This does not enable NATIONAL live HTTP ingestion.
 
 ### NHC Advisory/Feed Verification
 

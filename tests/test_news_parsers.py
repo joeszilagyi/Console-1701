@@ -10,6 +10,39 @@ from console1701.news.parsers import NewsParserError, parse_fixture_items
 from console1701.news.ranking import build_rank_result
 
 
+def test_national_nws_fixture_preserves_territory_and_official_instructions() -> None:
+    source = {
+        "id": "nws_active_alerts_api",
+        "scope": "NATIONAL",
+        "kind": "api_json",
+        "parser": "nws_alerts_json",
+    }
+    fixture = (
+        Path(__file__).resolve().parent / "fixtures/news/national_nws_alerts.json"
+    ).read_text()
+    items = parse_fixture_items(source, fixture)
+
+    assert len(items) == 2
+    flood = items[0]["evidence"]["nws_alert"]
+    wind = items[1]["evidence"]["nws_alert"]
+    assert flood["id"] == "national-wa-flood"
+    assert flood["affected_states"] == ["WA"]
+    assert flood["geography_basis"] == "official_ugc_zone_ids"
+    assert flood["effective"] == "2026-10-15T13:00:00+00:00"
+    assert flood["expires"] == "2026-10-16T13:00:00+00:00"
+    assert flood["severity"] == "Severe"
+    assert flood["urgency"] == "Immediate"
+    assert flood["certainty"] == "Observed"
+    assert flood["instruction"] == "Move to higher ground."
+    assert flood["instruction_url"] == "https://www.weather.gov/sew/"
+    assert flood["source_url"] == items[0]["url"]
+    assert flood["ranking"]["total_alert_weight"] > wind["ranking"][
+        "total_alert_weight"
+    ]
+    assert wind["affected_states"] == ["PR"]
+    assert wind["instruction_url"] is None
+
+
 def test_wsdot_official_rss_preserves_ids_and_strips_embedded_markup() -> None:
     source = {
         "id": "wsdot_highway_alerts_rss",
