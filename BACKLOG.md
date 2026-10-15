@@ -1508,11 +1508,19 @@ implementation. Do not scrape warning maps or dashboards.
 
 ### USGS Global Earthquake GeoJSON Parser
 
-Status: not implemented.
+Status: completed 2026-10-15 for fixture-first parser; live source remains disabled.
 
 Build a fixture-first parser for USGS global earthquake GeoJSON with configured magnitude,
 tsunami, depth, felt, intensity, country/region, and time-window filters. Preserve event id,
 magnitude, depth, place, time, update time, source URL, tsunami flag, and seismic ranking evidence.
+
+The existing USGS GeoJSON adapter now has a GLOBAL-specific filter and uses
+`global.earthquake_min_magnitude` by default. It supports tsunami-only, depth, felt, MMI,
+source-place country/region term, and origin-age filters; preserves the listed official metadata;
+and records `source_place_unverified` instead of inferring a country from free text. A synthetic
+official-shape fixture and offline scan tests cover inclusion/exclusion, health, identity, and
+ranking. [Verification notes](docs/project/GLOBAL_USGS_GEOJSON_SOURCE_VERIFICATION.md) record the
+USGS documentation and live-feed candidate. No GLOBAL USGS HTTP URL was allowlisted or enabled.
 
 ### NHC RSS Parser
 

@@ -915,6 +915,8 @@ def _normalize_news_source(
             )
     if source_scope == "GLOBAL":
         _normalize_global_source_metadata(source_cfg, path=path, global_cfg=global_cfg)
+        if str(source_cfg.get("parser") or "").strip().lower() == "usgs_earthquake_geojson":
+            source_cfg.setdefault("min_magnitude", global_cfg["earthquake_min_magnitude"])
 
     source_cfg["enabled"] = _coerce_bool(source_cfg.get("enabled", False), f"{path}.enabled")
     source_cfg["priority"] = _coerce_int(source_cfg.get("priority", 50), f"{path}.priority")
