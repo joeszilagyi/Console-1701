@@ -141,6 +141,7 @@ def test_gracedb_live_scan_updates_a_candidate_to_retracted_without_network(
     assert second["status"] == "complete" and second["item_count"] == 1
     with connect_db(config["_db_path"]) as conn:
         assert conn.execute("SELECT COUNT(*) FROM news_items").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM science_withdrawals").fetchone()[0] == 1
         row = conn.execute("SELECT evidence_json FROM news_items").fetchone()
         event = conn.execute("SELECT status, score FROM science_events").fetchone()
     evidence = json_loads(row["evidence_json"], {})["gracedb_public_alert"]
@@ -160,4 +161,5 @@ def test_gracedb_live_scan_updates_a_candidate_to_retracted_without_network(
         )
         assert conn.execute("SELECT COUNT(*) FROM news_items").fetchone()[0] == 0
         assert conn.execute("SELECT COUNT(*) FROM science_events").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM science_withdrawals").fetchone()[0] == 1
     assert purged["items"] == 1 and purged["science_events"] == 1

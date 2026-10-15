@@ -61,5 +61,9 @@ Sky-map URLs can be retained as official provenance links, but no FITS, HEALPix,
 sky-map file is downloaded, parsed, cached, or shown as a precise location. The REST API's
 `files/` subtree and broad logs/annotations are outside the fetch contract. Cross-source
 retention and purge are now covered for a fixture-only GCN notice plus Circular retraction.
-Retraction-first expiry followed by re-ingest remains an RS-144 follow-up; do not use
-credentials for nonpublic GraceDB data.
+An exact GCN or GraceDB event identifier retains a withdrawal marker for 21 days after the
+last observed retraction. The marker keeps a refreshed initial report withdrawn when the
+retraction item expires first; it is pruned by the normal retention command and stores no
+sky map, report body, or private metadata. The GCN sequence is verified offline; a live
+GraceDB retraction-to-expiry observation is not claimed. Do not use credentials for
+nonpublic GraceDB data.

@@ -105,7 +105,7 @@ def rank_science_event(
     archive_firehose = 45 if any(signal["safety"].get("archive_firehose_blocked")
                                  for signal in signals) else (
         15 if signals and all(signal["archive"] for signal in signals) else 0)
-    retracted = any(
+    retracted = bool(group.get("withdrawal_retained")) or any(
         signal["gcn"].get("status") == "retracted"
         or signal["circular"].get("status") == "retracted"
         or signal["gracedb"].get("status") == "retracted"
