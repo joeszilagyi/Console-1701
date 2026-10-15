@@ -52,6 +52,7 @@ from console1701.news.ranking import (
     build_rank_result,
 )
 from console1701.news.regional_contract import build_regional_event_contract
+from console1701.news.regional_events import correlate_regional_items
 from console1701.news.regional_policy import apply_regional_privacy_policy
 from console1701.news.regional_registry import list_regional_source_registry
 from console1701.news.science_events import correlate_science_items
@@ -2549,7 +2550,7 @@ def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
         return
     rows = conn.execute(
         """
-        SELECT id, title, url_hash, first_seen_at, last_seen_at, rank_score,
+        SELECT id, title, url_hash, source_published_at, first_seen_at, last_seen_at, rank_score,
                tags_json, evidence_json
         FROM news_items
         WHERE scope = ? AND status = 'active'
@@ -2557,11 +2558,24 @@ def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
         """,
         (scope,),
     ).fetchall()
+    regional_groups: dict[int, dict[str, Any]] = {}
+    if scope == "REGIONAL":
+        regional_items = [
+            {**dict(row), "scope": scope,
+             "evidence": json_loads(str(row["evidence_json"]), {})}
+            for row in rows
+        ]
+        regional_groups = {
+            item_id: group for group in correlate_regional_items(regional_items)
+            for item_id in group["item_ids"]
+        }
     grouped: dict[str, dict[str, Any]] = {}
     for row in rows:
         evidence = json_loads(str(row["evidence_json"]), {})
+        correlated = regional_groups.get(int(row["id"]))
         key = str(
-            evidence.get("cluster_key") or cluster_key(str(row["title"]), str(row["url_hash"]))
+            (correlated or {}).get("event_key") or evidence.get("cluster_key")
+            or cluster_key(str(row["title"]), str(row["url_hash"]))
         )
         group = grouped.setdefault(
             key,
@@ -2578,6 +2592,7 @@ def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
                 "source_keys": [],
                 "families": [],
                 "event": evidence.get("regional_event"),
+                "correlation": correlated,
             },
         )
         group["item_count"] += 1
@@ -2618,9 +2633,12 @@ def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
             highest_score = -(10**9)
             for member in group["members"]:
                 evidence = member["evidence"]
+                evidence["cluster_key"] = key
+                evidence["regional_correlation"] = group["correlation"]
                 ranking = apply_regional_cluster_ranking_adjustments(
                     evidence.get("ranking") or {},
-                    family_count=len(group["families"]),
+                    family_count=(len(group["families"])
+                                  if (group["correlation"] or {}).get("corroborated") else 1),
                     same_family_count=family_counts[member["family"] or "unknown"],
                     item_count=group["item_count"],
                 )
@@ -2642,11 +2660,15 @@ def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
                     "source_keys": group["source_keys"],
                     "families": group["families"],
                     "family_count": len(group["families"]),
-                    "corroborated": len(group["families"]) >= 2,
+                    "corroborated": bool((group["correlation"] or {}).get("corroborated")),
+                    "correlation": group["correlation"],
                     "duplicate_family_counts": family_counts,
                     "ranking": {
                         "score": group["score"],
-                        "source_diversity_bonus": min(15, max(0, len(group["families"]) - 1) * 5),
+                        "source_diversity_bonus": (
+                            min(15, max(0, len(group["families"]) - 1) * 5)
+                            if (group["correlation"] or {}).get("corroborated") else 0
+                        ),
                         "item_count": group["item_count"],
                     },
                 }
