@@ -98,6 +98,9 @@ def test_regional_reference_sources_cannot_ingest_when_configured(tmp_path, monk
                 - {id: wa_emd_division, enabled: true, url: 'file:///missing.html'}
                 - {id: nws_api_docs, enabled: true, url: 'file:///missing.xml'}
                 - {id: wa_dnr_current_wildfire, enabled: true, url: 'file:///missing.json'}
+                - {id: pse_outage_center, enabled: true, url: 'file:///missing.html'}
+                - {id: snopud_outage_center, enabled: true, url: 'file:///missing.html'}
+                - {id: tacoma_power_outages, enabled: true, url: 'file:///missing.html'}
     """)
     assert run_news_scan(config_path)["item_count"] == 0
     config = load_config(config_path)
@@ -110,6 +113,9 @@ def test_regional_reference_sources_cannot_ingest_when_configured(tmp_path, monk
         "wa_emd_division": "unsupported",
         "nws_api_docs": "unsupported",
         "wa_dnr_current_wildfire": "unsupported",
+        "pse_outage_center": "unsupported",
+        "snopud_outage_center": "unsupported",
+        "tacoma_power_outages": "unsupported",
     }
 
 
