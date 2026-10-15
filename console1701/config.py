@@ -1182,17 +1182,25 @@ def _normalize_news_source(
 
         fixture = SCIENCE_FIXTURE_SOURCES.get(source_key)
         registry = get_science_source_registry_entry(source_key)
+        url = str(source_cfg.get("url") or "")
+        is_fixture = url.startswith("file://") and source_cfg.get("fixture_only") is True
+        is_verified_live = (
+            source_key == "esa_space_science_feed"
+            and fixture is not None
+            and url == fixture[1]
+            and source_cfg.get("fixture_only") is False
+            and source_cfg["kind"] == "rss"
+        )
         if (
             fixture is None
             or registry is None
             or source_cfg.get("parser") != fixture[0]
             or source_cfg.get("official_url") != fixture[1]
-            or not str(source_cfg.get("url") or "").startswith("file://")
-            or source_cfg.get("fixture_only") is not True
+            or not (is_fixture or is_verified_live)
             or source_cfg["kind"] not in {"rss", "api_json", "local_file_json"}
         ):
             raise ConfigError(
-                f"{path} must be an exact, verified local COSMIC fixture source."
+                f"{path} must be an exact COSMIC fixture or the verified ESA live RSS source."
             )
         for field in (
             "source_family", "source_class", "official_status",
@@ -1201,6 +1209,10 @@ def _normalize_news_source(
             if field in source_cfg and source_cfg[field] != registry[field]:
                 raise ConfigError(f"{path}.{field} must match the science registry.")
             source_cfg[field] = registry[field]
+        if is_verified_live:
+            source_cfg["interval_minutes"] = _coerce_int(
+                source_cfg.get("interval_minutes", 60), f"{path}.interval_minutes", minimum=60
+            )
 
     source_cfg["enabled"] = _coerce_bool(source_cfg.get("enabled", False), f"{path}.enabled")
     source_cfg["priority"] = _coerce_int(source_cfg.get("priority", 50), f"{path}.priority")

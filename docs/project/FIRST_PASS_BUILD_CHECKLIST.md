@@ -157,7 +157,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-117** [Resolve SYSTEM Naming Collision](../../BACKLOG.md#L1989) — completed 2026-10-15; SYSTEM stays app health, COSMIC route maps to internal science scope.
 - [x] **RS-118** [Decide Final UI Label For Solar System And Beyond](../../BACKLOG.md#L1998) — completed 2026-10-15; COSMIC is the first-pass tab label and route, subject to a later user rename.
 - [x] **RS-119** [Disabled-By-Default Solar System And Beyond Config](../../BACKLOG.md#L2006) — disabled config tree, strict flag/attention validation, explicit sensitive-category gates, and example config; runtime scope remains pending.
-- [x] **RS-120** [Solar System And Beyond Source Registry Design Implementation](../../BACKLOG.md#L2016) — all 170 design candidates validated and disabled under the internal working name, with per-source health behavior and no runtime fetch wiring.
+- [x] **RS-120** [Solar System And Beyond Source Registry Design Implementation](../../BACKLOG.md#L2016) — all 170 design candidates validated and disabled by default, with per-source health behavior; exact ESA science RSS is separately opt-in.
 - [x] **RS-121** [Solar System And Beyond SQLite Schema Or Extension](../../BACKLOG.md#L2026) — disabled registry sync plus scoped science event/evidence/query-bound schema, indexes, and expiry purge.
 - [ ] **RS-122** [Solar System And Beyond Fixture Pack](../../BACKLOG.md#L2038) — all eight permitted parser fixtures pass offline scans; ATel and blocked-state matrix pending.
 - [x] **RS-123** [NASA/JPL RSS Parser](../../BACKLOG.md#L2049) — exact NASA-hosted JPL science RSS fixture parser with topic/operations filtering, bounded metadata, and no-download evidence; live access remains gated.
@@ -179,7 +179,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-139** [UI Disabled States After Naming Decision](../../BACKLOG.md#L2211) — COSMIC state card distinguishes configured health and disabled candidate inventory; future source-specific gates pending.
 - [ ] **RS-140** [Source Health States](../../BACKLOG.md#L2220) — fixture health, hype-blocked runtime, disabled candidate counts, and SQLite state rendering exist; future adapter gates pending.
 - [ ] **RS-141** [Evidence Drawer Contract](../../BACKLOG.md#L2231) — fixture item/event evidence renders; auth and broader policy/health states pending.
-- [ ] **RS-142** [Official RSS Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L2242) — not implemented.
+- [x] **RS-142** [Official RSS Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L2242) — exact ESA Space Science RSS opt-in, 14-day source freshness and bounded bytes/cadence/retention, and mocked transport gates pass; other candidates stay blocked.
 - [ ] **RS-143** [Official Small API Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L2250) — not implemented.
 - [ ] **RS-144** [Transient Alert Ingest Phase, Disabled By Default](../../BACKLOG.md#L2259) — not implemented.
 - [x] **RS-145** [Documentation For Source Verification](../../BACKLOG.md#L2292) — science endpoint signoff template, exact promotion gates, and NASA/JPL/ESA walkthroughs with observed blockers complete.

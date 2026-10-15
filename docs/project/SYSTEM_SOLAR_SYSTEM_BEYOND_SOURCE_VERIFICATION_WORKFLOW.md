@@ -94,7 +94,7 @@ items into science.
 | --- | --- |
 | [NASA Science News blog](https://science.nasa.gov/blogs/science-news/) | The exact `/feed/` URL returned `application/rss+xml` on 2026-10-15, but a bounded read failed strict XML parsing because the root namespace attributes were malformed. `reference_only` until the publisher fixes the feed or an official alternative is verified; do not silently repair live XML. |
 | [JPL RSS directory](https://www.jpl.nasa.gov/rss/) | JPL lists `/feeds/news/`, but a direct bounded request returned HTTP 403 on 2026-10-15. `reference_only`; no bypass or copied third-party feed. [NASA's JPL center feed](https://www.nasa.gov/centers-and-facilities/jpl/feed/) returned parseable RSS but mixes Earth and mission science, so it needs a separate scope-specific fixture/parser and is not a substitute approval. |
-| [ESA RSS directory](https://www.esa.int/Services/RSS_Feeds) | Top News and Human Spaceflight exact feeds are parseable for ORBITAL, as recorded in [ESA source verification](ORBITAL_ESA_RSS_SOURCE_VERIFICATION.md). `fixture_only` for science until a separate science/mission filter is tested; routine images and broad agency news cannot become science events by default. |
+| [ESA RSS directory](https://www.esa.int/Services/RSS_Feeds) | Top News and Human Spaceflight exact feeds are parseable for ORBITAL, as recorded in [ESA source verification](ORBITAL_ESA_RSS_SOURCE_VERIFICATION.md). The dedicated Space Science feed is verified separately for one opt-in COSMIC live path; routine images and broad agency news cannot become science events by default. |
 | [NASA Science Photojournal feeds](https://science.nasa.gov/photojournal/rss-feeds/) | The official directory lists topic-specific image feeds. `reference_only` for Recent Signal; an image release is not automatically a major science finding and image files must not be downloaded. |
 
 The signoff status is endpoint-specific. Record parser failure and HTTP 403 as source-health
@@ -112,8 +112,13 @@ ESA's [official RSS directory](https://www.esa.int/Services/RSS_Feeds) links a d
 [Space Science feed](https://www.esa.int/rssfeed/Our_Activities/Space_Science). A bounded
 2026-10-15 read returned HTTP 200, `application/rss+xml`, the `ESA Space Science` channel, and
 15 mixed science, launch, and multimedia entries. Its fixture parser keeps only Space Science
-article paths and excludes launch and image-only links. The source remains disabled until a
-separate live promotion signoff.
+article paths and excludes launch and image-only links. On 2026-10-15, a second bounded direct
+read of the exact URL
+returned HTTP 200, `application/rss+xml; charset=utf-8`, 40,550 bytes, a parseable
+`ESA Space Science` channel, 15 items, and no redirect. The fixture parser and mocked transport
+tests now verify exact identity, scope filtering, 14-day freshness, a one-hour minimum scan
+interval, 1 MiB response cap, seven-day metadata retention, no page-load fetch, and no product
+download. Decision: `live_opt_in` for this exact ESA feed only; all flags remain off by default.
 
 ESA/Hubble and ESA/Webb publisher news pages link FeedBurner RSS. Bounded reads on
 2026-10-15 returned parseable `ESAHubble News` and `ESAWebb News` channels, each with ten
