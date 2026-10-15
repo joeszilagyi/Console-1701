@@ -1,0 +1,17 @@
+[
+  {
+    "product_id": "K07W",
+    "issue_datetime": "2026-10-10 17:42:57.273",
+    "message": "Space Weather Message Code: WARK07\nSerial Number: 153\nIssue Time: 2026 Oct 10 1742 UTC\nWARNING: Geomagnetic K-index of 7 or greater expected\nValid From: 2026 Oct 10 1742 UTC\nValid To: 2026 Oct 10 2359 UTC\nNoaa Scale: G3 - Strong\nPotential Impacts: Area of impact primarily poleward of 55 degrees Geomagnetic Latitude.\nSpacecraft - Satellite orientation irregularities may occur.\nRadio - HF propagation can fade at higher latitudes.\nAurora - Aurora may be seen as low as Washington state."
+  },
+  {
+    "product_id": "A30F",
+    "issue_datetime": "2026-10-11 17:02:59.390",
+    "message": "Space Weather Message Code: WATA30\nSerial Number: 286\nIssue Time: 2026 Oct 11 1702 UTC\nCANCEL WATCH: Geomagnetic Storm Category G2 Predicted\nCancel Serial Number: 285\nConditions no longer warrant a G2 Watch."
+  },
+  {
+    "product_id": "BROKEN",
+    "issue_datetime": "",
+    "message": "Incomplete product for fail-soft coverage"
+  }
+]
