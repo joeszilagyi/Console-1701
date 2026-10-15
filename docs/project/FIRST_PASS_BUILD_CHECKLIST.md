@@ -66,7 +66,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-035** [NWS Active Alert Parser](../../BACKLOG.md#L1012) — fixture parser preserves national alert geography, timing, instruction, and ranking evidence; focused tests pass.
 - [ ] **RS-036** [NHC Advisory/Feed Verification](../../BACKLOG.md#L1020) — partial: official feed ownership/endpoints and advisory semantics documented; actual XML item shape remains unverified.
 - [ ] **RS-037** [USGS Earthquake GeoJSON Parser](../../BACKLOG.md#L1028) — partial: national coordinate regions, threshold, and fixture ingest work; nuanced cross-border and multi-state impact routing remains.
-- [ ] **RS-038** [FEMA/OpenFEMA Disaster Declarations Research](../../BACKLOG.md#L1037) — not implemented.
+- [x] **RS-038** [FEMA/OpenFEMA Disaster Declarations Research](../../BACKLOG.md#L1037) — official v2 API shape, stable composite identity, update semantics, policy and future adapter gate documented.
 - [ ] **RS-039** [CDC HAN Parser](../../BACKLOG.md#L1046) — not implemented.
 - [ ] **RS-040** [FDA Recall Endpoint/Feed Verification](../../BACKLOG.md#L1055) — not implemented.
 - [ ] **RS-041** [FSIS Recall API Parser](../../BACKLOG.md#L1064) — not implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-038 as bounded official-source research. Verified the OpenFEMA v2 JSON envelope and query controls, composite primary key, record refresh semantics, declaration fields, policy and source-health gates. No live adapter enabled. Progress: 49/150.
 - **2026-10-15:** Completed RS-033. Added NATIONAL agency/sector/state/source-family facets on the shared indexed facet table, active scoped lookup, old-row backfill, and tests for NWS/USGS labels and expiry purge. Full pytest passed (330 tests); Ruff passed. Progress: 48/150.
 - **2026-10-15:** Completed RS-029 and RS-030. Expanded the REGIONAL verification guide with the shared per-source signoff, regional scope checks and worked decisions; audited existing REGIONAL/SYSTEM state coverage and extended the opt-in HTTP GET no-fetch regression to REGIONAL. Full pytest passed (330 tests); Ruff passed. Progress: 47/150.
 - **2026-10-15:** Completed RS-021 as a cross-county source review. Recorded official access and RSS candidates or signup-only fallbacks for eight counties, with parser, policy, privacy, health and activation gates. No county feed was enabled. Progress: 45/150.

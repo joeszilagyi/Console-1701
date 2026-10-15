@@ -1199,12 +1199,19 @@ cross-border and multi-state felt-impact routing remains pending.
 
 ### FEMA/OpenFEMA Disaster Declarations Research
 
-Status: not implemented.
+Status: implemented (research; no parser or live ingest enabled).
 
 Research OpenFEMA disaster declarations and related FEMA data sources for stable API shapes,
 declaration update behavior, incident type fields, state/FEMA region filters, retention,
 source-health evidence, and ranking impact. Do not implement live fetch until endpoint behavior is
 verified.
+
+Current state: `docs/project/NATIONAL_OPENFEMA_DECLARATIONS_RESEARCH.md` records FEMA ownership,
+the documented v2 JSON API, bounded response shape, query controls, twenty-minute dataset update
+frequency, FEMA's `disasterNumber` plus `placeCode` primary key, nonpersistent generated IDs,
+`lastRefresh` semantics, declaration and state/region fields, policy/attribution requirements,
+privacy, retention, source-health behavior, ranking limits and a later exact-source release gate.
+The separate NATIONAL fixture parser and live adapter remain unimplemented and disabled.
 
 ### CDC HAN Parser
 
