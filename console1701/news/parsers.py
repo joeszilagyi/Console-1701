@@ -145,6 +145,8 @@ def parse_fixture_items(
         return _parse_nhtsa_recalls_json(source, payload_text)
     if parser_name == "cisa_kev_json":
         return _parse_cisa_kev_json(source, payload_text)
+    if parser_name == "faa_nas_status_xml":
+        return _parse_faa_nas_status_xml(source, payload_text)
     if parser_name == "alertseattle_rss":
         return _parse_alertseattle_rss_feed(source, payload_text)
     if parser_name == "metro_rss":
@@ -1791,6 +1793,125 @@ def _parse_cisa_kev_json(
             "catalog_released_at": normalize_timestamp(payload["dateReleased"]),
             "local_applicability": "unknown",
             "ranking": {"cyber_score": score},
+            "body_stored": False,
+        }
+        normalized.append(item)
+    return normalized
+
+
+_FAA_NAS_GROUPS = {
+    "Ground_Delay_List": ("Ground_Delay", "ground_delay", 34),
+    "Ground_Stop_List": ("Ground_Stop", "ground_stop", 40),
+    "Arrival_Departure_Delay_List": ("Delay", "arrival_departure_delay", 24),
+    "Airport_Closure_List": ("Airport", "closure_notice", 30),
+}
+
+
+def _parse_faa_nas_status_xml(
+    source: dict[str, Any], payload_text: str
+) -> list[dict[str, Any]]:
+    if str(source.get("scope") or "").upper() != "NATIONAL":
+        raise NewsParserError("FAA NAS XML parser requires NATIONAL scope.")
+    if re.search(r"<!\s*(?:DOCTYPE|ENTITY)\b", payload_text, re.I):
+        raise NewsParserError("FAA NAS XML must not contain a DTD or entity declaration.")
+    try:
+        root = ET.fromstring(payload_text)
+    except ET.ParseError as exc:
+        raise NewsParserError(f"Malformed FAA NAS XML: {exc}") from exc
+    if root.tag != "AIRPORT_STATUS_INFORMATION":
+        raise NewsParserError("FAA NAS XML has an unexpected root.")
+    update_text = str(_element_text(root.find("Update_Time")) or "").strip()
+    try:
+        updated_at = datetime.strptime(update_text, "%a %b %d %H:%M:%S %Y GMT").replace(
+            tzinfo=UTC
+        ).isoformat(timespec="seconds")
+    except ValueError as exc:
+        raise NewsParserError("FAA NAS XML has an invalid Update_Time.") from exc
+    selected_codes = [
+        _normalize_airport_code(value)
+        for value in _configured_texts(source.get("airport_codes"), default=[])
+    ]
+    selected_codes = [
+        value for value in selected_codes if value and re.fullmatch(r"[A-Z]{3}", value)
+    ]
+    if not selected_codes:
+        raise NewsParserError("NATIONAL FAA NAS XML needs a verified airport_codes allowlist.")
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for delay_type in root.findall("Delay_type"):
+        group_name = bounded_text(_element_text(delay_type.find("Name")), max_chars=100)
+        unknown_lists = [
+            child.tag for child in delay_type
+            if child.tag.endswith("_List") and child.tag not in _FAA_NAS_GROUPS and len(child)
+        ]
+        if unknown_lists:
+            raise NewsParserError(f"FAA NAS XML has unsupported active list: {unknown_lists[0]}.")
+        for list_name, (row_name, event_type, base_weight) in _FAA_NAS_GROUPS.items():
+            event_list = delay_type.find(list_name)
+            if event_list is None:
+                continue
+            for row in event_list.findall(row_name):
+                code = _normalize_airport_code(_element_text(row.find("ARPT")))
+                if not code or not re.fullmatch(r"[A-Z]{3}", code):
+                    raise NewsParserError("FAA NAS event has an invalid airport code.")
+                if code not in selected_codes:
+                    continue
+                direction_element = row.find("Arrival_Departure")
+                direction = (
+                    bounded_text(direction_element.get("Type"), max_chars=30)
+                    if direction_element is not None else None
+                )
+                average = bounded_text(_element_text(row.find("Avg")), max_chars=80)
+                maximum = bounded_text(_element_text(row.find("Max")), max_chars=80)
+                minimum = (
+                    bounded_text(_element_text(direction_element.find("Min")), max_chars=80)
+                    if direction_element is not None else None
+                )
+                if direction_element is not None:
+                    maximum = maximum or bounded_text(
+                        _element_text(direction_element.find("Max")), max_chars=80
+                    )
+                delay_minutes = _duration_minutes(average or minimum or maximum) or 0
+                event = {
+                    "event_type": event_type,
+                    "group_name": group_name,
+                    "direction": direction,
+                    "reason": bounded_text(_element_text(row.find("Reason")), max_chars=300),
+                    "average_delay": average,
+                    "minimum_delay": minimum,
+                    "maximum_delay": maximum,
+                    "delay_minutes": delay_minutes,
+                    "start_text": bounded_text(_element_text(row.find("Start")), max_chars=80),
+                    "end_text": bounded_text(_element_text(row.find("Reopen")), max_chars=80),
+                    "time_precision": (
+                        "source_text_without_year" if event_type == "closure_notice" else None
+                    ),
+                    "impact_score": min(50, base_weight + min(10, delay_minutes // 10)),
+                }
+                grouped.setdefault(code, []).append(event)
+    source_url = "https://nasstatus.faa.gov/api/airport-status-information"
+    normalized: list[dict[str, Any]] = []
+    for index, (code, events) in enumerate(grouped.items()):
+        event_count = len(events)
+        events = events[:25]
+        lead = max(events, key=lambda event: event["impact_score"])
+        airport_url = f"https://www.faa.gov/airport-status/{code}"
+        item = _normalize_item(source, {
+            "title": f"FAA NAS {code}: {lead['event_type'].replace('_', ' ').title()}",
+            "url": airport_url,
+            "description": lead["reason"] or lead["group_name"],
+            "published_at": updated_at,
+            "tags": ["official", "faa", "aviation", "airport-status", code.lower()],
+        }, index=index)
+        item["evidence"]["faa_nas_status"] = {
+            "airport_code": code,
+            "events": events,
+            "event_count": event_count,
+            "events_truncated": event_count > len(events),
+            "source_update_at": updated_at,
+            "source_url": source_url,
+            "airport_status_url": airport_url,
+            "geography_basis": "airport_code_only_not_country_verified",
+            "ranking": {"aviation_impact_score": lead["impact_score"]},
             "body_stored": False,
         }
         normalized.append(item)

@@ -187,6 +187,7 @@ def build_rank_result(
                 )
     national_vehicle_safety_bonus = 0
     national_cyber_bonus = 0
+    national_aviation_bonus = 0
     if scope == "NATIONAL":
         item_evidence = item.get("evidence") if isinstance(item.get("evidence"), dict) else {}
         recall = item_evidence.get("nhtsa_recall")
@@ -203,6 +204,13 @@ def build_rank_result(
                 national_cyber_bonus = min(
                     22, max(0, _int_value(kev_ranking.get("cyber_score")))
                 )
+        nas = item_evidence.get("faa_nas_status")
+        if isinstance(nas, dict):
+            nas_ranking = nas.get("ranking")
+            if isinstance(nas_ranking, dict):
+                national_aviation_bonus = min(
+                    50, max(0, _int_value(nas_ranking.get("aviation_impact_score")))
+                )
 
     factors = {
         "source_priority": source_priority,
@@ -216,6 +224,7 @@ def build_rank_result(
         "regional_seismic_boost": regional_seismic_boost,
         "national_vehicle_safety_bonus": national_vehicle_safety_bonus,
         "national_cyber_bonus": national_cyber_bonus,
+        "national_aviation_bonus": national_aviation_bonus,
         **({"local_active_alert_bonus": local_active_alert["bonus"]} if scope == "LOCAL" else {}),
         **local_signal["factors"],
         **regional_signal["factors"],
@@ -246,6 +255,8 @@ def build_rank_result(
         )
     if national_cyber_bonus:
         reasons.append(f"NATIONAL CISA KEV evidence adds {national_cyber_bonus}.")
+    if national_aviation_bonus:
+        reasons.append(f"NATIONAL FAA NAS disruption evidence adds {national_aviation_bonus}.")
     reasons.extend(local_signal["reasons"])
     if local_active_alert["reason"]:
         reasons.append(local_active_alert["reason"])

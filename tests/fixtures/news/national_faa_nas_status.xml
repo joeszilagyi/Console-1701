@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AIRPORT_STATUS_INFORMATION>
+  <Update_Time>Thu Oct 15 19:16:39 2026 GMT</Update_Time>
+  <Dtd_File>http://www.fly.faa.gov/AirportStatus.dtd</Dtd_File>
+  <Delay_type>
+    <Name>Ground Delay Programs</Name>
+    <Ground_Delay_List>
+      <Ground_Delay>
+        <ARPT>SFO</ARPT><Reason>airport volume</Reason>
+        <Avg>39 minutes</Avg><Max>1 hour and 29 minutes</Max>
+      </Ground_Delay>
+      <Ground_Delay>
+        <ARPT>YUL</ARPT><Reason>runway construction</Reason>
+        <Avg>17 minutes</Avg><Max>1 hour and 4 minutes</Max>
+      </Ground_Delay>
+    </Ground_Delay_List>
+  </Delay_type>
+  <Delay_type>
+    <Name>Ground Stops</Name>
+    <Ground_Stop_List>
+      <Ground_Stop><ARPT>SEA</ARPT><Reason>thunderstorms</Reason></Ground_Stop>
+    </Ground_Stop_List>
+  </Delay_type>
+  <Delay_type>
+    <Name>General Arrival/Departure Delay Info</Name>
+    <Arrival_Departure_Delay_List>
+      <Delay>
+        <ARPT>SFO</ARPT><Reason>weather</Reason>
+        <Arrival_Departure Type="Departure">
+          <Min>16 minutes</Min><Max>30 minutes</Max><Trend>Increasing</Trend>
+        </Arrival_Departure>
+      </Delay>
+    </Arrival_Departure_Delay_List>
+  </Delay_type>
+  <Delay_type>
+    <Name>Airport Closures</Name>
+    <Airport_Closure_List>
+      <Airport>
+        <ARPT>SAN</ARPT><Reason>Runway closure for construction</Reason>
+        <Start>Oct 13 at 06:30 UTC.</Start><Reopen>Oct 17 at 13:15 UTC.</Reopen>
+      </Airport>
+    </Airport_Closure_List>
+  </Delay_type>
+</AIRPORT_STATUS_INFORMATION>

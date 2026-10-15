@@ -62,7 +62,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-031** [NATIONAL Source Registry Design Implementation](../../BACKLOG.md#L973) — 227 disabled design entries, validated metadata, config defaults, SQLite sync, and summary.
 - [x] **RS-032** [Disabled-By-Default NATIONAL Config](../../BACKLOG.md#L982) — validated national policy tree, separate scope gate, social-source rejection, and disabled defaults.
 - [x] **RS-033** [NATIONAL SQLite Schema Or Extension](../../BACKLOG.md#L993) — scoped storage, agency/sector/state indexed facets, migration backfill and expiry purge verified.
-- [ ] **RS-034** [NATIONAL Fixture Pack](../../BACKLOG.md#L1003) — partial: NWS, USGS, NHTSA and CISA KEV fixtures; other selected source families pending.
+- [ ] **RS-034** [NATIONAL Fixture Pack](../../BACKLOG.md#L1003) — partial: NWS, USGS, NHTSA, CISA KEV and FAA NAS fixtures; other selected source families pending.
 - [x] **RS-035** [NWS Active Alert Parser](../../BACKLOG.md#L1012) — fixture parser preserves national alert geography, timing, instruction, and ranking evidence; focused tests pass.
 - [x] **RS-036** [NHC Advisory/Feed Verification](../../BACKLOG.md#L1020) — official basin XML, summary/advisory fields, identity limits and empty-basin sentinel observed; live disabled.
 - [ ] **RS-037** [USGS Earthquake GeoJSON Parser](../../BACKLOG.md#L1028) — partial: national coordinate regions, threshold, and fixture ingest work; nuanced cross-border and multi-state impact routing remains.
@@ -72,7 +72,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-041** [FSIS Recall API Parser](../../BACKLOG.md#L1064) — not implemented.
 - [ ] **RS-042** [CPSC Recalls API Parser](../../BACKLOG.md#L1072) — not implemented.
 - [x] **RS-043** [NHTSA Recalls API Parser](../../BACKLOG.md#L1080) — official lookup-envelope fixture parser, grouped campaign evidence, safety ranking, facets and offline scan verified; live discovery remains disabled.
-- [ ] **RS-044** [FAA NAS Status Fixture Parser](../../BACKLOG.md#L1088) — not implemented.
+- [x] **RS-044** [FAA NAS Status Fixture Parser](../../BACKLOG.md#L1088) — verified XML structure, filtered airport event grouping, cautious time/closure evidence, ranking, facets and offline scan; live disabled.
 - [ ] **RS-045** [CISA Advisory Parser](../../BACKLOG.md#L1097) — not implemented.
 - [x] **RS-046** [CISA KEV Endpoint Research](../../BACKLOG.md#L1106) — official JSON/schema, snapshot/update and due-date semantics, access and health gate documented; ingest stays disabled.
 - [ ] **RS-047** [Federal Register API Parser With Filters](../../BACKLOG.md#L1114) — not implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-044 and advanced RS-034. Verified official FAA NAS XML shape, implemented airport allowlist and grouped event fixture parser, added source-specific aviation ranking and facets, and tested offline scan. Full pytest passed (336 tests); Ruff passed. Live adapter remains disabled. Progress: 54/150.
 - **2026-10-15:** Advanced RS-034 with a CISA KEV full-catalog fixture parser, bounded CVE and federal due-date evidence, cyber ranking, NATIONAL facets, and an offline scan regression. Full pytest passed (334 tests); Ruff passed. Live KEV remains disabled. Progress: 53/150.
 - **2026-10-15:** Completed RS-046. Bounded official CISA KEV JSON/schema reads confirmed full-snapshot structure, unique CVEs, calendar dates and conditional headers; documented the CSV path gap and live release gate. Progress: 53/150.
 - **2026-10-15:** Completed RS-043 and advanced RS-034. Added a NATIONAL NHTSA lookup-envelope fixture parser with campaign grouping, bounded recall fields, vehicle-safety ranking, agency/sector facets, and offline scan coverage. Recorded the lookup-only live limitation and FSIS/CPSC access blockers. Full pytest passed (332 tests); Ruff passed. Progress: 52/150.
