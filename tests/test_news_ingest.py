@@ -1167,6 +1167,9 @@ def test_run_news_scan_ingests_regional_usgs_earthquake_fixture(tmp_path):
                 - id: usgs_eq_geojson
                   enabled: true
                   url: "{_file_url(FIXTURE_DIR / "regional_usgs_earthquakes.json")}"
+                  center_latitude: 47.6
+                  center_longitude: -122.4
+                  radius_km: 100
         """,
     )
 
@@ -1186,13 +1189,14 @@ def test_run_news_scan_ingests_regional_usgs_earthquake_fixture(tmp_path):
 
     evidence_rows = [json_loads(str(row["evidence_json"]), {}) for row in rows]
     assert result["status"] == "complete"
-    assert result["item_count"] == 2
-    assert len(rows) == 2
+    assert result["item_count"] == 1
+    assert len(rows) == 1
     assert all(
         evidence["storage"]["url"].startswith("https://earthquake.usgs.gov/")
         for evidence in evidence_rows
     )
     assert all(evidence["source"]["scope"] == "REGIONAL" for evidence in evidence_rows)
+    assert evidence_rows[0]["usgs_earthquake"]["filter"]["distance_km"] < 100
     assert all(
         evidence["ranking"]["factors"]["regional_seismic_boost"] > 0
         for evidence in evidence_rows

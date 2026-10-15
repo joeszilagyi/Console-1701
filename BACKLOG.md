@@ -811,7 +811,7 @@ behavior. Keep the source disabled until verification is complete.
 
 ### USGS Earthquake GeoJSON Parser
 
-Status: partially implemented.
+Status: implemented (first pass).
 
 Build a fixture-first parser for USGS earthquake GeoJSON filtered to Washington, Puget Sound,
 Cascadia, and configured radius/magnitude rules. Preserve event id, magnitude, depth, place, time,
@@ -822,9 +822,12 @@ synthetic fixture covers Washington-area events, out-of-region exclusion, and ma
 exclusion. The parser preserves USGS ids, magnitude/depth/place/time, felt and intensity measures,
 official event URL, filter bounds, and a capped seismic score. It now excludes non-earthquake
 feature types before assigning earthquake identity. Configurable geographic bounds and minimum
-magnitude are supported, but live admission requires at least 2.5 because the signed-off feed has
-that floor. Exact-source verification and opt-in live ingest are complete; radius-based geography
-and a live in-region event observation remain pending.
+magnitude are supported; an optional center/radius filter now further narrows the REGIONAL result
+using great-circle distance, and the distance and basis are retained in item evidence. Filter
+inputs are finite and bounded, and a configured radius requires both coordinates. Live admission
+still requires at least 2.5 because the signed-off feed has that floor. Exact-source verification
+and opt-in live ingest are complete. No in-region earthquake occurred during the prior live smoke
+check, so live item observation remains an operational evidence gap, not a parser blocker.
 
 ### USGS Water/Hydrology Fixture Parser
 

@@ -1065,7 +1065,33 @@ def _usgs_filter(source: dict[str, Any]) -> dict[str, Any]:
         and values["min_magnitude"] >= 0
     ):
         raise NewsParserError("USGS source coordinate bounds or magnitude threshold are invalid.")
+    radius_keys = ("center_latitude", "center_longitude", "radius_km")
+    if any(source.get(key) is not None for key in radius_keys):
+        if any(source.get(key) is None for key in radius_keys):
+            raise NewsParserError("USGS radius filter requires center latitude, longitude, and km.")
+        for key in radius_keys:
+            value = _usgs_number(source[key])
+            if value is None:
+                raise NewsParserError(f"USGS {key} must be a finite number.")
+            values[key] = value
+        if not (
+            -90 <= values["center_latitude"] <= 90
+            and -180 <= values["center_longitude"] <= 180
+            and 0 < values["radius_km"] <= 3000
+        ):
+            raise NewsParserError("USGS radius center or distance is invalid.")
     return values
+
+
+def _distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    lat_delta = math.radians(lat2 - lat1)
+    lon_delta = math.radians(lon2 - lon1)
+    arc = (
+        math.sin(lat_delta / 2) ** 2
+        + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2))
+        * math.sin(lon_delta / 2) ** 2
+    )
+    return 6371.0088 * 2 * math.asin(min(1.0, math.sqrt(arc)))
 
 
 def _national_usgs_region(longitude: float, latitude: float) -> str | None:
@@ -1123,11 +1149,19 @@ def _parse_usgs_earthquake_geojson(
             continue
         national = str(source.get("scope") or "").upper() == "NATIONAL"
         national_region = _national_usgs_region(longitude, latitude) if national else None
+        radius_distance = (
+            _distance_km(
+                geo_filter["center_latitude"], geo_filter["center_longitude"],
+                latitude, longitude,
+            ) if "radius_km" in geo_filter and not (national or global_scope) else None
+        )
         matches_geography = (
             True if global_scope else national_region is not None if national else
             geo_filter["min_longitude"] <= longitude <= geo_filter["max_longitude"]
             and geo_filter["min_latitude"] <= latitude <= geo_filter["max_latitude"]
         )
+        if radius_distance is not None:
+            matches_geography = matches_geography and radius_distance <= geo_filter["radius_km"]
         if not matches_geography or magnitude < geo_filter["min_magnitude"]:
             continue
         event_id = bounded_text(feature.get("id"), max_chars=120)
@@ -1228,8 +1262,11 @@ def _parse_usgs_earthquake_geojson(
                 "matched": True,
                 "geography_basis": (
                     "source_place_label" if global_scope else
-                    "coarse_us_region_coordinates" if national else "configured_bounds"
+                    "coarse_us_region_coordinates" if national else
+                    "configured_radius_and_bounds" if radius_distance is not None else
+                    "configured_bounds"
                 ),
+                "distance_km": round(radius_distance, 1) if radius_distance is not None else None,
                 "region": national_region,
                 "place_label": place if global_scope else None,
             },
