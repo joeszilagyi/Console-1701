@@ -1181,13 +1181,13 @@
   },
   {
     "source_key": "faa_nasstatus_api",
-    "source_name": "FAA NAS airport status API candidate",
+    "source_name": "FAA NAS airport status XML",
     "source_family": "faa",
     "source_class": "official_airport_port",
     "scope": "LOCAL",
     "raw_url": "https://nasstatus.faa.gov/api/airport-status-information",
-    "expected_access_kind": "candidate official JSON API",
-    "adapter": "official_api_json",
+    "expected_access_kind": "official public XML endpoint; ingest parser pending",
+    "adapter": "manual_review_only",
     "refresh_interval": "10 min",
     "priority": "90",
     "official_status": "official",
@@ -1195,8 +1195,8 @@
     "policy_risk": "low",
     "parser_risk": "medium",
     "retention_sensitivity": "medium",
-    "verification_status": "candidate_needs_verification",
-    "why_it_matters": "Candidate machine-readable FAA airport status source.",
+    "verification_status": "source_health_probe_only",
+    "why_it_matters": "Official machine-readable active airport events; SEA filter, XML fixture parser, and live-ingest controls remain pending.",
     "future_phase": "L6"
   },
   {

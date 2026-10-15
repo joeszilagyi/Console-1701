@@ -396,16 +396,31 @@ service area, advisory title, published time, source URL, and transit-impact ran
 
 ### FAA/SEA Airport Status Research
 
-Status: partially implemented.
+Status: implemented (research complete; live ingest remains in the separate LOCAL and NATIONAL tasks).
 
-Verify which FAA, NAS Status, Port of Seattle, or SEA Airport endpoints provide lawful,
-machine-readable operational metadata for SEA ground stops, delays, closures, checkpoint impacts, or
-traveler advisories. Do not implement live fetch until endpoint and policy review are complete.
+Verified 2026-10-15: the FAA's NAS Status user guide explicitly publishes machine-readable XML
+for active airport and en-route events, and the NAS Status footer exposes its XML link. A bounded
+read of `https://nasstatus.faa.gov/api/airport-status-information` returned HTTP 200,
+`application/xml`, root `AIRPORT_STATUS_INFORMATION`, a source `Update_Time`, and active
+`Delay_type` groups. Airport events carry `ARPT` and, by type, `Reason`, `Avg`, `Max`,
+arrival/departure direction, or closure `Start`/`Reopen`. The sample had no SEA event, which is
+normal for an active-event feed and does not prove SEA is on time. The public `robots.txt` had no
+disallow rule; no rate limit was identified in the reviewed FAA guide. A conservative ten-minute
+cadence is a proposed limit, not a published FAA allowance. The XML's `Dtd_File` points at a legacy URL that currently
+returns HTML, so parsing must not depend on fetching an external DTD.
 
-Current state: the FAA airport-status page and the NAS Status XML page are verified official
-sources, and the LOCAL registry now marks `faa_airport_status_sea` as
-`source_health_probe_only` with a machine-readable access note. A live parser/fetch path and policy
-review for any production ingest remain pending.
+The Port's SEA flight-status and checkpoint-wait pages returned public HTML; this review did not
+establish a published machine-readable API for either. Treat those pages and the FAA SEA status
+page as human reference surfaces. The existing FAA JSON fixture is synthetic and is **not** the
+verified XML shape. The LOCAL NAS XML registry entry is now reference-only and disabled until an
+XML fixture parser, SEA-only filtering, event expiry, and exact-URL live-ingest controls are tested
+under RS-011/RS-044. No live fetch path was enabled by this research.
+
+Evidence: [FAA NAS Status user guide](https://nasstatus.faa.gov/static/media/NASStatusUserGuide.cccc6d48.pdf),
+[NAS Status](https://nasstatus.faa.gov/),
+[NAS XML endpoint](https://nasstatus.faa.gov/api/airport-status-information),
+[Port SEA flight status](https://www.portseattle.org/sea/flight-status),
+[Port checkpoint times](https://www.portseattle.org/page/live-estimated-checkpoint-wait-times).
 
 ### City Light Outage Endpoint Research
 

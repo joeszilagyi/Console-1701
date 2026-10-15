@@ -168,6 +168,15 @@ def test_local_registry_exposes_faa_airport_status_probe_only_defaults():
     assert source["expected_access_kind"] == "public airport-status page and NAS Status XML"
     assert "machine-readable path" in source["why_it_matters"]
 
+    nas_xml = get_local_source_registry_entry("faa_nasstatus_api")
+    assert nas_xml is not None
+    assert nas_xml["raw_url"] == "https://nasstatus.faa.gov/api/airport-status-information"
+    assert nas_xml["kind"] == "reference_only"
+    assert nas_xml["adapter"] == "manual_review_only"
+    assert nas_xml["verification_status"] == "source_health_probe_only"
+    assert "XML" in nas_xml["expected_access_kind"]
+    assert nas_xml["enabled"] is False
+
 
 def test_local_registry_exposes_city_light_probe_only_defaults():
     source = get_local_source_registry_entry("city_light_outages_home")
