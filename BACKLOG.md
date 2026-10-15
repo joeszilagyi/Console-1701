@@ -3379,7 +3379,8 @@ Status: partial. ATel exact public RSS and GraceDB public Production superevent 
 metadata pass bounded opt-in live scans. GraceDB uses a 48-hour query, 10-row overflow fail,
 64 KiB aggregate cap, 60-minute interval, exact REST links, and revision/retraction parsing;
 the live smoke was healthy with an empty recent window. Mocked preliminary-to-retraction
-scan preserves one item and withdraws elevation. GCN live transport, cross-source retention
+and later empty-window scans preserve one item until its seven-day purge and withdraw
+elevation. GCN live transport, cross-source retention
 and purge sequences, and TNS auth/policy work remain open.
 
 ### Heavy Archive Phase, Disabled By Default

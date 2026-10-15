@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from copy import deepcopy
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
@@ -15,7 +15,7 @@ from console1701.db import connect_db, json_loads
 from console1701.news import official_http
 from console1701.news.official_http import is_supported_official_source
 from console1701.news.parsers import NewsIngestError, parse_fixture_items
-from console1701.news.scanner import run_news_scan
+from console1701.news.scanner import purge_news_retention, run_news_scan
 
 ENDPOINT = "https://gracedb.ligo.org/api/v2/superevents/"
 FIXTURE = Path(__file__).parent / "fixtures/science/gracedb_public_alerts.json"
@@ -116,10 +116,12 @@ def test_gracedb_live_scan_updates_a_candidate_to_retracted_without_network(
     configured = config["news"]["scopes"]["SYSTEM_SOLAR"]["sources"][0]
     assert configured["interval_minutes"] >= 60
     record = _record()
+    active_records = [record]
 
     def fake_get(url, **kwargs):
         if "?" in url:
-            return {"numRows": 1, "superevents": [record["superevent"]]}, 200
+            return {"numRows": len(active_records),
+                    "superevents": [item["superevent"] for item in active_records]}, 200
         assert url == record["superevent"]["links"]["voevents"]
         return record["voevents"], 100
 
@@ -144,3 +146,18 @@ def test_gracedb_live_scan_updates_a_candidate_to_retracted_without_network(
     evidence = json_loads(row["evidence_json"], {})["gracedb_public_alert"]
     assert evidence["status"] == "retracted"
     assert event["status"] == "retracted" and event["score"] == 0
+
+    active_records.clear()
+    with connect_db(config["_db_path"]) as conn:
+        conn.execute("UPDATE news_fetch_runs SET started_at='2026-01-01T00:00:00+00:00'")
+    empty = run_news_scan(path)
+    assert empty["status"] == "complete" and empty["item_count"] == 0
+    with connect_db(config["_db_path"]) as conn:
+        assert conn.execute("SELECT status FROM news_items").fetchone()[0] == "active"
+        assert conn.execute("SELECT status FROM science_events").fetchone()[0] == "retracted"
+        purged = purge_news_retention(
+            conn, config, now=(datetime.now(UTC) + timedelta(days=8)).isoformat()
+        )
+        assert conn.execute("SELECT COUNT(*) FROM news_items").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM science_events").fetchone()[0] == 0
+    assert purged["items"] == 1 and purged["science_events"] == 1

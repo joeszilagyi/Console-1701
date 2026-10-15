@@ -52,10 +52,13 @@ An isolated live opt-in `news-scan` on 2026-10-15 returned HTTP 200, healthy sou
 623 response bytes, and zero items because the recent query contained no public Production
 events. Mocked transport and scan tests cover a preliminary candidate followed by a
 retraction, stable superevent identity, zero retraction score, overflow, nonproduction rows,
-and foreign links. The full suite passed (695 tests) and Ruff passed. Empty-window live
+and foreign links. A later empty rolling query keeps the retracted item visible until its
+seven-day expiry; the retention purge removes both the item and science event. The full
+suite passed (695 tests) and Ruff passed. Empty-window live
 reads do not prove live revision behavior; that remains covered by the mocked sequence.
 
 Sky-map URLs can be retained as official provenance links, but no FITS, HEALPix, image, or other
 sky-map file is downloaded, parsed, cached, or shown as a precise location. The REST API's
-`files/` subtree and broad logs/annotations are outside the fetch contract. Retention and
-purge rules remain an RS-144 follow-up; do not use credentials for nonpublic GraceDB data.
+`files/` subtree and broad logs/annotations are outside the fetch contract. Cross-source
+retention and purge sequences remain an RS-144 follow-up; do not use credentials for
+nonpublic GraceDB data.
