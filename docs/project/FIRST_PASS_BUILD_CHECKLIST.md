@@ -54,8 +54,8 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-026** [REGIONAL Source Health States](../../BACKLOG.md#L869) — implemented; REGIONAL API/page state matrix test passes.
 - [ ] **RS-027** [REGIONAL Evidence Drawer Contract](../../BACKLOG.md#L883) — partially implemented.
 - [ ] **RS-028** [REGIONAL Official-Source Live Ingest Phase](../../BACKLOG.md#L898) — partially implemented.
-- [ ] **RS-029** [Documentation For Source Verification](../../BACKLOG.md#L942) — partially implemented.
-- [ ] **RS-030** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L955) — partially implemented.
+- [x] **RS-029** [Documentation For Source Verification](../../BACKLOG.md#L942) — shared signoff/release gate and REGIONAL geography, privacy and fallback checks linked to worked decisions.
+- [x] **RS-030** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L955) — REGIONAL/SYSTEM state matrix and opt-in HTTP GET no-fetch regression verified.
 
 ### NATIONAL United States Recent Signal Layer
 
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-029 and RS-030. Expanded the REGIONAL verification guide with the shared per-source signoff, regional scope checks and worked decisions; audited existing REGIONAL/SYSTEM state coverage and extended the opt-in HTTP GET no-fetch regression to REGIONAL. Full pytest passed (330 tests); Ruff passed. Progress: 47/150.
 - **2026-10-15:** Completed RS-021 as a cross-county source review. Recorded official access and RSS candidates or signup-only fallbacks for eight counties, with parser, policy, privacy, health and activation gates. No county feed was enabled. Progress: 45/150.
 - **2026-10-15:** Completed RS-020 and advanced RS-016. Verified the official King County Emergency News RSS source, added a synthetic warning/recovery/test fixture, source-specific classification and public-impact ranking, and exercised a configured offline scan. Live ingest remains disabled pending a separate release gate. Full pytest passed (330 tests); Ruff passed. Progress: 44/150.
 - **2026-10-15:** Completed RS-018 and advanced RS-016. Replaced the REGIONAL WSDOT JSON test fixture with the official documented Alert/RoadwayLocation shape, added WCF date parsing and roadway/status evidence, documented the access-code hold, and verified a configured offline scan. Full pytest passed (328 tests); Ruff passed. Progress: 43/150.

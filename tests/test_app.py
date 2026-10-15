@@ -1033,6 +1033,7 @@ paths: {repo_roots: [], explicit_repos: []}
 logs: []
 projects: []
 local: {enabled: true}
+regional: {enabled: true}
 news:
   enabled: true
   fetch_policy: {allow_official_http: true}
@@ -1041,6 +1042,11 @@ news:
       enabled: true
       sources:
         - id: nws_active_alerts_api
+          enabled: true
+    REGIONAL:
+      enabled: true
+      sources:
+        - id: nws_active_alerts_wa
           enabled: true
 """.strip() + "\n",
         encoding="utf-8",
@@ -1053,8 +1059,14 @@ news:
     monkeypatch.setattr("console1701.news.scanner.fetch_official_text", unexpected_fetch)
     assert _route_endpoint(router, "/")(_request("/")).status_code == 200
     assert _route_endpoint(router, "/{scope}")(_request("/LOCAL"), "LOCAL").status_code == 200
+    assert _route_endpoint(router, "/{scope}")(_request("/REGIONAL"), "REGIONAL").status_code == 200
+    assert _route_endpoint(router, "/{scope}")(_request("/SYSTEM"), "SYSTEM").status_code == 200
     scope = _route_endpoint(router, "/api/news/scopes/{scope}")("LOCAL", 8)
+    regional = _route_endpoint(router, "/api/news/scopes/{scope}")("REGIONAL", 8)
+    summary = _route_endpoint(router, "/api/news/summary")()
     assert scope["state"]["state"] == "configured_never_run"
+    assert regional["state"]["state"] == "configured_never_run"
+    assert summary["scope_states"]["REGIONAL"]["state"] == "configured_never_run"
 
 
 def test_root_page_renders_codex_terminal_action_for_host_penalty(tmp_path, monkeypatch):

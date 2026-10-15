@@ -1047,7 +1047,7 @@ configuration, use short retention, and never scrape HTML to bypass platform res
 
 ### Documentation For Source Verification
 
-Status: partially implemented.
+Status: implemented (first-pass workflow and regional signoff examples).
 
 Document the later REGIONAL source verification workflow: confirm endpoint ownership, access method,
 source terms, robots/policy notes, parser shape, rate limits, retention sensitivity, privacy risk,
@@ -1056,11 +1056,13 @@ source.
 
 Current state: `docs/project/REGIONAL_SOURCE_VERIFICATION_WORKFLOW.md` now captures the shared
 verification checklist, required registry fields, and scope-specific geography/relevance filters.
-Per-source signoff templates and endpoint-specific walkthroughs still need a dedicated follow-up.
+It points to the shared per-source signoff record and release gate, adds regional geography,
+test/inactive, syndication, privacy and fallback checks, and links worked NWS, WSDOT and King
+County decisions plus the cross-county review. Each new live source still needs its own signoff.
 
 ### Tests For No Page-Load External Fetches
 
-Status: partially implemented.
+Status: implemented.
 
 Add tests proving GET routes and page renders read SQLite/config only and never call REGIONAL
 network fetchers. Include disabled/not configured/stale/failing/policy-blocked/parser-failed state
@@ -1068,7 +1070,10 @@ tests for REGIONAL and SYSTEM source health.
 
 Current state: the shared GET-route regression now renders REGIONAL and reads its scope API with
 an enabled source pointing at a missing fixture. It proves page/API reads stay SQLite/config only
-and do not invoke ingest. The full REGIONAL/SYSTEM source-state matrix remains pending.
+and do not invoke ingest. The REGIONAL/SYSTEM source-state matrix covers disabled, not configured,
+never run, stale, failing, policy-blocked, parser-failed, manual-review, robots-blocked,
+rate-limited, unsupported and auth-required states. A separate GET regression exercises LOCAL,
+REGIONAL and SYSTEM with explicit official HTTP opt-in and a fetcher that raises if called.
 
 ## NATIONAL United States Recent Signal Layer
 
