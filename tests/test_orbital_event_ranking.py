@@ -37,14 +37,14 @@ def test_orbital_rank_uses_official_scale_and_explicit_impact_without_panic():
         swpc_alert={"noaa_scale": "G3", "potential_impacts": [
             {"system": "radio"}, {"system": "aurora"},
         ]},
-        identity={"impact_tags": ["regional"]},
+        identity={"impact_tags": ["REGIONAL_IMPACT"]},
     )
     ranked = rank_orbital_event(_group("swpc", identifiers=["swpc:one"]), [alert], now=NOW)
     assert ranked["score"] > 0
     assert ranked["factors"]["official_severity_score"] == 24
     assert ranked["factors"]["operational_impact_score"] == 10
     assert ranked["factors"]["active_alert_or_launch_window_score"] == 15
-    assert ranked["impact_tags"] == ["regional"]
+    assert ranked["impact_tags"] == ["regional_impact"]
     assert "impact prediction" not in " ".join(ranked["reasons"])
 
 

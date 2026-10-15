@@ -107,8 +107,10 @@ def rank_orbital_event(
         (_int(signal["source"].get("priority"), 50) for signal in signals), default=0
     ) // 10)
     cluster_size = min(8, len({member["id"] for member in members}))
-    domestic = min(20, 5 * len(tags & {"us", "national", "regional", "local"}))
-    global_impact = 8 if "global" in tags else 0
+    domestic = min(20, 5 * len(tags & {
+        "national_impact", "regional_impact", "local_impact",
+    }))
+    global_impact = 8 if "global_impact" in tags else 0
     duplicate = min(30, sum(max(0, count - 1) for count in family_counts.values()) * 3)
     stale = min(25, sum(
         8 for signal in signals if signal["ingest"].get("source_health_state_at_ingest")

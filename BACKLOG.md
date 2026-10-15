@@ -2489,12 +2489,19 @@ at ingest for social-only, rumor, reentry, debris, and panic-language cases; val
 
 ### ORBITAL Local And Global Impact Tag Rules
 
-Status: not implemented.
+Status: completed 2026-10-15 for first-pass source-backed rules.
 
 Define ORBITAL impact tags for `GLOBAL_IMPACT`, `NATIONAL_IMPACT`, `REGIONAL_IMPACT`,
 `LOCAL_IMPACT`, `SKY`, `RADIO`, `GPS`, `AVIATION`, `SATELLITE`, `POWER`, `AURORA`, `CREWED`,
 `NEO`, `REENTRY`, and `DEBRIS`. Keep canonical scope ORBITAL while allowing evidence-backed local,
 regional, national, and global impact tags.
+
+Current state: `orbital_impact.py` defines the canonical tag set and derives tags only from parsed
+official impact systems, configured OVATION location boxes, source-reported geography, and verified
+event records. A Kp value or HF impact alone cannot imply visibility or geographic reach. The
+scanner stores each tag's field-level basis in item evidence, adds the tags to cards, and keeps the
+item in ORBITAL. Ranking reads the canonical geographic tags. Tests cover SWPC alert and aurora
+facts, NEO identity, unsupported geography, and persisted scan output.
 
 ### ORBITAL UI Disabled States
 
