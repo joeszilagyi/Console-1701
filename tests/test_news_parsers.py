@@ -230,7 +230,7 @@ def test_parse_spd_blotter_rss_feed_marks_private_medical_calls_as_low_acuity() 
     <rss>
       <channel>
         <item>
-          <title>Preliminary Incident Report: Medical aid call in Ballard</title>
+          <title>Preliminary Incident Report: Medical aid call at 1825 4th Ave in Ballard</title>
           <link>https://spdblotter.seattle.gov/reports/medical-011</link>
           <description>Overdose response requested by 1825 4th Ave.</description>
           <pubDate>2026-06-01T12:00:00Z</pubDate>
@@ -248,6 +248,9 @@ def test_parse_spd_blotter_rss_feed_marks_private_medical_calls_as_low_acuity() 
     assert evidence["privacy"]["public_impact_justified"] is False
     assert evidence["privacy"]["overdose_related"] is True
     assert evidence["privacy"]["privacy_category"] == "overdose"
+    assert "1825" not in json.dumps(items[0], sort_keys=True)
+    assert items[0]["title"] == "SPD incident report near Ballard"
+    assert "narrative are withheld" in items[0]["description"]
     assert "privacy-redacted" in items[0]["tags"]
     spd = evidence["spd_blotter"]
     assert isinstance(spd, dict)
@@ -262,6 +265,31 @@ def test_parse_spd_blotter_rss_feed_marks_private_medical_calls_as_low_acuity() 
         combined_tags=items[0]["tags"],
         latest_health_state="healthy",
         repeat_count=0,
+    )
+    assert ranking["factors"]["local_privacy_penalty"] == -40
+
+
+def test_parse_spd_minor_report_redacts_private_address_without_medical_terms() -> None:
+    source = {
+        "id": "spd_blotter_feed", "name": "SPD Blotter Feed", "scope": "LOCAL",
+        "kind": "local_file_rss", "parser": "spd_blotter_rss", "source_family": "spd",
+    }
+    payload = """<rss><channel><item>
+      <title>Incident update at 712 Example St in Ballard</title>
+      <link>https://spdblotter.seattle.gov/reports/minor-012</link>
+      <description>Officers responded to a private residence at 712 Example St.</description>
+      <pubDate>2026-06-01T12:00:00Z</pubDate>
+    </item></channel></rss>"""
+
+    item = parse_fixture_items(source, payload)[0]
+    privacy = item["evidence"]["privacy"]
+    assert privacy["privacy_category"] == "minor_police"
+    assert privacy["low_public_value_private"] is True
+    assert privacy["exact_location_suppressed"] is True
+    assert "712" not in json.dumps(item, sort_keys=True)
+    ranking = build_rank_result(
+        source, item, seen_at="2026-06-01T12:00:00+00:00",
+        combined_tags=item["tags"], latest_health_state="healthy", repeat_count=0,
     )
     assert ranking["factors"]["local_privacy_penalty"] == -40
 

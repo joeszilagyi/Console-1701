@@ -1301,12 +1301,15 @@ def _normalize_sfd_fire_911_row(
         _first_value(row, "neighborhood", "neighborhood_district"),
         max_chars=120,
     )
-    location_tokens = _sfd_location_tokens(row, address=address, neighborhood=neighborhood)
     privacy = _sfd_privacy_decision(
         incident_type=incident_type,
         unit_count=unit_count,
         neighborhood=neighborhood,
         address=address,
+    )
+    location_tokens = _sfd_location_tokens(
+        row, address=address, neighborhood=neighborhood,
+        suppress_exact=privacy["exact_location_suppressed"],
     )
     display_location = privacy["display_location"]
     source_url = _sfd_source_url(source, row_id or incident_number or str(index))
@@ -1397,22 +1400,17 @@ def _sfd_location_tokens(
     *,
     address: str | None,
     neighborhood: str | None,
+    suppress_exact: bool,
 ) -> list[str]:
     tokens = _unique_texts(
         [
             neighborhood,
             _street_only(address),
-            _first_value(row, "cross_street", "intersection"),
+            None if suppress_exact else _first_value(row, "cross_street", "intersection"),
             _first_value(row, "zone", "beat"),
         ],
         max_chars=120,
     )
-    location = row.get("report_location") or row.get("location")
-    if isinstance(location, dict):
-        for key in ("human_address", "address"):
-            text = bounded_text(location.get(key), max_chars=120)
-            if text and text not in tokens:
-                tokens.append(text)
     return tokens
 
 
@@ -2781,6 +2779,8 @@ def _parse_spd_blotter_rss_feed(source: dict[str, Any], payload_text: str) -> li
         )
         signal = _spd_blotter_signal(text)
         route_tokens = _local_route_tokens(text)
+        if not signal["public_impact"]:
+            route_tokens = []
         matched_neighborhoods = _matched_keywords(text, neighborhoods)
         privacy = _spd_privacy_decision(
             text=text,
@@ -2789,6 +2789,12 @@ def _parse_spd_blotter_rss_feed(source: dict[str, Any], payload_text: str) -> li
             neighborhoods=matched_neighborhoods,
             route_tokens=route_tokens,
         )
+        if privacy["exact_location_suppressed"]:
+            item["title"] = f"SPD {signal['incident_label']} near {privacy['display_location']}"
+            item["description"] = (
+                "SPD reports a private incident. Exact location and narrative are withheld "
+                "by LOCAL privacy rules."
+            )
         incident_score = int(signal["score"])
         if privacy["exact_location_suppressed"]:
             incident_score = min(incident_score, 10)
@@ -2824,6 +2830,7 @@ def _parse_spd_blotter_rss_feed(source: dict[str, Any], payload_text: str) -> li
             },
             "privacy": {
                 "low_acuity_private": privacy["low_acuity_private"],
+                "low_public_value_private": privacy["low_public_value_private"],
                 "exact_location_suppressed": privacy["exact_location_suppressed"],
                 "public_impact_justified": privacy["public_impact_justified"],
                 "redaction_reason": privacy["redaction_reason"],
@@ -2846,6 +2853,7 @@ def _parse_spd_blotter_rss_feed(source: dict[str, Any], payload_text: str) -> li
             "location_basis": privacy["location_basis"],
             "raw_address_stored": False,
             "low_acuity_private": privacy["low_acuity_private"],
+            "low_public_value_private": privacy["low_public_value_private"],
             "public_impact_justified": privacy["public_impact_justified"],
             "overdose_related": privacy["overdose_related"],
             "privacy_category": privacy["privacy_category"],
@@ -3058,9 +3066,11 @@ def _spd_privacy_decision(
     lowered = str(text).lower()
     low_acuity = bool(_SPD_LOW_ACUITY_RE.search(lowered))
     overdose_related = bool(_SPD_OVERDOSE_RE.search(lowered))
-    suppress_exact = low_acuity and not public_impact
-    if suppress_exact:
+    suppress_exact = not public_impact
+    if low_acuity and suppress_exact:
         reason = "Low-acuity or private SPD report without public-impact justification."
+    elif suppress_exact:
+        reason = "Minor SPD report without public-impact justification."
     elif low_acuity and public_impact:
         reason = "SPD item is low-acuity/private but elevated by public-impact evidence."
     else:
@@ -3082,11 +3092,13 @@ def _spd_privacy_decision(
         "display_location": display_location,
         "location_basis": basis,
         "low_acuity_private": low_acuity,
+        "low_public_value_private": suppress_exact,
         "public_impact_justified": public_impact,
         "preliminary_report": preliminary_report,
         "overdose_related": overdose_related,
         "privacy_category": (
-            "overdose" if overdose_related else "low_acuity" if low_acuity else "none"
+            "overdose" if overdose_related else "low_acuity" if low_acuity
+            else "minor_police" if suppress_exact else "none"
         ),
         "raw_address_stored": False,
     }

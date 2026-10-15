@@ -507,7 +507,7 @@ diversity, cluster, privacy, stale health, and low-confidence terms.
 
 ### LOCAL Privacy Redaction Rules
 
-Status: partially implemented.
+Status: implemented (first pass for supported public-safety parsers).
 
 Add deterministic redaction rules for public safety data. Suppress exact addresses for low-acuity
 medical calls, overdose calls, private residential aid, single-source minor police calls, and
@@ -519,7 +519,14 @@ storage/display for low-acuity medical/private incidents, keep privacy-safe loca
 store explicit redaction evidence including low-acuity versus overdose privacy categories. LOCAL
 ranking now further suppresses private/sensitive items when they remain single-family or social-only
 and only partially relaxes that suppression when independent cross-source confirmation exists.
-Broader privacy handling for additional future LOCAL adapters remains pending.
+The SFD parser now discards nested `report_location`/`location` address strings from correlation
+tokens and excludes exact cross-street input for low-acuity calls. The SPD parser replaces the
+title and description of low-acuity or otherwise low-public-value minor reports with a bounded
+location-safe summary before storage, omits route tokens for those reports, and records a distinct
+`minor_police` privacy category. Both parsers retain source links and safe geography while
+privacy ranking suppresses isolated private incidents. Regression fixtures include addresses in
+SFD nested location data and SPD title, description, and numeric route-token text; no exact address
+appears in the normalized item. Future adapters must apply the same rule before ingest.
 
 ### LOCAL UI Disabled States
 
