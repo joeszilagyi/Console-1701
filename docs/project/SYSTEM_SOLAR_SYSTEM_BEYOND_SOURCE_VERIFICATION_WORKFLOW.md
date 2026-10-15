@@ -140,3 +140,11 @@ one-day JWST/TRAPPIST-1 observation query returned HTTP 200 and three matching r
 selected metadata columns. The fixture parser requires a complete bounded page, stores the
 observation start as such, and rejects product fields. Live MAST remains disabled pending
 source-use and heavy-archive signoff; it must never call product/download services by default.
+
+PDS's [official Search API guide](https://nasa-pds.github.io/pds-api/guides/search/endpoints.html)
+documents exact product-identifier resolution and warns that its federation may return 404
+for unpopulated data sets. A bounded lookup of one known collection LID on 2026-10-15 returned
+HTTP 200 JSON after redirect to another NASA PDS host. The fixture parser keeps collection
+identity, mission, target, version, and registry harvest time only; it neither traverses
+`/members` nor treats the harvest timestamp as a release date. Live access remains blocked
+pending exact URL/redirect, source-use, and heavy-archive signoff.

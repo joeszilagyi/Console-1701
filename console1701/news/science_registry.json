@@ -520,6 +520,26 @@
     "future_phase": "S2"
   },
   {
+    "source_key": "pds_collection_metadata",
+    "source_name": "NASA PDS collection metadata",
+    "source_family": "nasa_pds",
+    "source_class": "official_planetary_data_archive",
+    "scope": "SYSTEM_SOLAR",
+    "raw_url": "https://pds.nasa.gov/api/search/1/products/",
+    "expected_access_kind": "single-identifier official JSON metadata",
+    "adapter": "pds_api_candidate",
+    "refresh_interval": "24 h",
+    "priority": "55",
+    "official_status": "official",
+    "privacy_risk": "low",
+    "policy_risk": "medium",
+    "parser_risk": "medium",
+    "retention_sensitivity": "low",
+    "verification_status": "heavy_archive_risk",
+    "why_it_matters": "One allowlisted collection release/version check; no member or product traversal.",
+    "future_phase": "S8"
+  },
+  {
     "source_key": "pds_home",
     "source_name": "NASA Planetary Data System",
     "source_family": "pds",

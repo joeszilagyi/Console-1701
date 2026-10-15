@@ -169,6 +169,10 @@ def parse_fixture_items(
         from console1701.news.science_mast import parse_mast_caom_tiny_json
 
         return parse_mast_caom_tiny_json(source, payload_text)
+    if parser_name == "pds_collection_metadata":
+        from console1701.news.science_pds import parse_pds_collection_metadata
+
+        return parse_pds_collection_metadata(source, payload_text)
 
     if parser_name == "nws_alerts_json":
         return _parse_nws_alerts_json(source, payload_text)
