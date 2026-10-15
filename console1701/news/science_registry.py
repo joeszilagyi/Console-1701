@@ -1,7 +1,4 @@
-"""Disabled Solar System and Beyond source candidates from the design inventory.
-
-SYSTEM_SOLAR is an internal working name, not a news scope or final UI label.
-"""
+"""Disabled COSMIC source candidates under the internal SYSTEM_SOLAR scope key."""
 
 from __future__ import annotations
 
@@ -177,3 +174,12 @@ def get_science_source_registry_entry(source_key: str) -> dict[str, Any] | None:
         (deepcopy(row) for row in SCIENCE_SOURCE_REGISTRY if row["source_key"] == source_key),
         None,
     )
+
+
+def science_candidate_health_summary() -> dict[str, Any]:
+    """Describe disabled registry candidates separately from configured source health."""
+    counts: dict[str, int] = {}
+    for entry in SCIENCE_SOURCE_REGISTRY:
+        state = str(entry["source_health_behavior"])
+        counts[state] = counts.get(state, 0) + 1
+    return {"candidate_count": len(SCIENCE_SOURCE_REGISTRY), "state_counts": counts}

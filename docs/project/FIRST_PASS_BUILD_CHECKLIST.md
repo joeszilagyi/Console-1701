@@ -176,14 +176,14 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-136** [Deterministic Ranking For Official Science And Rarity](../../BACKLOG.md#L2182) — explainable science rank runs during offline COSMIC scans and persists score features and reasons.
 - [ ] **RS-137** [Hype And Speculation Suppression Rules](../../BACKLOG.md#L2192) — pre-storage COSMIC claim blocking and background labels exist; source-specific and literature variants pending.
 - [ ] **RS-138** [Archive Firehose Blocking Rules](../../BACKLOG.md#L2202) — not implemented.
-- [ ] **RS-139** [UI Disabled States After Naming Decision](../../BACKLOG.md#L2211) — COSMIC route and truthful disabled/not-configured states exist; source-specific states pending.
-- [ ] **RS-140** [Source Health States](../../BACKLOG.md#L2220) — not implemented.
+- [ ] **RS-139** [UI Disabled States After Naming Decision](../../BACKLOG.md#L2211) — COSMIC state card distinguishes configured health and disabled candidate inventory; future source-specific gates pending.
+- [ ] **RS-140** [Source Health States](../../BACKLOG.md#L2220) — fixture health, hype-blocked runtime, disabled candidate counts, and SQLite state rendering exist; future adapter gates pending.
 - [ ] **RS-141** [Evidence Drawer Contract](../../BACKLOG.md#L2231) — fixture item/event evidence renders; auth and broader policy/health states pending.
 - [ ] **RS-142** [Official RSS Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L2242) — not implemented.
 - [ ] **RS-143** [Official Small API Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L2250) — not implemented.
 - [ ] **RS-144** [Transient Alert Ingest Phase, Disabled By Default](../../BACKLOG.md#L2259) — not implemented.
 - [x] **RS-145** [Documentation For Source Verification](../../BACKLOG.md#L2292) — science endpoint signoff template, exact promotion gates, and NASA/JPL/ESA walkthroughs with observed blockers complete.
-- [ ] **RS-146** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L2307) — not implemented.
+- [x] **RS-146** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L2307) — disabled/not-configured and stored COSMIC state matrix renders with fetchers forced to fail; SYSTEM remains separate.
 - [x] **RS-147** [Tests For No Heavy Archive Source Running Without Explicit Config](../../BACKLOG.md#L2316) — every heavy/catalog registry candidate is rejected by the COSMIC exact-source gate, even with heavy flags enabled.
 - [ ] **RS-148** [Tests For No Auth Source Running Without Config](../../BACKLOG.md#L2325) — not implemented.
 - [x] **RS-149** [Tests For No Data Product Downloads](../../BACKLOG.md#L2333) — all eight permitted COSMIC adapters pass offline scans with bounded metadata and explicit no-product-request evidence.

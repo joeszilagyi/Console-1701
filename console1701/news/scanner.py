@@ -743,11 +743,13 @@ def _ingest_source(
         if is_live:
             items = _fresh_live_orbital_items(source, items, now=datetime.now(UTC))
         stored_count = 0
+        science_policy_dropped = 0
         seen_item_ids: set[int] = set()
         for item in items:
             if source.get("scope") == "SYSTEM_SOLAR":
                 item = classify_science_item(source, item)
                 if item is None:
+                    science_policy_dropped += 1
                     continue
             evidence = dict(item.get("evidence") or {})
             if not is_live:
@@ -776,6 +778,8 @@ def _ingest_source(
                 conn, source_id, seen_item_ids, fetch_run_id=run_id, retired_at=utc_now()
             )
         _rebuild_scope_clusters(conn, str(source["scope"]))
+        if science_policy_dropped:
+            fetch_evidence["science_policy_dropped_count"] = science_policy_dropped
         _finish_fetch_run(
             conn,
             run_id,
@@ -789,10 +793,16 @@ def _ingest_source(
             conn,
             source_id,
             observed_at=utc_now(),
-            state="healthy",
+            state=(
+                "hype_blocked" if science_policy_dropped and stored_count == 0
+                else "healthy"
+            ),
             last_success_at=utc_now(),
             last_failure_at=None,
-            message=success_message,
+            message=(
+                "COSMIC fixture contained only claims blocked before storage."
+                if science_policy_dropped and stored_count == 0 else success_message
+            ),
             evidence={**fetch_evidence, "item_count": stored_count},
             source=source,
         )
