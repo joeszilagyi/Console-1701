@@ -159,7 +159,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-119** [Disabled-By-Default Solar System And Beyond Config](../../BACKLOG.md#L2006) — disabled config tree, strict flag/attention validation, explicit sensitive-category gates, and example config; runtime scope remains pending.
 - [x] **RS-120** [Solar System And Beyond Source Registry Design Implementation](../../BACKLOG.md#L2016) — all 178 current design candidates validated and disabled by default, with per-source health behavior; exact ESA and NASA-hosted JPL science RSS are separately opt-in.
 - [x] **RS-121** [Solar System And Beyond SQLite Schema Or Extension](../../BACKLOG.md#L2026) — disabled registry sync plus scoped science event/evidence/query-bound schema, indexes, and expiry purge.
-- [ ] **RS-122** [Solar System And Beyond Fixture Pack](../../BACKLOG.md#L2038) — GCN Circular and NASA Science News fixtures now pass offline scans; TNS and remaining blocked-state variants pending.
+- [x] **RS-122** [Solar System And Beyond Fixture Pack](../../BACKLOG.md#L2038) — all frozen fixture families, TNS auth-required inventory, offline scans, malformed/oversized gates, and source-health/policy states have acceptance coverage.
 - [x] **RS-123** [NASA/JPL RSS Parser](../../BACKLOG.md#L2049) — exact NASA-hosted JPL science RSS parser with topic/operations filtering, bounded metadata, no-download evidence, and isolated live HTTP 200/two-item scan; opt-in only.
 - [x] **RS-124** [ESA RSS Parser](../../BACKLOG.md#L2058) — exact ESA Space Science fixture parser with article-path/launch/image filtering, mission labels, bounded metadata, and no-download evidence.
 - [x] **RS-125** [Hubble/JWST RSS Parser](../../BACKLOG.md#L2066) — fixture-only ESA Hubble/Webb science-release parsers with release IDs, telescope identity, bounded metadata, and explicit third-party feed block.
@@ -186,7 +186,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-146** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L2307) — disabled/not-configured and stored COSMIC state matrix renders with fetchers forced to fail; SYSTEM remains separate.
 - [x] **RS-147** [Tests For No Heavy Archive Source Running Without Explicit Config](../../BACKLOG.md#L2316) — every heavy/catalog registry candidate is rejected by the COSMIC exact-source gate, even with heavy flags enabled.
 - [x] **RS-148** [Tests For No Auth Source Running Without Config](../../BACKLOG.md#L2325) — auth-marked registry candidates remain unconfigurable; declared missing auth records `auth_required` before any file or HTTP read.
-- [x] **RS-149** [Tests For No Data Product Downloads](../../BACKLOG.md#L2333) — all nine permitted COSMIC adapters pass offline scans with bounded metadata and explicit no-product-request evidence.
+- [x] **RS-149** [Tests For No Data Product Downloads](../../BACKLOG.md#L2333) — all current COSMIC adapters pass offline scans with bounded metadata and explicit no-product-request evidence.
 - [x] **RS-150** [Tests For No Alien-Life Or UFO Hype Leakage](../../BACKLOG.md#L2342) — direct and offline SQLite scan tests block explicit claims before storage and reject journalism source impersonation.
 
 ## Deferred from this first pass
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-122. Audited the frozen fixture list against parser, offline scanner, TNS candidate, and COSMIC state/UI regressions. The final NASA Science News adapter and an explicit TNS auth-required assertion close the remaining coverage gap; all tests pass with HTTP trapped where applicable. Progress: 136/150.
 - **2026-10-15:** Advanced RS-122. The NASA Science News RSS still returns 79,465 bytes and ten items, none newer than August; its root still has one missing namespace separator. A COSMIC fixture-only parser repairs only that exact defect, admits planetary/astrophysics category items, excludes Earth-only and mission-action stories, omits article bodies, and rejects live config. Offline scan, parser, and HTTP-trap tests pass. Progress: 135/150.
 - **2026-10-15:** Advanced RS-037. The NATIONAL USGS parser now excludes feed events explicitly labeled in nearby foreign countries when their coordinates fall within a broad U.S. relevance box. Fixture cases include high-felt Canada/Mexico events and a New Mexico counterexample. The USGS summary has no state-distributed felt evidence, so multi-state impact remains false and RS-037 remains open. Progress: 135/150.
 - **2026-10-15:** Advanced RS-122 with a fixture-only NASA GCN Circular parser. An official Circular page links a small per-circular JSON object; the parser retains ID, inferred event name, subject, timestamp, permalink, and conservative status while dropping body, contact, and sky-map fields. Offline scan and event correlation use the exact local source identity. No bounded discovery API is verified, so live ingest stays blocked. Progress: 135/150.

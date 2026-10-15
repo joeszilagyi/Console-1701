@@ -368,6 +368,9 @@ def test_cosmic_auth_candidates_stay_unconfigurable_and_missing_auth_stops_inges
     auth_candidates = [row for row in list_science_source_registry()
                        if row["verification_status"] == "auth_required"]
     assert len(auth_candidates) >= 3
+    assert {"tns_getting_started", "tns_api_manual"} <= {
+        row["source_key"] for row in auth_candidates
+    }
     for row in auth_candidates:
         assert row["source_health_behavior"] == "auth_required"
         path = _config(tmp_path, monkeypatch)
