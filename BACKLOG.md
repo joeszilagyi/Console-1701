@@ -1540,11 +1540,20 @@ USGS documentation and live-feed candidate. No GLOBAL USGS HTTP URL was allowlis
 
 ### NHC RSS Parser
 
-Status: not implemented.
+Status: completed 2026-10-15 for fixture-first GLOBAL parser; live source remains disabled.
 
 Build a fixture-first parser for National Hurricane Center RSS/global tropical weather candidates
 after source scope is verified. Preserve basin, storm id/name when present, advisory type,
 watch/warning terms, published/update time, source URL, and tropical-cyclone ranking evidence.
+
+The official Atlantic, Eastern Pacific, and Central Pacific basin XML feeds were inspected, and
+the Eastern Pacific feed supplied active summary/Public Advisory shapes. The dedicated parser
+retains explicit ATCF identity, basin, storm name/type, advisory number, source time/URL, and
+watch/warning terms while excluding outlooks and inactive placeholders. It marks watch geography
+unverified and uses a summary only when the corresponding Public Advisory is absent. A synthetic
+official-shape fixture verifies offline ingest, global event identity/type, source health, and
+no inferred affected country. [Verification notes](docs/project/GLOBAL_NHC_RSS_SOURCE_VERIFICATION.md)
+record exact URLs and limitations. No NHC HTTP URL is allowlisted by the app.
 
 ### Smithsonian GVP Weekly Report Parser
 

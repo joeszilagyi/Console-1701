@@ -125,6 +125,8 @@ def parse_fixture_items(
         return _parse_gdacs_rss(source, payload_text)
     if parser_name == "ecdc_rss":
         return _parse_ecdc_rss(source, payload_text)
+    if parser_name == "nhc_basin_rss":
+        return _parse_nhc_basin_rss(source, payload_text)
     if parser_name == "gdacs_geojson":
         return _parse_gdacs_geojson(source, payload_text)
     if parser_name == "reliefweb_disasters_json":
@@ -405,6 +407,140 @@ def _parse_ecdc_rss(source: dict[str, Any], payload_text: str) -> list[dict[str,
                 "official_public_health": True,
                 "source_weight": "below_who_don_until_convergence_or_severity",
             },
+        }
+        items.append(item)
+    return items
+
+
+_NHC_BASINS = {
+    "NHC Atlantic": "atlantic",
+    "NHC Eastern North Pacific": "eastern_pacific",
+    "CPHC Central North Pacific": "central_pacific",
+}
+_NHC_ATCF_RE = re.compile(r"\b(?:AL|EP|CP)\d{2}20\d{2}\b")
+_NHC_ADVISORY_RE = re.compile(
+    r"^(?P<storm_type>.+?) (?P<name>[A-Z][A-Za-z0-9-]+) "
+    r"Public Advisory Number (?P<number>\d+[a-z]?)$"
+)
+_NHC_WATCH_RE = re.compile(
+    r"\b(Hurricane|Tropical Storm) (Watch|Warning) is in effect\b", re.IGNORECASE
+)
+
+
+def _parse_nhc_basin_rss(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:
+    if str(source.get("scope") or "").upper() != "GLOBAL":
+        raise NewsParserError("NHC basin RSS parser requires GLOBAL scope.")
+    try:
+        root = ET.fromstring(payload_text)
+    except ET.ParseError as exc:
+        raise NewsParserError(f"Malformed NHC basin RSS fixture: {exc}") from exc
+    channel = root.find("./channel") if _local_name(root.tag) == "rss" else None
+    basin = _NHC_BASINS.get(_element_text(channel.find("./title"))) if channel is not None else None
+    if not basin:
+        raise NewsParserError("NHC basin RSS fixture has an unknown channel/basin.")
+    rows = channel.findall("./item")
+    summaries: dict[str, dict[str, str | None]] = {}
+    for row in rows:
+        title = _element_text(row.find("./title")) or ""
+        cyclone = row.find("{https://www.nhc.noaa.gov}Cyclone")
+        if not title.startswith("Summary for ") or cyclone is None:
+            continue
+        url = _element_text(row.find("./link"))
+        if not url:
+            continue
+        storm_id = _element_text(cyclone.find("{https://www.nhc.noaa.gov}atcf"))
+        summaries[url] = {
+            "storm_id": storm_id if storm_id and _NHC_ATCF_RE.fullmatch(storm_id) else None,
+            "storm_name": _element_text(cyclone.find("{https://www.nhc.noaa.gov}name")),
+            "storm_type": _element_text(cyclone.find("{https://www.nhc.noaa.gov}type")),
+            "wallet": _element_text(cyclone.find("{https://www.nhc.noaa.gov}wallet")),
+        }
+    items: list[dict[str, Any]] = []
+    advisory_urls: set[str] = set()
+    for index, row in enumerate(rows):
+        title = _element_text(row.find("./title")) or ""
+        match = _NHC_ADVISORY_RE.fullmatch(title)
+        if match is None:
+            continue  # Outlooks, graphics, and inactive placeholders are not advisories.
+        url = _element_text(row.find("./link"))
+        try:
+            parts = urlsplit(url or "")
+        except ValueError as exc:
+            raise NewsParserError(f"NHC advisory {index} has an invalid URL.") from exc
+        if parts.scheme != "https" or parts.hostname != "www.nhc.noaa.gov":
+            raise NewsParserError(f"NHC advisory {index} lacks an official HTTPS URL.")
+        published = normalize_timestamp(_element_text(row.find("./pubDate")))
+        if not published:
+            raise NewsParserError(f"NHC advisory {index} lacks a valid publication time.")
+        raw_description = _element_text(row.find("./description")) or ""
+        summary = summaries.get(url or "") or {}
+        storm_id = summary.get("storm_id") or (
+            (_NHC_ATCF_RE.search(raw_description) or [None])[0]
+        )
+        if storm_id and not _NHC_ATCF_RE.fullmatch(storm_id):
+            storm_id = None
+        watch_terms = sorted({
+            f"{kind.title()} {state.title()}"
+            for kind, state in _NHC_WATCH_RE.findall(raw_description)
+        })
+        item = _normalize_item(source, {
+            "title": title,
+            "url": url,
+            "description": _wsdot_plain_text(raw_description),
+            "published_at": published,
+            "tags": ["official", "nhc", "tropical-cyclone", basin],
+        }, index=index)
+        item["evidence"]["nhc_rss"] = {
+            "basin": basin,
+            "storm_id": storm_id,
+            "storm_name": summary.get("storm_name") or match.group("name"),
+            "storm_type": summary.get("storm_type") or match.group("storm_type"),
+            "wallet": summary.get("wallet"),
+            "advisory_type": "public_advisory",
+            "advisory_number": match.group("number"),
+            "watch_warning_terms": watch_terms,
+            "watch_warning_geography_verified": False,
+            "guid": bounded_text(_element_text(row.find("./guid")), max_chars=500),
+            "published_at": published,
+            "source_url": item["url"],
+        }
+        item["evidence"]["global_identity"] = {
+            "basin": basin,
+            "storm_id": storm_id,
+        }
+        advisory_urls.add(url or "")
+        items.append(item)
+    for index, row in enumerate(rows):
+        title = _element_text(row.find("./title")) or ""
+        url = _element_text(row.find("./link"))
+        if not title.startswith("Summary for ") or not url or url in advisory_urls:
+            continue
+        summary = summaries.get(url)
+        if not summary:
+            continue
+        try:
+            parts = urlsplit(url)
+        except ValueError as exc:
+            raise NewsParserError(f"NHC summary {index} has an invalid URL.") from exc
+        published = normalize_timestamp(_element_text(row.find("./pubDate")))
+        if parts.scheme != "https" or parts.hostname != "www.nhc.noaa.gov" or not published:
+            raise NewsParserError(f"NHC summary {index} lacks an official URL or time.")
+        item = _normalize_item(source, {
+            "title": title,
+            "url": url,
+            "description": _wsdot_plain_text(_element_text(row.find("./description"))),
+            "published_at": published,
+            "tags": ["official", "nhc", "tropical-cyclone", basin],
+        }, index=index)
+        item["evidence"]["nhc_rss"] = {
+            **summary, "basin": basin, "advisory_type": "storm_summary",
+            "advisory_number": None, "watch_warning_terms": [],
+            "watch_warning_geography_verified": False,
+            "guid": bounded_text(_element_text(row.find("./guid")), max_chars=500),
+            "published_at": published, "source_url": item["url"],
+        }
+        item["evidence"]["global_identity"] = {
+            "basin": basin, "storm_id": summary.get("storm_id"),
         }
         items.append(item)
     return items
