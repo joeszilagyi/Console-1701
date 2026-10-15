@@ -2717,13 +2717,19 @@ docs, tests, routes, templates, and source-health references only in the future 
 
 ### Disabled-By-Default Solar System And Beyond Config
 
-Status: not implemented.
+Status: completed 2026-10-15 for the scope config foundation.
 
 Add a `solar_system_beyond:` or chosen-scope config tree that defaults to disabled. Include flags
 for planetary science, interplanetary missions, exoplanets, telescope science, major space-agency
 science, transients, GCN, TNS, gravitational waves, neutrino alerts, catalog archives, literature
 metadata, social sources, and large archive queries. Reject social, auth-required, heavy archive,
 literature, and homepage extraction sources unless explicit local flags are set.
+
+Current state: `solar_system_beyond` now has a disabled default tree and example config with
+science topic and attention flags. Normalization validates booleans and attention enums; TNS,
+catalog/large archive, literature, and social categories require their explicit corresponding
+local allow flags. No science news scope or route is wired yet, so enabling this tree alone
+does not cause fetches or display items. The final UI label remains a separate user decision.
 
 ### Solar System And Beyond Source Registry Design Implementation
 

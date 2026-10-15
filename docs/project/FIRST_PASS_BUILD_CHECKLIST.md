@@ -156,7 +156,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 
 - [ ] **RS-117** [Resolve SYSTEM Naming Collision](../../BACKLOG.md#L1989) — not implemented.
 - [ ] **RS-118** [Decide Final UI Label For Solar System And Beyond](../../BACKLOG.md#L1998) — not implemented.
-- [ ] **RS-119** [Disabled-By-Default Solar System And Beyond Config](../../BACKLOG.md#L2006) — not implemented.
+- [x] **RS-119** [Disabled-By-Default Solar System And Beyond Config](../../BACKLOG.md#L2006) — disabled config tree, strict flag/attention validation, explicit sensitive-category gates, and example config; runtime scope remains pending.
 - [ ] **RS-120** [Solar System And Beyond Source Registry Design Implementation](../../BACKLOG.md#L2016) — not implemented.
 - [ ] **RS-121** [Solar System And Beyond SQLite Schema Or Extension](../../BACKLOG.md#L2026) — not implemented.
 - [ ] **RS-122** [Solar System And Beyond Fixture Pack](../../BACKLOG.md#L2038) — not implemented.
