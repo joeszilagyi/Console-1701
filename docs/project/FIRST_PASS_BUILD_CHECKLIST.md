@@ -137,7 +137,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-100** [Official Launch Provider Source Verification](../../BACKLOG.md#L1766) — not implemented.
 - [ ] **RS-101** [ISS And Crewed-Spaceflight Source Verification](../../BACKLOG.md#L1775) — not implemented.
 - [ ] **RS-102** [ESA Reentry Source Verification](../../BACKLOG.md#L1801) — not implemented.
-- [ ] **RS-103** [NASA Orbital Debris Source Verification](../../BACKLOG.md#L1809) — not implemented.
+- [x] **RS-103** [NASA Orbital Debris Source Verification](../../BACKLOG.md#L1809) — official program, quarterly PDF index, and reentry methods classified as disabled reference/source-health entries; no event feed claimed.
 - [ ] **RS-104** [ORBITAL Deterministic Event Correlation](../../BACKLOG.md#L1818) — partially implemented; core matcher and stored evidence pass, future adapter identities pending.
 - [x] **RS-105** [ORBITAL Deterministic Ranking](../../BACKLOG.md#L1828) — completed 2026-10-15; factor score and reasons persist on ORBITAL events.
 - [x] **RS-106** [ORBITAL Safety And Sensitivity Rules](../../BACKLOG.md#L1838) — completed 2026-10-15; deterministic ingest flags, redaction, penalties, and short retention pass.
