@@ -134,8 +134,10 @@ documents the current `ps` table and JSON output; its
 separate `rowupdate` from discovery year and status. A two-row, date-bounded TAP read on
 2026-10-15 returned HTTP 200 JSON with the seven fixture columns. The fixture parser blocks
 broader table/column/window/row shapes. A `rowupdate` is a parameter update, not proof that
-the planet was discovered on that date. Live TAP access remains disabled pending query,
-source-use, retention, and heavy-archive policy signoff.
+the planet was discovered on that date. The [exact tiny TAP live
+signoff](COSMIC_EXOPLANET_TAP_LIVE_SIGNOFF.md) now admits only an app-built,
+seven-day, ten-row, seven-column `ps` metadata query as an explicit opt-in.
+The broad TAP source and other archive queries remain disabled.
 
 The [MAST API guide](https://mast.stsci.edu/api/v0/) documents `invoke` and request envelopes;
 the [services guide](https://mast.stsci.edu/api/v0/_services.html) documents

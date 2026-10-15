@@ -1200,11 +1200,13 @@ def _normalize_news_source(
         url = str(source_cfg.get("url") or "")
         is_fixture = url.startswith("file://") and source_cfg.get("fixture_only") is True
         is_verified_live = (
-            source_key == "esa_space_science_feed"
+            source_key in {"esa_space_science_feed", "nasa_exoplanet_ps_tap"}
             and fixture is not None
             and url == fixture[1]
             and source_cfg.get("fixture_only") is False
-            and source_cfg["kind"] == "rss"
+            and source_cfg["kind"] == (
+                "rss" if source_key == "esa_space_science_feed" else "api_json"
+            )
         )
         if (
             fixture is None
@@ -1215,7 +1217,7 @@ def _normalize_news_source(
             or source_cfg["kind"] not in {"rss", "api_json", "local_file_json"}
         ):
             raise ConfigError(
-                f"{path} must be an exact COSMIC fixture or the verified ESA live RSS source."
+                f"{path} must be an exact COSMIC fixture or verified live source."
             )
         for field in (
             "source_family", "source_class", "official_status",
@@ -1225,9 +1227,17 @@ def _normalize_news_source(
                 raise ConfigError(f"{path}.{field} must match the science registry.")
             source_cfg[field] = registry[field]
         if is_verified_live:
+            minimum_interval = 60 if source_key == "esa_space_science_feed" else 1440
             source_cfg["interval_minutes"] = _coerce_int(
-                source_cfg.get("interval_minutes", 60), f"{path}.interval_minutes", minimum=60
+                source_cfg.get("interval_minutes", minimum_interval),
+                f"{path}.interval_minutes", minimum=minimum_interval,
             )
+            if source_key == "nasa_exoplanet_ps_tap":
+                from console1701.news.science_exoplanets import live_exoplanet_query_contract
+
+                if "query_contract" in source_cfg:
+                    raise ConfigError(f"{path}.query_contract is app-owned for live TAP requests.")
+                source_cfg["query_contract"] = live_exoplanet_query_contract()
 
     source_cfg["enabled"] = _coerce_bool(source_cfg.get("enabled", False), f"{path}.enabled")
     source_cfg["priority"] = _coerce_int(source_cfg.get("priority", 50), f"{path}.priority")

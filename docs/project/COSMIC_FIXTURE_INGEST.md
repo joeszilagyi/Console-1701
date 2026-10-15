@@ -36,7 +36,8 @@ responses and do not call product, sky-map, image, article-body, or paper endpoi
 candidates for heavy catalogs and archives cannot be configured as these fixture parsers, even
 when the science heavy-archive flags are set.
 
-ESA Space Science RSS is the single opt-in live COSMIC source in this first pass. Set
+ESA Space Science RSS and one bounded NASA Exoplanet Archive TAP metadata query are the opt-in
+live COSMIC sources in this first pass. Set
 `solar_system_beyond.enabled`, `news.enabled`, and `news.scopes.SYSTEM_SOLAR.enabled` to true,
 configure this exact source, and invoke `news-scan`:
 
@@ -62,4 +63,8 @@ news:
 The exact ESA URL/parser/verification status is checked again by the HTTP transport. Successful
 live scans retain only source-dated science items from the last 14 days, cap response reads at
 1 MiB, and retain item metadata for at most seven days. This opt-in never runs on page loads.
-Other COSMIC HTTP URLs remain blocked; heavy archives and product downloads remain disabled.
+The [NASA Exoplanet Archive tiny TAP signoff](COSMIC_EXOPLANET_TAP_LIVE_SIGNOFF.md) gives the
+separate exact API opt-in. Its URL is the official `/TAP/sync` base; the app supplies a fixed
+seven-day, ten-row, seven-column query, rejects configured live query text, caps the response at
+64 KiB, and waits at least 24 hours between reads. Other COSMIC HTTP URLs remain blocked;
+broad archives and product downloads remain disabled.

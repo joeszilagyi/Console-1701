@@ -60,7 +60,8 @@ news stack.
   M2.5+ day GeoJSON for REGIONAL/NATIONAL, WSDOT Highway Alerts RSS for REGIONAL, and ORBITAL
   NOAA SWPC alerts/scales/K-index/OVATION, six NASA news/Station/Artemis/Kennedy RSS feeds,
   and two ESA RSS feeds. GLOBAL has an exact opt-in USGS M4.5+ past-week GeoJSON feed with an
-  M6+ default, and Solar System and Beyond has one exact opt-in ESA Space Science RSS feed.
+  M6+ default, and Solar System and Beyond has an exact opt-in ESA Space Science RSS feed and
+  a tiny NASA Exoplanet Archive `ps` metadata query.
   All remain disabled in default config. Do not enable the news timer by default.
 - Source verification documents in `docs/project/` explain each exact endpoint, parser, response
   and policy boundary. A registry entry or working fixture is not live authorization. JPL CNEOS

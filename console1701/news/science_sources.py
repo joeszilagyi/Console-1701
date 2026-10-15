@@ -1,4 +1,4 @@
-"""Exact source identities allowed for local COSMIC fixture ingestion."""
+"""Exact source identities for COSMIC fixture and signed-off live ingestion."""
 
 from __future__ import annotations
 

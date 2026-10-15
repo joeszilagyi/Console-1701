@@ -2927,8 +2927,8 @@ Current state: `science_exoplanets.py` requires the exact NASA Exoplanet Archive
 and a date window of at most seven days. A two-row public probe returned JSON with planet/host,
 method, year, `rowupdate`, and `soltype`; the parser keeps only those fields, records exact
 query bounds, and labels the date as a parameter update rather than a new discovery. Oversized,
-malformed, over-cap, extra-column, and out-of-window fixture data fail closed. The registry
-candidate stays heavy-archive/policy blocked and no live adapter runs.
+malformed, over-cap, extra-column, and out-of-window fixture data fail closed. The exact tiny
+`ps` query now has a separate opt-in live signoff; broad archive queries remain blocked.
 
 ### MAST Tiny Metadata Parser
 
@@ -3222,12 +3222,21 @@ hosting-policy limitations.
 
 ### Official Small API Live Ingest Phase, Disabled By Default
 
-Status: not implemented.
+Status: implemented for the first exact tiny API source.
 
 After fixture tests and query caps exist, add opt-in small metadata API ingest for NASA Exoplanet
 Archive, PDS, MAST, JPL SSD/MPC science context, HEASARC, or GWOSC one source at a time. Require
 explicit allowlists, row caps, timeouts, no data-product downloads, no bulk catalog queries, and no
 page-load fetches.
+
+Current state: the NASA Exoplanet Archive `ps` TAP source has an app-built seven-day,
+ten-row, seven-column, default-solution JSON query. It is exact allowlisted and disabled by
+default, with a 64 KiB cap, 24-hour minimum cadence, no product download, archive-update
+semantics, and offline gate tests. An isolated explicit scan returned HTTP 200, parsed ten rows,
+and stored eight distinct COSMIC items. See
+[`COSMIC_EXOPLANET_TAP_LIVE_SIGNOFF.md`](docs/project/COSMIC_EXOPLANET_TAP_LIVE_SIGNOFF.md).
+MAST, PDS, HEASARC, broad TAP/catalog queries, and other API sources remain blocked pending
+their own signoff.
 
 ### Transient Alert Ingest Phase, Disabled By Default
 

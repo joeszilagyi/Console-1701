@@ -1,11 +1,11 @@
-"""Tiny fixture-only NASA Exoplanet Archive PS metadata parser."""
+"""Tiny NASA Exoplanet Archive PS metadata contract and parser."""
 
 from __future__ import annotations
 
 import json
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
-from urllib.parse import quote
+from urllib.parse import quote, urlencode
 
 from console1701.news.normalize import bounded_text
 from console1701.news.parsers import (
@@ -21,6 +21,30 @@ PS_COLUMNS = (
     "pl_name", "hostname", "discoverymethod", "disc_year", "rowupdate",
     "soltype", "default_flag",
 )
+
+
+def live_exoplanet_query_contract(*, today: date | None = None) -> dict[str, Any]:
+    """The only query window admitted for live PS metadata."""
+    until = today or datetime.now(UTC).date()
+    return {
+        "table": "ps", "format": "json", "columns": list(PS_COLUMNS),
+        "default_only": True, "row_cap": 10,
+        "since": (until - timedelta(days=6)).isoformat(),
+        "until": until.isoformat(),
+    }
+
+
+def live_exoplanet_request_url(source: dict[str, Any]) -> str:
+    """Build a bounded TAP request from app-owned fields only."""
+    if source.get("query_contract") != live_exoplanet_query_contract():
+        raise ArchiveFirehoseBlockedError("Exoplanet live query is outside the current tiny window")
+    query = _query_contract(source)
+    statement = (
+        f"select top {query['row_cap']} {','.join(PS_COLUMNS)} from ps "
+        f"where default_flag=1 and rowupdate >= '{query['since']}' "
+        f"and rowupdate <= '{query['until']}' order by rowupdate desc"
+    )
+    return EXOPLANET_TAP_URL + "?" + urlencode({"query": statement, "format": "json"})
 
 
 def _query_contract(source: dict[str, Any]) -> dict[str, Any]:

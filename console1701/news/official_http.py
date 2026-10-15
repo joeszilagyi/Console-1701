@@ -101,6 +101,10 @@ OFFICIAL_SOURCES = {
         "https://www.esa.int/rssfeed/Our_Activities/Space_Science", "rss",
         "esa_science_rss", "application/rss+xml"
     ),
+    ("SYSTEM_SOLAR", "nasa_exoplanet_ps_tap"): (
+        "https://exoplanetarchive.ipac.caltech.edu/TAP/sync", "api_json",
+        "exoplanet_ps_json", "application/json"
+    ),
 }
 MAX_HTTP_BYTES = 4 * 1024 * 1024
 MAX_HTTP_TIMEOUT_SECONDS = 30
@@ -142,6 +146,11 @@ def is_supported_official_source(source: dict[str, Any]) -> bool:
             )
         )
         and (
+            (source.get("scope"), source.get("id")) !=
+            ("SYSTEM_SOLAR", "nasa_exoplanet_ps_tap")
+            or _exoplanet_live_query_safe(source)
+        )
+        and (
             source.get("id") != "usgs_eq_geojson"
             or _usgs_feed_covers_threshold(source.get("min_magnitude", 3.0))
         )
@@ -162,6 +171,12 @@ def is_supported_official_source(source: dict[str, Any]) -> bool:
             or _orbital_aurora_locations_safe(source.get("aurora_locations"))
         )
     )
+
+
+def _exoplanet_live_query_safe(source: dict[str, Any]) -> bool:
+    from console1701.news.science_exoplanets import live_exoplanet_query_contract
+
+    return source.get("query_contract") == live_exoplanet_query_contract()
 
 
 def _usgs_feed_covers_threshold(value: Any, *, feed_floor: float = 2.5) -> bool:
@@ -224,7 +239,13 @@ def fetch_official_text(
         headers["If-None-Match"] = etag
     if last_modified and _bounded_header({"Last-Modified": last_modified}, "Last-Modified"):
         headers["If-Modified-Since"] = last_modified
-    request = Request(spec[0], headers=headers, method="GET")
+    request_url = spec[0]
+    if (source["scope"], source["id"]) == ("SYSTEM_SOLAR", "nasa_exoplanet_ps_tap"):
+        from console1701.news.science_exoplanets import live_exoplanet_request_url
+
+        request_url = live_exoplanet_request_url(source)
+        limit = min(limit, 65_536)
+    request = Request(request_url, headers=headers, method="GET")
     # Do not honor environment proxies or follow redirects to an unapproved host.
     opener = build_opener(ProxyHandler({}), HTTPSHandler(), _NoRedirect())
     try:
