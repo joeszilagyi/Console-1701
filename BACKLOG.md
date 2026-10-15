@@ -1649,7 +1649,7 @@ multi-source public-impact events.
 
 ### GLOBAL UI Disabled States
 
-Status: partially implemented.
+Status: completed 2026-10-15 for first-pass acceptance.
 
 Replace GLOBAL placeholders only after storage/config support exists. Show honest states for
 disabled, not configured, configured but disabled, never scanned, stale, policy blocked, parser
@@ -1657,14 +1657,15 @@ failed, auth required, rate limited, social disabled, homepage extraction disabl
 disabled, token/account source not configured, and manual-review-only sources. Do not show fake
 headlines.
 
-Current state: the shared scope page renders GLOBAL state, source health, and real stored items
-without placeholder headlines. It now shows dedicated heavy open-data and homepage extractor gate
-counts, with source cards naming those states. Source cards still show only the first six
-configured sources; a broader disabled/not-configured/stale/failure UI matrix remains to verify.
+The shared GLOBAL page renders real, unexpired stored items without placeholder headlines. It
+shows disabled/not-configured/configured-disabled/never-run scope states, stored stale/failure and
+policy states, and dedicated heavy/homepage gate counts. The first six source cards are followed
+by an expandable list of every remaining configured source with its health state and message.
+Expired items and their cluster traces are hidden before the next scan.
 
 ### GLOBAL Source Health States
 
-Status: partially implemented.
+Status: completed 2026-10-15 for first-pass acceptance.
 
 Implement source health states for GLOBAL: `disabled`, `not_configured`, `configured_never_run`,
 `healthy`, `stale`, `failing`, `parser_failed`, `policy_blocked`, `robots_blocked`,
@@ -1672,11 +1673,11 @@ Implement source health states for GLOBAL: `disabled`, `not_configured`, `config
 `heavy_open_data_disabled`, `social_disabled`, and `homepage_extract_disabled`. Surface these
 states in SYSTEM later and summarize them on GLOBAL.
 
-Current state: shared health reporting covers disabled, never-run, healthy, stale, parser failure,
-policy block, auth required, rate limit, robots block, manual review, unsupported, and social block.
-GLOBAL now also exposes `heavy_open_data_disabled` and `homepage_extract_disabled`, including
-fetch-run health evidence when an enabled candidate is scanned. More GLOBAL state transitions and
-SYSTEM presentation still need dedicated verification.
+GLOBAL source cards, overflow list, API, and SYSTEM scope-readiness counts surface the configured
+source-health states. The GLOBAL/SYSTEM GET regression covers disabled/not-configured/never-run,
+healthy/stale/failing/parser-failed/policy-blocked/rate-limited/robots-blocked/unsupported outcomes;
+the gated-source regression covers auth-required, manual-review-only, heavy-data-disabled,
+social-disabled, and homepage-extraction-disabled outcomes with fetch-run evidence.
 
 ### GLOBAL Evidence Drawer Contract
 
@@ -1741,16 +1742,16 @@ dedicated follow-up.
 
 ### Tests For No Page-Load External Fetches
 
-Status: partially implemented.
+Status: completed 2026-10-15 for first-pass acceptance.
 
 Add tests proving GET routes and page renders read SQLite/config only and never call GLOBAL network
 fetchers. Include disabled/not configured/stale/failing/auth-required/policy-blocked/parser-failed,
 heavy-open-data-disabled, social-disabled, homepage-extraction-disabled, and manual-review-only
 state tests for GLOBAL and SYSTEM source health.
 
-Current state: GLOBAL and SYSTEM page GETs plus GLOBAL scope/summary/source API GETs run under
-file/HTTP access traps with a five-gate failure matrix. Disabled, not-configured, stale, parser
-failure, rate-limit, robots, and other transitions still need the dedicated GLOBAL GET matrix.
+GLOBAL and SYSTEM page GETs plus GLOBAL scope/summary/source API GETs run under scanner fixture
+and official-HTTP access traps across unstarted, stored-health, and five gated-source states.
+The routes render SQLite/config state only. No GET invokes a scan or fetch.
 
 ### Tests For No Heavy Source Running Without Explicit Config
 

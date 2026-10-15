@@ -441,8 +441,8 @@ def get_news_scope_states(
         active_items = _count(
             conn,
             "news_items",
-            "WHERE scope = ? AND status = 'active'",
-            (scope,),
+            "WHERE scope = ? AND status = 'active' AND expires_at >= ?",
+            (scope, datetime.now(UTC).isoformat(timespec="seconds")),
         )
         health_states = [
             str(status["health_state"]) for status in status_rows if status.get("health_state")
@@ -532,7 +532,12 @@ def get_news_storage_summary(conn: sqlite3.Connection, config: dict[str, Any]) -
         "enabled": bool((config.get("news") or {}).get("enabled")),
         "configured_source_count": len(iter_news_sources(config)),
         "stored_source_count": _count(conn, "news_sources"),
-        "active_item_count": _count(conn, "news_items", "WHERE status = 'active'"),
+        "active_item_count": _count(
+            conn,
+            "news_items",
+            "WHERE status = 'active' AND expires_at >= ?",
+            (datetime.now(UTC).isoformat(timespec="seconds"),),
+        ),
         "fetch_run_count": _count(conn, "news_fetch_runs"),
         "source_health_count": _count(conn, "news_source_health"),
         "stale_source_count": stale_source_count,
@@ -680,8 +685,8 @@ def get_news_sources_status(
                 "item_count": _count(
                     conn,
                     "news_items",
-                    "WHERE source_id = ? AND status = 'active'",
-                    (stored_id,),
+                    "WHERE source_id = ? AND status = 'active' AND expires_at >= ?",
+                    (stored_id, datetime.now(UTC).isoformat(timespec="seconds")),
                 )
                 if stored_id is not None
                 else 0,
@@ -761,37 +766,45 @@ def get_news_scope_view(
 ) -> dict[str, Any]:
     normalized_scope = str(scope).upper()
     scope_state = get_news_scope_states(conn, config)[normalized_scope]
+    now = datetime.now(UTC).isoformat(timespec="seconds")
     items = conn.execute(
         """
         SELECT *
         FROM news_items
-        WHERE scope = ? AND status = 'active'
+        WHERE scope = ? AND status = 'active' AND expires_at >= ?
         ORDER BY rank_score DESC, last_seen_at DESC, id DESC
         LIMIT ?
         """,
-        (normalized_scope, item_limit),
+        (normalized_scope, now, item_limit),
     ).fetchall()
     clusters = conn.execute(
         """
-        SELECT *
-        FROM news_clusters
-        WHERE scope = ?
-        ORDER BY score DESC, last_seen_at DESC, id DESC
+        SELECT cluster.*
+        FROM news_clusters AS cluster
+        JOIN news_items AS representative ON representative.id = cluster.representative_item_id
+        WHERE cluster.scope = ?
+          AND representative.status = 'active'
+          AND representative.expires_at >= ?
+        ORDER BY cluster.score DESC, cluster.last_seen_at DESC, cluster.id DESC
         LIMIT ?
         """,
-        (normalized_scope, cluster_limit),
+        (normalized_scope, now, cluster_limit),
     ).fetchall()
-    sources = [
+    all_sources = [
         source
         for source in get_news_sources_status(conn, config)
         if source["scope"] == normalized_scope
-    ][:source_limit]
+    ]
+    sources = all_sources[:source_limit]
     return {
         "scope": normalized_scope,
         "state": scope_state,
         "items": [_decode_news_item_row(row) for row in items],
         "clusters": [_decode_news_cluster_row(row) for row in clusters],
         "sources": sources,
+        "source_overflow": all_sources[source_limit:],
+        "source_total_count": len(all_sources),
+        "source_omitted_count": max(0, len(all_sources) - len(sources)),
     }
 
 

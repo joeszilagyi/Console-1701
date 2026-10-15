@@ -281,9 +281,19 @@
           <p class="module-kicker">{{ view['scope'] }}</p>
           <h2>Source health</h2>
         </div>
-        <span class="module-code">{{ view['sources'] | length }} source{{ "" if (view['sources'] | length) == 1 else "s" }}</span>
+        <span class="module-code">{{ view['sources'] | length }} of {{ view['source_total_count'] }} sources shown</span>
       </div>
       {{ render_source_list(view['sources'], "No sources are configured for this scope.") }}
+      {% if view['source_omitted_count'] %}
+        <details>
+          <summary>{{ view['source_omitted_count'] }} more configured source{{ "" if view['source_omitted_count'] == 1 else "s" }}</summary>
+          <ul class="news-evidence-list">
+            {% for source in view['source_overflow'] %}
+              <li><b>{{ source.name }}</b><span>{{ source.health_state }} · {{ source.health_message }}</span></li>
+            {% endfor %}
+          </ul>
+        </details>
+      {% endif %}
     </article>
 
     {% if regional_context %}
@@ -430,6 +440,13 @@
           <li>
             <b>{{ scope_name }}</b>
             <span>{{ state.state }} · {{ state.message }}</span>
+            {% if state.source_state_counts %}
+              <span>
+                {% for health_name, count in state.source_state_counts.items() %}
+                  {{ health_name | replace("_", " ") }} {{ count }}{% if not loop.last %} · {% endif %}
+                {% endfor %}
+              </span>
+            {% endif %}
           </li>
         {% endfor %}
       </ul>
@@ -444,6 +461,16 @@
         <span class="module-code">{{ sources | length }} source{{ "" if (sources | length) == 1 else "s" }}</span>
       </div>
       {{ render_source_list(sources[:6], "No configured sources exist yet.") }}
+      {% if sources | length > 6 %}
+        <details>
+          <summary>{{ sources | length - 6 }} more configured sources</summary>
+          <ul class="news-evidence-list">
+            {% for source in sources[6:] %}
+              <li><b>{{ source.name }}</b><span>{{ source.health_state }} · {{ source.health_message }}</span></li>
+            {% endfor %}
+          </ul>
+        </details>
+      {% endif %}
     </article>
 
     <article class="module news-panel">

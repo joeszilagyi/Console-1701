@@ -112,12 +112,12 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-078** [GLOBAL Deterministic Event Correlation](../../BACKLOG.md#L1485) — not implemented.
 - [ ] **RS-079** [GLOBAL Deterministic Ranking](../../BACKLOG.md#L1494) — not implemented.
 - [ ] **RS-080** [GLOBAL Low-Public-Value, Rumor, And Public-Impact Rules](../../BACKLOG.md#L1504) — not implemented.
-- [ ] **RS-081** [GLOBAL UI Disabled States](../../BACKLOG.md#L1515) — partial: shared page shows real items and dedicated heavy/homepage gate counts; wider state matrix and source-list breadth remain.
-- [ ] **RS-082** [GLOBAL Source Health States](../../BACKLOG.md#L1525) — partial: new heavy/homepage/manual gate health and fetch states; transition and SYSTEM presentation matrix remains.
+- [x] **RS-081** [GLOBAL UI Disabled States](../../BACKLOG.md#L1515) — honest GLOBAL state matrix, complete source-health overflow list, and expired-content hiding.
+- [x] **RS-082** [GLOBAL Source Health States](../../BACKLOG.md#L1525) — configured health states surfaced on GLOBAL and SYSTEM and verified across transition and gate cases.
 - [ ] **RS-083** [GLOBAL Evidence Drawer Contract](../../BACKLOG.md#L1535) — not implemented.
 - [ ] **RS-084** [GLOBAL Official-Source Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L1545) — not implemented.
 - [ ] **RS-085** [Documentation For Source Verification](../../BACKLOG.md#L1581) — partially implemented.
-- [ ] **RS-086** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L1596) — partial: GLOBAL/SYSTEM/API GETs trapped under gated-source failure matrix; remaining state transitions pending.
+- [x] **RS-086** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L1596) — GLOBAL/SYSTEM/API GETs trapped across unstarted, stored-health, and gated-source states.
 - [x] **RS-087** [Tests For No Heavy Source Running Without Explicit Config](../../BACKLOG.md#L1605) — all 20 heavy registry candidates blocked before file/network access.
 - [x] **RS-088** [Tests For No Token/Account Source Running Without Config](../../BACKLOG.md#L1613) — known auth/account/social candidates blocked before file/network access.
 
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-081, RS-082, and RS-086. GLOBAL now exposes every configured source health state through a six-card preview and expandable remainder; SYSTEM shows per-scope health counts. GET-only tests cover unstarted, stale/failing, parser/policy, and gated-source states with fixture and HTTP fetch hooks trapped. Expired items and representative cluster traces no longer render as active before another scan. Full pytest passed (290 tests); Ruff passed. Next: implement GLOBAL evidence and deterministic event/ranking work.
 - **2026-10-15:** Completed RS-059 and RS-060; advanced RS-061. Added 172 disabled GLOBAL design inventory entries, registry metadata validation/persistence, and a disabled policy config with geography/attention settings. Explicit gates cover social, auth-required, heavy open-data, homepage, and high-risk conflict sources. Every inventory entry was checked for config seeding under its explicit policy gates. No GLOBAL HTTP allowlist entry was added. Full pytest passed (257 tests); Ruff passed. Next: continue GLOBAL fixture/parser and storage paths.
 - **2026-10-15:** Completed RS-058. The scanner now records `auth_required` before fixture or official HTTP access when declared credentials are absent. Congress.gov, BEA, FRED, and AirNow API candidates default to a local key requirement; a custom auth source uses the same gate. The regression proves no item or network/fixture read occurs. Full pytest passed (248 tests); Ruff passed. Next: advance NATIONAL evidence/schema work.
 - **2026-10-15:** Completed RS-057. Extended the no-fetch GET regression to NATIONAL page/API and SYSTEM summary using a missing fixture, with scan and official HTTP fetch hooks set to fail. NATIONAL/SYSTEM source-state tests cover disabled/not configured, never-run, healthy, stale, parser failure, policy blocking, auth required, and failing aggregation. Full pytest passed (247 tests); Ruff passed. Next: continue NATIONAL API-key gating and schema evidence.
