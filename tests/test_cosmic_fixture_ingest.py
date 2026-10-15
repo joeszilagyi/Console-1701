@@ -195,6 +195,8 @@ def test_cosmic_scan_drops_hype_claims_before_sqlite_storage(tmp_path, monkeypat
         "timeout_seconds": 10, "retention_days": 7,
     }, "pds_collection", 1),
     ("gcn_notices", "gcn_notice.json", "api_json", None, "gcn_notice", 1),
+    ("gracedb_public_alerts", "gracedb_public_alerts.json", "api_json", None,
+     "gracedb_public_alert", 2),
 ])
 def test_cosmic_fixture_adapters_run_offline_with_bounded_metadata(
     tmp_path, monkeypatch, source_id, fixture_name, kind, contract, evidence_key, count

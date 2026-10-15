@@ -2844,8 +2844,10 @@ def _rebuild_science_clusters(conn: sqlite3.Connection) -> None:
             == "background"
         })
         event_type = group["event_kinds"][0] if group["event_kinds"] else "science_release"
-        status = "retracted" if all(
+        status = "retracted" if any(
             (member["evidence"].get("gcn_notice") or {}).get("status") == "retracted"
+            or (member["evidence"].get("gracedb_public_alert") or {}).get("status")
+            == "retracted"
             for member in members
         ) else "active"
         event = {

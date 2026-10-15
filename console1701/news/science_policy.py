@@ -49,6 +49,8 @@ def classify_science_item(source: dict[str, Any], item: dict[str, Any]) -> dict[
         reasons.append("unreviewed preprint claim")
     output = dict(item)
     evidence = dict(item.get("evidence") or {})
+    if (evidence.get("gracedb_public_alert") or {}).get("status") == "retracted":
+        reasons.append("official GraceDB VOEvent retraction")
     if (
         evidence.get("exoplanet_archive") or evidence.get("mast_caom")
         or evidence.get("pds_collection") or "archive_metadata" in (item.get("tags") or [])

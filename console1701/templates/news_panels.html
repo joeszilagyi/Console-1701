@@ -162,6 +162,7 @@
                   {% set science = evidence.science_event or {} %}
                   {% set science_rss = evidence.science_rss or {} %}
                   {% set gcn = evidence.gcn_notice or {} %}
+                  {% set gracedb = evidence.gracedb_public_alert or {} %}
                   {% set archive = evidence.exoplanet_archive or evidence.mast_caom or evidence.pds_collection or {} %}
                   {% set science_safety = evidence.science_safety or {} %}
                   <div class="news-evidence-grid">
@@ -178,7 +179,11 @@
                     <div><span>Event type / status</span><strong>{{ science.event_type or "unclassified" }} / {{ science.status or "unknown" }}</strong></div>
                     <div><span>Mission / telescope</span><strong>{{ science_rss.mission_label or science_rss.telescope or gcn.mission or archive.mission or "not provided" }}</strong></div>
                     <div><span>Object / target</span><strong>{{ archive.planet_name or archive.target_name or archive.target_body or "not provided" }}</strong></div>
-                    <div><span>Alert status</span><strong>{{ gcn.status or "not applicable" }}</strong></div>
+                    <div><span>Alert status</span><strong>{{ gcn.status or gracedb.status or "not applicable" }}</strong></div>
+                    {% if gracedb %}
+                      <div><span>GraceDB revision</span><strong>{{ gracedb.latest_revision }} · {{ gracedb.latest_voevent_type }}</strong></div>
+                      <div><span>Notice / event time</span><strong>{{ gracedb.notice_at }} / GPS {{ gracedb.event_time_gps }}</strong></div>
+                    {% endif %}
                     <div><span>Source date meaning</span><strong>{{ archive.date_semantics or "source publication or alert time" }}</strong></div>
                     <div><span>Attention</span><strong>{{ science_safety.attention_state or "unclassified" }}</strong></div>
                   </div>
@@ -193,6 +198,9 @@
                     <li><b>Policy flags</b><span>{{ science.policy_flags | join(", ") if science.policy_flags else "none recorded" }}</span></li>
                     <li><b>Attention reasons</b><span>{{ science_safety.reasons | join("; ") if science_safety.reasons else "none recorded" }}</span></li>
                     <li><b>Data products</b><span>Metadata only; this ingest did not request a product download.</span></li>
+                    {% if gracedb %}
+                      <li><b>GraceDB public record</b><span>{{ gracedb.source_url }} · false-alarm rate {{ gracedb.false_alarm_rate_hz if gracedb.false_alarm_rate_hz is not none else "not provided" }} Hz</span></li>
+                    {% endif %}
                   </ul>
                 {% endif %}
                 {% if item.scope == "NATIONAL" and national_evidence %}

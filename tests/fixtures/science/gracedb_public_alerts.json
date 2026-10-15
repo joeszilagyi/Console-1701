@@ -1,0 +1,50 @@
+{
+  "assembly_version": 1,
+  "query": {"category": "Production", "is_public": true, "count": 2},
+  "records": [
+    {
+      "superevent": {
+        "superevent_id": "S251017di",
+        "category": "Production",
+        "created": "2025-10-17 21:08:11 UTC",
+        "t_0": 1444770508.105494,
+        "far": 7.041725023589097e-08,
+        "gw_id": null,
+        "links": {
+          "self": "https://gracedb.ligo.org/api/v2/superevents/S251017di/",
+          "voevents": "https://gracedb.ligo.org/api/v2/superevents/S251017di/voevents/"
+        }
+      },
+      "voevents": {
+        "numRows": 2,
+        "voevents": [
+          {"N": 1, "voevent_type": "EW", "created": "2025-10-17 21:08:17 UTC"},
+          {"N": 2, "voevent_type": "RE", "created": "2025-10-17 21:19:22 UTC"}
+        ]
+      }
+    },
+    {
+      "superevent": {
+        "superevent_id": "S251013x",
+        "category": "Production",
+        "created": "2025-10-13 02:44:25 UTC",
+        "t_0": 1444358672.280518,
+        "far": 1.484145413923102e-08,
+        "gw_id": null,
+        "links": {
+          "self": "https://gracedb.ligo.org/api/v2/superevents/S251013x/",
+          "voevents": "https://gracedb.ligo.org/api/v2/superevents/S251013x/voevents/"
+        }
+      },
+      "voevents": {
+        "numRows": 4,
+        "voevents": [
+          {"N": 1, "voevent_type": "PR", "created": "2025-10-13 02:44:45 UTC"},
+          {"N": 2, "voevent_type": "PR", "created": "2025-10-13 02:49:23 UTC"},
+          {"N": 3, "voevent_type": "IN", "created": "2025-10-13 03:20:15 UTC"},
+          {"N": 4, "voevent_type": "UP", "created": "2025-10-13 14:43:52 UTC"}
+        ]
+      }
+    }
+  ]
+}

@@ -3267,11 +3267,14 @@ their own signoff.
 
 ### Transient Alert Ingest Phase, Disabled By Default
 
-Status: not implemented.
-
 Add opt-in transient alert ingest for GCN notices/circulars, ATel, TNS, and GraceDB/LIGO only after
 fixture parsers, policy/auth review, source health, preliminary/update/retraction handling, and
 retention tests exist. Do not download sky maps by default.
+
+Status: partial. GraceDB public superevent plus VOEvent metadata passes a fixture-only parser and
+offline scan with revision/retraction handling, bounded payload, source health, and no sky-map
+fetch. A live public polling contract, retention sequence tests, and the other transient sources
+remain open.
 
 ### Heavy Archive Phase, Disabled By Default
 
@@ -3366,7 +3369,7 @@ other archive sources do not download science products, sky maps, papers, images
 by default. Parsers should store metadata only and evidence should explicitly record no data product
 downloads.
 
-End-to-end scans of all eight permitted science fixture adapters assert local-only ingest and
+End-to-end scans of all nine permitted science fixture adapters assert local-only ingest and
 persisted metadata. The relevant Exoplanet, MAST, PDS, GCN, and telescope evidence records
 explicit false download/product-request flags; parser unit tests reject broader payloads and
 product fields. Extend this gate before any new live or archive adapter is admitted.

@@ -181,6 +181,10 @@ def parse_fixture_items(
         from console1701.news.science_gcn import parse_gcn_notice_fixture
 
         return parse_gcn_notice_fixture(source, payload_text)
+    if parser_name == "gracedb_public_alert_fixture":
+        from console1701.news.science_gracedb import parse_gracedb_public_alert_fixture
+
+        return parse_gracedb_public_alert_fixture(source, payload_text)
     if parser_name == "cpsc_recalls_json":
         from console1701.news.cpsc_recalls import parse_cpsc_recalls_json
 
