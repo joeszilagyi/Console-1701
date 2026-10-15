@@ -34,6 +34,13 @@ NASA_FEEDS = {
         ("/blogs/kennedy/",),
     ),
 }
+ESA_FEEDS = {
+    "esa_rss": ("https://www.esa.int/rssfeed/Our_Activities/Space_News", "ESA Top News"),
+    "esa_iss": (
+        "https://www.esa.int/rssfeed/Our_Activities/Human_Spaceflight",
+        "ESA Human and Robotic Exploration",
+    ),
+}
 _NASA_ACTION_RE = re.compile(
     r"\b(launch|liftoff|dock|undock|return|arriv|depart|spacewalk|crew|"
     r"station power|solar array|mission milestone|reentry|space weather|"
@@ -45,6 +52,16 @@ _NASA_LOW_VALUE_RE = re.compile(
     re.I,
 )
 _TAG_RE = re.compile(r"<[^>]+>")
+_ESA_ACTION_RE = re.compile(
+    r"\b(launch|liftoff|dock|undock|return|arriv|depart|crew|astronaut|"
+    r"mission|station|spacewalk|complet|confirm|test|deployment)\w*\b",
+    re.I,
+)
+_ESA_ROUTINE_RE = re.compile(
+    r"\b(week in images|earth from space|facts and figures|podcast|"
+    r"education|student|gallery|video)\b",
+    re.I,
+)
 
 
 def _xml_text(element: ET.Element | None) -> str:
@@ -127,6 +144,79 @@ def parse_nasa_orbital_rss(source: dict[str, Any], payload_text: str) -> list[di
         item["evidence"]["orbital_identity"] = {
             "event_type": story_type,
             "object_id": path.rstrip("/").rsplit("/", 1)[-1][:100],
+        }
+        items.append(item)
+    return items
+
+
+def parse_esa_orbital_rss(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:
+    from console1701.news.parsers import NewsParserError, _normalize_item
+
+    if str(source.get("scope") or "").upper() != "ORBITAL":
+        raise NewsParserError("ESA RSS parser requires ORBITAL scope")
+    source_key = str(source.get("id") or "")
+    if source_key not in ESA_FEEDS:
+        raise NewsParserError("ESA RSS parser requires a verified feed candidate")
+    feed_url, expected_channel = ESA_FEEDS[source_key]
+    try:
+        root = ET.fromstring(payload_text)
+    except ET.ParseError as exc:
+        raise NewsParserError(f"Malformed ESA RSS: {exc}") from exc
+    channel = root.find("./channel") if root.tag == "rss" else None
+    if channel is None or _xml_text(channel.find("./title")) != expected_channel:
+        raise NewsParserError("ESA RSS requires the verified ESA channel")
+    items: list[dict[str, Any]] = []
+    for index, row in enumerate(channel.findall("./item")[:100]):
+        title = bounded_text(_xml_text(row.find("./title")), max_chars=280)
+        link = _xml_text(row.find("./link"))
+        parts = urlsplit(link)
+        if (
+            not title or parts.scheme != "https"
+            or parts.hostname not in {"esa.int", "www.esa.int"}
+        ):
+            continue
+        path = parts.path.casefold()
+        if (
+            path.startswith(("/esa_multimedia/", "/about_us/week_in_images/"))
+            or not _ESA_ACTION_RE.search(title) or _ESA_ROUTINE_RE.search(title)
+            or "reentry" in title.casefold() or "space debris" in title.casefold()
+        ):
+            continue
+        published = normalize_timestamp(_xml_text(row.find("./pubDate")))
+        if not published:
+            continue
+        mission = (
+            "ISS" if "international space station" in title.casefold()
+            or "iss" in title.casefold().split()
+            or "international_space_station" in path else
+            "Artemis" if "artemis" in title.casefold() else None
+        )
+        story_type = (
+            "esa_iss_update" if source_key == "esa_iss" or mission == "ISS" else
+            "esa_launch_update" if "launch" in title.casefold() else
+            "esa_mission_update"
+        )
+        item = _normalize_item(source, {
+            "title": title,
+            "url": link,
+            "description": _plain_description(_xml_text(row.find("./description"))),
+            "published_at": published,
+            "tags": ["official", "esa", "orbital"],
+        }, index=index)
+        item["evidence"]["esa_rss"] = {
+            "feed_url": feed_url,
+            "story_url": link,
+            "guid": bounded_text(_xml_text(row.find("./guid")), max_chars=120),
+            "published_at": published,
+            "story_type": story_type,
+            "mission_label": mission,
+            "scope_basis": "official_feed_and_title_action",
+            "reentry_or_debris_reviewed": False,
+        }
+        item["evidence"]["orbital_identity"] = {
+            "event_type": story_type,
+            "object_id": path.rstrip("/").rsplit("/", 1)[-1][:100],
+            "mission_id": mission,
         }
         items.append(item)
     return items

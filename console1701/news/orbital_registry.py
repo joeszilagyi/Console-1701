@@ -146,6 +146,8 @@ def _load_registry() -> tuple[dict[str, Any], ...]:
             "nasa_artemis": "nasa_orbital_rss",
             "nasa_artemis_blog": "nasa_orbital_rss",
             "nasa_kennedy_blog": "nasa_orbital_rss",
+            "esa_rss": "esa_orbital_rss",
+            "esa_iss": "esa_orbital_rss",
         }.get(key)
         entry["source_health_behavior"] = (
             "unsupported" if row["verification_status"] == "reject_for_now" else
