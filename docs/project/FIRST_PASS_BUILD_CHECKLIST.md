@@ -126,9 +126,9 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-089** [ORBITAL Source Registry Design Implementation](../../BACKLOG.md#L1627) — all 136 design entries disabled, validated and inherited by config, persisted in SQLite and summary; reference rows cannot ingest.
 - [x] **RS-090** [Disabled-By-Default ORBITAL Config](../../BACKLOG.md#L1637) — disabled and validated policy tree; sensitive and unparsed candidates blocked before access; no live ORBITAL allowlist.
 - [x] **RS-091** [ORBITAL SQLite Schema Or Extension](../../BACKLOG.md#L1647) — shared scoped storage plus indexed event/object/mission, safety, sensitivity and impact facets; backfill, refresh and purge verified.
-- [ ] **RS-092** [ORBITAL Fixture Pack](../../BACKLOG.md#L1658) — partial: SWPC alerts product; other products and source-health variants pending.
+- [ ] **RS-092** [ORBITAL Fixture Pack](../../BACKLOG.md#L1658) — partial: SWPC alerts and NOAA scales products; other products and source-health variants pending.
 - [x] **RS-093** [SWPC Alerts JSON Parser](../../BACKLOG.md#L1670) — official-shape offline parser with identity, validity, scale, impacts, cancellation, provenance and facet coverage; live ingest remains disabled.
-- [ ] **RS-094** [SWPC NOAA Scales Parser](../../BACKLOG.md#L1679) — not implemented.
+- [x] **RS-094** [SWPC NOAA Scales Parser](../../BACKLOG.md#L1679) — official-shape offline parser for nonzero G/R/S states with source timing, current/forecast distinction, provenance and facets; live ingest remains disabled.
 - [ ] **RS-095** [SWPC Kp And Aurora Fixture Parsers](../../BACKLOG.md#L1687) — not implemented.
 - [ ] **RS-096** [JPL CNEOS Close Approach Parser](../../BACKLOG.md#L1696) — not implemented.
 - [ ] **RS-097** [JPL CNEOS Fireball Parser](../../BACKLOG.md#L1705) — not implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-094. Checked NOAA SWPC's period-keyed scales product and added a fixture-first G/R/S parser for explicit nonzero current and forecast states, with no inferred impact. Empty and malformed states are covered; live HTTP remains blocked. Full pytest passed (382 tests); Ruff passed. Progress: 70/150. RS-092 remains partial.
 - **2026-10-15:** Completed RS-093. Checked NOAA SWPC's alerts JSON shape and added a fixture-first parser for warning, watch cancellation, product timing, scale, source-provided impacts and indexed identity. Bad rows fail soft; malformed JSON fails clearly. The registry parser is set, but live HTTP remains blocked. Full pytest passed (379 tests); Ruff passed. Progress: 69/150. RS-092 fixture pack remains partial.
 - **2026-10-15:** Completed RS-091. Reused the scoped SQLite source, fetch, item, health and cluster tables; added ORBITAL identity and safety facets, bounded indexed queries, backfill and purge coverage. No body or bulk catalog storage was added. Full pytest passed (376 tests); Ruff passed. Progress: 68/150. Next: ORBITAL fixture pack and source parsers.
 - **2026-10-15:** Completed RS-090. Added the disabled ORBITAL policy tree, candidate gates for topic, social, auth, restricted, tactical, homepage and parser readiness, plus disabled scope health. Existing fixture tests now opt in to ORBITAL explicitly. Full pytest passed (374 tests); Ruff passed. Progress: 67/150. Next: ORBITAL storage indexes and facets.
