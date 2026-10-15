@@ -74,7 +74,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-043** [NHTSA Recalls API Parser](../../BACKLOG.md#L1080) — official lookup-envelope fixture parser, grouped campaign evidence, safety ranking, facets and offline scan verified; live discovery remains disabled.
 - [ ] **RS-044** [FAA NAS Status Fixture Parser](../../BACKLOG.md#L1088) — not implemented.
 - [ ] **RS-045** [CISA Advisory Parser](../../BACKLOG.md#L1097) — not implemented.
-- [ ] **RS-046** [CISA KEV Endpoint Research](../../BACKLOG.md#L1106) — not implemented.
+- [x] **RS-046** [CISA KEV Endpoint Research](../../BACKLOG.md#L1106) — official JSON/schema, snapshot/update and due-date semantics, access and health gate documented; ingest stays disabled.
 - [ ] **RS-047** [Federal Register API Parser With Filters](../../BACKLOG.md#L1114) — not implemented.
 - [ ] **RS-048** [GovInfo RSS Parser](../../BACKLOG.md#L1122) — not implemented.
 - [ ] **RS-049** [NATIONAL Deterministic Event Correlation](../../BACKLOG.md#L1155) — not implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-046. Bounded official CISA KEV JSON/schema reads confirmed full-snapshot structure, unique CVEs, calendar dates and conditional headers; documented the CSV path gap and disabled live/fixture release gate. Progress: 53/150.
 - **2026-10-15:** Completed RS-043 and advanced RS-034. Added a NATIONAL NHTSA lookup-envelope fixture parser with campaign grouping, bounded recall fields, vehicle-safety ranking, agency/sector facets, and offline scan coverage. Recorded the lookup-only live limitation and FSIS/CPSC access blockers. Full pytest passed (332 tests); Ruff passed. Progress: 52/150.
 - **2026-10-15:** Completed RS-040 and recorded the RS-039 endpoint blocker. Verified three official FDA RSS feeds, their overlapping headline metadata and conditional headers; documented openFDA enforcement's public-alert limitation. CDC HAN's former RSS paths no longer resolve to a current feed, so its parser stays open and disabled. Progress: 51/150.
 - **2026-10-15:** Completed RS-036. Bounded reads of the three official NHC/CPHC basin feeds confirmed RSS item and cyclone-summary fields, conditional headers, and no-storm sentinels; documented parser and watch/warning limits. No NHC source enabled. Progress: 50/150.

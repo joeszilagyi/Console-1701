@@ -1310,7 +1310,14 @@ flag, source URL, and cyber ranking evidence.
 
 ### CISA KEV Endpoint Research
 
-Status: not implemented.
+Status: implemented as endpoint research; fixture parser and live ingest remain separate work.
+
+The official JSON catalog and JSON Schema returned HTTP 200 in bounded reads on 2026-10-15.
+Documented envelope, CVE identity, required/optional fields, date semantics, full-snapshot update
+behavior, due-date interpretation, conditional headers, proposed cadence, policy gate, and
+source-health states. The website advertises CSV but the guessed sibling CSV URL returned 404;
+its exact current path is not signed off. See `docs/project/NATIONAL_CISA_KEV_ENDPOINT_RESEARCH.md`.
+No KEV source was enabled.
 
 Research CISA Known Exploited Vulnerabilities machine-readable endpoint options, including JSON/CSV
 availability, schema fields, due date handling, update behavior, source policy, refresh interval,
