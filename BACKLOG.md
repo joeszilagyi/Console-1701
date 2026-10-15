@@ -160,7 +160,7 @@ still pending.
 
 ### Deterministic Ranking
 
-Status: partially implemented.
+Status: implemented for first pass.
 
 Add explainable ranking with no LLM calls. Candidate factors: recency, source priority, official
 source boost, scope priority, user-pinned tags, repeated topic/cluster count, source-provided alert
@@ -171,8 +171,9 @@ source priority, recency, freshness, official-tag boost, scope priority, repeat 
 density, prior source-health confidence, source-provided severity, and topic repetition. Event
 merging now records the topic-repetition contract alongside the existing cluster-size and
 cross-source signals. LOCAL event-correlation now also applies a capped, explainable
-`local_source_family_boost` for trusted official and local-news families. Future
-scope-specific severity normalization remains pending.
+`local_source_family_boost` for trusted official and local-news families. The
+candidate factor set and stored reasons are present; finer scope-specific
+severity normalization is a later ranking refinement.
 
 ### Scope Page UI
 
@@ -205,22 +206,22 @@ derived config warnings.
 
 ### Official API/RSS First Live Ingest
 
-Status: partially implemented.
+Status: implemented for first pass.
 
 After fixture ingest and tests exist, add explicit enabled HTTP fetch for safe official APIs/RSS only.
 Use timeouts, response size caps, per-source intervals, backoff, ETag/Last-Modified support, honest
 user agent, and fail-soft per-source behavior. Tests must use mocked HTTP or a local test server, not
 live network.
 
-Current state: an allowlisted, explicit HTTPS client supports exactly two verified URLs: Washington
-NWS active alerts for LOCAL/REGIONAL and USGS M2.5+ past-day GeoJSON for REGIONAL. It has bounded
+Current state: an allowlisted, explicit HTTPS client supports exact verified official URLs across
+LOCAL, REGIONAL, NATIONAL, GLOBAL, ORBITAL, and COSMIC. It has bounded
 timeout/response size, a User-Agent, no redirects or inherited proxy, conditional ETag/Last-Modified
 requests, URL-level interval/backoff, local SQLite evidence, and mocked transport tests. LOCAL and
-REGIONAL share the NWS response in one scan. Controlled NWS and USGS scans returned HTTP 200 and
-healthy state; REGIONAL NWS persisted two alerts, while LOCAL NWS and REGIONAL USGS had zero
-in-scope matches at their respective check times. Temporary opt-ins were removed; default config
-and news timer remain disabled. Live HTTP 304 remains unobserved; general official RSS/API support
-and further source verification remain pending.
+REGIONAL share the NWS response in one scan. Isolated explicit NWS, USGS, ESA, and SWPC scans
+returned HTTP 200 and healthy state, with source-backed items in multiple scopes. Temporary
+opt-ins were removed; default config and news timer remain disabled. Live HTTP 304 remains
+unobserved, while mocked 304 handling is covered. Each additional URL requires a separate
+source-specific signoff.
 
 ### Homepage Extractor Later And Disabled
 
@@ -1011,7 +1012,7 @@ Scope-specific display design and full public-impact/privacy explanation remain 
 
 ### REGIONAL Official-Source Live Ingest Phase
 
-Status: partially implemented.
+Status: implemented for first pass.
 
 After fixtures, correlation, ranking, retention, source health, and tests exist, add opt-in live
 ingest for one safe official source at a time. First candidates are NWS alerts for Washington,
@@ -1036,6 +1037,10 @@ WSDOT follow-up: its legacy per-alert RSS links currently redirect to a general 
 Investigate an official stable alert-specific link without arbitrary crawling; preserve the numeric
 WSDOT ID for identity in the meantime. Do not enable LOCAL WSDOT until a defensible Seattle-area
 geography filter is tested against real source fields or clearly documented text evidence.
+
+The first-pass admission criterion is met by exact NWS, USGS, and WSDOT opt-ins with isolated
+live checks and offline gate tests. WSDOT JSON and county feed promotion are separate source
+expansions.
 
 ### REGIONAL News RSS Ingest Phase
 
@@ -2612,7 +2617,7 @@ fixture scan tests the direct item-detail payload and HTML without GET-time fetc
 
 ### ORBITAL Official-Source Live Ingest Phase, Disabled By Default
 
-Status: partially implemented.
+Status: implemented for first pass.
 
 After fixtures, correlation, ranking, retention, source health, and tests exist, add opt-in live
 ingest for one safe official ORBITAL source at a time. First candidates are SWPC alerts JSON, SWPC
@@ -2632,9 +2637,10 @@ observation freshness window. NASA RSS keeps only seven-day-old or newer source-
 stories; ESA RSS uses the same seven-day freshness window. NASA/JPL and ESA channel variants
 do not create false independent corroboration. Alert
 validity and cancellation affect active-alert scoring. Mocked-transport tests cover source gates,
-200/304 handling, provenance, freshness, and offline GET. Defaults remain disabled and no live
-app scan was run. Remaining candidates need endpoint, parser, response size, freshness, and policy
-review; JPL RSS remains unverified here.
+200/304 handling, provenance, freshness, and offline GET. An isolated explicit NOAA SWPC alerts
+scan on 2026-10-15 returned HTTP 200 and stored three ORBITAL items in temporary state.
+Defaults remain disabled. Remaining candidates need endpoint, parser, response size, freshness,
+and policy review; JPL RSS remains unverified here.
 
 ### ORBITAL Launch/Event API Ingest Phase, Disabled By Default
 

@@ -24,11 +24,15 @@ individual source's `enabled` plus `verification_status: verified`. The URL, par
 absence of auth must match the allowlist exactly. `console-1701 news-scan` is the only live entry
 point; page loads and tests do not fetch.
 
+An isolated explicit `news-scan` with temporary config and state on 2026-10-15
+returned HTTP 200 and stored three ORBITAL alert items with successful source
+health. The temporary opt-in and SQLite state were removed. No standing source
+or timer setting changed.
+
 Live alerts older than 72 hours or more than one hour in the future are dropped before storage.
 An alert's ranking active-window bonus ends after its source-reported validity time or 72 hours
 from issuance, whichever comes first. Fixture and mocked-transport tests cover opt-in gates,
-conditional HTTP 304, freshness, stored provenance, and GET-only views. No live app scan was run
-as part of this change.
+conditional HTTP 304, freshness, stored provenance, and GET-only views.
 
 Example local opt-in, subject to the normal configuration location:
 

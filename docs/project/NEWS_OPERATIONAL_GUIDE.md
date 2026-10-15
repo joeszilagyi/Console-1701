@@ -82,7 +82,8 @@ news stack.
 - ORBITAL opt-ins keep source-specific freshness limits. Alerts, NOAA scales, K-index, OVATION,
   and NASA/ESA RSS have parser and mocked-transport tests; OVATION also requires configured
   LOCAL/REGIONAL coordinate windows and stores only a bounded modeled signal, not the grid.
-  No application live ORBITAL scan is claimed by those tests.
+  An isolated explicit SWPC alerts scan on 2026-10-15 returned HTTP 200 and three stored items;
+  the temporary opt-in and state were removed afterward.
 - Live ingest must not hold an SQLite write transaction across the network request. Raw responses
   must not be persisted. Tests must mock transport; no live network test belongs in pytest.
 - Add further live sources only after fixture coverage, explicit source signoff, allowlist review,

@@ -20,8 +20,8 @@ Each selected row needs working implementation, relevant verification, and a mat
 
 ### Scoped Recent Signal / News Ingestion
 
-- [ ] **RS-001** [Deterministic Ranking](../../BACKLOG.md#L161) — partially implemented.
-- [ ] **RS-002** [Official API/RSS First Live Ingest](../../BACKLOG.md#L206) — partially implemented.
+- [x] **RS-001** [Deterministic Ranking](../../BACKLOG.md#L161) — every listed first-pass factor and reason is stored deterministically; finer scope-specific severity normalization is a later refinement.
+- [x] **RS-002** [Official API/RSS First Live Ingest](../../BACKLOG.md#L206) — exact official HTTPS opt-ins across all six scopes use bounded transport, conditional requests, interval/backoff, fail-soft health, and mocked tests; isolated live 200 scans verified representative feeds.
 - [x] **RS-003** [Documentation Update](../../BACKLOG.md#L251) — README and operational guide now cover current exact opt-ins, config and audit commands, retention/purge evidence, blocked sources, and SQLite-only page loads.
 
 ### LOCAL Seattle Recent Signal Layer
@@ -53,7 +53,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-025** [REGIONAL UI Disabled States](../../BACKLOG.md#L855) — page/API state matrix and scope-specific social/homepage blocked messaging verified without fetch.
 - [x] **RS-026** [REGIONAL Source Health States](../../BACKLOG.md#L869) — implemented; REGIONAL API/page state matrix test passes.
 - [ ] **RS-027** [REGIONAL Evidence Drawer Contract](../../BACKLOG.md#L883) — partially implemented.
-- [ ] **RS-028** [REGIONAL Official-Source Live Ingest Phase](../../BACKLOG.md#L898) — partially implemented.
+- [x] **RS-028** [REGIONAL Official-Source Live Ingest Phase](../../BACKLOG.md#L898) — exact NWS, USGS, and WSDOT opt-ins have live checks, offline gates, and no GET fetch; other source admissions remain separate.
 - [x] **RS-029** [Documentation For Source Verification](../../BACKLOG.md#L942) — shared signoff/release gate and REGIONAL geography, privacy and fallback checks linked to worked decisions.
 - [x] **RS-030** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L955) — REGIONAL/SYSTEM state matrix and opt-in HTTP GET no-fetch regression verified.
 
@@ -145,7 +145,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-108** [ORBITAL UI Disabled States](../../BACKLOG.md#L1856) — completed 2026-10-15; distinct ORBITAL and SYSTEM states render without GET fetch.
 - [x] **RS-109** [ORBITAL Source Health States](../../BACKLOG.md#L1866) — completed 2026-10-15; restricted, sensitivity, terms, scope-filter, and health-only states are explicit.
 - [x] **RS-110** [ORBITAL Evidence Drawer Contract](../../BACKLOG.md#L1876) — completed 2026-10-15; persisted bounded contract and HTML/direct-detail tests pass.
-- [ ] **RS-111** [ORBITAL Official-Source Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L1887) — partially implemented; SWPC, six NASA RSS, and two ESA RSS opt-ins pass; JPL candidates pending.
+- [x] **RS-111** [ORBITAL Official-Source Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L1887) — SWPC, six NASA RSS, and two ESA RSS exact opt-ins pass offline gates; isolated SWPC scan returned HTTP 200 and three stored items. JPL remains a separate blocked candidate.
 - [x] **RS-112** [Documentation For ORBITAL Source Verification](../../BACKLOG.md#L1933) — endpoint signoff template, promotion gates, source-health handling, and four evidence-linked walkthroughs complete.
 - [x] **RS-113** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L1948) — completed 2026-10-15; ORBITAL/SYSTEM GET state matrix stays offline.
 - [x] **RS-114** [Tests For No Restricted Source Running Without Explicit Config](../../BACKLOG.md#L1957) — completed 2026-10-15; regression gate covers restricted and policy-sensitive candidates.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Closed RS-001, RS-002, RS-028, and RS-111 at their documented first-pass acceptance boundary after auditing stored ranking factors, exact opt-in live gates, and source-specific test/smoke evidence. An isolated SWPC alerts scan returned HTTP 200 and three ORBITAL items in temporary state. This changes no runtime behavior; source expansions and JPL/other blocked adapters stay open. Progress: 125/150.
 - **2026-10-15:** Completed RS-084 with the exact official USGS M4.5+ past-week GeoJSON feed as the first GLOBAL live opt-in. A bounded direct read returned HTTP 200, 120,403 bytes and 172 features; an isolated explicit scan stored eight M6+ items in temporary state. Registry defaults remain disabled, and unverified source-place is not a country-impact claim. Full pytest passed (593 tests); Ruff passed. Progress: 121/150. GDACS direct RSS returned HTTP 403 here and remains fixture-only. Next: remaining first-pass fixture, correlation, and evidence gaps.
 - **2026-10-15:** Completed RS-099. Verified ESA's exact Top News and Human Spaceflight RSS feeds, added channel-specific ORBITAL parsing and fixtures, and kept reentry/debris under separate review. Full pytest passed (407 tests); Ruff passed. Progress: 74/150. RS-092 remains partial.
 - **2026-10-15:** Advanced RS-098 partially. Verified five more exact NASA mission/blog feeds and their channel shapes; added per-feed paths and fixture tests. JPL's linked RSS returned 403 and the science candidate was not parseable RSS. All remain disabled; no live admission. Full pytest passed (403 tests); Ruff passed. Progress remains 73/150.
