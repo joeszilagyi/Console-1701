@@ -11,6 +11,10 @@ from urllib.parse import urlsplit
 from console1701.news.normalize import bounded_text, normalize_timestamp
 
 NASA_NEWS_RSS_URL = "https://www.nasa.gov/news-release/feed/"
+NASA_SCIENCE_RSS_URL = "https://science.nasa.gov/blogs/science-news/feed/"
+_SCIENCE_MALFORMED_HEADER = (
+    'xmlns:apod="https://science.nasa.gov/apod/"xmlns:media='
+)
 NASA_FEEDS = {
     "nasa_rss_feeds": (NASA_NEWS_RSS_URL, "NASA", ()),
     "nasa_iss_page": (
@@ -36,6 +40,10 @@ NASA_FEEDS = {
     "jpl_rss": (
         "https://www.nasa.gov/centers-and-facilities/jpl/feed/",
         "Jet Propulsion Laboratory", ("/missions/", "/news-release/"),
+    ),
+    "nasa_science_news": (
+        NASA_SCIENCE_RSS_URL, "The Latest in NASA Science News - NASA Science",
+        ("/blogs/science-news/",),
     ),
 }
 ESA_FEEDS = {
@@ -85,6 +93,19 @@ def parse_nasa_orbital_rss(source: dict[str, Any], payload_text: str) -> list[di
     if source_key not in NASA_FEEDS:
         raise NewsParserError("NASA RSS parser requires a verified feed candidate")
     feed_url, expected_channel, path_prefixes = NASA_FEEDS[source_key]
+    repaired_header = False
+    if source_key == "nasa_science_news":
+        if not str(source.get("url") or "").startswith("file://"):
+            raise NewsParserError("NASA Science RSS parser is fixture-only")
+        if source.get("official_url") != NASA_SCIENCE_RSS_URL:
+            raise NewsParserError("NASA Science fixture requires its exact official feed URL")
+        if payload_text.count(_SCIENCE_MALFORMED_HEADER) == 1:
+            payload_text = payload_text.replace(
+                _SCIENCE_MALFORMED_HEADER,
+                'xmlns:apod="https://science.nasa.gov/apod/" xmlns:media=',
+                1,
+            )
+            repaired_header = True
     try:
         root = ET.fromstring(payload_text)
     except ET.ParseError as exc:
@@ -99,7 +120,10 @@ def parse_nasa_orbital_rss(source: dict[str, Any], payload_text: str) -> list[di
         parts = urlsplit(link)
         if (
             not title or parts.scheme != "https"
-            or parts.hostname not in {"nasa.gov", "www.nasa.gov"}
+            or parts.hostname not in (
+                {"science.nasa.gov"} if source_key == "nasa_science_news"
+                else {"nasa.gov", "www.nasa.gov"}
+            )
         ):
             continue
         path = parts.path.casefold()
@@ -128,6 +152,7 @@ def parse_nasa_orbital_rss(source: dict[str, Any], payload_text: str) -> list[di
             "crewed_mission_update" if source_key in {"nasa_artemis", "nasa_artemis_blog"}
             or "crew" in title_folded else
             "jpl_mission_update" if source_key == "jpl_rss" else
+            "science_mission_update" if source_key == "nasa_science_news" else
             "orbital_agency_update"
         )
         item = _normalize_item(source, {
@@ -145,6 +170,8 @@ def parse_nasa_orbital_rss(source: dict[str, Any], payload_text: str) -> list[di
             "published_at": published,
             "story_type": story_type,
             "scope_basis": "official_path_and_title_action",
+            **({"xml_header_repair": "single_missing_namespace_separator"}
+               if repaired_header else {}),
         }
         item["evidence"]["orbital_identity"] = {
             "event_type": story_type,

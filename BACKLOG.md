@@ -2459,7 +2459,7 @@ or launch-provider sources without convergence.
 
 ### NASA RSS Parser
 
-Status: partially implemented.
+Status: completed 2026-10-15 for fixture-first parser coverage.
 
 Build a fixture-first RSS/Atom parser for verified NASA, JPL, NASA blog, Kennedy, Space Station,
 Artemis, mission, and science feeds. Store headline metadata only, bound descriptions, preserve
@@ -2474,8 +2474,11 @@ and bounded description, and requires an ORBITAL title action. Unrelated Earth s
 and routine stories are suppressed in offline tests. The six NASA agency/mission feeds and the
 NASA-hosted JPL feed have exact opt-in HTTP allowlist entries. A controlled JPL scan returned
 HTTP 200, healthy source state, and two ORBITAL mission items; science-only content stayed out.
-The JPL-hosted feed still returns HTTP 403 to the identifying scanner agent, and the NASA Science
-candidate has no verified accessible RSS endpoint. See
+The JPL-hosted feed still returns HTTP 403 to the identifying scanner agent. NASA Science's
+Science News RSS returned HTTP 200 but has one malformed namespace separator and August-dated
+content in an October read. Its fixture-only parser applies just that exact separator repair,
+records the repair, filters to NASA-hosted mission actions, and rejects other malformed XML. The
+science feed remains outside the live allowlist pending fresh, stable response behavior. See
 `docs/project/ORBITAL_NASA_RSS_SOURCE_VERIFICATION.md`.
 
 ### ESA RSS Parser
