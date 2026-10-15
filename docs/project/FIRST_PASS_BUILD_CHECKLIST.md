@@ -38,7 +38,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 
 ### REGIONAL Pacific Northwest Recent Signal Layer
 
-- [ ] **RS-013** [REGIONAL Source Registry Design Implementation](../../BACKLOG.md#L620) — partially implemented.
+- [x] **RS-013** [REGIONAL Source Registry Design Implementation](../../BACKLOG.md#L620) — all 224 design rows plus six existing candidates disabled, validated, inherited by config, and synced to SQLite.
 - [x] **RS-014** [Disabled-By-Default REGIONAL Config](../../BACKLOG.md#L634) — validated geography/topic flags and explicit social/homepage gates; defaults remain off.
 - [ ] **RS-015** [REGIONAL SQLite Schema Or Extension](../../BACKLOG.md#L649) — partially implemented.
 - [ ] **RS-016** [REGIONAL Fixture Pack](../../BACKLOG.md#L665) — partially implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-013. Added all 224 REGIONAL design-table entries to the disabled registry and retained six reviewed operational candidates. Extended config enums, validated registry metadata and HTTPS URLs, and verified full SQLite persistence. Reference-only sources are blocked before file or HTTP access. Full pytest passed (319 tests); Ruff passed. Progress: 31/150.
 - **2026-10-15:** Completed RS-004. Added all 119 LOCAL design-table sources to the disabled registry while preserving reviewed core metadata. Validation covers unique keys, classes/adapters/kinds, risks/statuses, HTTPS URLs, priority, interval, and phase. Config and SQLite expose the complete inventory; a source-kind gate prevents reference-only pages from loading fixtures or fetching HTTP when configured. Full pytest passed (317 tests); Ruff passed. Progress: 30/150.
 - **2026-10-15:** Completed RS-073. Verified the official UN News all-news RSS endpoint and observed title/link/GUID/time/source fields with optional category. Added a GLOBAL fixture parser that keeps canonical story URL and feed-link evidence, bounded plain-text description, institution identity, and narrow routine/feature exclusions. The homepage is now reference-only and the exact RSS entry remains disabled for HTTP. Full pytest passed (315 tests); Ruff passed. Progress: 29/150.
 - **2026-10-15:** RS-072 source review found the official Smithsonian/USGS weekly report RSS URL and its stated category/cadence limits, but the exact feed returned HTTP 403 to bounded direct inspection. No parser or completion claim; continue after legitimate sample access. Next: UN News RSS.

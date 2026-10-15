@@ -1,7 +1,19 @@
 from __future__ import annotations
 
+import json
+import re
 from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
+
+from console1701.config import (
+    NEWS_SOURCE_KINDS,
+    REGIONAL_ADAPTER_TYPES,
+    REGIONAL_RISK_LEVELS,
+    REGIONAL_SOURCE_CLASSES,
+    REGIONAL_VERIFICATION_STATUSES,
+)
 
 
 @dataclass(frozen=True)
@@ -202,6 +214,123 @@ REGIONAL_SOURCE_REGISTRY: tuple[RegionalSourceRegistryEntry, ...] = (
         ),
     ),
 )
+
+
+_REGIONAL_DESIGN_INTERVAL = re.compile(r"^(\d+) (min|h)$")
+_REGIONAL_RSS_ADAPTERS = {"cap_alerts", "official_rss", "rss_atom", "wordpress_feed_candidate"}
+_REGIONAL_API_ADAPTERS = {
+    "airport_status_json_or_xml", "arcgis_feature_service_candidate", "geojson_feed",
+    "gtfs_realtime_alerts", "hydrology_api_json", "official_api_json", "open511_json",
+}
+_REGIONAL_OFFICIAL_STATUSES = {
+    "independent_local", "local_tv", "nonprofit_community", "nonprofit_media",
+    "official", "official_candidate", "official_reference_candidate", "platform",
+    "platform_official_account", "public_media", "reference", "regional_media",
+}
+_REGIONAL_FUTURE_PHASES = {"R1", "R2", "R3", "R6", "R7", "R8", "R9", "R10"}
+
+
+def _design_interval_minutes(raw: str) -> int:
+    if raw in {"manual", "none", "disabled"}:
+        return 0
+    match = _REGIONAL_DESIGN_INTERVAL.fullmatch(raw)
+    if match is None:
+        raise ValueError(f"Invalid REGIONAL design refresh interval: {raw}")
+    count = int(match.group(1))
+    return count * (60 if match.group(2) == "h" else 1)
+
+
+def _design_kind(adapter: str) -> str:
+    if adapter == "socrata_json":
+        return "open_data_json"
+    if adapter in _REGIONAL_RSS_ADAPTERS:
+        return "rss"
+    if adapter in _REGIONAL_API_ADAPTERS:
+        return "api_json"
+    if adapter == "static_html_headline_candidate":
+        return "homepage_headlines"
+    return "reference_only"
+
+
+def _complete_regional_registry(
+    core: tuple[RegionalSourceRegistryEntry, ...],
+) -> tuple[RegionalSourceRegistryEntry, ...]:
+    raw = json.loads(
+        Path(__file__).with_name("regional_registry.json").read_text(encoding="utf-8")
+    )
+    if not isinstance(raw, list):
+        raise ValueError("REGIONAL design source inventory must be a list.")
+    overrides = {entry.source_key: entry for entry in core}
+    entries: list[RegionalSourceRegistryEntry] = []
+    seen: set[str] = set()
+    for row in raw:
+        if not isinstance(row, dict):
+            raise ValueError("REGIONAL design source entry must be an object.")
+        key = str(row.get("source_key") or "")
+        if not key or key in seen or row.get("scope") != "REGIONAL":
+            raise ValueError(f"Invalid or duplicate REGIONAL design source key: {key}")
+        seen.add(key)
+        if key in overrides:
+            entries.append(overrides.pop(key))
+            continue
+        adapter = str(row["adapter"])
+        entries.append(RegionalSourceRegistryEntry(
+            source_key=key,
+            source_name=str(row["source_name"]),
+            source_family=str(row["source_family"]),
+            source_class=str(row["source_class"]),
+            adapter=adapter,
+            kind=_design_kind(adapter),
+            raw_url=str(row["raw_url"]),
+            priority=int(row["priority"]),
+            interval_minutes=_design_interval_minutes(str(row["refresh_interval"])),
+            official_status=str(row["official_status"]),
+            privacy_risk=str(row["privacy_risk"]),
+            policy_risk=str(row["policy_risk"]),
+            parser_risk=str(row["parser_risk"]),
+            retention_sensitivity=str(row["retention_sensitivity"]),
+            verification_status=str(row["verification_status"]),
+            future_phase=str(row["future_phase"]),
+            why_it_matters=str(row["why_it_matters"]),
+            expected_access_kind=str(row["expected_access_kind"]),
+        ))
+    entries.extend(overrides.values())
+    return tuple(entries)
+
+
+REGIONAL_SOURCE_REGISTRY = _complete_regional_registry(REGIONAL_SOURCE_REGISTRY)
+
+
+def _validate_registry() -> None:
+    seen: set[str] = set()
+    for entry in REGIONAL_SOURCE_REGISTRY:
+        if entry.source_key in seen:
+            raise RuntimeError(f"Duplicate REGIONAL source registry key: {entry.source_key}")
+        seen.add(entry.source_key)
+        if entry.scope != "REGIONAL" or entry.enabled:
+            raise RuntimeError(f"{entry.source_key} must be disabled REGIONAL source.")
+        parts = urlsplit(entry.raw_url)
+        if parts.scheme != "https" or not parts.hostname:
+            raise RuntimeError(f"{entry.source_key} must have an HTTPS source URL.")
+        if not 0 <= entry.priority <= 100 or entry.interval_minutes < 0:
+            raise RuntimeError(f"{entry.source_key} has invalid priority or interval.")
+        for field, allowed in (
+            ("source_class", REGIONAL_SOURCE_CLASSES),
+            ("adapter", REGIONAL_ADAPTER_TYPES),
+            ("kind", NEWS_SOURCE_KINDS),
+            ("official_status", _REGIONAL_OFFICIAL_STATUSES),
+            ("privacy_risk", REGIONAL_RISK_LEVELS),
+            ("policy_risk", REGIONAL_RISK_LEVELS),
+            ("parser_risk", REGIONAL_RISK_LEVELS),
+            ("retention_sensitivity", REGIONAL_RISK_LEVELS),
+            ("verification_status", REGIONAL_VERIFICATION_STATUSES),
+            ("future_phase", _REGIONAL_FUTURE_PHASES),
+        ):
+            if getattr(entry, field) not in allowed:
+                raise RuntimeError(f"{entry.source_key} has invalid {field}.")
+
+
+_validate_registry()
 
 
 def list_regional_source_registry() -> list[dict[str, Any]]:
