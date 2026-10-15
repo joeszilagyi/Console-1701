@@ -1,0 +1,42 @@
+[
+  {
+    "BulletinID": 260101,
+    "BulletinFlag": true,
+    "BulletinText": "The evening sailing is canceled while the vessel is out of service.",
+    "CommunicationFlag": false,
+    "CommunicationText": null,
+    "RouteAlertFlag": true,
+    "RouteAlertText": "Evening sailing canceled",
+    "HomepageAlertText": null,
+    "PublishDate": "/Date(1792099800000-0700)/",
+    "DisruptionDescription": "Evening sailing canceled.",
+    "AllRoutesFlag": false,
+    "SortSeq": 1,
+    "AlertTypeID": 1,
+    "AlertType": "Service Disruption",
+    "AlertFullTitle": "Route 7 evening sailing canceled",
+    "AffectedRouteIDs": [7],
+    "IVRText": null
+  },
+  {
+    "BulletinID": 260102,
+    "BulletinFlag": true,
+    "BulletinText": "Several sailings are behind schedule.",
+    "CommunicationFlag": false,
+    "RouteAlertFlag": true,
+    "PublishDate": "/Date(1792102200000-0700)/",
+    "DisruptionDescription": "Sailings delayed 20 minutes.",
+    "AllRoutesFlag": false,
+    "AlertType": "Service Disruption",
+    "AlertFullTitle": "Route 3 sailings delayed",
+    "AffectedRouteIDs": [3],
+    "IVRText": null
+  },
+  {
+    "BulletinID": 260103,
+    "BulletinFlag": false,
+    "PublishDate": "/Date(1792102200000-0700)/",
+    "AlertFullTitle": "Non-bulletin route announcement",
+    "AffectedRouteIDs": [3]
+  }
+]

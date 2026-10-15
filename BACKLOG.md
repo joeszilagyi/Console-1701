@@ -749,10 +749,12 @@ and closed-alert cases; it is not an observed authenticated response. A syntheti
 Emergency News RSS fixture now covers warning, recovery, and test posts with source-specific
 classification and an offline scan. Dedicated USGS water fixture coverage now joins an observed
 latest-continuous response to Cedar River at Renton station metadata, preserves stage/flow and
-staleness evidence, and leaves flood stage unknown without a source threshold. Dedicated WSF,
-wildfire, other county emergency, AQI,
-outage, and other regional fixture shapes remain pending endpoint verification; do not invent
-live API shapes to close this pack.
+staleness evidence, and leaves flood stage unknown without a source threshold. A synthetic WSF
+alerts fixture now follows the official access-code API model and preserves bulletin IDs, route
+IDs, cancellation/delay classification and impact evidence while leaving absent terminal, vessel,
+and end-time fields unknown. Dedicated wildfire, other county emergency, AQI, outage, and other
+regional fixture shapes remain pending endpoint verification; do not invent live API shapes to
+close this pack.
 
 ### NWS Alert Parser For Washington
 
@@ -799,11 +801,20 @@ code or authenticated live path was added.
 
 ### WSF Bulletin/API Fixture Parser
 
-Status: not implemented.
+Status: implemented (documented synthetic fixture; live API remains disabled).
 
 Build a fixture parser for Washington State Ferries bulletins and API records after access-code and
 endpoint behavior are designed. Preserve ferry route, terminal, vessel when public, delay or
 cancellation status, start/end times, source URL, and ferry-impact ranking evidence.
+
+Current state: WSDOT documents a JSON `/alerts` operation with BulletinID, BulletinFlag,
+PublishDate, AlertFullTitle, AffectedRouteIDs, DisruptionDescription, and BulletinText. A
+fixture-only parser accepts a synthetic example of that documented shape, keeps numeric bulletin
+and route identity, bounds metadata text, classifies cancellation/delay from explicit text, and
+records official impact evidence. It does not infer terminal, vessel, start, or end fields absent
+from the API alert model. The public bulletin page is the display URL; a labeled local canonical
+key separates bulletins for dedupe without claiming an official per-alert link. The API needs a
+WSDOT access code, so direct HTTP remains blocked. See the source verification note.
 
 ### WA DNR Wildfire Endpoint Research
 
