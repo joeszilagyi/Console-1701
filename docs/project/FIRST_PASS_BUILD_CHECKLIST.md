@@ -159,7 +159,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-119** [Disabled-By-Default Solar System And Beyond Config](../../BACKLOG.md#L2006) — disabled config tree, strict flag/attention validation, explicit sensitive-category gates, and example config; runtime scope remains pending.
 - [x] **RS-120** [Solar System And Beyond Source Registry Design Implementation](../../BACKLOG.md#L2016) — all 170 design candidates validated and disabled under the internal working name, with per-source health behavior and no runtime fetch wiring.
 - [x] **RS-121** [Solar System And Beyond SQLite Schema Or Extension](../../BACKLOG.md#L2026) — disabled registry sync plus scoped science event/evidence/query-bound schema, indexes, and expiry purge.
-- [ ] **RS-122** [Solar System And Beyond Fixture Pack](../../BACKLOG.md#L2038) — parser fixtures and first offline JPL/ESA scan pass; blocked-state matrix and other fixture families pending.
+- [ ] **RS-122** [Solar System And Beyond Fixture Pack](../../BACKLOG.md#L2038) — all eight permitted parser fixtures pass offline scans; ATel and blocked-state matrix pending.
 - [x] **RS-123** [NASA/JPL RSS Parser](../../BACKLOG.md#L2049) — exact NASA-hosted JPL science RSS fixture parser with topic/operations filtering, bounded metadata, and no-download evidence; live access remains gated.
 - [x] **RS-124** [ESA RSS Parser](../../BACKLOG.md#L2058) — exact ESA Space Science fixture parser with article-path/launch/image filtering, mission labels, bounded metadata, and no-download evidence.
 - [x] **RS-125** [Hubble/JWST RSS Parser](../../BACKLOG.md#L2066) — fixture-only ESA Hubble/Webb science-release parsers with release IDs, telescope identity, bounded metadata, and explicit third-party feed block.
@@ -184,9 +184,9 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-144** [Transient Alert Ingest Phase, Disabled By Default](../../BACKLOG.md#L2259) — not implemented.
 - [x] **RS-145** [Documentation For Source Verification](../../BACKLOG.md#L2292) — science endpoint signoff template, exact promotion gates, and NASA/JPL/ESA walkthroughs with observed blockers complete.
 - [ ] **RS-146** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L2307) — not implemented.
-- [ ] **RS-147** [Tests For No Heavy Archive Source Running Without Explicit Config](../../BACKLOG.md#L2316) — not implemented.
+- [x] **RS-147** [Tests For No Heavy Archive Source Running Without Explicit Config](../../BACKLOG.md#L2316) — every heavy/catalog registry candidate is rejected by the COSMIC exact-source gate, even with heavy flags enabled.
 - [ ] **RS-148** [Tests For No Auth Source Running Without Config](../../BACKLOG.md#L2325) — not implemented.
-- [ ] **RS-149** [Tests For No Data Product Downloads](../../BACKLOG.md#L2333) — not implemented.
+- [x] **RS-149** [Tests For No Data Product Downloads](../../BACKLOG.md#L2333) — all eight permitted COSMIC adapters pass offline scans with bounded metadata and explicit no-product-request evidence.
 - [x] **RS-150** [Tests For No Alien-Life Or UFO Hype Leakage](../../BACKLOG.md#L2342) — direct and offline SQLite scan tests block explicit claims before storage and reject journalism source impersonation.
 
 ## Deferred from this first pass
