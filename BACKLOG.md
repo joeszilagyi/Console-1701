@@ -1155,8 +1155,9 @@ park instructions and missing optional population data. `national_cisa_kev.json`
 catalog envelope, CVE identity, due dates, ransomware/triage evidence, and offline scan.
 `national_faa_nas_status.xml` covers FAA delay, ground stop, closure notice, airport filtering,
 and offline scan. `national_federal_register_documents.json` covers document filters, action
-windows, low-value suppression, and offline scan. The other NATIONAL source-family fixtures
-listed above remain pending.
+windows, low-value suppression, and offline scan. `national_govinfo_enrolled_bills.rss` covers
+allowlisted collection, title filtering, identity and offline scan. The other NATIONAL
+source-family fixtures listed above remain pending.
 
 ### NWS Active Alert Parser
 
@@ -1355,7 +1356,14 @@ routine notices from flooding NATIONAL attention.
 
 ### GovInfo RSS Parser
 
-Status: not implemented.
+Status: implemented for filtered offline fixture ingest; live remains disabled.
+
+Three exact official GovInfo collection feeds returned RSS with GUID, title, date, details link,
+category, and HTML content-file descriptions in bounded 2026-10-15 reads. The parser accepts
+only verified collection channels with explicit title impact terms, validates official identity
+and URL, strips/bounds description metadata, and preserves publication-stage and timestamp
+caveats. A synthetic enrolled-bills fixture and offline scan test pass. See
+`docs/project/NATIONAL_GOVINFO_RSS_FIXTURE_VERIFICATION.md`.
 
 Build a fixture-first parser for allowlisted GovInfo RSS feeds. Preserve collection, title, URL,
 published timestamp, bounded description, document identifiers, and official publication evidence.

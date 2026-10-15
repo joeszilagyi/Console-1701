@@ -62,7 +62,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-031** [NATIONAL Source Registry Design Implementation](../../BACKLOG.md#L973) — 227 disabled design entries, validated metadata, config defaults, SQLite sync, and summary.
 - [x] **RS-032** [Disabled-By-Default NATIONAL Config](../../BACKLOG.md#L982) — validated national policy tree, separate scope gate, social-source rejection, and disabled defaults.
 - [x] **RS-033** [NATIONAL SQLite Schema Or Extension](../../BACKLOG.md#L993) — scoped storage, agency/sector/state indexed facets, migration backfill and expiry purge verified.
-- [ ] **RS-034** [NATIONAL Fixture Pack](../../BACKLOG.md#L1003) — partial: NWS, USGS, NHTSA, CISA KEV, FAA NAS and Federal Register fixtures; other selected source families pending.
+- [ ] **RS-034** [NATIONAL Fixture Pack](../../BACKLOG.md#L1003) — partial: NWS, USGS, NHTSA, CISA KEV, FAA NAS, Federal Register and GovInfo fixtures; other selected source families pending.
 - [x] **RS-035** [NWS Active Alert Parser](../../BACKLOG.md#L1012) — fixture parser preserves national alert geography, timing, instruction, and ranking evidence; focused tests pass.
 - [x] **RS-036** [NHC Advisory/Feed Verification](../../BACKLOG.md#L1020) — official basin XML, summary/advisory fields, identity limits and empty-basin sentinel observed; live disabled.
 - [ ] **RS-037** [USGS Earthquake GeoJSON Parser](../../BACKLOG.md#L1028) — partial: national coordinate regions, threshold, and fixture ingest work; nuanced cross-border and multi-state impact routing remains.
@@ -76,7 +76,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-045** [CISA Advisory Parser](../../BACKLOG.md#L1097) — not implemented.
 - [x] **RS-046** [CISA KEV Endpoint Research](../../BACKLOG.md#L1106) — official JSON/schema, snapshot/update and due-date semantics, access and health gate documented; ingest stays disabled.
 - [x] **RS-047** [Federal Register API Parser With Filters](../../BACKLOG.md#L1114) — official list shape, required agency/type/impact filters, low-value suppression, action dates, ranking, facets and offline scan verified; live disabled.
-- [ ] **RS-048** [GovInfo RSS Parser](../../BACKLOG.md#L1122) — not implemented.
+- [x] **RS-048** [GovInfo RSS Parser](../../BACKLOG.md#L1122) — verified collection RSS shapes, explicit title filter, bounded metadata, ranking/facets and offline scan; live disabled.
 - [ ] **RS-049** [NATIONAL Deterministic Event Correlation](../../BACKLOG.md#L1155) — not implemented.
 - [ ] **RS-050** [NATIONAL Deterministic Ranking](../../BACKLOG.md#L1165) — not implemented.
 - [ ] **RS-051** [NATIONAL Low-Public-Value And Public-Impact Rules](../../BACKLOG.md#L1175) — not implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-048 and advanced RS-034. Verified three GovInfo collection RSS feeds, added collection/title-filtered fixture parser with publication-stage caveats, and tested offline scan. Full pytest passed (340 tests); Ruff passed. Progress: 56/150.
 - **2026-10-15:** Completed RS-047 and advanced RS-034. Verified Federal Register JSON list shape, implemented explicit agency/type/impact filtering and administrative suppression, preserved optional action windows, and tested fixture scan. Full pytest passed (338 tests); Ruff passed. Progress: 55/150.
 - **2026-10-15:** Completed RS-044 and advanced RS-034. Verified official FAA NAS XML shape, implemented airport allowlist and grouped event fixture parser, added source-specific aviation ranking and facets, and tested offline scan. Full pytest passed (336 tests); Ruff passed. Live adapter remains disabled. Progress: 54/150.
 - **2026-10-15:** Advanced RS-034 with a CISA KEV full-catalog fixture parser, bounded CVE and federal due-date evidence, cyber ranking, NATIONAL facets, and an offline scan regression. Full pytest passed (334 tests); Ruff passed. Live KEV remains disabled. Progress: 53/150.

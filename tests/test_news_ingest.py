@@ -1280,6 +1280,45 @@ def test_run_news_scan_filters_national_federal_register_fixture(tmp_path):
     assert all(row["ingest"]["fixture_only"] is True for row in evidence_rows)
 
 
+def test_run_news_scan_filters_national_govinfo_rss_fixture(tmp_path):
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        news:
+          enabled: true
+          scopes:
+            NATIONAL:
+              enabled: true
+              sources:
+                - id: govinfo_feeds
+                  name: GovInfo enrolled bills fixture
+                  kind: rss
+                  parser: govinfo_collection_rss
+                  source_family: govinfo
+                  official_status: official
+                  tags: [official]
+                  collection: BILLS
+                  impact_terms: [emergency communications]
+                  enabled: true
+                  url: "{_file_url(FIXTURE_DIR / 'national_govinfo_enrolled_bills.rss')}"
+        """,
+    )
+    result = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        rows = conn.execute(
+            "SELECT evidence_json FROM news_items WHERE scope = 'NATIONAL'"
+        ).fetchall()
+        gpo_items = list_national_items_by_facet(conn, "agency", "GPO")
+    assert result["status"] == "complete"
+    assert result["item_count"] == 1
+    assert len(rows) == len(gpo_items) == 1
+    evidence = json_loads(rows[0]["evidence_json"], {})
+    assert evidence["govinfo_publication"]["document_id"] == "BILLS-119hr8322enr"
+    assert evidence["ingest"]["fixture_only"] is True
+
+
 def test_run_news_scan_uses_national_usgs_threshold_for_fixture(tmp_path):
     config_path = _write_config(
         tmp_path / "config.yml",
