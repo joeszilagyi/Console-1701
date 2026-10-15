@@ -84,6 +84,10 @@ _NATIONAL_USGS_REGIONS = (
     ("guam_nmi", 143.0, 147.0, 13.0, 21.0),
     ("american_samoa", -172.0, -168.0, -15.0, -10.0),
 )
+_FOREIGN_USGS_PLACE_SUFFIX = re.compile(
+    r",\s*(?:Canada|Mexico|Cuba|The Bahamas|Bahamas|Guatemala|Belize|Honduras|"
+    r"Haiti|Dominican Republic|Jamaica)\s*$", re.I
+)
 
 
 def resolve_file_url(url: str, *, config_dir: Path) -> Path:
@@ -1459,6 +1463,11 @@ def _parse_usgs_earthquake_geojson(
             continue
         national = str(source.get("scope") or "").upper() == "NATIONAL"
         national_region = _national_usgs_region(longitude, latitude) if national else None
+        source_place = str(properties.get("place") or "").strip()
+        # The broad U.S. coordinate boxes include foreign land. A country suffix
+        # in USGS's own place label is a useful exclusion, not proof of a U.S.
+        # epicenter or a multi-state impact for labels that remain.
+        foreign_place_label = bool(_FOREIGN_USGS_PLACE_SUFFIX.search(source_place))
         radius_distance = (
             _distance_km(
                 geo_filter["center_latitude"], geo_filter["center_longitude"],
@@ -1466,7 +1475,9 @@ def _parse_usgs_earthquake_geojson(
             ) if "radius_km" in geo_filter and not (national or global_scope) else None
         )
         matches_geography = (
-            True if global_scope else national_region is not None if national else
+            True if global_scope else (
+                national_region is not None and not foreign_place_label
+            ) if national else
             geo_filter["min_longitude"] <= longitude <= geo_filter["max_longitude"]
             and geo_filter["min_latitude"] <= latitude <= geo_filter["max_latitude"]
         )
@@ -1487,7 +1498,7 @@ def _parse_usgs_earthquake_geojson(
             raise NewsParserError(f"USGS feature {index} has an invalid event URL.") from exc
         if parts.scheme != "https" or parts.hostname != "earthquake.usgs.gov":
             raise NewsParserError(f"USGS feature {index} has no official HTTPS event URL.")
-        place = bounded_text(properties.get("place"), max_chars=180) or (
+        place = bounded_text(source_place, max_chars=180) or (
             "World" if global_scope else "U.S. region" if national else "Washington region"
         )
         title = bounded_text(properties.get("title"), max_chars=MAX_TITLE_LENGTH)
@@ -1578,6 +1589,7 @@ def _parse_usgs_earthquake_geojson(
                 ),
                 "distance_km": round(radius_distance, 1) if radius_distance is not None else None,
                 "region": national_region,
+                "foreign_place_label_guard": bool(national),
                 "place_label": place if global_scope else None,
             },
             "ranking": {
