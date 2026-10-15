@@ -2158,7 +2158,15 @@ Architecture reference:
 
 ### ORBITAL Source Registry Design Implementation
 
-Status: not implemented.
+Status: implemented as disabled planning inventory.
+
+All 136 ORBITAL design-table entries are checked into `orbital_registry.json` with source/family,
+class, exact or reference URL, access, adapter, interval, priority, status, risks, phase, and
+planned health behavior. The loader validates enums, URL exceptions, key uniqueness, priority,
+and cadence; config inherits registry defaults, all entries remain disabled, and explicit scan
+syncs the inventory to SQLite and summary. Reference-only rows cannot ingest even with an
+overridden local file URL. The ORBITAL policy tree and candidate gates follow in RS-090; this
+registry does not admit live HTTP.
 
 Implement the ORBITAL source registry from the design document with explicit `source_key`,
 `source_name`, `source_family`, `source_class`, `scope`, `raw_url`, access kind, adapter type,

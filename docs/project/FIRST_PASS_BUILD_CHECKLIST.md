@@ -123,7 +123,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 
 ### ORBITAL Space Recent Signal Layer
 
-- [ ] **RS-089** [ORBITAL Source Registry Design Implementation](../../BACKLOG.md#L1627) — not implemented.
+- [x] **RS-089** [ORBITAL Source Registry Design Implementation](../../BACKLOG.md#L1627) — all 136 design entries disabled, validated and inherited by config, persisted in SQLite and summary; reference rows cannot ingest.
 - [ ] **RS-090** [Disabled-By-Default ORBITAL Config](../../BACKLOG.md#L1637) — not implemented.
 - [ ] **RS-091** [ORBITAL SQLite Schema Or Extension](../../BACKLOG.md#L1647) — not implemented.
 - [ ] **RS-092** [ORBITAL Fixture Pack](../../BACKLOG.md#L1658) — not implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-089. Added all 136 disabled ORBITAL design inventory rows, validated metadata and URL exceptions, config defaults, SQLite sync and summary, and no-fetch reference behavior. Full pytest passed (369 tests); Ruff passed. Progress: 66/150. Next: RS-090 policy tree and candidate gates.
 - **2026-10-15:** Completed RS-056. Expanded the NATIONAL source verification workflow with explicit agency, geography, public-action, filter, key, sensitivity, health and admission decisions. It links the USGS live signoff, researched/fixture sources and exact blocked candidates without promoting them. Progress: 65/150. Next: remaining fixture/parser and geography gaps.
 - **2026-10-15:** Completed RS-055 at the first-source boundary. Reused the verified exact USGS day feed for a NATIONAL-only allowlist; the default magnitude and coarse U.S./territory filters apply, with all flags off by default. An isolated explicit smoke scan returned HTTP 200, healthy health, and one retained NATIONAL item. Mocked gate, interval and conditional tests pass. Full pytest passed (365 tests); Ruff passed. Progress: 64/150. Next: remaining NATIONAL source verification, fixture pack, and documentation.
 - **2026-10-15:** Completed RS-054. NATIONAL items and event clusters now persist and render source, URLs, timing, fetch/parser/health, geography basis, match/confidence, public impact, ranking, policy and retention evidence. A read-only fixture test checks the JSON contract and HTML without HTTP. Full pytest passed (363 tests); Ruff passed. Progress: 63/150. Next: source verification and selected live-ingest gates.
