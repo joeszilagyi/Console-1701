@@ -1388,7 +1388,7 @@ settings. No GLOBAL source is live allowlisted.
 
 ### GLOBAL SQLite Schema Or Extension
 
-Status: partially implemented.
+Status: completed 2026-10-15 for first-pass storage contract.
 
 Add or extend SQLite storage for GLOBAL source registry state, fetch runs, normalized items,
 `global_events` or scoped clusters, source health, ranking explanations, crisis sensitivity flags,
@@ -1397,9 +1397,11 @@ indexes for latest-by-scope, event ranking, source health, source family, event 
 country/region, and `expires_at` purge. Do not store full article bodies by default.
 
 Current state: the shared scoped source registry stores all 172 GLOBAL inventory rows and exposes a
-GLOBAL registry summary. Shared source, fetch, item, health, cluster, and retention tables can
-persist GLOBAL records. Dedicated affected-country/region and event-type query indexes, crisis
-sensitivity evidence, and retention/purge verification remain pending.
+GLOBAL registry summary. Shared source, fetch, item, health, cluster, and retention tables persist
+GLOBAL records without full article bodies. `news_item_facets` indexes country, verified region,
+event type, source family, impact tag, and explicit sensitivity flags; it backfills existing GLOBAL
+items, refreshes when item evidence changes, and cascades on retention purge. Query and purge tests
+verify those paths. Broader event correlation and sensitivity classification remain separate rows.
 
 ### GLOBAL Fixture Pack
 
@@ -1646,7 +1648,7 @@ multi-source public-impact events.
 
 ### GLOBAL UI Disabled States
 
-Status: not implemented.
+Status: partially implemented.
 
 Replace GLOBAL placeholders only after storage/config support exists. Show honest states for
 disabled, not configured, configured but disabled, never scanned, stale, policy blocked, parser
@@ -1654,15 +1656,26 @@ failed, auth required, rate limited, social disabled, homepage extraction disabl
 disabled, token/account source not configured, and manual-review-only sources. Do not show fake
 headlines.
 
+Current state: the shared scope page already renders GLOBAL state, source health, and real stored
+items without placeholder headlines. Dedicated GLOBAL coverage for heavy open-data and homepage
+extractor gate states is missing, and source cards show only the first six configured sources.
+
 ### GLOBAL Source Health States
 
-Status: not implemented.
+Status: partially implemented.
 
 Implement source health states for GLOBAL: `disabled`, `not_configured`, `configured_never_run`,
 `healthy`, `stale`, `failing`, `parser_failed`, `policy_blocked`, `robots_blocked`,
 `auth_required`, `rate_limited`, `unsupported`, `manual_review_only`,
 `heavy_open_data_disabled`, `social_disabled`, and `homepage_extract_disabled`. Surface these
 states in SYSTEM later and summarize them on GLOBAL.
+
+Current state: shared health reporting covers disabled, never-run, healthy, stale, parser failure,
+policy block, auth required, rate limit, robots block, manual review, unsupported, and social block.
+It does not yet expose dedicated `heavy_open_data_disabled` or
+`homepage_extract_disabled` GLOBAL states. The current GLOBAL config rejects several gated
+sources before they can appear in a source-health list, so the UI and validation contract need a
+coherent blocked-source path.
 
 ### GLOBAL Evidence Drawer Contract
 

@@ -9,6 +9,7 @@ from typing import Any
 
 from console1701.config import ensure_state_dirs, iter_news_sources, load_config
 from console1701.db import connect_db, init_db, json_dumps, json_loads, utc_now
+from console1701.news.facets import replace_global_item_facets
 from console1701.news.global_registry import list_global_source_registry
 from console1701.news.local_registry import list_local_source_registry
 from console1701.news.national_registry import list_national_source_registry
@@ -1902,6 +1903,8 @@ def _upsert_item(
                     (json_dumps(evidence), item_id),
                 )
 
+        if str(source.get("scope") or "").upper() == "GLOBAL":
+            replace_global_item_facets(conn, item_id, evidence, combined_tags)
         return item_id
 
     item_id = int(existing["id"])
@@ -1979,6 +1982,8 @@ def _upsert_item(
                 (json_dumps(evidence), item_id),
             )
 
+    if str(source.get("scope") or "").upper() == "GLOBAL":
+        replace_global_item_facets(conn, item_id, evidence, combined_tags)
     return item_id
 
 

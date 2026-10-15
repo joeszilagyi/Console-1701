@@ -227,6 +227,15 @@ CREATE TABLE IF NOT EXISTS news_items (
   FOREIGN KEY(source_id) REFERENCES news_sources(id)
 );
 
+CREATE TABLE IF NOT EXISTS news_item_facets (
+  item_id INTEGER NOT NULL,
+  scope TEXT NOT NULL,
+  facet_kind TEXT NOT NULL,
+  facet_value TEXT NOT NULL,
+  PRIMARY KEY(item_id, facet_kind, facet_value),
+  FOREIGN KEY(item_id) REFERENCES news_items(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS local_events (
   id INTEGER PRIMARY KEY,
   scope TEXT NOT NULL,
@@ -323,6 +332,9 @@ CREATE INDEX IF NOT EXISTS idx_news_items_source_seen
 
 CREATE INDEX IF NOT EXISTS idx_news_items_expires_at
   ON news_items(expires_at);
+
+CREATE INDEX IF NOT EXISTS idx_news_item_facets_lookup
+  ON news_item_facets(scope, facet_kind, facet_value, item_id);
 
 CREATE INDEX IF NOT EXISTS idx_news_items_url_hash
   ON news_items(url_hash);
