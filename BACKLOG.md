@@ -1778,7 +1778,11 @@ and must be safe for pytest.
 Current state: checked-in GDACS RSS/API GeoJSON, ReliefWeb disaster/report, WHO DON, ECDC RSS,
 USGS earthquake, NHC RSS, UN News RSS, UN Press RSS and IAEA RSS fixtures exercise offline parser
 and `news-scan` persistence paths. Smithsonian GVP, broader news and remaining health/failure
-variants are pending.
+variants are pending. A bounded read of the BBC World RSS candidate on 2026-10-15 returned HTTP
+200 with title, link, GUID, publication time and description fields. Its feed points to BBC reuse
+terms, and [BBC's published terms](https://downloads.bbc.co.uk/usingthebbc/bbc_terms_of_use_31March2022english.pdf)
+restrict extracting metadata from RSS feeds. Keep `bbc_world_rss` disabled and do not build a
+metadata extraction parser without a suitable permission or a different verified source.
 
 ### GDACS Feed Parser
 
@@ -2124,8 +2128,12 @@ without granting independent-family or temporal credit, and a bounded syndicatio
 their cluster-size contribution; a shared homepage URL alone cannot merge unrelated titles.
 Direct and offline scan tests verify those rules. Sensitivity and explicit rumor phrases in
 descriptions now receive the same pre-storage policy check as titles; a neutral headline with
-graphic/private-person description is redacted before SQLite persistence. Remaining work:
-source-specific coverage for broader public-impact categories and additional low-value variants.
+graphic/private-person description is redacted before SQLite persistence. Routine institutional,
+opinion, and domestic-politics phrases in a bounded description now also mark an item background
+before storage; official alert metadata prevents that low-value rule from masking a verified alert.
+An offline scan verifies the stored 40-point low-value penalty and zero-score cluster. Remaining
+work: source-specific coverage for broader public-impact categories and additional low-value
+variants.
 
 ### GLOBAL UI Disabled States
 

@@ -37,6 +37,25 @@ def test_official_alert_metadata_prevents_routine_suppression():
     assert "public_value_class" not in result["evidence"]["global_identity"]
 
 
+def test_low_value_descriptions_are_classified_without_overriding_official_alerts():
+    source = {"scope": "GLOBAL", "source_family": "un_press"}
+    cases = (
+        ("This is a routine diplomatic statement about a courtesy call.", "routine"),
+        ("Opinion: A commentator reflects on the week.", "opinion"),
+        ("This concerns a domestic election campaign rally.", "generic_politics"),
+    )
+    for description, expected in cases:
+        result = classify_global_item(source, _item("World update", description=description))
+        assert result["evidence"]["global_identity"]["public_value_class"] == expected
+        assert result["evidence"]["global_attention_policy"]["attention_state"] == "background"
+    alert = classify_global_item(
+        {"scope": "GLOBAL", "source_family": "gdacs"},
+        _item("Cyclone warning", {"gdacs": {"alert_level": "Red"}},
+              description="Routine economic release mentioned in context."),
+    )
+    assert alert["evidence"]["global_attention_policy"]["attention_state"] == "eligible"
+
+
 def test_explicit_rumor_and_graphic_headline_are_labeled_without_impact_inference():
     rumor = classify_global_item(
         {"scope": "GLOBAL", "source_family": "regional_media"},
@@ -168,3 +187,48 @@ def test_scan_redacts_graphic_description_with_neutral_title(tmp_path, monkeypat
     assert evidence["sensitivity"]["private_distress"] is True
     assert evidence["sensitivity"]["redacted_before_storage"] is True
     assert "explicit graphic-content description" in evidence["global"]["policy_notes"]
+
+
+def test_scan_keeps_routine_description_out_of_global_attention(tmp_path, monkeypatch):
+    monkeypatch.setattr("console1701.news.scanner.fetch_official_text", lambda *a, **kw: (
+        (_ for _ in ()).throw(AssertionError("unexpected HTTP"))
+    ))
+    fixture = tmp_path / "routine.json"
+    fixture.write_text(json.dumps({"items": [{
+        "title": "World update",
+        "url": "https://example.test/global/routine",
+        "description": "A routine diplomatic statement about a courtesy call.",
+        "published_at": "2026-10-15T12:00:00Z",
+    }]}))
+    config_path = tmp_path / "config.yml"
+    config_path.write_text(dedent(f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        global: {{enabled: true}}
+        news:
+          enabled: true
+          scopes:
+            GLOBAL:
+              enabled: true
+              sources:
+                - id: global_routine_fixture
+                  name: GLOBAL routine fixture
+                  kind: api_json
+                  parser: generic_json_items
+                  source_family: un_press
+                  official_status: official
+                  policy_reviewed: true
+                  enabled: true
+                  url: "file://{fixture}"
+    """).strip() + "\n")
+    assert run_news_scan(config_path)["item_count"] == 1
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        row = conn.execute("SELECT evidence_json FROM news_items").fetchone()
+        cluster = conn.execute(
+            "SELECT score, evidence_json FROM news_clusters WHERE scope='GLOBAL'"
+        ).fetchone()
+    evidence = json_loads(row["evidence_json"], {})
+    assert evidence["global_identity"]["public_value_class"] == "routine"
+    assert evidence["global_attention_policy"]["attention_state"] == "background"
+    assert evidence["global"]["low_public_value_penalty"] == 40
+    assert cluster["score"] == 0
