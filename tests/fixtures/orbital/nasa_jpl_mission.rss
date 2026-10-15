@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+  <title>Jet Propulsion Laboratory – NASA</title>
+  <link>https://www.nasa.gov/centers-and-facilities/jpl/</link>
+  <item>
+    <title>NASA JPL Completes Lunar Lander Test</title>
+    <link>https://www.nasa.gov/missions/moon-base/nasa-jpl-completes-lunar-lander-test/</link>
+    <guid>https://www.nasa.gov/?p=1234567</guid>
+    <pubDate>Thu, 15 Oct 2026 17:00:00 +0000</pubDate>
+    <description>JPL teams completed a mission test.</description>
+    <category>Moon Base</category>
+  </item>
+  <item>
+    <title>NASA Roman Space Telescope Launches</title>
+    <link>https://www.nasa.gov/news-release/nasa-roman-space-telescope-launches/</link>
+    <guid>https://www.nasa.gov/?p=1234568</guid>
+    <pubDate>Thu, 15 Oct 2026 16:00:00 +0000</pubDate>
+    <description>NASA reports a launch.</description>
+  </item>
+  <item>
+    <title>NASA’s SPHEREx Telescope Sees Brown Dwarfs</title>
+    <link>https://www.nasa.gov/missions/spherex/nasa-spherex-sees-brown-dwarfs/</link>
+    <pubDate>Thu, 15 Oct 2026 15:00:00 +0000</pubDate>
+  </item>
+  <item>
+    <title>JPL Opens Student Mission Challenge</title>
+    <link>https://www.nasa.gov/missions/moon-base/student-mission-challenge/</link>
+    <pubDate>Thu, 15 Oct 2026 14:00:00 +0000</pubDate>
+  </item>
+  <item>
+    <title>JPL Completes Moon Mission Test</title>
+    <link>https://example.test/missions/moon-base/fake/</link>
+    <pubDate>Thu, 15 Oct 2026 13:00:00 +0000</pubDate>
+  </item>
+</channel></rss>

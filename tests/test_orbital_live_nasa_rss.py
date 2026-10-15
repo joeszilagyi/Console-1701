@@ -33,6 +33,10 @@ FEEDS = {
     "nasa_kennedy_blog": (
         "Kennedy Space Center - NASA", "/blogs/kennedy/", "Kennedy Teams Complete Launch Test",
     ),
+    "jpl_rss": (
+        "Jet Propulsion Laboratory – NASA", "/missions/moon-base/",
+        "NASA JPL Completes Lunar Lander Test",
+    ),
 }
 
 

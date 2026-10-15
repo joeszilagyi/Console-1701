@@ -89,6 +89,10 @@ OFFICIAL_SOURCES = {
         "https://www.nasa.gov/blogs/kennedy/feed/", "rss", "nasa_orbital_rss",
         "application/rss+xml"
     ),
+    ("ORBITAL", "jpl_rss"): (
+        "https://www.nasa.gov/centers-and-facilities/jpl/feed/", "rss",
+        "nasa_orbital_rss", "application/rss+xml"
+    ),
     ("ORBITAL", "esa_rss"): (
         "https://www.esa.int/rssfeed/Our_Activities/Space_News", "rss", "esa_orbital_rss",
         "application/rss+xml"
