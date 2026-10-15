@@ -28,6 +28,9 @@ def test_science_inventory_is_disabled_and_keeps_system_as_app_health():
     assert get_science_source_registry_entry("esa_space_science_feed")[
         "source_health_behavior"
     ] == "disabled"
+    assert get_science_source_registry_entry("nasa_jpl_science_feed")[
+        "source_health_behavior"
+    ] == "disabled"
     assert get_science_source_registry_entry("nasa_exoplanet_ps_tap")[
         "source_health_behavior"
     ] == "disabled"
