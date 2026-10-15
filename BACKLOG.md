@@ -926,10 +926,12 @@ weather zone, fire incident name, volcano, seismic region, AQI station, and publ
 jurisdiction. Do not use LLMs, embeddings, or hidden cloud calls.
 
 Current state: USGS, NWS, and WSDOT fixtures match updates by their official event IDs into scoped
-clusters. The item/cluster contract stores geography basis, matching tokens, confidence, member
-IDs, and source families; unverified headlines remain isolated by URL. This prevents title-only
-false convergence. Cross-family semantic/time-window matching and the remaining regional token
-families are still pending; see `docs/project/REGIONAL_EVENT_CONTRACT.md`.
+clusters. The cluster rebuild also supports conservative cross-family matching by equal official
+event type, shared parser-backed geography, at least three title tokens, and a 48-hour publication
+window. It requires every pair to match and keeps unverified headlines isolated by URL. The
+item/cluster contract stores pairwise matching basis and tokens, confidence, member IDs, and
+source families. The remaining regional token families await source parsers; see
+`docs/project/REGIONAL_EVENT_CONTRACT.md`.
 
 ### REGIONAL Deterministic Ranking
 

@@ -10,11 +10,65 @@ from console1701.config import load_config
 from console1701.db import connect_db, json_loads
 from console1701.news.parsers import parse_fixture_items
 from console1701.news.regional_contract import build_regional_event_contract
+from console1701.news.regional_events import correlate_regional_items
 from console1701.news.regional_registry import regional_registry_config_defaults
 from console1701.news.scanner import purge_news_retention, run_news_scan
 from console1701.news.storage import get_news_scope_view, list_regional_items_by_facet
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures" / "news"
+
+
+def _correlation_item(
+    item_id: int, *, family: str, title: str, route: str = "I-5",
+    event_type: str = "traveler_alert", published: str = "2026-10-15T10:00:00+00:00",
+    official: bool = True,
+) -> dict:
+    return {
+        "id": item_id, "scope": "REGIONAL", "title": title,
+        "source_published_at": published,
+        "evidence": {
+            "source": {"source_key": f"source-{item_id}", "source_family": family,
+                       "official_status": "official" if official else "unverified"},
+            "regional_event": {
+                "event_key": f"event-{item_id}", "event_type": event_type,
+                "confidence": "high" if official else "low",
+                "geography": {"matched": True, "routes": [route]},
+            },
+        },
+    }
+
+
+def test_regional_correlation_requires_independent_verified_context_and_time():
+    title = "I-5 northbound closure near Tacoma after landslide"
+    first = _correlation_item(1, family="wsdot", title=title)
+    second = _correlation_item(2, family="county", title="Tacoma I-5 northbound landslide closure")
+    groups = correlate_regional_items([first, second])
+    assert len(groups) == 1
+    assert groups[0]["corroborated"] is True
+    assert "route" in groups[0]["matches"][0]["basis"]
+    for change in (
+        {"route": "SR-7"}, {"event_type": "weather_alert"},
+        {"published": "2026-10-18T10:00:00+00:00"},
+        {"official": False}, {"family": "wsdot"},
+        {"title": "Unrelated traffic notice"},
+    ):
+        altered = _correlation_item(
+            2, family=change.get("family", "county"), title=change.get("title", second["title"]),
+            route=change.get("route", "I-5"),
+            event_type=change.get("event_type", "traveler_alert"),
+            published=change.get("published", "2026-10-15T10:00:00+00:00"),
+            official=change.get("official", True),
+        )
+        assert len(correlate_regional_items([first, altered])) == 2
+
+
+def test_regional_correlation_does_not_bridge_distinct_incidents():
+    first = _correlation_item(1, family="wsdot", title="I-5 northbound Tacoma landslide closure")
+    middle = _correlation_item(2, family="county", title="I-5 Tacoma landslide closure")
+    last = _correlation_item(3, family="state", title="I-5 Tacoma landslide closure",
+                             route="SR-7")
+    groups = correlate_regional_items([first, middle, last])
+    assert sorted(len(group["item_ids"]) for group in groups) == [1, 2]
 
 
 def _file_url(name: str) -> str:
@@ -135,6 +189,49 @@ def test_regional_cluster_converges_same_official_event_without_family_inflation
             "regional_duplicate_family_penalty"
         ] == -2 for row in rows_after
     )
+
+
+def test_regional_scan_correlates_distinct_official_family_reports(tmp_path):
+    payload = json.loads((FIXTURES / "local_wsdot_alerts.json").read_text())
+    second = json.loads(json.dumps(payload))
+    second["alerts"] = [second["alerts"][0]]
+    second["alerts"][0]["AlertID"] = 2001
+    second["alerts"][0]["Url"] = "https://wsdot.example.test/travel/alerts/2001"
+    second_path = tmp_path / "second.json"
+    second_path.write_text(json.dumps(second), encoding="utf-8")
+    config_path = tmp_path / "regional.yml"
+    config_path.write_text(dedent(f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        news:
+          enabled: true
+          scopes:
+            REGIONAL:
+              enabled: true
+              sources:
+                - id: wsdot_traveler_api
+                  enabled: true
+                  url: "{_file_url('local_wsdot_alerts.json')}"
+                - id: county_travel_fixture
+                  name: County travel fixture
+                  kind: api_json
+                  parser: wsdot_travel_alerts_json
+                  source_family: county_transport
+                  source_class: official_transport
+                  official_status: official
+                  enabled: true
+                  url: "{second_path.as_uri()}"
+    """).strip() + "\n", encoding="utf-8")
+    result = run_news_scan(config_path)
+    assert result["item_count"] == 3, result
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        scope = get_news_scope_view(conn, config, "REGIONAL", cluster_limit=10)
+    correlated = [cluster for cluster in scope["clusters"] if cluster["item_count"] == 2]
+    assert len(correlated) == 1
+    assert correlated[0]["evidence"]["corroborated"] is True
+    assert "independent_family" in correlated[0]["evidence"]["correlation"]["matches"][0][
+        "basis"
+    ]
 
 
 def test_regional_geography_facets_are_official_scoped_and_expire(tmp_path):
