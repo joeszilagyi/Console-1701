@@ -549,6 +549,39 @@ def _source_config_hash(source: dict[str, Any]) -> str:
     return content_hash(json_dumps(stable), str(source.get("enabled")))
 
 
+def _fresh_live_orbital_items(
+    source: dict[str, Any], items: list[dict[str, Any]], *, now: datetime
+) -> list[dict[str, Any]]:
+    source_key = str(source.get("id") or "")
+    if source.get("scope") != "ORBITAL" or source_key not in {
+        "swpc_alerts_json", "swpc_noaa_scales_json",
+    }:
+        return items
+    fresh: list[dict[str, Any]] = []
+    for candidate in items:
+        try:
+            published = datetime.fromisoformat(
+                str(candidate.get("source_published_at"))
+            ).astimezone(UTC)
+        except (TypeError, ValueError):
+            continue
+        if source_key == "swpc_alerts_json":
+            keep = now - timedelta(hours=72) <= published <= now + timedelta(hours=1)
+        else:
+            period_kind = str((candidate.get("evidence") or {}).get(
+                "swpc_noaa_scale", {}
+            ).get("period_kind") or "")
+            keep = (
+                now - timedelta(hours=6) <= published <= now + timedelta(hours=1)
+                if period_kind == "current" else
+                now - timedelta(hours=1) <= published <= now + timedelta(hours=96)
+                if period_kind == "forecast" else False
+            )
+        if keep:
+            fresh.append(candidate)
+    return fresh
+
+
 def _ingest_source(
     conn: sqlite3.Connection,
     config: dict[str, Any],
@@ -668,21 +701,8 @@ def _ingest_source(
             fetch_evidence = {"fixture_path": str(path), "fixture_only": True}
             success_message = f"Fixture ingest succeeded for {path.name}."
         items = parse_fixture_items(source, text)
-        if is_live and source.get("scope") == "ORBITAL" and source.get("id") == (
-            "swpc_alerts_json"
-        ):
-            scan_now = datetime.now(UTC)
-            cutoff = scan_now - timedelta(hours=72)
-            fresh_items = []
-            for candidate in items:
-                published = candidate.get("source_published_at")
-                try:
-                    published_at = datetime.fromisoformat(str(published)).astimezone(UTC)
-                except (TypeError, ValueError):
-                    continue
-                if cutoff <= published_at <= scan_now + timedelta(hours=1):
-                    fresh_items.append(candidate)
-            items = fresh_items
+        if is_live:
+            items = _fresh_live_orbital_items(source, items, now=datetime.now(UTC))
         stored_count = 0
         seen_item_ids: set[int] = set()
         for item in items:
