@@ -2942,7 +2942,7 @@ verify registry sync, no configured science fetch sources, migration idempotence
 
 ### Solar System And Beyond Fixture Pack
 
-Status: partially implemented.
+Status: completed 2026-10-15 for the frozen first-pass fixture pack.
 
 Create local-only fixtures for NASA/JPL RSS, ESA RSS, Hubble/JWST RSS, NASA Exoplanet Archive tiny
 metadata, MAST tiny metadata, PDS tiny metadata, GCN notice, GCN circular, ATel RSS, TNS
@@ -2960,19 +2960,27 @@ with complete paging. The PDS fixture covers one collection metadata record. The
 covers an official-schema notice, coordinates, test gates, update, and retraction. The Circular
 fixture covers one official page-linked JSON shape, subject-prefix status labels, and a strict
 body/contact/sky-map exclusion; direct HTTP and archive discovery remain blocked. The ATel
-RSS 1.0 fixture covers two telegrams, preliminary labels, and no full bodies. Other fixture
-families and some source-health/policy variants remain pending.
+RSS 1.0 fixture covers two telegrams, preliminary labels, and no full bodies. A NASA Science
+News fixture now covers the observed malformed RSS header, official category filtering,
+Earth-only and mission-action exclusions, and article-body omission. Live access stays blocked
+because the real feed is stale and still malformed. TNS getting-started/API-manual registry
+candidates are explicitly auth-required and cannot be configured as fixture ingest sources;
+missing declared credentials on a permitted source record `auth_required` before fixture or HTTP
+access. GraceDB's public-alert fixture covers update/retraction metadata without sky-map access.
 
-The first offline `news-scan` integration now ingests configured NASA JPL and ESA RSS fixtures,
+The first offline `news-scan` integration ingests configured NASA JPL and ESA RSS fixtures,
 persists COSMIC items and events, and rejects nonexact source identities. A scan and page-render
-test assert no network call, while a repeat scan confirms event rebuild idempotence. The remaining
-fixture families and blocked-state variants still need end-to-end coverage.
+test assert no network call, while a repeat scan confirms event rebuild idempotence.
 
 A parameterized scan regression also exercises the Hubble, Webb, Exoplanet Archive, MAST, PDS,
-and GCN notice/Circular fixture adapters through the real scanner, with local-only input,
-stored event evidence,
-and no product-download flags. `docs/project/COSMIC_FIXTURE_INGEST.md` gives the exact local
-configuration shape. ATel and the broader source-health/policy matrix remain pending.
+NASA Science News, GCN notice/Circular, and GraceDB fixture adapters through the real scanner,
+with local-only input, stored event evidence, and no product-download flags. The ATel adapter
+has its own offline scanner and live-gate regression. Direct parser tests cover malformed and
+oversized inputs; scan tests cover hype and firehose rejection before item storage. The COSMIC
+state/UI matrix covers disabled, not-configured, never-run, stale, parser failure, rate limit,
+auth, policy, robots, manual review, terms/scope review, unsupported, failing, social and heavy
+archive states without page-load fetches. `docs/project/COSMIC_FIXTURE_INGEST.md` gives the
+exact local configuration shape. Future source admissions need their own fixture and policy gates.
 
 ### NASA/JPL RSS Parser
 
