@@ -1,0 +1,119 @@
+[
+  {
+    "RecallID": 11013,
+    "RecallNumber": "27003",
+    "RecallDate": "2026-10-01T00:00:00",
+    "LastPublishDate": "2026-10-01T00:00:00",
+    "URL": "https://www.cpsc.gov/Recalls/2027/ABC-Trading-Recalls-Squishy-Toys-Due-to-Risk-of-Serious-Injury-or-Death-from-Water-Bead-Ingestion-Violate-Mandatory-Standard-for-Toys",
+    "Title": "ABC Trading Recalls Squishy Toys Due to Risk of Serious Injury or Death from Water Bead Ingestion; Violate Mandatory Standard for Toys",
+    "Products": [
+      {
+        "Name": "Squishy Dumpling Toys, Crazy Squib Ball Toys"
+      }
+    ],
+    "Manufacturers": [],
+    "Importers": [
+      {
+        "Name": "ABC Trading Inc., of Vernon, California"
+      }
+    ],
+    "Hazards": [
+      {
+        "Name": "The squishy toys violate the mandatory safety standard for toys because the water beads inside the toys expand larger than permitted, posing a deadly ingestion hazard. If a water bead is ingested, it can pose ingestion, choking, and intestinal obstruction hazards inside a child's body, resulting in severe discomfort, vomiting, dehydration and a risk of death to a child."
+      }
+    ],
+    "Injuries": [
+      {
+        "Name": "None reported"
+      }
+    ],
+    "Remedies": [
+      {
+        "Name": "Consumers should stop using the squishy toys immediately and contact ABC Trading for a full refund. Consumers will be asked to write \"RECALLED\" in permanent marker on the squishy toys, throw the toy away and email a photo of the disposed toy to recallabc@gmail.com."
+      }
+    ],
+    "Retailers": [
+      {
+        "Name": "Sold At:\nABC Trading stores in Los Angeles, California and other stores nationwide from April 2026 through June 2026 for between 41 cents and $1.25."
+      }
+    ]
+  },
+  {
+    "RecallID": 11005,
+    "RecallNumber": "27007",
+    "RecallDate": "2026-10-01T00:00:00",
+    "LastPublishDate": "2026-10-01T00:00:00",
+    "URL": "https://cpsc.gov/Recalls/2027/Designs-Direct-Recalls-Cupcakes-and-Cashmere-Brand-Three-Light-Floor-Lamps-Due-to-Risk-of-Serious-Injury-from-Fire-and-Burn-Hazards",
+    "Title": "Designs Direct Recalls Cupcakes and Cashmere Brand Three-Light Floor Lamps, Due to Risk of Serious Injury from Fire and Burn Hazards",
+    "Products": [
+      {
+        "Name": "Designs Direct Cupcakes and Cashmere Brand Three-Light Floor Lamps"
+      }
+    ],
+    "Manufacturers": [],
+    "Importers": [
+      {
+        "Name": "Designs Direct LLC, d/b/a Designs Direct Creative Group, of Covington, Kentucky"
+      }
+    ],
+    "Hazards": [
+      {
+        "Name": "When plugged in or switched on, the lamp cord or internal wiring can smoke, melt, spark, overheat or ignite, posing a risk of serious injury from fire and burn hazards."
+      }
+    ],
+    "Injuries": [
+      {
+        "Name": "The firm has received 11 reports of incidents, including two shock and burn injuries."
+      }
+    ],
+    "Remedies": [
+      {
+        "Name": "Consumers should stop using the recalled lamp immediately, turn it off, and unplug it. Consumers will be asked to cut the cord and provide a photograph of the destroyed lamp, following the instructions at https://www.designsdirectllc.com/recalls/. Designs Direct will issue a full refund to consumers within 15 days of receipt of the photo proof of destruction."
+      }
+    ],
+    "Retailers": [
+      {
+        "Name": "Sold At:\nHomeGoods retail stores from June 2025 through July 2026 for between $79 and $89."
+      }
+    ]
+  },
+  {
+    "RecallID": 11009,
+    "RecallNumber": "27010",
+    "RecallDate": "2026-10-01T00:00:00",
+    "LastPublishDate": "2026-10-01T00:00:00",
+    "URL": "https://www.cpsc.gov/Recalls/2027/Walmart-Recalls-Over-4-4-Million-Expert-Grill-Brushes-Due-to-Ingestion-Hazard",
+    "Title": "Walmart Recalls Over 4.4 Million Expert Grill Brushes Due to Ingestion Hazard",
+    "Products": [
+      {
+        "Name": "Metal Wire Bristle Grill Brushes"
+      }
+    ],
+    "Manufacturers": [],
+    "Importers": [
+      {
+        "Name": "Walmart, Inc. of Bentonville, Arkansas"
+      }
+    ],
+    "Hazards": [
+      {
+        "Name": "Small metal wire bristles can detach from the brushes and stick to the grill or food, posing an ingestion hazard and risk of serious internal injuries that could require surgery."
+      }
+    ],
+    "Injuries": [
+      {
+        "Name": "None reported."
+      }
+    ],
+    "Remedies": [
+      {
+        "Name": "Consumers should stop using the recalled grill brushes immediately and contact Walmart for a full refund or a credit for use at any Walmart store or Walmart.com. Consumers will be asked to return their recalled brushes to Walmart or discard them."
+      }
+    ],
+    "Retailers": [
+      {
+        "Name": "Sold At:\nWalmart and online, including Walmart.com from January 2021 through August 2026 for between $1 and $28."
+      }
+    ]
+  }
+]

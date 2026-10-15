@@ -43,6 +43,12 @@ def classify_national_item(source: dict[str, Any], item: dict[str, Any]) -> dict
         elevated = elevated or bool(recall.get("park_it") or recall.get("park_outside"))
         impact_score = max(impact_score, 30 if elevated else 15)
         reasons.append("official NHTSA safety recall")
+    if (cpsc := evidence.get("cpsc_recall") or {}):
+        risk = set(cpsc.get("risk_indicators") or [])
+        elevated = elevated or bool(risk & {"death_risk", "injury_risk"})
+        impact_score = max(impact_score, 25 if "death_risk" in risk else
+                           18 if "injury_risk" in risk else 10)
+        reasons.append("official CPSC product recall with source-stated risk")
     if evidence.get("cisa_kev"):
         elevated = True
         impact_score = max(impact_score, 12)

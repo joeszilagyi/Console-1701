@@ -1268,11 +1268,18 @@ source URL, and food-safety ranking evidence.
 
 ### CPSC Recalls API Parser
 
-Status: not implemented.
+Status: completed 2026-10-15 for bounded fixture ingest; live scanning remains disabled.
 
-2026-10-15 source check: CPSC's official API page and programmer guide document a REST/JSON
-service, but bounded GET and HEAD requests timed out without a response body. Direct service
-behavior remains unverified; see `docs/project/NATIONAL_NHTSA_RECALL_API_VERIFICATION.md`.
+2026-10-15 follow-up: CPSC's official API page and programmer guide document a REST/JSON
+service. A one-day HTTPS date query returned HTTP 200 JSON, 12 recall rows, and validated the
+response shape. `cpsc_recalls_json` now validates an exact fixture source, seven-day query window,
+15-second timeout ceiling, 1 MiB payload, 100-row cap, CPSC recall permalink, recall identity and
+date. It stores bounded product, firm, hazard, injury-report and remedy text; labels death/injury
+**risk** without claiming a reported death, and marks distribution geography unavailable when the
+API does not structure it. Source-stated risk contributes capped NATIONAL attention and ranking;
+the official response subset fixture and parser tests pass. No live
+adapter or allowlisted network fetch is enabled. See
+`docs/project/NATIONAL_NHTSA_RECALL_API_VERIFICATION.md`.
 
 Build a fixture-first parser for the CPSC Recalls API. Preserve recall id, product, firm, hazard,
 injury/death risk indicators when source-provided, recall date, URL, distribution scope, public

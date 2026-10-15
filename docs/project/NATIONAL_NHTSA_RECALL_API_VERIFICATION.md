@@ -50,7 +50,14 @@ The linked documentation PDF and candidate API path returned HTTP 403 during bou
 2026-10-15, so the response contract cannot be verified yet. RS-041 stays open.
 
 CPSC's [official API information](https://www.cpsc.gov/Recalls/CPSC-Recalls-Application-Program-Interface-API-Information)
-and [programmer guide](https://www.cpsc.gov/s3fs-public/RecallRetrievalWebServicesProgrammersGuide20180917.pdf)
-document the Recall REST service and JSON/date parameters. A bounded recent-date GET and HEAD
-against the service timed out with no response body on 2026-10-15. The guide can inform a future
-fixture, but live service behavior still needs direct confirmation. RS-042 stays open.
+and [programmer guide](https://www.cpsc.gov/s3fs-public/pdfs/blk_pdf_CPSC-Recalls-Retrieval-Web-Services-Programmers-Guide_3-25-2015.pdf)
+document the Recall REST service, JSON output and recall-date bounds. A later bounded GET on
+2026-10-15 to `https://www.saferproducts.gov/RestWebServices/Recall?format=json&RecallDateStart=2026-10-01&RecallDateEnd=2026-10-02`
+returned HTTP 200, `application/json`, and 12 rows (37,540 bytes), all dated 2026-10-01.
+The earlier timeout was an access failure at that moment, not a permanent API block. RS-042 now
+has a local response-subset fixture and parser with exact source, date, size and row bounds.
+The API does not supply a structured national distribution field or an injury/death count in
+the sampled response. Evidence preserves source-reported text and separates stated risk from
+reported harm. Source-stated death or injury risk adds a capped NATIONAL attention and ranking
+contribution. Live polling remains disabled until scan cadence, update semantics, response
+ceilings, and allowlist behavior are signed off.
