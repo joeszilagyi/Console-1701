@@ -52,6 +52,7 @@ def apply_regional_privacy_policy(
     usgs = evidence.get("usgs_earthquake") or {}
     county = evidence.get("king_county_emergency") or {}
     wsf = evidence.get("wsf_alert") or {}
+    aqi = evidence.get("ecology_aqi") or {}
     title = str(item.get("title") or "")
     description = str(item.get("description") or "")
     text = f"{title} {description}"
@@ -62,6 +63,7 @@ def apply_regional_privacy_policy(
         or _score((usgs.get("ranking") or {}).get("regional_seismic_weight")) >= 25
         or _score((county.get("ranking") or {}).get("public_impact_score")) >= 15
         or _score((wsf.get("ranking") or {}).get("public_impact_score")) >= 15
+        or _score((aqi.get("ranking") or {}).get("public_impact_score")) >= 20
     )
     public_claim = bool(_PUBLIC_IMPACT_RE.search(text))
     verified_impact = official_impact

@@ -1805,8 +1805,8 @@
     "source_family": "ecology",
     "source_class": "official_air_quality",
     "scope": "REGIONAL",
-    "raw_url": "https://ecology.wa.gov/research-data/monitoring-assessment/air-quality-index",
-    "expected_access_kind": "public official webpage",
+    "raw_url": "https://gis.ecology.wa.gov/serverext/rest/services/AQ/AirQualityMonitoringHourlyResults/MapServer/0/query?where=HourPriorToLatest%3D1+AND+SiteId+IN+%2842%2C46%2C76%29&outFields=%2A&returnGeometry=false&resultRecordCount=3&f=json",
+    "expected_access_kind": "observed bounded ArcGIS hourly AQI JSON; fixture only",
     "adapter": "official_api_json",
     "refresh_interval": "30 min",
     "priority": "75",
@@ -1815,8 +1815,8 @@
     "policy_risk": "low",
     "parser_risk": "medium",
     "retention_sensitivity": "medium",
-    "verification_status": "candidate_needs_verification",
-    "why_it_matters": "Official AQI thresholds and data access context.",
+    "verification_status": "verified",
+    "why_it_matters": "Official Seattle station AQI without storing street addresses.",
     "future_phase": "R7"
   },
   {

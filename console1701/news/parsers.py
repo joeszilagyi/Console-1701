@@ -214,6 +214,10 @@ def parse_fixture_items(
         from console1701.news.regional_nwcc import parse_nwcc_atom_fixture
 
         return parse_nwcc_atom_fixture(source, payload_text)
+    if parser_name == "ecology_aqi_fixture":
+        from console1701.news.regional_aqi import parse_ecology_aqi_fixture
+
+        return parse_ecology_aqi_fixture(source, payload_text)
     if parser_name == "gdacs_rss":
         return _parse_gdacs_rss(source, payload_text)
     if parser_name == "ecdc_rss":

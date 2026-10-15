@@ -166,6 +166,33 @@ REGIONAL_SOURCE_REGISTRY: tuple[RegionalSourceRegistryEntry, ...] = (
         why_it_matters="Washington seismic and Cascadia hazard coverage needs earthquake context.",
     ),
     RegionalSourceRegistryEntry(
+        source_key="wa_ecology_aqi",
+        source_name="WA Ecology AQI",
+        source_family="ecology",
+        source_class="official_air_quality",
+        adapter="official_api_json",
+        kind="api_json",
+        raw_url=(
+            "https://gis.ecology.wa.gov/serverext/rest/services/AQ/"
+            "AirQualityMonitoringHourlyResults/MapServer/0/query"
+            "?where=HourPriorToLatest%3D1+AND+SiteId+IN+%2842%2C46%2C76%29"
+            "&outFields=%2A&returnGeometry=false&resultRecordCount=3&f=json"
+        ),
+        homepage_url="https://ecology.wa.gov/research-data/monitoring-assessment/air-quality-index",
+        parser="ecology_aqi_fixture",
+        priority=75,
+        interval_minutes=30,
+        official_status="official",
+        privacy_risk="low",
+        policy_risk="low",
+        parser_risk="medium",
+        retention_sensitivity="medium",
+        verification_status="verified",
+        future_phase="R7",
+        expected_access_kind="observed bounded ArcGIS hourly AQI JSON; fixture only",
+        why_it_matters="Official Seattle station AQI without storing street addresses.",
+    ),
+    RegionalSourceRegistryEntry(
         source_key="nwcc_blog",
         source_name="NWCC Info blog",
         source_family="nwcc",
