@@ -16,6 +16,7 @@ from console1701.news.facets import (
     replace_regional_item_facets,
 )
 from console1701.news.global_events import correlate_global_items
+from console1701.news.global_policy import classify_global_item
 from console1701.news.global_ranking import rank_global_event
 from console1701.news.global_registry import list_global_source_registry
 from console1701.news.local_registry import list_local_source_registry
@@ -2077,6 +2078,7 @@ def _upsert_item(
             identity["public_impact_score"] = max(0, current_impact, policy_impact)
         item["evidence"]["national_identity"] = identity
     if str(source.get("scope") or "").upper() == "GLOBAL":
+        item = classify_global_item(source, item)
         source_flags = source.get("sensitivity_flags") or []
         if source_flags:
             item = dict(item)

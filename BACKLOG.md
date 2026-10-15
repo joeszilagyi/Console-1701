@@ -2021,9 +2021,14 @@ multi-source public-impact events.
 Current state: the GLOBAL event scorer recognizes explicit parser-provided routine/background,
 rumor, out-of-scope, and domestic-impact tags and records bounded penalties or boosts. It uses
 official GDACS alert, USGS earthquake/tsunami, and active ReliefWeb disaster evidence for
-first-pass public-impact scores. It does not infer impact from headline wording. Remaining work:
-source-specific classification rules for the listed low-value and sensitive categories, social
-and syndicated duplicate suppression, and fixture tests for policy-safe elevation and hiding.
+first-pass public-impact scores. It does not infer impact from headline wording. A pre-storage
+`global_policy.py` classifier now labels routine diplomatic/institutional/economic headlines,
+opinion, domestic politics without international evidence, and single-source social background;
+explicit rumor and graphic/private-person language set sensitivity evidence, and graphic content
+is redacted before storage. Official alert metadata prevents a routine headline from suppressing
+an active alert. Direct and offline scan tests verify those rules. Remaining work: source-specific
+coverage for broader public-impact categories, duplicate syndication across source families,
+and additional low-value/sensitive fixture variants.
 
 ### GLOBAL UI Disabled States
 
