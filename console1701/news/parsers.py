@@ -125,6 +125,8 @@ def parse_fixture_items(
         return _parse_gdacs_rss(source, payload_text)
     if parser_name == "gdacs_geojson":
         return _parse_gdacs_geojson(source, payload_text)
+    if parser_name == "reliefweb_disasters_json":
+        return _parse_reliefweb_disasters_json(source, payload_text)
     if parser_name == "wsdot_highway_alerts_rss":
         return _parse_wsdot_highway_alerts_rss(source, payload_text)
     if parser_name == "alertseattle_rss":
@@ -444,6 +446,96 @@ def _parse_gdacs_geojson(source: dict[str, Any], payload_text: str) -> list[dict
             "updated_at": props.get("datemodified"),
             "source_format": "geojson",
         }))
+    return items
+
+
+def _reliefweb_names(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return _unique_texts(
+        [row.get("name") for row in value if isinstance(row, dict)], max_chars=120
+    )
+
+
+def _parse_reliefweb_disasters_json(
+    source: dict[str, Any], payload_text: str
+) -> list[dict[str, Any]]:
+    if str(source.get("scope") or "").upper() != "GLOBAL":
+        raise NewsParserError("ReliefWeb disaster parser requires GLOBAL scope.")
+    try:
+        payload = json.loads(payload_text)
+    except json.JSONDecodeError as exc:
+        raise NewsParserError(f"Malformed ReliefWeb disaster fixture: {exc}") from exc
+    if not isinstance(payload, dict) or not isinstance(payload.get("data"), list):
+        raise NewsParserError("ReliefWeb disaster fixture must have a data list.")
+    items = []
+    for index, row in enumerate(payload["data"]):
+        if not isinstance(row, dict) or not isinstance(row.get("fields"), dict):
+            raise NewsParserError(f"ReliefWeb disaster {index} lacks fields.")
+        fields = row["fields"]
+        date = fields.get("date") or {}
+        if not isinstance(date, dict):
+            raise NewsParserError(f"ReliefWeb disaster {index} has invalid dates.")
+        disaster_id = bounded_text(row.get("id") or fields.get("id"), max_chars=32)
+        name = bounded_text(fields.get("name"), max_chars=MAX_TITLE_LENGTH)
+        url = normalize_url(fields.get("url"))
+        parts = urlsplit(url)
+        if not disaster_id or not name or parts.scheme != "https" or parts.hostname not in {
+            "reliefweb.int", "www.reliefweb.int"
+        }:
+            raise NewsParserError(f"ReliefWeb disaster {index} lacks official identity or URL.")
+        country = _reliefweb_names(fields.get("country"))
+        primary_country = fields.get("primary_country")
+        if isinstance(primary_country, dict):
+            primary_country = bounded_text(primary_country.get("name"), max_chars=120)
+        else:
+            primary_country = None
+        disaster_type = _reliefweb_names(fields.get("type"))
+        primary_type = fields.get("primary_type")
+        if isinstance(primary_type, dict):
+            primary_type = bounded_text(primary_type.get("name"), max_chars=120)
+        else:
+            primary_type = None
+        event_date = normalize_timestamp(date.get("event"))
+        created_at = normalize_timestamp(date.get("created"))
+        changed_at = normalize_timestamp(date.get("changed"))
+        if not (event_date or created_at):
+            raise NewsParserError(f"ReliefWeb disaster {index} lacks event or creation date.")
+        reports_count = fields.get("reports_count")
+        if isinstance(reports_count, bool) or not isinstance(reports_count, int):
+            reports_count = None
+        item = _normalize_item(
+            source,
+            {
+                "title": name,
+                "url": url,
+                "description": fields.get("description"),
+                "published_at": event_date or created_at,
+                "tags": ["reliefweb", "global", "humanitarian", "disaster"],
+            },
+            index=index,
+        )
+        item["evidence"]["reliefweb_disaster"] = {
+            "id": disaster_id,
+            "name": name,
+            "status": bounded_text(fields.get("status"), max_chars=32),
+            "countries": country,
+            "primary_country": primary_country,
+            "types": disaster_type,
+            "primary_type": primary_type,
+            "event_date": event_date,
+            "created_at": created_at,
+            "updated_at": changed_at,
+            "source_url": url,
+            "reports_count": reports_count,
+            "glide": bounded_text(fields.get("glide"), max_chars=64),
+            "ranking": {
+                "humanitarian_source": True,
+                "active": fields.get("status") in {"current", "alert"},
+                "featured": fields.get("featured") is True,
+            },
+        }
+        items.append(item)
     return items
 
 

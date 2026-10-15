@@ -40,7 +40,7 @@ GLOBAL_RISK_LEVELS = {"low", "medium", "high"}
 GLOBAL_FUTURE_PHASES = {"G1", "G2", "G6", "G7", "G8", "G9", "G10"}
 GLOBAL_AUTH_REQUIRED_SOURCE_KEYS = {
     "nasa_firms_api", "nasa_firms_web_services", "acled_home", "acled_api_docs",
-    "marinetraffic_api",
+    "marinetraffic_api", "reliefweb_disasters", "reliefweb_updates",
 }
 _RSS_ADAPTERS = {"cap_alerts", "ecdc_rss", "gdacs_feed", "rss_atom"}
 _API_ADAPTERS = {
@@ -176,7 +176,9 @@ def global_registry_config_defaults(source_key: str) -> dict[str, Any] | None:
         ],
     }
     if source_key in GLOBAL_AUTH_REQUIRED_SOURCE_KEYS:
-        source["auth"] = {"api_key": ""}
+        source["auth"] = (
+            {"appname": ""} if source_key.startswith("reliefweb_") else {"api_key": ""}
+        )
     return source
 
 

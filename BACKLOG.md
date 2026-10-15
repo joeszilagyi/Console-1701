@@ -1411,8 +1411,9 @@ UN News RSS, UN Press RSS, IAEA RSS, global news RSS, source-health states, disa
 sources, auth-required sources, and parser failures. Fixture ingest must not perform network calls
 and must be safe for pytest.
 
-Current state: checked-in GDACS RSS and API GeoJSON fixtures exercise offline parser and
-`news-scan` persistence paths. Remaining source families and health/failure variants are pending.
+Current state: checked-in GDACS RSS/API GeoJSON and ReliefWeb disaster fixtures exercise offline
+parser and `news-scan` persistence paths. Remaining source families and health/failure variants are
+pending.
 
 ### GDACS Feed Parser
 
@@ -1442,11 +1443,18 @@ metadata, start/update time, report URL, and fixture source-health evidence. Off
 
 ### ReliefWeb Disasters API Parser
 
-Status: not implemented.
+Status: completed 2026-10-15 for fixture-first parser; live source remains blocked.
 
 Build a fixture-first parser for ReliefWeb disaster records. Preserve disaster id, name, status,
 country list, disaster type, primary dates, source URL, related reports count where available, and
 humanitarian ranking evidence. Store metadata only and avoid report body ingestion.
+
+Current state: parser accepts documented ReliefWeb v2 `data[].fields` disaster metadata, preserves
+ID, status, countries/types, event/create/update dates, canonical URL, optional source-provided
+report count, and humanitarian ranking evidence. Offline fixture and persistence tests pass. Live
+API response could not be sampled: ReliefWeb requires a pre-approved `appname` from 2025-11-01;
+an unapproved 2026-10-15 request returned 403. Registered disaster/update sources now require
+configured appname before any file or network access. No live ReliefWeb allowlist exists.
 
 ### ReliefWeb Reports API Parser
 
