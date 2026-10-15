@@ -2624,7 +2624,7 @@ to bypass platform restrictions, and never treat social as primary evidence.
 
 ### Documentation For ORBITAL Source Verification
 
-Status: partially implemented.
+Status: completed 2026-10-15 for first-pass verification workflow.
 
 Document the later ORBITAL source verification workflow: confirm endpoint ownership, access method,
 source terms, robots/policy notes, parser shape, auth/key requirements, rate limits, retention
@@ -2632,10 +2632,11 @@ sensitivity, privacy risk, verification status, source family, source class, orb
 filters, source-health behavior, tactical/sensitivity review, and whether the source is official,
 provider, media, nonprofit, platform, restricted, open-data, or manual review only.
 
-Current state: `docs/project/ORBITAL_SOURCE_VERIFICATION_WORKFLOW.md` now captures the shared
-verification checklist, required registry fields, and scope-specific orbital-domain and source-type
-filters. Per-source signoff templates and endpoint-specific walkthroughs still need a dedicated
-follow-up.
+Current state: `docs/project/ORBITAL_SOURCE_VERIFICATION_WORKFLOW.md` captures the shared
+verification checklist, required registry fields, source-health behavior, a per-endpoint signoff
+record, and walkthroughs for SWPC, ESA, NASA/JPL RSS, and JPL CNEOS APIs. It distinguishes
+reference-only, fixture-only, and live-opt-in decisions and lists the exact gates for promotion.
+Source-specific evidence lives in the linked verification documents.
 
 ### Tests For No Page-Load External Fetches
 
