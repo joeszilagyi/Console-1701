@@ -27,6 +27,10 @@ OFFICIAL_SOURCES = {
         USGS_REGIONAL_EARTHQUAKES_URL, "api_json", "usgs_earthquake_geojson",
         "application/json"
     ),
+    ("NATIONAL", "usgs_eq_geojson"): (
+        USGS_REGIONAL_EARTHQUAKES_URL, "api_json", "usgs_earthquake_geojson",
+        "application/json"
+    ),
     ("REGIONAL", "wsdot_highway_alerts_rss"): (
         WSDOT_HIGHWAY_ALERTS_RSS_URL, "rss", "wsdot_highway_alerts_rss", "application/rss+xml"
     ),

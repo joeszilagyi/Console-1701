@@ -13,8 +13,8 @@ news stack.
 
 ## Operational Commands
 
-- `console-1701 news-scan` runs fixture ingest and, only after explicit opt-in, the allowlisted
-  Washington NWS official HTTPS feed. It records source state, purge evidence, and item evidence in
+- `console-1701 news-scan` runs fixture ingest and, only after explicit opt-in, allowlisted
+  official HTTPS feeds. It records source state, purge evidence, and item evidence in
   SQLite. The web and host scanner never fetch this feed.
 - `console-1701 news-sources` prints the current source registry, source policy, and source-health
   metadata.
@@ -41,8 +41,9 @@ news stack.
 ## Official HTTP Boundary
 
 - The only supported live URLs are documented in the NWS and USGS source signoffs. NWS is available
-  to LOCAL and REGIONAL; USGS M2.5+ past-day GeoJSON is REGIONAL only. LOCAL requires
-  `local.enabled`; REGIONAL requires `regional.enabled`. Each also requires news, its scope, source,
+  to LOCAL and REGIONAL; USGS M2.5+ past-day GeoJSON is REGIONAL and NATIONAL. LOCAL requires
+  `local.enabled`; REGIONAL requires `regional.enabled`; NATIONAL requires `national.enabled`.
+  Each also requires news, its scope, source,
   and `allow_official_http` flags. Do not enable the news timer by default.
 - Requests use HTTPS, a bounded timeout and response, an identifying User-Agent, no inherited
   proxy or cross-host redirect, conditional validators, per-source interval, and failure backoff.
@@ -50,9 +51,11 @@ news stack.
   health evidence remains scope-specific. The URL-level interval/backoff gate prevents a newly
   enabled scope from immediately issuing another request. A new scope without a prior live success
   forces an unconditional response so a 304 cannot leave its initial item set empty.
-- The USGS feed has a magnitude floor of 2.5. A live REGIONAL USGS config below that threshold is
-  blocked instead of silently omitting events. The parser also discards non-earthquake event types
-  and out-of-region features. A successful zero-match response is healthy, not a failure.
+- The USGS feed has a magnitude floor of 2.5. A live REGIONAL or NATIONAL USGS config below that
+  threshold is blocked instead of silently omitting events. The parser also discards
+  non-earthquake event types and out-of-region features. NATIONAL uses coarse U.S./territory
+  coordinate relevance; it does not prove cross-border or multi-state impact. A successful
+  zero-match response is healthy, not a failure.
 - Live ingest must not hold an SQLite write transaction across the network request. Raw responses
   must not be persisted. Tests must mock transport; no live network test belongs in pytest.
 - Add further live sources only after fixture coverage, explicit source signoff, allowlist review,
