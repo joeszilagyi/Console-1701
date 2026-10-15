@@ -2766,7 +2766,7 @@ verification status, source-health behavior, and future phase fields. Validate e
 every source disabled until explicitly configured.
 
 Current state: `console1701/news/science_registry.json` preserves all 170 source candidates from
-the design table plus four later RSS candidates and one bounded Exoplanet Archive TAP candidate,
+the design table plus four later RSS candidates and narrow Exoplanet Archive/MAST candidates,
 under the internal `SYSTEM_SOLAR` working name. `science_registry.py` validates
 unique keys, required fields, URL shape, enums, intervals, and priorities, and derives a disabled
 source-health behavior for each candidate. The registry has no parser, route, news scope, or
@@ -2808,8 +2808,8 @@ Current state: `tests/fixtures/science/nasa_jpl_science.rss` covers NASA-hosted 
 exoplanet, Earth-only, launch, and nonofficial-link cases. The ESA fixture covers a science
 article, launch, image-only link, and nonofficial host. ESA telescope fixtures cover science
 releases, photo releases, and nonofficial links. The tiny Exoplanet Archive JSON fixture covers
-two bounded PS parameter updates. The other fixture families and source-health/policy states
-are still pending.
+two bounded PS parameter updates. The MAST fixture covers two JWST observation metadata rows
+with complete paging. The other fixture families and source-health/policy states are pending.
 
 ### NASA/JPL RSS Parser
 
@@ -2876,11 +2876,19 @@ candidate stays heavy-archive/policy blocked and no live adapter runs.
 
 ### MAST Tiny Metadata Parser
 
-Status: not implemented.
+Status: completed 2026-10-15 for fixture-first CAOM observation metadata.
 
 Build a fixture-first MAST metadata parser for narrow configured queries only. Preserve mission,
 collection, dataset id, object/target labels where provided, query bounds, row cap, source URL, and
 no-science-product-download evidence. Keep live MAST disabled by default.
+
+Current state: `science_mast.py` requires exact `Mast.Caom.Filtered` JSON, six selected metadata
+columns, a named JWST/HST target, a seven-day MJD observation window, a positive cap of at most
+ten, a 15-second timeout ceiling, and a complete first page. A bounded JWST/TRAPPIST-1 query
+returned three rows in a one-day window; the two-row fixture exercises field and paging shape.
+The parser preserves mission, observation/dataset IDs, target, instrument, query bounds, and
+observation-time semantics. It rejects extra product columns, incomplete paging, broad queries,
+and out-of-window rows. No product endpoint is called; the registry candidate stays disabled.
 
 ### PDS Metadata-Only Parser
 

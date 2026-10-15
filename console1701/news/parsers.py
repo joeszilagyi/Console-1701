@@ -165,6 +165,10 @@ def parse_fixture_items(
         from console1701.news.science_exoplanets import parse_exoplanet_ps_json
 
         return parse_exoplanet_ps_json(source, payload_text)
+    if parser_name == "mast_caom_tiny_json":
+        from console1701.news.science_mast import parse_mast_caom_tiny_json
+
+        return parse_mast_caom_tiny_json(source, payload_text)
 
     if parser_name == "nws_alerts_json":
         return _parse_nws_alerts_json(source, payload_text)

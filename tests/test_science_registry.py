@@ -16,8 +16,8 @@ from console1701.news.science_registry import (
 
 
 def test_science_inventory_is_disabled_and_keeps_system_as_app_health():
-    assert len(SCIENCE_SOURCE_REGISTRY) == 175
-    assert len({row["source_key"] for row in SCIENCE_SOURCE_REGISTRY}) == 175
+    assert len(SCIENCE_SOURCE_REGISTRY) == 176
+    assert len({row["source_key"] for row in SCIENCE_SOURCE_REGISTRY}) == 176
     assert all(row["scope"] == "SYSTEM_SOLAR" for row in SCIENCE_SOURCE_REGISTRY)
     assert all(row["enabled"] is False and row["parser"] is None for row in SCIENCE_SOURCE_REGISTRY)
     assert all(row["source_health_behavior"] for row in SCIENCE_SOURCE_REGISTRY)
@@ -72,7 +72,7 @@ def test_disabled_science_registry_syncs_without_fetch_and_events_expire(tmp_pat
             "SELECT source_key, enabled_by_default FROM news_source_registry "
             "WHERE scope = 'SYSTEM_SOLAR'"
         ).fetchall()
-        assert len(rows) == 175
+        assert len(rows) == 176
         assert all(row["enabled_by_default"] == 0 for row in rows)
         assert conn.execute(
             "SELECT COUNT(*) FROM news_sources WHERE scope = 'SYSTEM_SOLAR'"
@@ -90,4 +90,4 @@ def test_disabled_science_registry_syncs_without_fetch_and_events_expire(tmp_pat
         init_db(conn)
         assert conn.execute(
             "SELECT COUNT(*) FROM news_source_registry WHERE scope = 'SYSTEM_SOLAR'"
-        ).fetchone()[0] == 175
+        ).fetchone()[0] == 176

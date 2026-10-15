@@ -164,7 +164,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-124** [ESA RSS Parser](../../BACKLOG.md#L2058) — exact ESA Space Science fixture parser with article-path/launch/image filtering, mission labels, bounded metadata, and no-download evidence.
 - [x] **RS-125** [Hubble/JWST RSS Parser](../../BACKLOG.md#L2066) — fixture-only ESA Hubble/Webb science-release parsers with release IDs, telescope identity, bounded metadata, and explicit third-party feed block.
 - [x] **RS-126** [NASA Exoplanet Archive Tiny Metadata Parser](../../BACKLOG.md#L2074) — fixture-only bounded PS JSON parser with exact columns, ten-row/seven-day caps, update-date semantics, and no catalog download.
-- [ ] **RS-127** [MAST Tiny Metadata Parser](../../BACKLOG.md#L2083) — not implemented.
+- [x] **RS-127** [MAST Tiny Metadata Parser](../../BACKLOG.md#L2083) — fixture-only bounded CAOM parser with exact columns, target/time/page caps, observation identity, and no product requests.
 - [ ] **RS-128** [PDS Metadata-Only Parser](../../BACKLOG.md#L2091) — not implemented.
 - [ ] **RS-129** [GCN Notice Fixture Parser](../../BACKLOG.md#L2099) — not implemented.
 - [x] **RS-130** [GCN Circular Source Verification](../../BACKLOG.md#L2107) — official schema and archive classified; no narrow API verified, bulk export blocked, and metadata/privacy/status contract recorded.

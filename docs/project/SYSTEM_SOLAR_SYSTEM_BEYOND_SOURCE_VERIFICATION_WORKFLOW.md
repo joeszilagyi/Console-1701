@@ -131,3 +131,12 @@ separate `rowupdate` from discovery year and status. A two-row, date-bounded TAP
 broader table/column/window/row shapes. A `rowupdate` is a parameter update, not proof that
 the planet was discovered on that date. Live TAP access remains disabled pending query,
 source-use, retention, and heavy-archive policy signoff.
+
+The [MAST API guide](https://mast.stsci.edu/api/v0/) documents `invoke` and request envelopes;
+the [services guide](https://mast.stsci.edu/api/v0/_services.html) documents
+`Mast.Caom.Filtered` versus `Mast.Caom.Products`, and the
+[JSON format](https://mast.stsci.edu/api/v0/md_result_formats.html) includes paging. A
+one-day JWST/TRAPPIST-1 observation query returned HTTP 200 and three matching rows with six
+selected metadata columns. The fixture parser requires a complete bounded page, stores the
+observation start as such, and rejects product fields. Live MAST remains disabled pending
+source-use and heavy-archive signoff; it must never call product/download services by default.

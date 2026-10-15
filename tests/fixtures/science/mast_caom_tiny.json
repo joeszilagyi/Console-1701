@@ -1,0 +1,30 @@
+{
+  "status": "COMPLETE",
+  "msg": "",
+  "data": [
+    {
+      "obsid": 233637653,
+      "obs_collection": "JWST",
+      "t_min": 60245.93804137732,
+      "instrument_name": "NIRSPEC/SLIT",
+      "target_name": "TRAPPIST-1",
+      "obs_id": "jw01331-o002_t001_nirspec_clear-prism-s1600a1-sub512"
+    },
+    {
+      "obsid": 186655707,
+      "obs_collection": "JWST",
+      "t_min": 60245.942674212965,
+      "instrument_name": "NIRSPEC/SLIT",
+      "target_name": "TRAPPIST-1",
+      "obs_id": "jw01331002001_04101_00001-seg001_nrs2"
+    }
+  ],
+  "paging": {
+    "page": 1,
+    "pageSize": 2,
+    "pagesFiltered": 1,
+    "rows": 2,
+    "rowsFiltered": 2,
+    "rowsTotal": 2
+  }
+}
