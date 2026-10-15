@@ -145,7 +145,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-108** [ORBITAL UI Disabled States](../../BACKLOG.md#L1856) — completed 2026-10-15; distinct ORBITAL and SYSTEM states render without GET fetch.
 - [x] **RS-109** [ORBITAL Source Health States](../../BACKLOG.md#L1866) — completed 2026-10-15; restricted, sensitivity, terms, scope-filter, and health-only states are explicit.
 - [x] **RS-110** [ORBITAL Evidence Drawer Contract](../../BACKLOG.md#L1876) — completed 2026-10-15; persisted bounded contract and HTML/direct-detail tests pass.
-- [ ] **RS-111** [ORBITAL Official-Source Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L1887) — partially implemented; SWPC alerts and NOAA scales opt-ins pass, other candidates pending.
+- [ ] **RS-111** [ORBITAL Official-Source Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L1887) — partially implemented; SWPC alerts, scales, and three K-index opt-ins pass, other candidates pending.
 - [ ] **RS-112** [Documentation For ORBITAL Source Verification](../../BACKLOG.md#L1933) — partially implemented.
 - [x] **RS-113** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L1948) — completed 2026-10-15; ORBITAL/SYSTEM GET state matrix stays offline.
 - [x] **RS-114** [Tests For No Restricted Source Running Without Explicit Config](../../BACKLOG.md#L1957) — completed 2026-10-15; regression gate covers restricted and policy-sensitive candidates.

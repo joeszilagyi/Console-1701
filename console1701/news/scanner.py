@@ -555,6 +555,7 @@ def _fresh_live_orbital_items(
     source_key = str(source.get("id") or "")
     if source.get("scope") != "ORBITAL" or source_key not in {
         "swpc_alerts_json", "swpc_noaa_scales_json",
+        "swpc_kp_summary_json", "swpc_kp_1m_json", "swpc_boulder_k_json",
     }:
         return items
     fresh: list[dict[str, Any]] = []
@@ -567,7 +568,7 @@ def _fresh_live_orbital_items(
             continue
         if source_key == "swpc_alerts_json":
             keep = now - timedelta(hours=72) <= published <= now + timedelta(hours=1)
-        else:
+        elif source_key == "swpc_noaa_scales_json":
             period_kind = str((candidate.get("evidence") or {}).get(
                 "swpc_noaa_scale", {}
             ).get("period_kind") or "")
@@ -577,6 +578,9 @@ def _fresh_live_orbital_items(
                 now - timedelta(hours=1) <= published <= now + timedelta(hours=96)
                 if period_kind == "forecast" else False
             )
+        else:
+            max_age = 6 if source_key == "swpc_kp_summary_json" else 1
+            keep = now - timedelta(hours=max_age) <= published <= now + timedelta(minutes=10)
         if keep:
             fresh.append(candidate)
     return fresh

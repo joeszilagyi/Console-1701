@@ -18,6 +18,9 @@ USGS_REGIONAL_EARTHQUAKES_URL = (
 WSDOT_HIGHWAY_ALERTS_RSS_URL = "https://www.wsdot.wa.gov/traffic/api/HighwayAlerts/rss.aspx"
 SWPC_ALERTS_URL = "https://services.swpc.noaa.gov/products/alerts.json"
 SWPC_NOAA_SCALES_URL = "https://services.swpc.noaa.gov/products/noaa-scales.json"
+SWPC_PLANETARY_K_URL = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json"
+SWPC_PLANETARY_K_1M_URL = "https://services.swpc.noaa.gov/json/planetary_k_index_1m.json"
+SWPC_BOULDER_K_URL = "https://services.swpc.noaa.gov/json/boulder_k_index_1m.json"
 OFFICIAL_SOURCES = {
     ("LOCAL", "nws_active_alerts_api"): (
         NWS_WASHINGTON_ALERTS_URL, "api_json", "nws_alerts_json", "application/geo+json"
@@ -41,6 +44,15 @@ OFFICIAL_SOURCES = {
     ),
     ("ORBITAL", "swpc_noaa_scales_json"): (
         SWPC_NOAA_SCALES_URL, "api_json", "swpc_noaa_scales_json", "application/json"
+    ),
+    ("ORBITAL", "swpc_kp_summary_json"): (
+        SWPC_PLANETARY_K_URL, "api_json", "swpc_kp_json", "application/json"
+    ),
+    ("ORBITAL", "swpc_kp_1m_json"): (
+        SWPC_PLANETARY_K_1M_URL, "api_json", "swpc_kp_json", "application/json"
+    ),
+    ("ORBITAL", "swpc_boulder_k_json"): (
+        SWPC_BOULDER_K_URL, "api_json", "swpc_kp_json", "application/json"
     ),
 }
 MAX_HTTP_BYTES = 4 * 1024 * 1024
@@ -79,6 +91,13 @@ def is_supported_official_source(source: dict[str, Any]) -> bool:
             source.get("id") != "usgs_eq_geojson"
             or _usgs_feed_covers_threshold(source.get("min_magnitude", 3.0))
         )
+        and (
+            source.get("scope") != "ORBITAL"
+            or source.get("id") not in {
+                "swpc_kp_summary_json", "swpc_kp_1m_json", "swpc_boulder_k_json",
+            }
+            or _orbital_k_threshold_safe(source.get("min_k_index", 5.0))
+        )
     )
 
 
@@ -88,6 +107,14 @@ def _usgs_feed_covers_threshold(value: Any) -> bool:
     except (TypeError, ValueError):
         return False
     return isfinite(minimum) and minimum >= 2.5
+
+
+def _orbital_k_threshold_safe(value: Any) -> bool:
+    try:
+        minimum = float(value)
+    except (TypeError, ValueError):
+        return False
+    return isfinite(minimum) and 5.0 <= minimum <= 9.0
 
 
 def _bounded_header(headers: Any, name: str) -> str | None:
