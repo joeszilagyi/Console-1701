@@ -1,0 +1,30 @@
+{
+  "href": "https://api.reliefweb.int/v2/disasters",
+  "count": 1,
+  "data": [
+    {
+      "id": 51000,
+      "fields": {
+        "name": "Fictional Archipelago: Tropical Cyclone - Oct 2026",
+        "url": "https://reliefweb.int/disaster/tc-2026-000001-xxx",
+        "description": "Fictional training fixture with humanitarian impact.",
+        "status": "current",
+        "country": [
+          {"name": "Fictional Archipelago", "iso3": "XXX"},
+          {"name": "Example Island", "iso3": "YYY"}
+        ],
+        "primary_country": {"name": "Fictional Archipelago", "iso3": "XXX"},
+        "type": [{"name": "Tropical Cyclone", "code": "TC", "primary": true}],
+        "primary_type": {"name": "Tropical Cyclone"},
+        "date": {
+          "event": "2026-10-14T12:00:00+00:00",
+          "created": "2026-10-14T14:00:00+00:00",
+          "changed": "2026-10-15T09:00:00+00:00"
+        },
+        "glide": "TC-2026-000001-XXX",
+        "featured": true,
+        "reports_count": 3
+      }
+    }
+  ]
+}
