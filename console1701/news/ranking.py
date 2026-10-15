@@ -189,6 +189,7 @@ def build_rank_result(
     national_cyber_bonus = 0
     national_aviation_bonus = 0
     national_regulatory_bonus = 0
+    national_publication_bonus = 0
     if scope == "NATIONAL":
         item_evidence = item.get("evidence") if isinstance(item.get("evidence"), dict) else {}
         recall = item_evidence.get("nhtsa_recall")
@@ -219,6 +220,13 @@ def build_rank_result(
                 national_regulatory_bonus = min(
                     25, max(0, _int_value(regulatory_ranking.get("public_impact_score")))
                 )
+        publication = item_evidence.get("govinfo_publication")
+        if isinstance(publication, dict):
+            publication_ranking = publication.get("ranking")
+            if isinstance(publication_ranking, dict):
+                national_publication_bonus = min(
+                    8, max(0, _int_value(publication_ranking.get("publication_score")))
+                )
 
     factors = {
         "source_priority": source_priority,
@@ -234,6 +242,7 @@ def build_rank_result(
         "national_cyber_bonus": national_cyber_bonus,
         "national_aviation_bonus": national_aviation_bonus,
         "national_regulatory_bonus": national_regulatory_bonus,
+        "national_publication_bonus": national_publication_bonus,
         **({"local_active_alert_bonus": local_active_alert["bonus"]} if scope == "LOCAL" else {}),
         **local_signal["factors"],
         **regional_signal["factors"],
@@ -270,6 +279,8 @@ def build_rank_result(
         reasons.append(
             f"NATIONAL Federal Register filter evidence adds {national_regulatory_bonus}."
         )
+    if national_publication_bonus:
+        reasons.append(f"NATIONAL GovInfo publication evidence adds {national_publication_bonus}.")
     reasons.extend(local_signal["reasons"])
     if local_active_alert["reason"]:
         reasons.append(local_active_alert["reason"])

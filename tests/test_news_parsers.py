@@ -183,6 +183,37 @@ def test_national_federal_register_fixture_requires_all_filters() -> None:
         parse_fixture_items(source, json.dumps(malformed))
 
 
+def test_national_govinfo_rss_fixture_filters_collection_and_title() -> None:
+    source = {
+        "id": "govinfo_feeds", "scope": "NATIONAL", "kind": "rss",
+        "parser": "govinfo_collection_rss", "source_family": "govinfo",
+        "collection": "BILLS", "impact_terms": ["emergency communications"],
+    }
+    fixture = (
+        Path(__file__).resolve().parent / "fixtures/news/national_govinfo_enrolled_bills.rss"
+    ).read_text()
+    items = parse_fixture_items(source, fixture)
+    assert len(items) == 1
+    assert items[0]["title"].startswith("H.R. 8322 (ENR)")
+    evidence = items[0]["evidence"]["govinfo_publication"]
+    assert evidence["collection"] == "BILLS"
+    assert evidence["document_id"] == "BILLS-119hr8322enr"
+    assert evidence["publication_stage"] == "enrolled_bill"
+    assert evidence["legal_effect_inferred"] is False
+    assert evidence["feed_timestamp_meaning"] == "govinfo_feed_item_not_document_effective_date"
+    assert evidence["feed_url"] == "https://www.govinfo.gov/rss/bills-enr.xml"
+    assert items[0]["description"] == "Content Files PDF"
+    rank = build_rank_result(source, items[0], seen_at="2026-07-11T12:00:00+00:00",
+                             combined_tags=items[0]["tags"], latest_health_state="healthy",
+                             repeat_count=0)
+    assert rank["factors"]["national_publication_bonus"] == 8
+    assert parse_fixture_items({**source, "impact_terms": ["unmatched phrase"]}, fixture) == []
+    with pytest.raises(NewsParserError, match="allowlisted collection"):
+        parse_fixture_items({**source, "collection": "ALL"}, fixture)
+    with pytest.raises(NewsParserError, match="unexpected collection channel"):
+        parse_fixture_items({**source, "collection": "FR"}, fixture)
+
+
 def test_regional_nws_fixture_preserves_official_county_zone_and_alert_evidence() -> None:
     source = {
         "id": "nws_active_alerts_wa", "scope": "REGIONAL", "kind": "api_json",

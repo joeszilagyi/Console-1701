@@ -149,6 +149,8 @@ def parse_fixture_items(
         return _parse_faa_nas_status_xml(source, payload_text)
     if parser_name == "federal_register_documents_json":
         return _parse_federal_register_documents_json(source, payload_text)
+    if parser_name == "govinfo_collection_rss":
+        return _parse_govinfo_collection_rss(source, payload_text)
     if parser_name == "alertseattle_rss":
         return _parse_alertseattle_rss_feed(source, payload_text)
     if parser_name == "metro_rss":
@@ -2027,6 +2029,84 @@ def _federal_register_date(value: Any, index: int) -> str | None:
         return datetime.strptime(str(value), "%Y-%m-%d").date().isoformat()
     except ValueError as exc:
         raise NewsParserError(f"Federal Register row {index} has invalid action date.") from exc
+
+
+_GOVINFO_COLLECTIONS = {
+    "BILLS": ("Congressional Bills- Enrolled - New items on GovInfo", "enrolled_bill"),
+    "PLAW": ("Public and Private Laws - New items on GovInfo", "public_law"),
+    "FR": ("Federal Register - New items on GovInfo", "federal_register_issue"),
+}
+
+
+def _parse_govinfo_collection_rss(
+    source: dict[str, Any], payload_text: str
+) -> list[dict[str, Any]]:
+    if str(source.get("scope") or "").upper() != "NATIONAL":
+        raise NewsParserError("GovInfo RSS parser requires NATIONAL scope.")
+    collection = str(source.get("collection") or "").strip().upper()
+    if collection not in _GOVINFO_COLLECTIONS:
+        raise NewsParserError("GovInfo RSS parser needs an allowlisted collection.")
+    impact_terms = [
+        value.casefold() for value in _configured_texts(source.get("impact_terms"), default=[])
+    ]
+    if not impact_terms:
+        raise NewsParserError("GovInfo RSS parser needs impact_terms filtering.")
+    if re.search(r"<!\s*(?:DOCTYPE|ENTITY)\b", payload_text, re.I):
+        raise NewsParserError("GovInfo RSS must not contain DTD or entity declarations.")
+    try:
+        root = ET.fromstring(payload_text)
+    except ET.ParseError as exc:
+        raise NewsParserError(f"Malformed GovInfo RSS: {exc}") from exc
+    channel = root.find("channel") if root.tag == "rss" else None
+    expected_title, publication_stage = _GOVINFO_COLLECTIONS[collection]
+    if channel is None or _element_text(channel.find("title")) != expected_title:
+        raise NewsParserError("GovInfo RSS has an unexpected collection channel.")
+    normalized: list[dict[str, Any]] = []
+    seen_ids: set[str] = set()
+    for index, row in enumerate(channel.findall("item")[:100]):
+        identifier = str(_element_text(row.find("guid")) or "").strip()
+        if not identifier.startswith(collection + "-") or not re.fullmatch(
+            r"[A-Za-z0-9-]{6,100}", identifier
+        ) or identifier in seen_ids:
+            raise NewsParserError(f"GovInfo RSS item {index} has invalid identity.")
+        seen_ids.add(identifier)
+        title = bounded_text(_wsdot_plain_text(_element_text(row.find("title"))), max_chars=280)
+        published = normalize_timestamp(_element_text(row.find("pubDate")))
+        url = str(_element_text(row.find("link")) or "").strip()
+        if (
+            not title or not published
+            or url != f"https://www.govinfo.gov/app/details/{identifier}"
+        ):
+            raise NewsParserError(f"GovInfo RSS item {index} has invalid fields or URL.")
+        matched_terms = [term for term in impact_terms if term in title.casefold()]
+        if not matched_terms:
+            continue
+        description = bounded_text(
+            _wsdot_plain_text(_element_text(row.find("description"))), max_chars=250
+        )
+        item = _normalize_item(source, {
+            "title": title,
+            "url": url,
+            "description": description,
+            "published_at": published,
+            "tags": ["official", "govinfo", collection.lower(), "publication"],
+        }, index=index)
+        feed_name = "bills-enr" if collection == "BILLS" else collection.lower()
+        item["evidence"]["govinfo_publication"] = {
+            "collection": collection,
+            "document_id": identifier,
+            "publication_stage": publication_stage,
+            "feed_published_at": published,
+            "feed_timestamp_meaning": "govinfo_feed_item_not_document_effective_date",
+            "source_url": url,
+            "feed_url": f"https://www.govinfo.gov/rss/{feed_name}.xml",
+            "matched_impact_terms": matched_terms[:10],
+            "legal_effect_inferred": False,
+            "ranking": {"publication_score": 8},
+            "body_stored": False,
+        }
+        normalized.append(item)
+    return normalized
 
 
 def _parse_nhtsa_recalls_json(
