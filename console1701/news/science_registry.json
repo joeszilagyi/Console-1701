@@ -2015,8 +2015,8 @@
     "policy_risk": "low",
     "parser_risk": "medium",
     "retention_sensitivity": "medium",
-    "verification_status": "candidate_needs_verification",
-    "why_it_matters": "Official RSS 1.0 shape and offline fixture parser verified; live signoff remains pending.",
+    "verification_status": "verified",
+    "why_it_matters": "Exact official RSS 1.0 opt-in with bounded preliminary metadata and no body storage.",
     "future_phase": "S9"
   },
   {

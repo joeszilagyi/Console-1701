@@ -3025,7 +3025,7 @@ enabled, and the future fixture/parser must retain preliminary/follow-up/retract
 
 ### ATel RSS Parser
 
-Status: implemented for offline fixture ingest; live remains disabled.
+Status: implemented for exact disabled-by-default live RSS opt-in.
 
 Build a fixture-first Astronomers Telegram RSS parser. Preserve ATel number, title, URL, published
 time, object/transient tokens, bounded description if allowed, source family, and preliminary
@@ -3038,8 +3038,10 @@ and its `?rss` link returned RSS 1.0 XML. A bounded identifying-client GET retur
 12,359 bytes and ten items. The namespace-aware fixture parser checks the ATel number in the
 title, identifier and article URL, keeps publication time and bounded summary/object tokens,
 labels communication preliminary, and stores no full telegram body or email/provenance fields.
-An offline `news-scan` passes without HTTP. The direct live source is still rejected by config;
-cadence, source terms, health and current-item filtering need a separate live admission review.
+An offline `news-scan` passes without HTTP. The exact live source now has a 64 KiB cap,
+30-minute minimum interval, source-specific `text/xml` transport and explicit opt-in gate.
+An isolated live `news-scan` returned HTTP 200, healthy state and ten COSMIC items; see
+`docs/project/COSMIC_ATEL_RSS_LIVE_SIGNOFF.md` for policy and source-health bounds.
 
 ### TNS Auth/Policy Design
 
@@ -3286,10 +3288,11 @@ Add opt-in transient alert ingest for GCN notices/circulars, ATel, TNS, and Grac
 fixture parsers, policy/auth review, source health, preliminary/update/retraction handling, and
 retention tests exist. Do not download sky maps by default.
 
-Status: partial. GraceDB public superevent plus VOEvent metadata passes a fixture-only parser and
-offline scan with revision/retraction handling, bounded payload, source health, and no sky-map
-fetch. A live public polling contract, retention sequence tests, and the other transient sources
-remain open.
+Status: partial. ATel exact public RSS passes a bounded, opt-in live scan with preliminary
+labels and metadata-only storage. GraceDB public superevent plus VOEvent metadata passes a
+fixture-only parser and offline scan with revision/retraction handling, bounded payload,
+source health, and no sky-map fetch. GraceDB/GCN live polling, retention sequence tests,
+and TNS auth/policy work remain open.
 
 ### Heavy Archive Phase, Disabled By Default
 
