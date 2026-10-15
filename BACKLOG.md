@@ -1211,12 +1211,18 @@ federal disaster declarations, and public-health warnings with action guidance.
 
 ### NATIONAL UI Disabled States
 
-Status: not implemented.
+Status: implemented.
 
 Replace NATIONAL placeholders only after storage/config support exists. Show honest states for
 disabled, not configured, configured but disabled, never scanned, stale, policy blocked, parser
 failed, auth required, rate limited, social disabled, homepage extraction disabled, and
 manual-review-only sources. Do not show fake headlines.
+
+Current state: NATIONAL uses the shared scope page and source-health readout. Page regressions now
+cover disabled, not configured, configured but disabled, never scanned, stale, policy blocked,
+parser failed, auth required, rate limited, social disabled, homepage extraction disabled, and
+manual-review-only states without ingest or fabricated items. NATIONAL social sources receive a
+scope-specific disabled message when the national social allowance is off.
 
 ### NATIONAL Source Health States
 

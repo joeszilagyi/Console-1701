@@ -74,6 +74,15 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
     homepage_allowed = bool(fetch_policy.get("allow_homepage_extractors"))
     homepage_extractor_blocked = uses_homepage and not homepage_allowed
     local_policy = _local_policy(config, source)
+    source_family = str(source.get("source_family") or "").strip().lower()
+    source_class = str(source.get("source_class") or "").strip().lower()
+    is_social = source_class == "social_candidate" or source_family in LOCAL_SOCIAL_SOURCE_FAMILIES
+    scope = str(source.get("scope") or "").upper()
+    national_social_blocked = (
+        scope == "NATIONAL"
+        and is_social
+        and not bool((config.get("national") or {}).get("include_social_sources"))
+    )
 
     if is_local_fixture:
         policy_state = "allowed_fixture_only"
@@ -118,6 +127,8 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
             and not local_policy["allow_neighborhood_blogs"]
         ):
             notes.append("LOCAL neighborhood blog allowance is disabled.")
+    if national_social_blocked:
+        notes.append("NATIONAL social source allowance is disabled.")
     for note in source.get("evidence_notes") or []:
         if note not in notes:
             notes.append(str(note))
@@ -145,7 +156,10 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
         "uses_homepage_extractor": uses_homepage,
         "homepage_extractor_blocked": homepage_extractor_blocked,
         "robots_state": robots_state,
-        "social_source_blocked": bool(local_policy and local_policy.get("social_source_blocked")),
+        "social_source_blocked": bool(
+            (local_policy and local_policy.get("social_source_blocked"))
+            or national_social_blocked
+        ),
         "local": local_policy,
         "notes": notes,
     }

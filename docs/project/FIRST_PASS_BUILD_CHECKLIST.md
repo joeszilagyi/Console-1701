@@ -80,7 +80,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-049** [NATIONAL Deterministic Event Correlation](../../BACKLOG.md#L1155) — not implemented.
 - [ ] **RS-050** [NATIONAL Deterministic Ranking](../../BACKLOG.md#L1165) — not implemented.
 - [ ] **RS-051** [NATIONAL Low-Public-Value And Public-Impact Rules](../../BACKLOG.md#L1175) — not implemented.
-- [ ] **RS-052** [NATIONAL UI Disabled States](../../BACKLOG.md#L1185) — not implemented.
+- [x] **RS-052** [NATIONAL UI Disabled States](../../BACKLOG.md#L1185) — shared NATIONAL page shows verified disabled/failure states without fake items or fetch.
 - [x] **RS-053** [NATIONAL Source Health States](../../BACKLOG.md#L1194) — shared health and NATIONAL page/API state matrix verified without fetch.
 - [ ] **RS-054** [NATIONAL Evidence Drawer Contract](../../BACKLOG.md#L1203) — not implemented.
 - [ ] **RS-055** [NATIONAL Official-Source Live Ingest Phase](../../BACKLOG.md#L1213) — not implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-052. Extended page tests to NATIONAL for configured-disabled, not-configured, never-run, stale/failure, and social/homepage-blocked states. Added NATIONAL social-source policy and a scope-specific health message for read-only status. No ingest or page-load fetch is used. Full pytest passed (228 tests); Ruff passed. Next: build NATIONAL registry and storage foundation.
 - **2026-10-15:** Completed RS-053. Reused the REGIONAL page/API source-health matrix for NATIONAL with isolated SQLite state and no scan/fetch, verifying ten source states including stale, parser failure, policy blocking, and auth/rate/policy outcomes. A NATIONAL baseline regression covers disabled, not-configured, never-run, and healthy scope outcomes. Full pytest passed (225 tests); Ruff passed. Next: continue NATIONAL storage/registry foundation and UI disabled-state acceptance.
 - **2026-10-15:** Advanced RS-013. Corrected LOCAL and REGIONAL SQLite registry cleanup to delete only stale keys; the old REGIONAL query could delete current rows when any stale key existed. A repeat-scan regression verifies the full current REGIONAL key set survives and the obsolete key is removed. Full pytest passed (223 tests); Ruff passed. Next: inspect the remaining REGIONAL registry acceptance details, then move to the next missing scope foundation.
 - **2026-10-15:** Integration state: [PR #28](https://github.com/joeszilagyi/Console-1701/pull/28) has passing required CI and is ready for review. A normal `gh pr merge 28 --merge` call was rejected by the automatic PreToolUse hook, which requires `CODEX_ALLOW_PR_MERGE=28` or an audited project merge steward. No bypass was attempted. [PR #29](https://github.com/joeszilagyi/Console-1701/pull/29) is stacked on #28 for the NATIONAL config/USGS slice. Continue independent first-pass work while integration waits for the required authority path.

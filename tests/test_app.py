@@ -517,11 +517,13 @@ news:
     assert any(source["health_message"] for source in sources)
 
 
-def test_local_scope_ui_shows_disabled_source_states_without_fake_headlines(tmp_path, monkeypatch):
+@pytest.mark.parametrize("scope_name", ["LOCAL", "NATIONAL"])
+def test_scope_ui_shows_disabled_source_states_without_fake_headlines(
+    tmp_path, monkeypatch, scope_name
+):
     _use_temp_state(monkeypatch, tmp_path)
     config_path = tmp_path / "config.yml"
-    config_path.write_text(
-        """
+    config_text = """
 paths:
   repo_roots: []
   explicit_repos: []
@@ -541,12 +543,12 @@ news:
     REGIONAL:
       enabled: false
       sources: []
-""".strip()
-        + "\n",
-        encoding="utf-8",
+"""
+    config_path.write_text(
+        config_text.replace("LOCAL", scope_name).strip() + "\n", encoding="utf-8"
     )
     router = build_router(str(config_path))
-    response = _route_endpoint(router, "/{scope}")(_request("/LOCAL"), "LOCAL")
+    response = _route_endpoint(router, "/{scope}")(_request(f"/{scope_name}"), scope_name)
     body = response.body.decode()
 
     assert response.status_code == 200
@@ -556,11 +558,11 @@ news:
     assert "Seattle ferry delay at Colman Dock" not in body
 
 
-def test_local_scope_ui_shows_not_configured_and_never_run_states(tmp_path, monkeypatch):
+@pytest.mark.parametrize("scope_name", ["LOCAL", "NATIONAL"])
+def test_scope_ui_shows_not_configured_and_never_run_states(tmp_path, monkeypatch, scope_name):
     _use_temp_state(monkeypatch, tmp_path)
     config_path = tmp_path / "config.yml"
-    config_path.write_text(
-        """
+    config_text = """
 paths:
   repo_roots: []
   explicit_repos: []
@@ -579,20 +581,21 @@ news:
           kind: local_file_json
           enabled: false
           url: "file:///tmp/regional.json"
-""".strip()
-        + "\n",
-        encoding="utf-8",
+"""
+    config_path.write_text(
+        config_text.replace("LOCAL", scope_name).strip() + "\n", encoding="utf-8"
     )
     router = build_router(str(config_path))
-    not_configured_page = _route_endpoint(router, "/{scope}")(_request("/LOCAL"), "LOCAL")
+    not_configured_page = _route_endpoint(router, "/{scope}")(
+        _request(f"/{scope_name}"), scope_name
+    )
     not_configured_body = not_configured_page.body.decode()
 
-    assert "No LOCAL sources are configured." in not_configured_body
+    assert f"No {scope_name} sources are configured." in not_configured_body
     assert "No sources are configured for this scope." in not_configured_body
 
     _use_temp_state(monkeypatch, tmp_path)
-    config_path.write_text(
-        """
+    config_text = """
 paths:
   repo_roots: []
   explicit_repos: []
@@ -609,16 +612,18 @@ news:
           kind: local_file_json
           enabled: true
           url: "file:///tmp/waiting.json"
-""".strip()
-        + "\n",
-        encoding="utf-8",
+"""
+    config_path.write_text(
+        config_text.replace("LOCAL", scope_name).strip() + "\n", encoding="utf-8"
     )
     never_run_router = build_router(str(config_path))
-    never_run_page = _route_endpoint(never_run_router, "/{scope}")(_request("/LOCAL"), "LOCAL")
+    never_run_page = _route_endpoint(never_run_router, "/{scope}")(
+        _request(f"/{scope_name}"), scope_name
+    )
     never_run_body = never_run_page.body.decode()
 
     assert "have not been ingested yet" in never_run_body
-    assert "No LOCAL sources are configured." not in never_run_body
+    assert f"No {scope_name} sources are configured." not in never_run_body
 
 
 def test_local_scope_ui_shows_stale_and_failing_states(tmp_path, monkeypatch):
@@ -801,18 +806,19 @@ news:
         assert state in page.body.decode().lower()
 
 
-def test_local_scope_ui_shows_social_and_homepage_disabled_states(tmp_path, monkeypatch):
+@pytest.mark.parametrize("scope_name", ["LOCAL", "NATIONAL"])
+def test_scope_ui_shows_social_and_homepage_disabled_states(tmp_path, monkeypatch, scope_name):
     _use_temp_state(monkeypatch, tmp_path)
     config_path = tmp_path / "config.yml"
     _write_test_config(config_path)
     config = load_config(str(config_path))
     config["news"]["enabled"] = True
-    config["news"]["scopes"]["LOCAL"]["enabled"] = True
-    config["news"]["scopes"]["LOCAL"]["sources"] = [
+    config["news"]["scopes"][scope_name]["enabled"] = True
+    config["news"]["scopes"][scope_name]["sources"] = [
         {
             "id": "social_candidate_fixture",
             "name": "Blocked social source",
-            "scope": "LOCAL",
+            "scope": scope_name,
             "kind": "local_file_json",
             "enabled": True,
             "url": "file:///tmp/social-source.json",
@@ -822,7 +828,7 @@ def test_local_scope_ui_shows_social_and_homepage_disabled_states(tmp_path, monk
         {
             "id": "homepage_headline_fixture",
             "name": "Blocked homepage extractor",
-            "scope": "LOCAL",
+            "scope": scope_name,
             "kind": "homepage_headlines",
             "enabled": True,
             "url": "file:///tmp/homepage-source.html",
@@ -835,6 +841,7 @@ def test_local_scope_ui_shows_social_and_homepage_disabled_states(tmp_path, monk
         },
     ]
     config["local"]["allow_social_sources"] = False
+    config["national"]["include_social_sources"] = False
     config["news"]["fetch_policy"]["allow_homepage_extractors"] = False
 
     def fake_config(_path=None):
@@ -843,21 +850,29 @@ def test_local_scope_ui_shows_social_and_homepage_disabled_states(tmp_path, monk
     monkeypatch.setattr(api_module, "_config", fake_config)
     router = build_router(str(config_path))
 
-    scope_response = _route_endpoint(router, "/{scope}")(_request("/LOCAL"), "LOCAL")
-    _route_endpoint(router, "/api/news/sources")()
+    scope_response = _route_endpoint(router, "/{scope}")(_request(f"/{scope_name}"), scope_name)
+    sources = _route_endpoint(router, "/api/news/sources")()
     summary = _route_endpoint(router, "/api/news/summary")()
     body = scope_response.body.decode()
 
     assert scope_response.status_code == 200
     assert summary["source_state_counts"]["social_disabled"] == 1
     assert summary["source_state_counts"]["homepage_disabled"] == 1
-    assert summary["scope_states"]["LOCAL"]["source_state_counts"]["social_disabled"] == 1
-    assert summary["scope_states"]["LOCAL"]["source_state_counts"]["homepage_disabled"] == 1
+    assert summary["scope_states"][scope_name]["source_state_counts"]["social_disabled"] == 1
+    assert summary["scope_states"][scope_name]["source_state_counts"]["homepage_disabled"] == 1
     assert "Homepage extraction is disabled by config." in body
-    assert (
-        "LOCAL social source is blocked until local.allow_social_sources is enabled."
-        in body
+    if scope_name == "LOCAL":
+        social_message = (
+            "LOCAL social source is blocked until local.allow_social_sources is enabled."
+        )
+    else:
+        social_message = "NATIONAL social source allowance is disabled."
+    assert social_message in body
+    social_source = next(
+        source for source in sources if source["source_key"] == "social_candidate_fixture"
     )
+    assert social_source["health_state"] == "social_disabled"
+    assert social_source["health_message"] == social_message
     assert "Blocked social source" in body
     assert "Blocked homepage extractor" in body
 
