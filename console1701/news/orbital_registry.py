@@ -35,7 +35,8 @@ commercial_provider fixture nonprofit official official_candidate platform
 """.split())
 ORBITAL_VERIFICATION_STATUSES = set("""
 assistant_seeded candidate_needs_verification candidate_policy_sensitive
- official_page_seen reject_for_now restricted_auth_required unofficial_secondary user_seeded
+ official_page_seen official_feed_seen reject_for_now restricted_auth_required
+ unofficial_secondary user_seeded
 """.split())
 ORBITAL_RISK_LEVELS = {"low", "medium", "high"}
 ORBITAL_FUTURE_PHASES = {"O1", "O2", "O6", "O7", "O8", "O9", "O10", "O11"}
@@ -140,6 +141,11 @@ def _load_registry() -> tuple[dict[str, Any], ...]:
             "jpl_cad_api": "jpl_cad_json",
             "jpl_fireball_api": "jpl_fireball_json",
             "nasa_rss_feeds": "nasa_orbital_rss",
+            "nasa_iss_page": "nasa_orbital_rss",
+            "nasa_spacestation_blog": "nasa_orbital_rss",
+            "nasa_artemis": "nasa_orbital_rss",
+            "nasa_artemis_blog": "nasa_orbital_rss",
+            "nasa_kennedy_blog": "nasa_orbital_rss",
         }.get(key)
         entry["source_health_behavior"] = (
             "unsupported" if row["verification_status"] == "reject_for_now" else
