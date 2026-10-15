@@ -143,6 +143,7 @@ def test_news_schema_creates_metadata_tables_and_indexes(tmp_path):
         "idx_news_items_source_seen",
         "idx_news_items_expires_at",
         "idx_news_items_url_hash",
+        "idx_news_item_facets_lookup",
         "idx_news_items_rank_scope",
         "idx_news_source_registry_scope_family",
         "idx_local_events_scope_time",

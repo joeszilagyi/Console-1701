@@ -195,6 +195,40 @@ GLOBAL_FACET_KINDS = {
 REGIONAL_FACET_KINDS = {
     "county", "region", "route", "facility", "zone", "event_type", "source_family"
 }
+NATIONAL_FACET_KINDS = {"agency", "sector", "state", "source_family"}
+
+
+def list_national_items_by_facet(
+    conn: sqlite3.Connection,
+    facet_kind: str,
+    facet_value: str,
+    *,
+    limit: int = 50,
+) -> list[dict[str, Any]]:
+    if facet_kind not in NATIONAL_FACET_KINDS:
+        raise ValueError(f"Unsupported NATIONAL facet kind: {facet_kind}")
+    if not 1 <= limit <= 100:
+        raise ValueError("NATIONAL facet query limit must be 1..100")
+    value = facet_value.strip().casefold()
+    if not value:
+        return []
+    now = datetime.now(UTC).isoformat(timespec="seconds")
+    rows = conn.execute(
+        """
+        SELECT item.*
+        FROM news_item_facets AS facet
+        JOIN news_items AS item ON item.id = facet.item_id
+        WHERE facet.scope = 'NATIONAL'
+          AND facet.facet_kind = ?
+          AND facet.facet_value = ?
+          AND item.status = 'active'
+          AND item.expires_at >= ?
+        ORDER BY item.rank_score DESC, item.last_seen_at DESC, item.id DESC
+        LIMIT ?
+        """,
+        (facet_kind, value, now, limit),
+    ).fetchall()
+    return [_decode_news_item_row(row) for row in rows]
 
 
 def list_global_items_by_facet(

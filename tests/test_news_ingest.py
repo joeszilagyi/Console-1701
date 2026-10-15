@@ -14,7 +14,7 @@ from console1701.db import connect_db, init_db, json_loads
 from console1701.news.official_http import OfficialFetchResult, RateLimitedError
 from console1701.news.parsers import parse_fixture_items
 from console1701.news.scanner import purge_news_retention, run_news_scan
-from console1701.news.storage import get_news_sources_status
+from console1701.news.storage import get_news_sources_status, list_national_items_by_facet
 
 FIXTURE_DIR = Path(__file__).resolve().parent / "fixtures" / "news"
 
@@ -1092,6 +1092,27 @@ def test_run_news_scan_ingests_national_nws_alert_fixture(tmp_path):
     ]
     assert all(row["ranking"]["score"] == sum(row["ranking"]["factors"].values())
                for row in evidence_rows)
+    with connect_db(config["_db_path"]) as conn:
+        assert len(list_national_items_by_facet(conn, "agency", "NWS")) == 2
+        assert len(list_national_items_by_facet(conn, "sector", "weather")) == 2
+        assert len(list_national_items_by_facet(conn, "state", "WA")) == 1
+        assert len(list_national_items_by_facet(conn, "state", "PR")) == 1
+        assert list_national_items_by_facet(conn, "state", "CA") == []
+        with pytest.raises(ValueError, match="Unsupported NATIONAL facet"):
+            list_national_items_by_facet(conn, "address", "123 main")
+        removed_id = list_national_items_by_facet(conn, "state", "WA")[0]["id"]
+        conn.execute("DELETE FROM news_item_facets WHERE item_id = ?", (removed_id,))
+        init_db(conn)
+        assert len(list_national_items_by_facet(conn, "state", "WA")) == 1
+        conn.execute(
+            "UPDATE news_items SET expires_at = '2020-01-01T00:00:00+00:00' WHERE id = ?",
+            (removed_id,),
+        )
+        purged = purge_news_retention(conn, config, now="2026-10-15T00:00:00+00:00")
+        assert purged["items"] == 1
+        assert conn.execute(
+            "SELECT COUNT(*) FROM news_item_facets WHERE item_id = ?", (removed_id,)
+        ).fetchone()[0] == 0
 
 
 def test_run_news_scan_uses_national_usgs_threshold_for_fixture(tmp_path):
@@ -1131,6 +1152,10 @@ def test_run_news_scan_uses_national_usgs_threshold_for_fixture(tmp_path):
     evidence = json_loads(rows[0]["evidence_json"], {})
     assert evidence["usgs_earthquake"]["filter"]["min_magnitude"] == 5.5
     assert evidence["usgs_earthquake"]["filter"]["region"] == "contiguous_us"
+    with connect_db(config["_db_path"]) as conn:
+        assert len(list_national_items_by_facet(conn, "agency", "USGS")) == 1
+        assert len(list_national_items_by_facet(conn, "sector", "seismic")) == 1
+        assert list_national_items_by_facet(conn, "state", "CA") == []
 
 
 def test_run_news_scan_ingests_regional_wsdot_alert_fixture(tmp_path):

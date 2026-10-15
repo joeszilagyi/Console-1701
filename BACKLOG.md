@@ -1116,7 +1116,7 @@ enabled by this config work; homepage extraction remains blocked by the shared f
 
 ### NATIONAL SQLite Schema Or Extension
 
-Status: partially implemented.
+Status: implemented (first-pass scoped storage and indexed facets).
 
 Add or extend SQLite storage for NATIONAL source registry state, fetch runs, normalized items,
 `national_events` or scoped clusters, source health, ranking explanations, agency/sector/state
@@ -1130,8 +1130,13 @@ in place while preserving registry rows. NATIONAL registry rows and summaries ar
 `news-scan`. Scoped items, fetch runs, source health, and cluster tables already support NATIONAL.
 Configured `news_sources` now has the same scoped uniqueness; its migration preserves source IDs
 and dependent fetch/item rows. A fixture scan verifies independent LOCAL and NATIONAL ingest with
-the same documented source key. Dedicated agency/sector/state query indexes and retention/purge
-evidence remain to be verified.
+the same documented source key. The shared scoped item-facet table and its
+`(scope, facet_kind, facet_value, item_id)` index now hold NATIONAL agency, sector, state and
+source-family labels. NWS state labels come only from official `affected_states`; USGS point
+coordinates are not guessed into state labels. A bounded query helper returns active NATIONAL
+items by facet. Tests cover NWS/USGS fixture ingest, lookup, old-row backfill, the index, expiry
+purge and cascading facet deletion. Shared scope/score and source-health indexes remain available
+to NATIONAL. No article body column was added.
 
 ### NATIONAL Fixture Pack
 

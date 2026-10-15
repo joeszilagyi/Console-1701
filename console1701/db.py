@@ -158,6 +158,7 @@ def init_db(conn: sqlite3.Connection) -> None:
     _migrate_source_registry_scope_key(conn, schema)
     conn.executescript(schema)
     _backfill_global_item_facets(conn)
+    _backfill_national_item_facets(conn)
     conn.commit()
 
 
@@ -182,6 +183,26 @@ def _backfill_global_item_facets(conn: sqlite3.Connection) -> None:
         if not isinstance(tags, list):
             tags = []
         replace_global_item_facets(conn, int(row["id"]), evidence, tags)
+
+
+def _backfill_national_item_facets(conn: sqlite3.Connection) -> None:
+    from console1701.news.facets import replace_national_item_facets
+
+    rows = conn.execute(
+        """
+        SELECT item.id, item.evidence_json
+        FROM news_items AS item
+        WHERE item.scope = 'NATIONAL'
+          AND NOT EXISTS (
+            SELECT 1 FROM news_item_facets AS facet WHERE facet.item_id = item.id
+          )
+        """
+    ).fetchall()
+    for row in rows:
+        evidence = json_loads(row["evidence_json"], {})
+        if not isinstance(evidence, dict):
+            evidence = {}
+        replace_national_item_facets(conn, int(row["id"]), evidence)
 
 
 def json_dumps(value: Any) -> str:
