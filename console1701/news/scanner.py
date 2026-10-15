@@ -416,7 +416,10 @@ def _retention_cutoffs(config: dict[str, Any], now: str) -> dict[str, str]:
 def _source_is_enabled(config: dict[str, Any], source: dict[str, Any]) -> bool:
     scopes = (config.get("news") or {}).get("scopes") or {}
     scope_cfg = scopes.get(str(source.get("scope")) or "") or {}
-    return bool(scope_cfg.get("enabled")) and bool(source.get("enabled"))
+    science_allowed = source.get("scope") != "SYSTEM_SOLAR" or bool(
+        (config.get("solar_system_beyond") or {}).get("enabled")
+    )
+    return bool(scope_cfg.get("enabled")) and bool(source.get("enabled")) and science_allowed
 
 
 def _is_allowed_live_source(config: dict[str, Any], source: dict[str, Any]) -> bool:

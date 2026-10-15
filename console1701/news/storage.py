@@ -561,6 +561,7 @@ def get_news_scope_states(
             str(status["health_state"]) for status in status_rows if status.get("health_state")
         ]
         blocking_states = FAILING_SOURCE_HEALTH_STATES
+        display_scope = "COSMIC" if scope == "SYSTEM_SOLAR" else scope
 
         if not news_cfg.get("enabled"):
             state = "disabled"
@@ -568,30 +569,35 @@ def get_news_scope_states(
         elif scope == "ORBITAL" and not (config.get("orbital") or {}).get("enabled"):
             state = "disabled"
             message = "ORBITAL recent signal is disabled by config."
+        elif scope == "SYSTEM_SOLAR" and not (
+            config.get("solar_system_beyond") or {}
+        ).get("enabled"):
+            state = "disabled"
+            message = "COSMIC recent signal is disabled by config."
         elif not sources:
             state = "not_configured"
-            message = f"No {scope} sources are configured."
+            message = f"No {display_scope} sources are configured."
         elif not enabled_sources:
             state = "configured_disabled"
-            message = f"{scope} sources are configured but disabled."
+            message = f"{display_scope} sources are configured but disabled."
         elif health_states and all(value == "configured_never_run" for value in health_states):
             state = "configured_never_run"
-            message = f"{scope} sources are enabled but have not been ingested yet."
+            message = f"{display_scope} sources are enabled but have not been ingested yet."
         elif not health_states and (db_sources == 0 or db_enabled_sources == 0):
             state = "configured_never_run"
-            message = f"{scope} sources are enabled but have not been ingested yet."
+            message = f"{display_scope} sources are enabled but have not been ingested yet."
         elif any(value in blocking_states for value in health_states):
             state = "failing"
-            message = f"{scope} has failing or policy-blocked sources."
+            message = f"{display_scope} has failing or policy-blocked sources."
         elif "stale" in health_states:
             state = "stale"
-            message = f"{scope} source health is stale."
+            message = f"{display_scope} source health is stale."
         elif health_states and all(value == "healthy" for value in health_states):
             state = "healthy"
-            message = f"{scope} sources are healthy."
+            message = f"{display_scope} sources are healthy."
         else:
             state = "configured_never_run"
-            message = f"{scope} source health has not produced a stable state yet."
+            message = f"{display_scope} source health has not produced a stable state yet."
 
         states[scope] = {
             "scope": scope,

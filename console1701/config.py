@@ -11,13 +11,14 @@ DEFAULT_STATE_DIR = Path.home() / ".local" / "state" / APP_NAME
 DEFAULT_DB_PATH = DEFAULT_STATE_DIR / "console.sqlite"
 DEFAULT_HANDOFF_DIR = DEFAULT_STATE_DIR / "handoffs"
 
-NEWS_SCOPES = ("LOCAL", "REGIONAL", "NATIONAL", "GLOBAL", "ORBITAL")
+NEWS_SCOPES = ("LOCAL", "REGIONAL", "NATIONAL", "GLOBAL", "ORBITAL", "SYSTEM_SOLAR")
 NEWS_SCOPE_LABELS = {
     "LOCAL": "Seattle",
     "REGIONAL": "Washington / PNW",
     "NATIONAL": "United States",
     "GLOBAL": "World",
     "ORBITAL": "Orbital",
+    "SYSTEM_SOLAR": "Cosmic",
 }
 NEWS_SOURCE_KINDS = {
     "rss",
@@ -600,6 +601,8 @@ def _normalize_optional_keyword(
 
 def _apply_scope_registry_defaults(source_cfg: dict[str, Any], scope: str) -> dict[str, Any]:
     if scope not in {"LOCAL", "REGIONAL", "NATIONAL", "GLOBAL", "ORBITAL"}:
+        # Science candidates need individual adapter signoff before they may
+        # seed a configured source; the internal scope still has a UI state.
         return source_cfg
     source_key = str(source_cfg.get("id") or "").strip()
     if not source_key:

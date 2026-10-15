@@ -114,6 +114,8 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
         if source.get("scope") == "GLOBAL"
         else bool((config.get("orbital") or {}).get("enabled"))
         if source.get("scope") == "ORBITAL"
+        else bool((config.get("solar_system_beyond") or {}).get("enabled"))
+        if source.get("scope") == "SYSTEM_SOLAR"
         else False
     )
     is_allowed_official_http = (

@@ -313,6 +313,10 @@ news:
           parser: "api_json"
           evidence_notes:
             - "Disabled example only. Do not enable without endpoint and key-policy review."
+    SYSTEM_SOLAR:
+      enabled: false
+      label: "Cosmic"
+      sources: [] # Internal scope key; COSMIC is the UI tab, SYSTEM remains app health.
 
 projects:
   - name: "console-1701"

@@ -82,6 +82,10 @@ Recommended path:
 - Candidate UI labels are `COSMIC`, `SOLAR`, `DEEP`, `DEEP SPACE`, `SYSTEM`, `SKY`, and `BEYOND`.
 - Do not change existing routes or tabs in this task.
 
+Implementation decision on 2026-10-15: `SYSTEM` continues to show app health. The science
+tab and route use `COSMIC`; `SYSTEM_SOLAR` stays the internal config/SQLite scope key.
+This is a first-pass UI choice that can be renamed on user request without reusing `SYSTEM`.
+
 ## SECTION 3: Relationship to ORBITAL and other scopes
 
 Solar System and Beyond should complement existing scopes rather than duplicate them.
