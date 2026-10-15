@@ -287,6 +287,11 @@ news:
     assert "Retention expiry" in scope_body
     assert "Fetch run" in scope_body
     assert "Policy" in scope_body
+    assert "Official status" in scope_body
+    assert "First / last seen" in scope_body
+    assert "Recency state" in scope_body
+    assert "Redaction" in scope_body
+    assert "Matching tokens" in scope_body
     assert "Fetch 1" in scope_body
     assert "Health 1" in scope_body
 
@@ -383,8 +388,23 @@ news:
     assert int(local_event["item_count"]) == 2
     assert int(local_event["matching_contract"]["topic_repetition_score"]) > 0
     assert int(local_event["matching_contract"]["source_severity_score"]) == 0
+    assert local_event["event_confidence"] in {"low", "medium", "high"}
+    assert local_event["geography_basis"]["signature_tokens"]
     assert any(payload["id"] == item_id for payload in local_event["items"])
+    member = next(payload for payload in local_event["items"] if payload["id"] == item_id)
+    assert member["source_family"] == "city_light"
+    assert member["source_class"] == "official_utility"
+    assert member["official_status"] is None
+    assert member["official_confirmed"] is False
+    assert member["canonical_url"] == item["canonical_url"]
+    assert member["fetch_run_id"] == item["evidence"]["ingest"]["fetch_run_id"]
+    assert member["ranking_factors"] == item["evidence"]["ranking"]["factors"]
+    assert member["privacy"]["article_body_stored"] is False
+    assert member["expires_at"] == item["expires_at"]
     assert item["local_event"]["id"] == event_id
+    assert item["evidence"]["local_event"]["event"]["event_confidence"] == (
+        local_event["event_confidence"]
+    )
     assert item["evidence"]["local_event"]["event"]["id"] == event_id
 
 

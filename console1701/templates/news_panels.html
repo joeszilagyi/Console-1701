@@ -49,6 +49,25 @@
                 {% endfor %}
               </ul>
             {% endif %}
+                {% if item.scope == "LOCAL" %}
+                  {% set privacy = evidence.privacy or {} %}
+                  <div class="news-evidence-grid">
+                    <div><span>Source ID</span><strong>{{ source.source_key or "unknown" }}</strong></div>
+                    <div><span>Family / class</span><strong>{{ source.source_family or "unknown" }} / {{ source.source_class or "unknown" }}</strong></div>
+                    <div><span>Official status</span><strong>{{ source.official_status or "unverified" }}</strong></div>
+                    <div><span>Parser</span><strong>{{ source.parser or "unknown" }}</strong></div>
+                    <div><span>Published</span><strong>{{ item.source_published_at or "unknown" }}</strong></div>
+                    <div><span>First / last seen</span><strong>{{ item.first_seen_at }} / {{ item.last_seen_at }}</strong></div>
+                    <div><span>Recency state</span><strong>{{ ranking.local_recency_state or "not assessed" }}</strong></div>
+                    <div><span>Redaction</span><strong>{{ privacy.privacy_category or "none" }} · {{ privacy.redaction_reason or "no redaction reason recorded" }}</strong></div>
+                  </div>
+                  <ul class="news-evidence-list">
+                    <li><b>Item URL</b><span>{{ item.url }}</span></li>
+                    <li><b>Canonical URL</b><span>{{ item.canonical_url or "not provided" }}</span></li>
+                    <li><b>Ranking factors</b><span>{{ ranking.factors | tojson }}</span></li>
+                    <li><b>Matching tokens</b><span>{{ local_event.signature.match_tokens | join(", ") if local_event.signature and local_event.signature.match_tokens else "not correlated" }}</span></li>
+                  </ul>
+                {% endif %}
                 {% if policy.notes %}
                   <ul class="news-evidence-list">
                     {% for note in policy.notes %}
@@ -108,7 +127,8 @@
                         {{ local_event_payload.event_type or "unclassified" }} ·
                         match {{ local_event_match_score if local_event_match_score is not none else "unknown" }} ·
                         repeat {{ local_event_topic_repetition }} ·
-                        severity {{ local_event_source_severity }}
+                        severity {{ local_event_source_severity }} ·
+                        confidence {{ local_event_payload.event_confidence or "not assessed" }}
                       </span>
                     </li>
                   </ul>
