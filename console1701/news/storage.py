@@ -30,9 +30,13 @@ FAILING_SOURCE_HEALTH_STATES = {
     "parser_failed",
     "policy_blocked",
     "rate_limited",
+    "restricted_source_disabled",
     "robots_blocked",
+    "sensitivity_blocked",
     "social_disabled",
     "unsupported",
+    "needs_scope_filter",
+    "needs_terms_review",
 }
 
 SOURCE_HEALTH_STATE_MESSAGES = {
@@ -54,6 +58,11 @@ SOURCE_HEALTH_STATE_MESSAGES = {
     "heavy_open_data_disabled": "GLOBAL heavy open-data source is disabled by config.",
     "manual_review_only": "Source is gated for manual review in this phase.",
     "unsupported": "Source is configured in an unsupported way for this phase.",
+    "restricted_source_disabled": "Restricted source allowance is disabled by local config.",
+    "needs_terms_review": "Restricted source needs a documented terms and policy review.",
+    "needs_scope_filter": "Broad catalog source needs a safe, bounded event scope filter.",
+    "sensitivity_blocked": "Tactical satellite source is blocked by sensitivity policy.",
+    "source_health_only": "Source is retained for health/reference context, not ingest.",
 }
 
 

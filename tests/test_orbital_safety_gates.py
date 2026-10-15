@@ -98,7 +98,7 @@ def test_restricted_and_policy_sensitive_candidates_stop_before_access(tmp_path,
     assert status["space_track_home"]["health_state"] == "auth_required"
     assert status["space_track_docs"]["health_state"] == "auth_required"
     for key in ("celestrak_elements", "celestrak_satcat", "celestrak_socrates"):
-        assert status[key]["health_state"] == "policy_blocked"
+        assert status[key]["health_state"] == "sensitivity_blocked"
     assert status["nasa_orbital_debris_news"]["health_state"] == "policy_blocked"
     assert status["esa_reentry"]["health_state"] == "unsupported"
     assert status["orbital_arcgis_reentry_candidate"]["health_state"] == "unsupported"
@@ -143,5 +143,5 @@ def test_tactical_catalogs_do_not_render_even_with_topic_flags(tmp_path, monkeyp
     page = _route(router, "/{scope}")(_request("/ORBITAL"), "ORBITAL")
     assert scope["items"] == []
     assert "Tactical object 12345" not in page.body.decode()
-    assert all(source["health_state"] == "manual_review_only"
+    assert all(source["health_state"] == "needs_scope_filter"
                for source in scope["sources"] if source["source_key"] in keys)
