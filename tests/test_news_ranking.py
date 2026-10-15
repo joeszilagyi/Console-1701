@@ -3,7 +3,46 @@ from __future__ import annotations
 from console1701.news.ranking import (
     apply_local_event_ranking_adjustments,
     apply_regional_cluster_ranking_adjustments,
+    build_rank_result,
 )
+
+
+def test_local_active_nws_alert_stays_elevated_after_recency_fades() -> None:
+    source = {"scope": "LOCAL", "priority": 80}
+    item = {
+        "source_published_at": "2026-10-13T12:00:00+00:00",
+        "evidence": {"nws_alert": {
+            "ranking": {"active_alert": True},
+            "effective": "2026-10-13T12:00:00+00:00",
+            "expires": "2026-10-16T12:00:00+00:00",
+        }},
+    }
+    seen_at = "2026-10-15T12:00:00+00:00"
+    active = build_rank_result(
+        source, item, seen_at=seen_at, combined_tags=["official"],
+        latest_health_state="healthy", repeat_count=0,
+    )
+    expired_item = {**item, "evidence": {"nws_alert": {
+        **item["evidence"]["nws_alert"],
+        "expires": "2026-10-14T12:00:00+00:00",
+    }}}
+    expired = build_rank_result(
+        source, expired_item, seen_at=seen_at, combined_tags=["official"],
+        latest_health_state="healthy", repeat_count=0,
+    )
+
+    assert active["local_recency_state"] == "active_but_older"
+    assert active["factors"]["local_active_alert_bonus"] == 20
+    assert active["score"] == sum(active["factors"].values())
+    assert any("remains active" in reason for reason in active["reasons"])
+    adjusted = apply_local_event_ranking_adjustments(
+        active, source_family="nws", local_event={"families": ["nws"], "item_count": 1}
+    )
+    assert adjusted["local_recency_state"] == "active_but_older"
+    assert adjusted["health_state"] == "healthy"
+    assert expired["local_recency_state"] == "older"
+    assert expired["factors"]["local_active_alert_bonus"] == 0
+    assert active["score"] - expired["score"] == 20
 
 
 def test_regional_cluster_ranking_uses_independent_families_without_accumulating() -> None:

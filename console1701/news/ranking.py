@@ -168,6 +168,10 @@ def build_rank_result(
     local_signal = _local_signal_factors(item) if scope == "LOCAL" else {
         "factors": {}, "reasons": []
     }
+    local_active_alert = (
+        _local_active_alert_state(item, seen, age_hours)
+        if scope == "LOCAL" else {"bonus": 0, "state": None, "reason": None}
+    )
     regional_signal = _regional_signal_factors(item) if scope == "REGIONAL" else {
         "factors": {}, "reasons": []
     }
@@ -192,6 +196,7 @@ def build_rank_result(
         "repeat_observation_bonus": repeat_bonus,
         "source_health_confidence": health_confidence,
         "regional_seismic_boost": regional_seismic_boost,
+        **({"local_active_alert_bonus": local_active_alert["bonus"]} if scope == "LOCAL" else {}),
         **local_signal["factors"],
         **regional_signal["factors"],
     }
@@ -216,6 +221,8 @@ def build_rank_result(
     if regional_seismic_boost:
         reasons.append(f"REGIONAL USGS seismic evidence adds {regional_seismic_boost}.")
     reasons.extend(local_signal["reasons"])
+    if local_active_alert["reason"]:
+        reasons.append(local_active_alert["reason"])
     reasons.extend(regional_signal["reasons"])
 
     return {
@@ -224,7 +231,43 @@ def build_rank_result(
         "age_hours": age_hours,
         "reasons": reasons,
         "health_state": latest_health_state,
+        **({"local_recency_state": local_active_alert["state"]} if scope == "LOCAL" else {}),
     }
+
+
+def _local_active_alert_state(
+    item: dict[str, Any], seen: datetime | None, age_hours: int
+) -> dict[str, Any]:
+    evidence = item.get("evidence") if isinstance(item.get("evidence"), dict) else {}
+    nws = evidence.get("nws_alert") if isinstance(evidence.get("nws_alert"), dict) else {}
+    nws_ranking = nws.get("ranking") if isinstance(nws.get("ranking"), dict) else {}
+    expiration_times = [
+        parsed for key in ("expires", "ends")
+        if (parsed := _parse_time(nws.get(key))) is not None
+    ]
+    expires = min(expiration_times) if expiration_times else None
+    effective = _parse_time(nws.get("effective"))
+    active = bool(nws_ranking.get("active_alert")) and bool(
+        seen and expires and seen < expires and (effective is None or effective <= seen)
+    )
+    if active:
+        older = age_hours > 6
+        bonus = 20 if older else 12
+        return {
+            "bonus": bonus,
+            "state": "active_but_older" if older else "fresh_active",
+            "reason": (
+                f"LOCAL NWS alert remains active; adds {bonus} "
+                f"despite age_hours={age_hours}."
+            ),
+        }
+    if age_hours <= 6:
+        state = "fresh"
+    elif age_hours <= 72:
+        state = "older"
+    else:
+        state = "stale"
+    return {"bonus": 0, "state": state, "reason": None}
 
 
 def _regional_signal_factors(item: dict[str, Any]) -> dict[str, Any]:
@@ -310,6 +353,7 @@ def apply_local_event_ranking_adjustments(
 
     if not local_event:
         return {
+            **ranking,
             "score": int(ranking.get("score", 0)),
             "factors": factors,
             "age_hours": int(ranking.get("age_hours", 0)),
@@ -403,6 +447,7 @@ def apply_local_event_ranking_adjustments(
         reasons.append("LOCAL source health is stale and reduces confidence.")
 
     return {
+        **ranking,
         "score": score,
         "factors": factors,
         "age_hours": int(ranking.get("age_hours", 0)),
