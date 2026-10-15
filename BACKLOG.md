@@ -3146,7 +3146,7 @@ and a separate live signoff. Broad TAP/catalog and all other archive transports 
 
 ### UI Disabled States After Naming Decision
 
-Status: partially implemented 2026-10-15; source-specific states pending.
+Status: implemented for first-pass COSMIC source set.
 
 After the user chooses a scope label, add UI states for disabled, not configured, configured but
 disabled, never scanned, stale, policy blocked, parser failed, auth required, rate limited, social
@@ -3161,14 +3161,17 @@ items, events, and evidence. The remaining policy/auth/health-specific states an
 need a source-gating pass.
 
 The COSMIC state card now separates configured-source health from the disabled science registry
-candidate inventory. It shows counts for heavy archives, auth-required, social, and manual-review
-candidates, plus current hype/archive-query blocked sources. A SQLite state matrix confirms stale,
-parser-failed, rate-limited, auth-required, policy-blocked, hype-blocked, and archive-firehose
-states render without GET fetches. Unconfigured future adapters still need source-specific gates.
+candidate inventory. It counts the two verified opt-in sources as off by default, not as heavy
+archive blocks. It shows heavy archives, auth-required, social, and manual-review candidates,
+plus current hype/archive-query blocked sources. A SQLite state matrix covers every reachable
+first-pass health state, including disabled, never-run, stale, parser/rate/auth/policy/robots,
+terms/scope, hype, and archive-firehose cases without GET fetches. The earlier
+`naming_collision_unresolved` state is impossible because RS-117 resolved the name before the
+COSMIC route was enabled. New adapters need their own source-specific gates.
 
 ### Source Health States
 
-Status: partially implemented 2026-10-15; fixture and disabled-candidate states render.
+Status: implemented for first-pass COSMIC sources and disabled inventory.
 
 Implement source health states for the chosen Solar System and Beyond scope: `disabled`,
 `not_configured`, `configured_never_run`, `healthy`, `stale`, `failing`, `parser_failed`,
@@ -3182,8 +3185,10 @@ An all-rejected fixture records `hype_blocked` without storing its claims. Disab
 candidates are summarized separately, including heavy archive, auth, social, manual-review,
 unsupported, and health-only behaviors. Parser/rate/auth/policy/stale and archive-firehose states
 render from SQLite and appear in app-health SYSTEM. Broad archive fixture queries now produce a
-real `archive_firehose_blocked` state. Later live adapters need real runtime gates
-for source-specific states beyond the current exact fixture allowlist.
+real `archive_firehose_blocked` state. The signed-off ESA and Exoplanet Archive sources move
+through disabled, policy-blocked, never-run, healthy, stale, and failure states using the shared
+health table. Candidate inventory remains a separate disabled-by-default summary. Future source
+admissions require new runtime gates and tests.
 
 ### Evidence Drawer Contract
 

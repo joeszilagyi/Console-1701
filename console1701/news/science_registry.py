@@ -74,6 +74,11 @@ def _interval_minutes(value: str) -> int:
 
 
 def _source_health_behavior(row: dict[str, Any]) -> str:
+    if (
+        row["source_key"] in {"esa_space_science_feed", "nasa_exoplanet_ps_tap"}
+        and row["verification_status"] == "verified"
+    ):
+        return "disabled"
     if row["verification_status"] == "reject_for_now":
         return "unsupported"
     if row["source_class"] == "social_candidate":

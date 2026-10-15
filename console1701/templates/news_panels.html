@@ -352,6 +352,7 @@
       {% endif %}
       {% if state.scope == "SYSTEM_SOLAR" and state.science_candidates %}
         <div><span>Disabled registry candidates</span><strong>{{ state.science_candidates.candidate_count }}</strong></div>
+        <div><span>Verified opt-in sources off by default</span><strong>{{ state.science_candidates.state_counts.get("disabled", 0) }}</strong></div>
         <div><span>Heavy archive candidates gated</span><strong>{{ state.science_candidates.state_counts.get("heavy_archive_disabled", 0) }}</strong></div>
         <div><span>Auth candidates gated</span><strong>{{ state.science_candidates.state_counts.get("auth_required", 0) }}</strong></div>
         <div><span>Social candidates gated</span><strong>{{ state.science_candidates.state_counts.get("social_disabled", 0) }}</strong></div>
