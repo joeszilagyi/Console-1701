@@ -2095,6 +2095,7 @@ def test_cli_news_scan_command_prints_summary(tmp_path, capsys):
         tmp_path / "config.yml",
         f"""
         paths: {{repo_roots: [], explicit_repos: []}}
+        orbital: {{enabled: true}}
         news:
           enabled: true
           scopes:
@@ -2122,6 +2123,7 @@ def test_cli_news_sources_command_reports_policy_and_health(tmp_path, capsys):
         tmp_path / "config.yml",
         f"""
         paths: {{repo_roots: [], explicit_repos: []}}
+        orbital: {{enabled: true}}
         news:
           enabled: true
           scopes:
@@ -2316,6 +2318,7 @@ def test_news_sources_status_derives_policy_and_never_run_states(tmp_path):
         tmp_path / "config.yml",
         """
         paths: {repo_roots: [], explicit_repos: []}
+        orbital: {enabled: true}
         news:
           enabled: true
           scopes:

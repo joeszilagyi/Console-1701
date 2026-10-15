@@ -237,6 +237,30 @@ DEFAULT_GLOBAL_CONFIG: dict[str, Any] = {
     "wildfire_attention_minimum": "major_or_smoke_impact",
 }
 
+DEFAULT_ORBITAL_CONFIG: dict[str, Any] = {
+    "enabled": False,
+    "default_place_label": "Orbital",
+    "include_space_weather": True,
+    "include_aurora": True,
+    "include_neo_close_approaches": True,
+    "include_fireballs": True,
+    "include_launches": True,
+    "include_crewed_spaceflight": True,
+    "include_iss": True,
+    "include_reentries": True,
+    "include_debris": False,
+    "include_satellite_catalog": False,
+    "include_conjunction_awareness": False,
+    "include_space_agency_news": True,
+    "include_spaceflight_news": True,
+    "include_astronomy_transients": True,
+    "include_social_sources": False,
+    "allow_auth_required_sources": False,
+    "allow_restricted_sources": False,
+    "allow_tactical_sources": False,
+    "allow_homepage_extractors": False,
+}
+
 DEFAULT_NEWS_CONFIG: dict[str, Any] = {
     "enabled": False,
     "retention": {
@@ -463,6 +487,7 @@ def normalize_config(config: dict[str, Any]) -> None:
     normalize_regional_config(config)
     normalize_national_config(config)
     normalize_global_config(config)
+    normalize_orbital_config(config)
     normalize_news_config(config)
 
 
@@ -705,6 +730,18 @@ def normalize_global_config(config: dict[str, Any]) -> None:
         if value not in allowed:
             raise ConfigError(f"global.{key} must be one of: {', '.join(sorted(allowed))}.")
         global_cfg[key] = value
+
+
+def normalize_orbital_config(config: dict[str, Any]) -> None:
+    orbital = _require_mapping(
+        config.setdefault("orbital", deepcopy(DEFAULT_ORBITAL_CONFIG)), "orbital"
+    )
+    orbital["default_place_label"] = _require_string(
+        orbital.get("default_place_label", "Orbital"), "orbital.default_place_label"
+    )
+    for key, default in DEFAULT_ORBITAL_CONFIG.items():
+        if key.startswith(("include_", "allow_")) or key == "enabled":
+            orbital[key] = _coerce_bool(orbital.get(key, default), f"orbital.{key}")
 
 
 def _normalize_local_source_metadata(

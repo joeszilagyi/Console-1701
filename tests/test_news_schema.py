@@ -776,7 +776,7 @@ def test_news_system_scope_matrix_reports_stale_and_failing_states(tmp_path):
     assert summary["scope_states"]["REGIONAL"]["state"] == "failing"
     assert summary["scope_states"]["NATIONAL"]["state"] == "not_configured"
     assert summary["scope_states"]["GLOBAL"]["state"] == "not_configured"
-    assert summary["scope_states"]["ORBITAL"]["state"] == "not_configured"
+    assert summary["scope_states"]["ORBITAL"]["state"] == "disabled"
     assert summary["source_state_counts"]["stale"] == 1
     assert summary["source_state_counts"]["parser_failed"] == 1
     assert summary["stale_source_count"] == 1
