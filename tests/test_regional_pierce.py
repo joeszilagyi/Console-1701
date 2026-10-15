@@ -71,6 +71,10 @@ def test_pierce_road_rss_offline_scan_and_live_block(tmp_path, monkeypatch):
     by_id = {row["pierce_road_alert"]["alert_id"]: row for row in evidence}
     assert by_id["2892"]["ranking"]["factors"]["regional_public_impact_bonus"] == 0
     assert by_id["2889"]["ranking"]["factors"]["regional_public_impact_bonus"] == 5
+    assert all(row["regional_event"]["matching_basis"] == "official_pierce_road_alert_id"
+               for row in evidence)
+    assert all(row["regional_event"]["event_type"] == "traveler_alert"
+               for row in evidence)
 
     live_config = tmp_path / "live.yml"
     live_config.write_text(dedent("""

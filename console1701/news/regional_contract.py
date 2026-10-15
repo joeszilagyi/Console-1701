@@ -32,6 +32,7 @@ def build_regional_event_contract(
     water = evidence.get("usgs_water")
     wsf = evidence.get("wsf_alert")
     aqi = evidence.get("ecology_aqi")
+    pierce = evidence.get("pierce_road_alert")
     identity = f"isolated:{source.get('id')}:{hashed_url}"
     event_type = "regional_headline"
     matching_basis = "isolated_url"
@@ -114,6 +115,18 @@ def build_regional_event_contract(
         }
         match_tokens = [str(wsf["bulletin_id"]), *routes]
         public_impact_basis = "WSF bulletin cancellation or delay text; no vessel inference"
+    elif isinstance(pierce, dict) and str(pierce.get("alert_id") or "").isdigit():
+        identity = f"pierce-road-alert:{pierce['alert_id']}"
+        event_type = "traveler_alert"
+        matching_basis = "official_pierce_road_alert_id"
+        confidence = "high"
+        geography = {
+            "basis": "official_publisher_jurisdiction",
+            "matched": True,
+            "county": "Pierce",
+        }
+        match_tokens = [str(pierce["alert_id"])]
+        public_impact_basis = "Pierce County road alert classification"
     elif isinstance(wsdot, dict) and wsdot.get("alert_id"):
         identity = f"wsdot-alert:{wsdot['alert_id']}"
         event_type = "traveler_alert"
