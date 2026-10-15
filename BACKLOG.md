@@ -1224,14 +1224,29 @@ Preserve alert id or URL, title, published/update time, alert type, affected pop
 jurisdiction if provided, public instruction URL, preliminary status, bounded description, and
 public-health ranking evidence.
 
+Blocker reviewed 2026-10-15: official HAN pages expose notice IDs and alert types, but no
+current machine-readable HAN feed/API was verified. Former RSS addresses redirect to CDC's
+general emergency page, and candidate new XML paths return 404. See
+`docs/project/NATIONAL_CDC_HAN_ENDPOINT_BLOCKER.md`. Keep the sources disabled as manual references;
+do not scrape the notice list or invent a parser input shape. Continue when CDC documents a
+current public endpoint.
+
 ### FDA Recall Endpoint/Feed Verification
 
-Status: not implemented.
+Status: implemented (source verification; live ingest disabled).
 
 Verify FDA recall endpoint/feed options before implementation. Identify whether RSS, enforcement
 report data, or another official endpoint provides stable recall metadata. Preserve endpoint
 ownership, parser shape, recall class/hazard/product fields, distribution geography, policy notes,
 refresh interval, and source-health behavior.
+
+Current state: `docs/project/NATIONAL_FDA_RECALL_SOURCE_VERIFICATION.md` records the official
+Recalls, Food Safety and MedWatch RSS URLs, bounded item/XML and conditional-header observations,
+cross-feed duplicates, absent structured severity/geography fields, policy/robots notes,
+proposed interval, source-health behavior, and a future exact-URL release gate. The separate
+openFDA enforcement API has useful classification and distribution fields but explicitly warns
+against using its reports to issue public alerts or track recall lifecycle; it is held as
+research/reference data for this feature. No FDA live source is enabled.
 
 ### FSIS Recall API Parser
 
