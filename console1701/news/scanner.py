@@ -31,6 +31,7 @@ from console1701.news.official_http import (
     is_supported_official_source,
 )
 from console1701.news.orbital_events import correlate_orbital_items
+from console1701.news.orbital_impact import derive_orbital_impact
 from console1701.news.orbital_ranking import rank_orbital_event
 from console1701.news.orbital_registry import list_orbital_source_registry
 from console1701.news.parsers import (
@@ -2013,6 +2014,15 @@ def _upsert_item(
             item_sensitivity.update({str(flag): True for flag in source_flags})
             item["evidence"]["sensitivity"] = item_sensitivity
         item = _redact_global_sensitive_item(item)
+    if str(source.get("scope") or "").upper() == "ORBITAL":
+        item = dict(item)
+        item["evidence"] = dict(item.get("evidence") or {})
+        impact = derive_orbital_impact(item)
+        item["evidence"]["orbital_impact"] = impact
+        identity = dict(item["evidence"].get("orbital_identity") or {})
+        identity["impact_tags"] = impact["tags"]
+        item["evidence"]["orbital_identity"] = identity
+        item["tags"] = [*(item.get("tags") or []), *impact["tags"]]
     combined_tags = list(dict.fromkeys([*(source.get("tags") or []), *(item.get("tags") or [])]))
     hashed_url = url_hash(str(item["canonical_url"] or item["url"]))
     cluster = cluster_key(str(item["title"]), hashed_url)

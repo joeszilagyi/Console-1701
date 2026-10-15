@@ -141,7 +141,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-104** [ORBITAL Deterministic Event Correlation](../../BACKLOG.md#L1818) — partially implemented; core matcher and stored evidence pass, future adapter identities pending.
 - [x] **RS-105** [ORBITAL Deterministic Ranking](../../BACKLOG.md#L1828) — completed 2026-10-15; factor score and reasons persist on ORBITAL events.
 - [ ] **RS-106** [ORBITAL Safety And Sensitivity Rules](../../BACKLOG.md#L1838) — partially implemented; policy gate and hard rendering suppression pass, ingest classification pending.
-- [ ] **RS-107** [ORBITAL Local And Global Impact Tag Rules](../../BACKLOG.md#L1847) — not implemented.
+- [x] **RS-107** [ORBITAL Local And Global Impact Tag Rules](../../BACKLOG.md#L1847) — completed 2026-10-15; canonical tags have source-backed field-level basis.
 - [ ] **RS-108** [ORBITAL UI Disabled States](../../BACKLOG.md#L1856) — not implemented.
 - [ ] **RS-109** [ORBITAL Source Health States](../../BACKLOG.md#L1866) — not implemented.
 - [ ] **RS-110** [ORBITAL Evidence Drawer Contract](../../BACKLOG.md#L1876) — not implemented.
