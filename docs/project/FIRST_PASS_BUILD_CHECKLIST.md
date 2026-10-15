@@ -142,9 +142,9 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-105** [ORBITAL Deterministic Ranking](../../BACKLOG.md#L1828) — completed 2026-10-15; factor score and reasons persist on ORBITAL events.
 - [ ] **RS-106** [ORBITAL Safety And Sensitivity Rules](../../BACKLOG.md#L1838) — partially implemented; policy gate and hard rendering suppression pass, ingest classification pending.
 - [x] **RS-107** [ORBITAL Local And Global Impact Tag Rules](../../BACKLOG.md#L1847) — completed 2026-10-15; canonical tags have source-backed field-level basis.
-- [ ] **RS-108** [ORBITAL UI Disabled States](../../BACKLOG.md#L1856) — not implemented.
+- [ ] **RS-108** [ORBITAL UI Disabled States](../../BACKLOG.md#L1856) — partially implemented; stored evidence renders, state matrix pending.
 - [ ] **RS-109** [ORBITAL Source Health States](../../BACKLOG.md#L1866) — not implemented.
-- [ ] **RS-110** [ORBITAL Evidence Drawer Contract](../../BACKLOG.md#L1876) — not implemented.
+- [ ] **RS-110** [ORBITAL Evidence Drawer Contract](../../BACKLOG.md#L1876) — partially implemented; visible core fields pass, formal impact/diversity basis pending.
 - [ ] **RS-111** [ORBITAL Official-Source Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L1887) — not implemented.
 - [ ] **RS-112** [Documentation For ORBITAL Source Verification](../../BACKLOG.md#L1933) — partially implemented.
 - [ ] **RS-113** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L1948) — partially implemented; remaining source-health state matrix.

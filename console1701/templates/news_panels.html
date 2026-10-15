@@ -21,6 +21,9 @@
         {% set local_event = evidence.local_event or {} %}
         {% set global_evidence = evidence.global or {} %}
         {% set national_evidence = evidence.national or {} %}
+        {% set orbital_identity = evidence.orbital_identity or {} %}
+        {% set orbital_impact = evidence.orbital_impact or {} %}
+        {% set orbital_event = evidence.orbital_event or {} %}
         <li class="news-item">
           <div class="news-item-head">
             <a href="{{ item.url }}" target="_blank" rel="noreferrer">{{ item.title }}</a>
@@ -100,6 +103,27 @@
                     <li><b>Impact tags</b><span>{{ global_evidence.impact_tags | join(", ") or "not assessed" }}</span></li>
                     <li><b>Sensitivity notes</b><span>{{ global_evidence.sensitivity_notes | join("; ") or "none recorded" }}</span></li>
                     <li><b>Ranking factors</b><span>{{ ranking.factors | tojson }}</span></li>
+                  </ul>
+                {% endif %}
+                {% if item.scope == "ORBITAL" %}
+                  <div class="news-evidence-grid">
+                    <div><span>Source ID</span><strong>{{ source.source_key or "unknown" }}</strong></div>
+                    <div><span>Family / class</span><strong>{{ source.source_family or "unknown" }} / {{ source.source_class or "unknown" }}</strong></div>
+                    <div><span>Official status</span><strong>{{ source.official_status or "unverified" }}</strong></div>
+                    <div><span>Parser</span><strong>{{ source.parser or "unknown" }}</strong></div>
+                    <div><span>Published</span><strong>{{ item.source_published_at or "unknown" }}</strong></div>
+                    <div><span>First / last seen</span><strong>{{ item.first_seen_at }} / {{ item.last_seen_at }}</strong></div>
+                    <div><span>Event type</span><strong>{{ orbital_identity.event_type or "unclassified" }}</strong></div>
+                    <div><span>Mission / object</span><strong>{{ orbital_identity.mission_name or orbital_identity.mission_id or orbital_identity.object_id or "not provided" }}</strong></div>
+                    <div><span>Event confidence</span><strong>{{ orbital_event.confidence or "not correlated" }}</strong></div>
+                    <div><span>Source diversity</span><strong>{{ orbital_event.families | join(", ") if orbital_event.families else "not correlated" }}</strong></div>
+                    <div><span>Impact tags</span><strong>{{ orbital_impact.tags | join(", ") or "none verified" }}</strong></div>
+                  </div>
+                  <ul class="news-evidence-list">
+                    <li><b>Item URL</b><span>{{ item.url }}</span></li>
+                    <li><b>Impact basis</b><span>{{ orbital_impact.basis | tojson }}</span></li>
+                    <li><b>Ranking factors</b><span>{{ orbital_event.ranking.factors | tojson if orbital_event.ranking else "not yet correlated" }}</span></li>
+                    <li><b>Sensitivity</b><span>{{ orbital_event.ranking.sensitivity.label if orbital_event.ranking else "not assessed" }}</span></li>
                   </ul>
                 {% endif %}
                 {% if item.scope == "NATIONAL" and national_evidence %}
@@ -318,6 +342,7 @@
             {% set cluster_evidence = cluster.evidence or {} %}
             {% set global_event = cluster_evidence.global_event or {} %}
             {% set national_event = cluster_evidence.national_event or {} %}
+            {% set orbital_event = cluster_evidence.orbital_event or {} %}
             <li>
               <b>{{ cluster.title }}</b>
               <span>{{ cluster.item_count }} item{{ "" if cluster.item_count == 1 else "s" }} · score {{ cluster.score }}</span>
@@ -343,6 +368,23 @@
                       <li><b>Match {{ match.item_ids | join(" + ") }}</b><span>{{ match.basis | join(", ") }}{% if match.shared_tokens %} · tokens {{ match.shared_tokens | join(", ") }}{% endif %}</span></li>
                     {% endfor %}
                     {% for reason in global_event.ranking.reasons %}
+                      <li><b>Rank</b><span>{{ reason }}</span></li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+                {% if view['scope'] == "ORBITAL" and orbital_event %}
+                  <div class="news-evidence-grid">
+                    <div><span>Event confidence</span><strong>{{ orbital_event.confidence }}</strong></div>
+                    <div><span>Source families</span><strong>{{ orbital_event.families | join(", ") or "unknown" }}</strong></div>
+                    <div><span>Event types</span><strong>{{ orbital_event.event_types | join(", ") or "unclassified" }}</strong></div>
+                    <div><span>Event score</span><strong>{{ orbital_event.ranking.score }}</strong></div>
+                    <div><span>Impact tags</span><strong>{{ orbital_event.ranking.impact_tags | join(", ") or "none verified" }}</strong></div>
+                  </div>
+                  <ul class="news-evidence-list">
+                    {% for match in orbital_event.matches %}
+                      <li><b>Match {{ match.item_ids | join(" + ") }}</b><span>{{ match.basis | join(", ") }}{% if match.shared_tokens %} · tokens {{ match.shared_tokens | join(", ") }}{% endif %}</span></li>
+                    {% endfor %}
+                    {% for reason in orbital_event.ranking.reasons %}
                       <li><b>Rank</b><span>{{ reason }}</span></li>
                     {% endfor %}
                   </ul>
