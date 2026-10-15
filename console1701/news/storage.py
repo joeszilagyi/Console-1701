@@ -860,6 +860,12 @@ def get_news_local_event_detail(
         return None
 
     event = _decode_local_event_row(row)
+    match_score = int(event["matching_contract"].get("best_match_score") or 0)
+    event["event_confidence"] = (
+        "single_source" if event["item_count"] <= 1 else
+        "high" if match_score >= 35 else
+        "medium" if match_score >= 20 else "low"
+    )
     item_ids = [int(value) for value in event["item_ids"] if str(value).isdigit()]
     if item_ids:
         placeholders = ",".join(["?"] * len(item_ids))
@@ -870,7 +876,12 @@ def get_news_local_event_detail(
               i.title,
               i.scope,
               i.url,
+              i.canonical_url,
+              i.source_published_at,
+              i.first_seen_at,
               i.last_seen_at,
+              i.expires_at,
+              i.evidence_json,
               s.source_key,
               s.name AS source_name
             FROM news_items i
@@ -879,18 +890,35 @@ def get_news_local_event_detail(
             """,
             item_ids,
         ).fetchall()
-        id_to_item = {
-            int(item["id"]): {
+        id_to_item = {}
+        for item in item_rows:
+            item_evidence = json_loads(str(item["evidence_json"]), {})
+            source_evidence = item_evidence.get("source") or {}
+            id_to_item[int(item["id"])] = {
                 "id": int(item["id"]),
                 "title": str(item["title"]),
                 "scope": str(item["scope"]),
                 "url": str(item["url"]),
+                "canonical_url": item["canonical_url"],
+                "source_published_at": item["source_published_at"],
+                "first_seen_at": str(item["first_seen_at"]),
                 "last_seen_at": str(item["last_seen_at"]),
+                "expires_at": str(item["expires_at"]),
                 "source_key": str(item["source_key"]),
                 "source_name": str(item["source_name"]),
+                "source_family": source_evidence.get("source_family"),
+                "source_class": source_evidence.get("source_class"),
+                "official_status": source_evidence.get("official_status"),
+                "official_confirmed": source_evidence.get("official_status") == "official",
+                "parser": source_evidence.get("parser"),
+                "fetch_run_id": (item_evidence.get("ingest") or {}).get("fetch_run_id"),
+                "source_health_at_ingest": (
+                    item_evidence.get("ingest") or {}
+                ).get("source_health_state_at_ingest"),
+                "ranking_factors": (item_evidence.get("ranking") or {}).get("factors") or {},
+                "privacy": item_evidence.get("privacy") or {},
+                "policy_notes": (item_evidence.get("policy") or {}).get("notes") or [],
             }
-            for item in item_rows
-        }
         event["items"] = [
             id_to_item[identifier] for identifier in item_ids if identifier in id_to_item
         ]

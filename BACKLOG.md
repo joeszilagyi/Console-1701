@@ -563,7 +563,7 @@ robots block, rate limit, unsupported, and auth required. No external fetch is p
 
 ### LOCAL Evidence Drawer Contract
 
-Status: partially implemented.
+Status: implemented (first pass).
 
 Define and test evidence payloads for LOCAL items and events. Include source ids, source names,
 families, classes, item URLs, canonical URLs, official flags, source published times, first/last
@@ -579,6 +579,16 @@ item detail includes a resolved local-event envelope with associated item summar
 correlation explanation, explicit geography basis normalization, and scope-specific matching
 contract details now land in local-event payloads via `matching_contract` and
 `geography_basis`, with local-item evidence carrying the resolved event envelope.
+The LOCAL item drawer now shows source key/name, family/class, official status, parser, item and
+canonical URLs, published/first/last seen times, fetch run and source health at ingest, explicit
+recency state, ranking factors/reasons, privacy category/reason, retention expiry, policy notes,
+and matching tokens. Event detail now supplies a bounded item provenance summary for every member:
+source identity and class, official status/confirmation, canonical and item URLs, times/expiry,
+parser, fetch run, health at ingest, ranking factors, privacy decision, and policy notes. The
+event payload also labels correlation confidence as `single_source`, `low`, `medium`, or `high`
+from the deterministic match score, separate from source official status. The existing geography
+and matching contract remains available, and item detail resolves its linked event. Fixture/API/UI
+tests verify the contract without an external fetch.
 
 ### LOCAL Official-Source Live Ingest Phase
 

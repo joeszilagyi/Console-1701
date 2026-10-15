@@ -1567,6 +1567,7 @@ def _upsert_local_event(
             "event_key": signature["event_key"],
             "match_score": 0,
             "matched": False,
+            "event_confidence": "single_source",
             "item_count": 1,
             "families": [signature["source_family"]] if signature["source_family"] else [],
             "is_duplicate_family": False,
@@ -1748,6 +1749,10 @@ def _upsert_local_event(
         "event_key": str(existing["event_key"]),
         "match_score": int(best_match_score),
         "matched": True,
+        "event_confidence": (
+            "high" if best_match_score >= 35 else
+            "medium" if best_match_score >= LOCAL_EVENT_MATCH_THRESHOLD else "low"
+        ),
         "item_count": len(merged_item_ids),
         "families": merged_families,
         "is_duplicate_family": duplicate_family,

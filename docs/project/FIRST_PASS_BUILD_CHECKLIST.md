@@ -32,7 +32,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-007** [LOCAL Deterministic Ranking](../../BACKLOG.md#L461) — all first-pass factors and reasons are stored; NWS active-window and older-alert ranking is verified.
 - [x] **RS-008** [LOCAL Privacy Redaction Rules](../../BACKLOG.md#L482) — supported SFD/SPD parsers redact private addresses before storage and rank isolated minor incidents down.
 - [x] **RS-009** [LOCAL Source Health States](../../BACKLOG.md#L511) — all first-pass source/scope states are derived and visible in LOCAL and SYSTEM; offline matrix coverage added.
-- [ ] **RS-010** [LOCAL Evidence Drawer Contract](../../BACKLOG.md#L527) — partially implemented.
+- [x] **RS-010** [LOCAL Evidence Drawer Contract](../../BACKLOG.md#L527) — item drawer and event API expose provenance, ranking, redaction, matching, geography, confidence, policy, and retention evidence.
 - [ ] **RS-011** [LOCAL Official-Source Live Ingest Phase](../../BACKLOG.md#L546) — partially implemented.
 - [ ] **RS-012** [Documentation For Source Verification](../../BACKLOG.md#L588) — partially implemented.
 
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-010. Expanded LOCAL item drawer fields and event-member API provenance, added explicit deterministic event confidence, and verified linked item/event evidence. Full pytest passed (325 tests); Ruff passed. Progress: 38/150.
 - **2026-10-15:** Completed RS-009. Audited the existing source-health derivation and scope/SYSTEM presentation; extended the shared offline state-matrix test to LOCAL. `not_configured` correctly applies at scope level, while rate-limit and robots states await real evidence from a future verified live source. App tests passed (28 tests); Ruff passed. Progress: 37/150.
 - **2026-10-15:** Completed RS-008 for supported public-safety parsers. Removed nested SFD address and low-acuity cross-street leakage from event tokens. SPD now replaces sensitive title/description and suppresses unverified numeric route tokens for low-acuity and minor reports, with explicit privacy evidence and ranking penalty. Full pytest passed (324 tests); Ruff passed. Progress: 36/150.
 - **2026-10-15:** Completed RS-007. Audited existing LOCAL parser and event ranking factors, then added a bounded NWS active-window bonus and explicit recency state so older active hazards remain visible while expired alerts receive no active boost. Event adjustment preserves the state. Full pytest passed (323 tests); Ruff passed. Progress: 35/150.
