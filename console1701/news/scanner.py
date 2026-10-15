@@ -10,6 +10,7 @@ from typing import Any
 from console1701.config import ensure_state_dirs, iter_news_sources, load_config
 from console1701.db import connect_db, init_db, json_dumps, json_loads, utc_now
 from console1701.news.facets import replace_global_item_facets
+from console1701.news.global_events import correlate_global_items
 from console1701.news.global_registry import list_global_source_registry
 from console1701.news.local_registry import list_local_source_registry
 from console1701.news.national_registry import list_national_source_registry
@@ -2184,6 +2185,9 @@ def _latest_health_state_for_rank(conn: sqlite3.Connection, source_id: int) -> s
 
 
 def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
+    if scope == "GLOBAL":
+        _rebuild_global_clusters(conn)
+        return
     rows = conn.execute(
         """
         SELECT id, title, url_hash, first_seen_at, last_seen_at, rank_score,
@@ -2306,6 +2310,98 @@ def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
                 group["item_count"],
                 group["score"],
                 json_dumps(group["tags"]),
+                json_dumps(cluster_evidence),
+            ),
+        )
+
+
+def _rebuild_global_clusters(conn: sqlite3.Connection) -> None:
+    rows = conn.execute(
+        """
+        SELECT id, scope, title, source_published_at, first_seen_at, last_seen_at,
+               expires_at, rank_score, tags_json, evidence_json
+        FROM news_items
+        WHERE scope = 'GLOBAL' AND status = 'active' AND expires_at >= ?
+        ORDER BY id
+        """,
+        (datetime.now(UTC).isoformat(timespec="seconds"),),
+    ).fetchall()
+    items = [
+        {**dict(row), "evidence": json_loads(str(row["evidence_json"]), {})}
+        for row in rows
+    ]
+    by_id = {int(item["id"]): item for item in items}
+    conn.execute("DELETE FROM news_clusters WHERE scope = 'GLOBAL'")
+    for group in correlate_global_items(items):
+        members = [by_id[item_id] for item_id in group["item_ids"]]
+        representative = max(
+            members, key=lambda item: (int(item["rank_score"]), item["last_seen_at"], item["id"])
+        )
+        family_scores: dict[str, int] = {}
+        tags: list[str] = []
+        fixture_only = True
+        matching_tokens = sorted({
+            token for match in group["matches"] for token in match["shared_tokens"]
+        })
+        confidence = (
+            "corroborated" if group["corroborated"] else
+            "source_reported" if group["identifiers"] else "uncorroborated"
+        )
+        for member in members:
+            evidence = member["evidence"]
+            family = str((evidence.get("source") or {}).get("source_family") or "unknown")
+            family_scores[family] = max(
+                family_scores.get(family, 0), int(member["rank_score"])
+            )
+            fixture_only = fixture_only and bool((evidence.get("ingest") or {}).get("fixture_only"))
+            tags.extend(json_loads(str(member["tags_json"]), []))
+            contract = dict(evidence.get("global") or {})
+            contract["event_confidence"] = confidence
+            contract["matching_tokens"] = matching_tokens
+            contract["source_diversity_basis"] = (
+                f"{len(group['families'])} independent source families"
+                if group["corroborated"] else "not_correlated"
+            )
+            evidence["global"] = contract
+            evidence["global_event"] = {
+                "event_key": group["event_key"],
+                "item_ids": group["item_ids"],
+                "source_keys": group["source_keys"],
+                "families": group["families"],
+                "matches": group["matches"],
+                "confidence": confidence,
+            }
+            conn.execute(
+                "UPDATE news_items SET evidence_json = ? WHERE id = ?",
+                (json_dumps(evidence), member["id"]),
+            )
+        cluster_evidence = {
+            "fixture_only": fixture_only,
+            "global_event": {
+                **group,
+                "confidence": confidence,
+                "ranking": {
+                    "method": "maximum_item_score_per_source_family",
+                    "family_scores": family_scores,
+                },
+            },
+        }
+        conn.execute(
+            """
+            INSERT INTO news_clusters (
+              scope, cluster_key, title, representative_item_id, first_seen_at,
+              last_seen_at, item_count, score, tags_json, evidence_json
+            ) VALUES ('GLOBAL', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                group["event_key"],
+                representative["title"],
+                representative["id"],
+                min(str(member["first_seen_at"]) for member in members),
+                max(str(member["last_seen_at"]) for member in members),
+                len(members),
+                sum(family_scores.values()),
+                json_dumps(list(dict.fromkeys(tags))),
                 json_dumps(cluster_evidence),
             ),
         )
