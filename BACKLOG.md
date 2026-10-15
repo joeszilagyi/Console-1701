@@ -757,7 +757,8 @@ metadata fixture for fire updates, with body and Washington impact excluded. WA 
 hourly AQI ArcGIS layer now has an observed three-station Seattle fixture; exact street addresses
 from the source response are dropped before storage. Pierce County's official Road Alert RSS now
 has an observed metadata fixture and fixture-only parser; it collapses four revisions of one AID,
-stores no description/body, and ranks routine roadwork low. Dedicated WA DNR incident, other county
+stores no description/body, and ranks routine roadwork low. Its AID now persists as a stable
+REGIONAL traveler-alert event identity with publisher county provenance. Dedicated WA DNR incident, other county
 emergency, outage, and other regional fixture shapes remain pending endpoint verification; do not
 invent live API shapes to close this pack.
 
@@ -993,7 +994,9 @@ clusters. The cluster rebuild also supports conservative cross-family matching b
 event type, shared parser-backed geography, at least three title tokens, and a 48-hour publication
 window. It requires every pair to match and keeps unverified headlines isolated by URL. The
 item/cluster contract stores pairwise matching basis and tokens, confidence, member IDs, and
-source families. The remaining regional token families await source parsers; see
+source families. Pierce County road-alert AIDs survive headline revisions as official event
+identities and can match a separate official road report only with shared Pierce geography,
+title context, and time. The remaining regional token families await source parsers; see
 `docs/project/REGIONAL_EVENT_CONTRACT.md`.
 
 ### REGIONAL Deterministic Ranking

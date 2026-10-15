@@ -47,7 +47,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-019** [USGS Earthquake GeoJSON Parser](../../BACKLOG.md#L738) — official GeoJSON identity, bounded geography/magnitude/radius, event evidence, and fixture scan verified.
 - [x] **RS-020** [King County Emergency Feed Parser](../../BACKLOG.md#L787) — official RSS source, bounded item parser, classification/ranking and offline scan verified; live ingest disabled.
 - [x] **RS-021** [County Emergency Alert Source Verification](../../BACKLOG.md#L795) — eight county access paths, feed candidates, risks and fallbacks recorded; no live feed enabled.
-- [ ] **RS-022** [REGIONAL Deterministic Event Correlation](../../BACKLOG.md#L816) — partially implemented.
+- [ ] **RS-022** [REGIONAL Deterministic Event Correlation](../../BACKLOG.md#L816) — official NWS/USGS/WSDOT and Pierce road IDs plus conservative cross-family context pass; remaining parser-backed token families are open.
 - [x] **RS-023** [REGIONAL Deterministic Ranking](../../BACKLOG.md#L831) — implemented for first pass.
 - [x] **RS-024** [REGIONAL Privacy And Public-Impact Rules](../../BACKLOG.md#L846) — completed 2026-10-15; pre-storage address redaction, low-value/outage penalty, official-impact exception, and offline scan test.
 - [x] **RS-025** [REGIONAL UI Disabled States](../../BACKLOG.md#L855) — page/API state matrix and scope-specific social/homepage blocked messaging verified without fetch.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Advanced RS-016 and RS-022. Pierce County road-alert AIDs now become stable REGIONAL traveler-alert event identities; source-backed county enables conservative matching to independent official road reports with shared title/time, while a different county stays separate. Fixture parser, event-contract, and stored-scan coverage pass. Full pytest passed (706 tests); Ruff passed. Progress: 136/150.
 - **2026-10-15:** Advanced RS-144. GCN Notice and separate Circular fixtures now form one retracted event; retraction overrides even high cross-source rank, applies to Circular evidence, and persists through notice expiry until the retraction itself is purged. Offline scan and ranking tests trap HTTP. GCN live transport and retraction-first expiry/re-ingest remain open. Full pytest passed (705 tests); Ruff passed. Progress: 136/150.
 - **2026-10-15:** Advanced RS-049. CPSC recalls now carry source-backed event type, agency and official recall ID for NATIONAL correlation; existing rows without the new identity contract can still match from stored CPSC evidence. FDA RSS notices get an explicit FDA notice type without inferred recall class or geography. FSIS API and documentation remain HTTP 403. Full pytest passed (701 tests); Ruff passed. Progress: 136/150.
 - **2026-10-15:** Advanced RS-092. Replaced the stale SWPC X-ray summary candidate (HTTP 404) with its observed seven-day GOES flare event list (HTTP 200, 56 rows/21,256 bytes). A bounded fixture parser now stores M/X observations with source times/class/flux, excludes C/B rows, adds cautious severity ranking, and claims no alert or Earth impact. Offline scan and negative tests pass; live HTTP remains outside the allowlist. Full pytest passed (700 tests); Ruff passed. Progress: 136/150.

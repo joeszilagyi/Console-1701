@@ -11,13 +11,19 @@ and are visible through the existing scope/item APIs and evidence drawers.
 | USGS earthquake | `earthquake` | official USGS event ID | point coordinates and configured bounding filter |
 | NWS alert | `weather_alert` | official NWS alert ID | Washington zone IDs and area description |
 | WSDOT alert | `traveler_alert` | official WSDOT alert ID | route, facility, county, and region |
+| WSF bulletin | `ferry_alert` | official bulletin ID | affected route IDs; all-routes flag stays distinct |
+| USGS water observation | `hydrology_observation` | official gauge ID and observation time | station county and HUC8 basin |
+| Ecology AQI observation | `air_quality_observation` | official site ID and sample time | allowlisted station and city |
+| Pierce County road alert | `traveler_alert` | official AID | publisher jurisdiction, Pierce County |
 | Unverified headline | `regional_headline` | source plus canonical URL hash | headline service area, not trusted for convergence |
 
 The persisted event key is a stable hash of the corresponding identity. This matches updates or
 duplicate feed paths carrying the same official ID. The cluster rebuild can also correlate two
 different official source families when event type, one verified geographic field, at least three
 normalized title tokens, and publication times within 48 hours all agree. Current parser-backed
-geographic fields for that match are WSDOT route/county and NWS weather zone. Future official
+geographic fields include WSDOT route/county, NWS weather zone, Pierce County jurisdiction,
+WSF route IDs, USGS water basin/county, and Ecology station/city. Event type still has to match;
+the Pierce and WSDOT road reports can converge on a shared county and title. Future official
 parsers can supply the other named REGIONAL identity fields. Every pair in a multi-item group must
 match; a general middle report cannot bridge two unrelated incidents. Unverified headlines remain
 isolated even when their title and place resemble an official report. REGIONAL NWS fixture parsing excludes alerts without
@@ -48,8 +54,8 @@ cover stale, parser-failed, policy-blocked, never-run, disabled, and manual-revi
 
 ## Remaining Limits
 
-This is deterministic identity matching for the three structured official fixture parsers, plus a
-conservative cross-family path for their verified geography. Counties beyond existing source
-fields, passes/ferries/ports/basins/volcanoes/AQI/public-health jurisdictions, syndicated-news
-handling, and broader privacy/public-impact policy remain in `BACKLOG.md`. REGIONAL NWS and USGS
+This is deterministic identity matching for the structured official fixture parsers, plus a
+conservative cross-family path for their verified geography. Additional county and incident
+sources, passes, airports, ports, volcanoes, public-health jurisdictions, and syndicated-news
+handling remain in `BACKLOG.md`. REGIONAL NWS and USGS
 have opt-in live paths, but this event contract does not enable them or the news timer by default.

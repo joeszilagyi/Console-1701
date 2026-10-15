@@ -71,6 +71,44 @@ def test_regional_correlation_does_not_bridge_distinct_incidents():
     assert sorted(len(group["item_ids"]) for group in groups) == [1, 2]
 
 
+def test_pierce_road_id_survives_revisions_and_matches_only_pierce_road_context():
+    source = regional_registry_config_defaults("pierce_road_alert_rss")
+    source["official_url"] = source["url"]
+    source["url"] = _file_url("regional_pierce_road_alerts.rss")
+    pierce = next(
+        item for item in parse_fixture_items(
+            source, (FIXTURES / "regional_pierce_road_alerts.rss").read_text()
+        ) if item["evidence"]["pierce_road_alert"]["alert_id"] == "2892"
+    )
+    first = build_regional_event_contract(source, pierce, hashed_url="a" * 64)
+    revised = build_regional_event_contract(
+        source, {**pierce, "title": "Revised road alert"}, hashed_url="b" * 64
+    )
+    assert first["event_key"] == revised["event_key"]
+    assert first["matching_basis"] == "official_pierce_road_alert_id"
+    assert first["event_type"] == "traveler_alert"
+    assert first["geography"]["county"] == "Pierce"
+
+    pierce_row = {
+        "id": 1, "scope": "REGIONAL", "title": pierce["title"],
+        "source_published_at": pierce["source_published_at"],
+        "evidence": {**pierce["evidence"], "regional_event": first, "source": {
+            "source_key": source["id"], "source_family": source["source_family"],
+            "official_status": "official",
+        }},
+    }
+    wsdot_row = _correlation_item(
+        2, family="wsdot", title=pierce["title"],
+        published=pierce["source_published_at"],
+    )
+    wsdot_row["evidence"]["regional_event"]["geography"] = {
+        "matched": True, "county": "Pierce",
+    }
+    assert len(correlate_regional_items([pierce_row, wsdot_row])) == 1
+    wsdot_row["evidence"]["regional_event"]["geography"]["county"] = "King"
+    assert len(correlate_regional_items([pierce_row, wsdot_row])) == 2
+
+
 def _file_url(name: str) -> str:
     return f"file://{(FIXTURES / name).resolve()}"
 
