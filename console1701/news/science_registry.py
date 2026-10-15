@@ -49,6 +49,13 @@ SCIENCE_HEAVY_ADAPTERS = {
     "pds_api_candidate", "simbad_tap_candidate", "tap_adql_candidate",
     "vizier_tap_candidate",
 }
+_RSS_ADAPTERS = {"astronomers_telegram_rss", "rss_atom"}
+_API_ADAPTERS = {
+    "exoplanet_archive_api", "gcn_circular_candidate", "gcn_notice_candidate",
+    "gracedb_api_candidate", "heasarc_api_candidate", "jpl_ssd_api",
+    "mast_api_candidate", "mpc_api", "nasa_api_json", "official_api_json",
+    "pds_api_candidate", "tns_api_candidate",
+}
 _INTERVAL_RE = re.compile(r"^(\d+) (min|h)$")
 _REQUIRED_TEXT = {
     "source_key", "source_name", "source_family", "source_class", "scope", "raw_url",
@@ -89,6 +96,16 @@ def _source_health_behavior(row: dict[str, Any]) -> str:
     if row["verification_status"] == "candidate_policy_sensitive":
         return "policy_blocked"
     return "disabled_until_verified"
+
+
+def _source_kind(adapter: str) -> str:
+    if adapter == "local_file_fixture":
+        return "local_file_json"
+    if adapter in _RSS_ADAPTERS:
+        return "rss"
+    if adapter in _API_ADAPTERS:
+        return "api_json"
+    return "reference_only"
 
 
 def validate_science_registry(raw: Any) -> tuple[dict[str, Any], ...]:
@@ -134,9 +151,14 @@ def validate_science_registry(raw: Any) -> tuple[dict[str, Any], ...]:
         entry = dict(row)
         entry["priority"] = priority
         entry["interval_minutes"] = _interval_minutes(row["refresh_interval"])
+        entry["kind"] = _source_kind(row["adapter"])
         entry["enabled"] = False
         entry["parser"] = None
         entry["source_health_behavior"] = _source_health_behavior(row)
+        entry["evidence_notes"] = [
+            f"Expected source health: {entry['source_health_behavior']}.",
+            str(row["why_it_matters"]),
+        ]
         entries.append(entry)
     return tuple(entries)
 

@@ -51,6 +51,7 @@ from console1701.news.ranking import (
 )
 from console1701.news.regional_contract import build_regional_event_contract
 from console1701.news.regional_registry import list_regional_source_registry
+from console1701.news.science_registry import list_science_source_registry
 from console1701.news.source_policy import evaluate_source_policy
 
 LOCAL_EVENT_MATCH_WINDOW_HOURS = 3
@@ -114,6 +115,7 @@ def run_news_scan(config_path: str | Path | None = None) -> dict[str, Any]:
     _sync_national_source_registry(conn, synced_at=sync_time)
     _sync_global_source_registry(conn, synced_at=sync_time)
     _sync_orbital_source_registry(conn, synced_at=sync_time)
+    _sync_science_source_registry(conn, synced_at=sync_time)
 
     scanned_sources = 0
     skipped_sources = 0
@@ -260,6 +262,7 @@ def _news_table_counts(conn: sqlite3.Connection) -> dict[str, int]:
         "news_clusters": _count_rows(conn, "news_clusters"),
         "news_source_health": _count_rows(conn, "news_source_health"),
         "local_events": _count_rows(conn, "local_events"),
+        "science_events": _count_rows(conn, "science_events"),
     }
 
 
@@ -378,6 +381,12 @@ def _sync_global_source_registry(conn: sqlite3.Connection, synced_at: str) -> in
 
 def _sync_orbital_source_registry(conn: sqlite3.Connection, synced_at: str) -> int:
     return _sync_source_registry(conn, synced_at, "ORBITAL", list_orbital_source_registry())
+
+
+def _sync_science_source_registry(conn: sqlite3.Connection, synced_at: str) -> int:
+    return _sync_source_registry(
+        conn, synced_at, "SYSTEM_SOLAR", list_science_source_registry()
+    )
 
 
 def _count_rows(conn: sqlite3.Connection, table: str) -> int:
@@ -2965,6 +2974,10 @@ def purge_news_retention(
         "DELETE FROM local_events WHERE expires_at < ?",
         (cutoffs["local_events_before"],),
     ).rowcount
+    deleted_science_events = conn.execute(
+        "DELETE FROM science_events WHERE expires_at < ?",
+        (cutoffs["items_before"],),
+    ).rowcount
     deleted_fetch_runs = conn.execute(
         "DELETE FROM news_fetch_runs WHERE started_at < ?",
         (cutoffs["fetch_runs_before"],),
@@ -2986,4 +2999,5 @@ def purge_news_retention(
         "fetch_runs": int(deleted_fetch_runs or 0),
         "source_health": int(deleted_health or 0),
         "local_events": int(deleted_local_events or 0),
+        "science_events": int(deleted_science_events or 0),
     }

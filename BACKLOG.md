@@ -2774,7 +2774,7 @@ isolation and invalid entries.
 
 ### Solar System And Beyond SQLite Schema Or Extension
 
-Status: not implemented.
+Status: completed 2026-10-15 for the first-pass storage contract.
 
 Add or extend SQLite storage for source registry state, fetch runs, normalized items,
 `solar_system_beyond_events` or scoped clusters, source health, ranking explanations, source naming
@@ -2783,6 +2783,14 @@ purge evidence, and source verification metadata. Use JSON-heavy columns and ind
 scope, event ranking, source health, source family, event type, object/mission/transient ids, and
 `expires_at` purge. Do not store full article bodies, papers, sky maps, science products, or bulk
 catalog rows by default.
+
+Current state: the existing scope-aware `news_source_registry`, `news_sources`,
+`news_fetch_runs`, `news_items`, and `news_source_health` tables cover science source metadata,
+fetch and health history, bounded item metadata, and JSON evidence. `science_events` adds an
+indexed scoped event store for identity, ranking, query bounds, policy flags, label-decision
+state, and expiry. Disabled science registry rows sync on `news-scan` without creating fetchable
+sources. Retention purges expired science events and records a science event count; fixture tests
+verify registry sync, no configured science fetch sources, migration idempotence, and purge.
 
 ### Solar System And Beyond Fixture Pack
 

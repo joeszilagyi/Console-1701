@@ -297,6 +297,33 @@ CREATE TABLE IF NOT EXISTS news_source_health (
   FOREIGN KEY(source_id) REFERENCES news_sources(id)
 );
 
+CREATE TABLE IF NOT EXISTS science_events (
+  id INTEGER PRIMARY KEY,
+  scope TEXT NOT NULL DEFAULT 'SYSTEM_SOLAR' CHECK(scope = 'SYSTEM_SOLAR'),
+  event_key TEXT NOT NULL UNIQUE,
+  event_type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  representative_item_id INTEGER,
+  object_id TEXT,
+  mission_id TEXT,
+  telescope_id TEXT,
+  transient_id TEXT,
+  status TEXT NOT NULL DEFAULT 'active',
+  scope_label_status TEXT NOT NULL DEFAULT 'unresolved',
+  score INTEGER NOT NULL DEFAULT 0,
+  first_seen_at TEXT NOT NULL,
+  last_seen_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  source_ids_json TEXT NOT NULL DEFAULT '[]',
+  families_json TEXT NOT NULL DEFAULT '[]',
+  item_ids_json TEXT NOT NULL DEFAULT '[]',
+  ranking_explanation_json TEXT NOT NULL DEFAULT '{}',
+  evidence_json TEXT NOT NULL DEFAULT '{}',
+  query_bounds_json TEXT NOT NULL DEFAULT '{}',
+  policy_flags_json TEXT NOT NULL DEFAULT '{}',
+  FOREIGN KEY(representative_item_id) REFERENCES news_items(id) ON DELETE SET NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_repo_snapshots_repo_time
   ON repo_snapshots(repo_id, scanned_at DESC);
 
@@ -386,3 +413,21 @@ CREATE INDEX IF NOT EXISTS idx_news_source_health_source_observed
 
 CREATE INDEX IF NOT EXISTS idx_news_source_health_state
   ON news_source_health(state, observed_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_science_events_score
+  ON science_events(scope, status, score DESC, last_seen_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_science_events_identity
+  ON science_events(event_type, object_id, mission_id, telescope_id, transient_id);
+
+CREATE INDEX IF NOT EXISTS idx_science_events_mission
+  ON science_events(mission_id, last_seen_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_science_events_telescope
+  ON science_events(telescope_id, last_seen_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_science_events_transient
+  ON science_events(transient_id, last_seen_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_science_events_expires
+  ON science_events(expires_at);

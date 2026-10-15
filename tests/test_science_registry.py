@@ -4,6 +4,9 @@ from copy import deepcopy
 
 import pytest
 
+from console1701.config import load_config
+from console1701.db import connect_db, init_db
+from console1701.news.scanner import purge_news_retention, run_news_scan
 from console1701.news.science_registry import (
     SCIENCE_SOURCE_REGISTRY,
     get_science_source_registry_entry,
@@ -56,3 +59,35 @@ def test_science_registry_rejects_duplicate_keys():
     row = deepcopy(SCIENCE_SOURCE_REGISTRY[0])
     with pytest.raises(ValueError, match="duplicate"):
         validate_science_registry([row, row])
+
+
+def test_disabled_science_registry_syncs_without_fetch_and_events_expire(tmp_path):
+    path = tmp_path / "config.yml"
+    path.write_text("paths: {repo_roots: [], explicit_repos: []}\n")
+    result = run_news_scan(path)
+    assert result["status"] == "disabled"
+    config = load_config(path)
+    with connect_db(config["_db_path"]) as conn:
+        rows = conn.execute(
+            "SELECT source_key, enabled_by_default FROM news_source_registry "
+            "WHERE scope = 'SYSTEM_SOLAR'"
+        ).fetchall()
+        assert len(rows) == 170
+        assert all(row["enabled_by_default"] == 0 for row in rows)
+        assert conn.execute(
+            "SELECT COUNT(*) FROM news_sources WHERE scope = 'SYSTEM_SOLAR'"
+        ).fetchone()[0] == 0
+        conn.execute(
+            "INSERT INTO science_events (event_key, event_type, title, first_seen_at, "
+            "last_seen_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)",
+            ("old", "transient", "Old fixture", "2026-10-01T00:00:00+00:00",
+             "2026-10-01T00:00:00+00:00", "2026-10-02T00:00:00+00:00"),
+        )
+        assert purge_news_retention(conn, config, now="2026-10-15T00:00:00+00:00")[
+            "science_events"
+        ] == 1
+        assert conn.execute("SELECT COUNT(*) FROM science_events").fetchone()[0] == 0
+        init_db(conn)
+        assert conn.execute(
+            "SELECT COUNT(*) FROM news_source_registry WHERE scope = 'SYSTEM_SOLAR'"
+        ).fetchone()[0] == 170
