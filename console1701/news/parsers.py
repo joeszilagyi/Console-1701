@@ -185,6 +185,10 @@ def parse_fixture_items(
         from console1701.news.science_gcn import parse_gcn_notice_fixture
 
         return parse_gcn_notice_fixture(source, payload_text)
+    if parser_name == "gcn_circular_fixture":
+        from console1701.news.science_circular import parse_gcn_circular_fixture
+
+        return parse_gcn_circular_fixture(source, payload_text)
     if parser_name == "gracedb_public_alert_fixture":
         from console1701.news.science_gracedb import parse_gracedb_public_alert_fixture
 

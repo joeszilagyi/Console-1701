@@ -32,6 +32,9 @@ SCIENCE_FIXTURE_SOURCES = {
     "gcn_notices": (
         "gcn_notice_fixture", "https://gcn.nasa.gov/docs/notices",
     ),
+    "gcn_circulars": (
+        "gcn_circular_fixture", "https://gcn.nasa.gov/circulars",
+    ),
     "gracedb_public_alerts": (
         "gracedb_public_alert_fixture", "https://gracedb.ligo.org/api/v2/superevents/",
     ),

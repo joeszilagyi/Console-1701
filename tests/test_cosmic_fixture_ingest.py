@@ -195,6 +195,7 @@ def test_cosmic_scan_drops_hype_claims_before_sqlite_storage(tmp_path, monkeypat
         "timeout_seconds": 10, "retention_days": 7,
     }, "pds_collection", 1),
     ("gcn_notices", "gcn_notice.json", "api_json", None, "gcn_notice", 1),
+    ("gcn_circulars", "gcn_circular.json", "api_json", None, "gcn_circular", 1),
     ("gracedb_public_alerts", "gracedb_public_alerts.json", "api_json", None,
      "gracedb_public_alert", 2),
 ])
@@ -231,6 +232,9 @@ def test_cosmic_fixture_adapters_run_offline_with_bounded_metadata(
         evidence = json_loads(row["evidence_json"], {})
         assert evidence["ingest"]["fixture_only"] is True
         assert evidence[evidence_key]
+        if evidence_key == "gcn_circular":
+            assert "fixture@example.test" not in row["evidence_json"]
+            assert "map.fits" not in row["evidence_json"]
         if evidence_key in {"exoplanet_archive", "mast_caom", "pds_collection"}:
             assert evidence[evidence_key]["query_bounds"]
         for field in (
@@ -241,6 +245,20 @@ def test_cosmic_fixture_adapters_run_offline_with_bounded_metadata(
             if field in evidence[evidence_key]:
                 assert evidence[evidence_key][field] is False
         assert evidence["science_event"]["ranking"]["score"] >= 0
+
+
+def test_gcn_circular_live_source_is_rejected_by_config(tmp_path, monkeypatch):
+    path = _config(tmp_path, monkeypatch)
+    payload = yaml.safe_load(path.read_text())
+    payload["news"]["scopes"]["SYSTEM_SOLAR"]["sources"] = [{
+        "id": "gcn_circulars", "name": "GCN Circulars", "kind": "api_json",
+        "parser": "gcn_circular_fixture", "enabled": True, "fixture_only": False,
+        "official_url": "https://gcn.nasa.gov/circulars",
+        "url": "https://gcn.nasa.gov/circulars/33603.json",
+    }]
+    path.write_text(yaml.safe_dump(payload))
+    with pytest.raises(ConfigError):
+        load_config(path)
 
 
 def test_cosmic_heavy_archive_registry_cannot_be_configured_for_fixture_scan(
