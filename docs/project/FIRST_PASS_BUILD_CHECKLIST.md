@@ -64,7 +64,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-033** [NATIONAL SQLite Schema Or Extension](../../BACKLOG.md#L993) — scoped storage, agency/sector/state indexed facets, migration backfill and expiry purge verified.
 - [ ] **RS-034** [NATIONAL Fixture Pack](../../BACKLOG.md#L1003) — not implemented.
 - [x] **RS-035** [NWS Active Alert Parser](../../BACKLOG.md#L1012) — fixture parser preserves national alert geography, timing, instruction, and ranking evidence; focused tests pass.
-- [ ] **RS-036** [NHC Advisory/Feed Verification](../../BACKLOG.md#L1020) — partial: official feed ownership/endpoints and advisory semantics documented; actual XML item shape remains unverified.
+- [x] **RS-036** [NHC Advisory/Feed Verification](../../BACKLOG.md#L1020) — official basin XML, summary/advisory fields, identity limits and empty-basin sentinel observed; live disabled.
 - [ ] **RS-037** [USGS Earthquake GeoJSON Parser](../../BACKLOG.md#L1028) — partial: national coordinate regions, threshold, and fixture ingest work; nuanced cross-border and multi-state impact routing remains.
 - [x] **RS-038** [FEMA/OpenFEMA Disaster Declarations Research](../../BACKLOG.md#L1037) — official v2 API shape, stable composite identity, update semantics, policy and future adapter gate documented.
 - [ ] **RS-039** [CDC HAN Parser](../../BACKLOG.md#L1046) — not implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-036. Bounded reads of the three official NHC/CPHC basin feeds confirmed RSS item and cyclone-summary fields, conditional headers, and no-storm sentinels; documented parser and watch/warning limits. No NHC source enabled. Progress: 50/150.
 - **2026-10-15:** Completed RS-038 as bounded official-source research. Verified the OpenFEMA v2 JSON envelope and query controls, composite primary key, record refresh semantics, declaration fields, policy and source-health gates. No live adapter enabled. Progress: 49/150.
 - **2026-10-15:** Completed RS-033. Added NATIONAL agency/sector/state/source-family facets on the shared indexed facet table, active scoped lookup, old-row backfill, and tests for NWS/USGS labels and expiry purge. Full pytest passed (330 tests); Ruff passed. Progress: 48/150.
 - **2026-10-15:** Completed RS-029 and RS-030. Expanded the REGIONAL verification guide with the shared per-source signoff, regional scope checks and worked decisions; audited existing REGIONAL/SYSTEM state coverage and extended the opt-in HTTP GET no-fetch regression to REGIONAL. Full pytest passed (330 tests); Ruff passed. Progress: 47/150.
