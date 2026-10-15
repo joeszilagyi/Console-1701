@@ -1256,8 +1256,9 @@ advisory classes, CVE/CVSS/sector metadata, KEV announcement suppression, and of
 The synthetic Eastern Pacific NHC RSS fixture now runs through NATIONAL; separate Atlantic
 and Central Pacific empty-basin fixtures prove healthy zero-event scans. Storm ATCF IDs and
 advisory numbers are retained without inferring U.S. watch geography, multi-state impact,
-or article body. The three exact basin registry entries remain fixture-only; live URLs are
-blocked before fetch.
+or article body. NATIONAL attention suppresses these basin reports until a product provides
+source-verified U.S. watch geography; the stored metadata remains available for audit. The
+three exact basin registry entries remain fixture-only; live URLs are blocked before fetch.
 The other NATIONAL source-family fixtures listed above remain pending.
 
 ### NWS Active Alert Parser
@@ -1290,7 +1291,10 @@ cyclone-summary namespace fields, advisory product differences, conditional-requ
 empty-basin sentinel behavior. A NATIONAL fixture parser now reuses the observed basin shape,
 requires exact basin/source identity and a local file, bounds bytes/rows, stores ATCF/advisory
 metadata without article body or inferred U.S. geography, and treats empty sentinels as healthy.
-Exact-URL live signoff remains separate; no NHC endpoint is allowlisted or enabled.
+NATIONAL attention suppresses storm reports without source-verified U.S. watch geography.
+A bounded follow-up GET returned HTTP 200 for all three feeds and a robots file without a
+disallow rule, but the two Eastern Pacific advisory rows still supplied no verified U.S.
+watch region. Exact-URL live signoff remains separate; no NHC endpoint is allowlisted or enabled.
 
 ### USGS Earthquake GeoJSON Parser
 

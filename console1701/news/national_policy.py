@@ -106,6 +106,11 @@ def classify_national_item(source: dict[str, Any], item: dict[str, Any]) -> dict
             suppressed_reason = "routine agency or personnel announcement"
         elif _COURT_ROUTINE_RE.search(title):
             suppressed_reason = "routine procedural court filing"
+        elif (nhc := evidence.get("nhc_rss")) and not (
+            nhc.get("watch_warning_geography_verified") is True
+            and (identity.get("affected_states") or identity.get("affected_territories"))
+        ):
+            suppressed_reason = "NHC basin report lacks verified U.S. watch geography"
         elif identity.get("local_only") is True and not identity.get("national_impact"):
             suppressed_reason = "local report without national impact evidence"
         elif identity.get("public_value_class") in {"routine", "opinion", "speculation"}:

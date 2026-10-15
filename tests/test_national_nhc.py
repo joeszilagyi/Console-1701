@@ -11,6 +11,7 @@ from console1701.news.national_events import correlate_national_items
 from console1701.news.national_registry import national_registry_config_defaults
 from console1701.news.parsers import NewsParserError, PayloadTooLargeError, parse_fixture_items
 from console1701.news.scanner import run_news_scan
+from console1701.news.storage import get_news_scope_view
 
 FIXTURE = Path(__file__).parent / "fixtures/news/global_nhc_ep.rss"
 NHC_KEYS = ("nhc_atlantic_rss", "nhc_eastern_pacific_rss", "nhc_central_pacific_rss")
@@ -122,6 +123,10 @@ def test_national_nhc_three_basin_scan_is_offline_and_empty_basins_are_healthy(
         rows = conn.execute(
             "SELECT evidence_json FROM news_items WHERE scope='NATIONAL' ORDER BY id"
         ).fetchall()
+        cluster_count = conn.execute(
+            "SELECT COUNT(*) FROM news_clusters WHERE scope='NATIONAL'"
+        ).fetchone()[0]
+        view = get_news_scope_view(conn, config, "NATIONAL")
         states = conn.execute(
             "SELECT state FROM news_source_health ORDER BY id"
         ).fetchall()
@@ -129,6 +134,12 @@ def test_national_nhc_three_basin_scan_is_offline_and_empty_basins_are_healthy(
     evidence = [json_loads(row["evidence_json"], {}) for row in rows]
     assert all(row["national_identity"]["multi_state_impact"] is False for row in evidence)
     assert all(row["national_identity"]["national_impact"] is False for row in evidence)
+    assert all(row["national_policy"]["suppressed"] is True for row in evidence)
+    assert all(any("verified U.S. watch geography" in reason
+                   for reason in row["national_policy"]["reasons"])
+               for row in evidence)
+    assert cluster_count == 0
+    assert view["items"] == [] and view["clusters"] == []
     assert {event_type for row in evidence
             for event_type in row["national_event"]["event_types"]} == {
         "tropical_cyclone"

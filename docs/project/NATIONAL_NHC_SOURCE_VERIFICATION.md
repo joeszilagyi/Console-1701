@@ -83,4 +83,14 @@ watch/warning terms do not establish U.S. or multi-state impact. Atlantic and Ce
 empty-sentinel fixtures yield healthy scans with no item. A live URL is rejected before HTTP.
 An advisory URL/number revision still groups by the explicit ATCF ID, while a second storm
 stays separate and same-family revisions do not count as independent corroboration.
-Live signoff remains open, including a separate current response and policy review.
+NATIONAL attention suppresses a basin report without source-verified U.S. watch geography;
+the item metadata remains stored for audit and cannot create a visible NATIONAL cluster.
+
+A bounded follow-up GET on 2026-10-15 returned HTTP 200 `text/xml` for all three exact basin
+feeds: 2,098 bytes Atlantic, 36,787 bytes Eastern Pacific, and 2,492 bytes Central Pacific.
+The NATIONAL parser accepted all three snapshots and found zero, two, and zero items respectively.
+Both Eastern Pacific advisories had ATCF IDs and issue times, but still no verified U.S. watch
+geography. The official `robots.txt` response had no disallow rule. These reads establish current
+transport and shape, but do not establish U.S. relevance for the active storms. Live signoff
+remains open until a bounded, source-backed U.S. watch/impact field or product rule is implemented,
+plus exact allowlist, cadence/backoff, and no-page-load verification.
