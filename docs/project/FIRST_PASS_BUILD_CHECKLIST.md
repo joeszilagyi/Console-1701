@@ -126,11 +126,11 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-089** [ORBITAL Source Registry Design Implementation](../../BACKLOG.md#L1627) — all 136 design entries disabled, validated and inherited by config, persisted in SQLite and summary; reference rows cannot ingest.
 - [x] **RS-090** [Disabled-By-Default ORBITAL Config](../../BACKLOG.md#L1637) — disabled and validated policy tree; sensitive and unparsed candidates blocked before access; no live ORBITAL allowlist.
 - [x] **RS-091** [ORBITAL SQLite Schema Or Extension](../../BACKLOG.md#L1647) — shared scoped storage plus indexed event/object/mission, safety, sensitivity and impact facets; backfill, refresh and purge verified.
-- [ ] **RS-092** [ORBITAL Fixture Pack](../../BACKLOG.md#L1658) — partial: SWPC alerts, scales, K-index and aurora; other products and source-health variants pending.
+- [ ] **RS-092** [ORBITAL Fixture Pack](../../BACKLOG.md#L1658) — partial: SWPC alerts, scales, K-index, aurora and JPL CAD; other products and source-health variants pending.
 - [x] **RS-093** [SWPC Alerts JSON Parser](../../BACKLOG.md#L1670) — official-shape offline parser with identity, validity, scale, impacts, cancellation, provenance and facet coverage; live ingest remains disabled.
 - [x] **RS-094** [SWPC NOAA Scales Parser](../../BACKLOG.md#L1679) — official-shape offline parser for nonzero G/R/S states with source timing, current/forecast distinction, provenance and facets; live ingest remains disabled.
 - [x] **RS-095** [SWPC Kp And Aurora Fixture Parsers](../../BACKLOG.md#L1687) — official-shape offline planetary/Boulder K-index and bounded OVATION grid parsers; configurable thresholds, coordinate windows, staleness and provenance.
-- [ ] **RS-096** [JPL CNEOS Close Approach Parser](../../BACKLOG.md#L1696) — not implemented.
+- [x] **RS-096** [JPL CNEOS Close Approach Parser](../../BACKLOG.md#L1696) — NASA/JPL CAD v1.5 field-array parser; TDB, distance/velocity/diameter, bounded thresholds, no impact inference, offline persistence.
 - [ ] **RS-097** [JPL CNEOS Fireball Parser](../../BACKLOG.md#L1705) — not implemented.
 - [ ] **RS-098** [NASA RSS Parser](../../BACKLOG.md#L1748) — not implemented.
 - [ ] **RS-099** [ESA RSS Parser](../../BACKLOG.md#L1757) — not implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-096. Checked NASA/JPL CAD v1.5 documentation and added a fixture-first close-approach parser with TDB time, distance/velocity/diameter evidence, conservative configurable filters, and explicit no-impact framing. Offline scan and indexed object tests pass; live HTTP remains blocked. Full pytest passed (391 tests); Ruff passed. Progress: 72/150. RS-092 remains partial.
 - **2026-10-15:** Completed RS-095. Verified NOAA planetary, minute K-index, Boulder, and OVATION JSON shapes; replaced a 404 summary URL with an observed official endpoint. Added bounded fixture parsers, configurable K-index threshold and aurora coordinate windows, model-only local tags, and stale health coverage. Full pytest passed (388 tests); Ruff passed. Progress: 71/150. RS-092 remains partial.
 - **2026-10-15:** Completed RS-094. Checked NOAA SWPC's period-keyed scales product and added a fixture-first G/R/S parser for explicit nonzero current and forecast states, with no inferred impact. Empty and malformed states are covered; live HTTP remains blocked. Full pytest passed (382 tests); Ruff passed. Progress: 70/150. RS-092 remains partial.
 - **2026-10-15:** Completed RS-093. Checked NOAA SWPC's alerts JSON shape and added a fixture-first parser for warning, watch cancellation, product timing, scale, source-provided impacts and indexed identity. Bad rows fail soft; malformed JSON fails clearly. The registry parser is set, but live HTTP remains blocked. Full pytest passed (379 tests); Ruff passed. Progress: 69/150. RS-092 fixture pack remains partial.

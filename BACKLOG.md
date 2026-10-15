@@ -2223,8 +2223,9 @@ policy-blocked sources, and parser failures. Fixture ingest must not perform net
 must be safe for pytest.
 
 Current state: small official-shape SWPC alerts, NOAA scales, planetary and Boulder K-index, and
-OVATION aurora JSON fixtures cover warning, cancelled watch, incomplete row, current and forecast
-scale, zero state, K-index thresholds, and a tiny aurora grid. Their parsers and offline scans are
+OVATION aurora and JPL CAD JSON fixtures cover warning, cancelled watch, incomplete row, current
+and forecast scale, zero state, K-index thresholds, a tiny aurora grid, and close-approach
+threshold cases. Their parsers and offline scans are
 tested. Remaining ORBITAL products and
 source-health variants are pending in this pack.
 
@@ -2279,12 +2280,20 @@ default. Source health reports staleness, and offline fixture scans make no HTTP
 
 ### JPL CNEOS Close Approach Parser
 
-Status: not implemented.
+Status: completed 2026-10-15 for fixture-first ingest.
 
 Build a fixture-first JPL SSD/CNEOS close approach parser. Preserve object designation, approach
 time, miss distance, lunar distance, relative velocity, estimated diameter when available, source
 URL, official risk framing, and ranking evidence. Suppress distant low-risk objects unless
 configured.
+
+Current state: the NASA/JPL CAD v1.5 field-array parser preserves designation, TDB approach
+time, nominal and uncertainty-bound distance, lunar-distance conversion, velocity, optional
+diameter/H, official URL, and explicit no-impact-inference framing. A configurable five-lunar-
+distance and 0.05 km diameter filter suppresses distant small/unknown objects. Version and row
+shape are checked, and a local-only scan tests persistence and indexed object identity. The
+candidate remains disabled and has no live HTTP allowlist entry. See
+`docs/project/ORBITAL_JPL_CAD_SOURCE_VERIFICATION.md`.
 
 ### JPL CNEOS Fireball Parser
 

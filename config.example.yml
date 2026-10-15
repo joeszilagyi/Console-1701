@@ -151,6 +151,8 @@ orbital:
   kp_min_index: 5.0
   aurora_locations: [] # Optional named LOCAL/REGIONAL coordinates; no local tags by default.
   include_neo_close_approaches: true
+  neo_max_lunar_distance: 5.0
+  neo_min_diameter_km: 0.05
   include_fireballs: true
   include_launches: true
   include_crewed_spaceflight: true
