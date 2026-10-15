@@ -1807,7 +1807,13 @@ configured.
 
 ### Humanitarian Source Evidence Contract
 
-Status: not implemented.
+Status: implemented for first-pass GLOBAL ReliefWeb disaster and report items.
+
+Persisted `evidence.humanitarian` now carries source identity/family/status, affected countries,
+disaster IDs, event type, publication and local observation times, bounded description, report and
+source URLs, retention expiry, policy notes, and an explicit omitted people-at-risk value. Offline
+scan tests verify both source shapes and no report body leakage. See
+`docs/project/GLOBAL_HUMANITARIAN_EVIDENCE_CONTRACT.md`.
 
 Define and test evidence payloads for humanitarian GLOBAL items. Include source id, source family,
 official or humanitarian status, affected countries, disaster/crisis id where available, event
