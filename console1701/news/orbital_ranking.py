@@ -34,6 +34,7 @@ def _member_signals(member: dict[str, Any], observed: datetime | None) -> dict[s
     swpc = evidence.get("swpc_alert") or {}
     scale = evidence.get("swpc_noaa_scale") or {}
     kp = evidence.get("swpc_k_index") or {}
+    flare = evidence.get("swpc_xray_flare") or {}
     fireball = evidence.get("jpl_fireball") or {}
     event_type = str(identity.get("event_type") or "")
     scale_label = str(scale.get("scale") or swpc.get("noaa_scale") or "").upper()
@@ -41,6 +42,16 @@ def _member_signals(member: dict[str, Any], observed: datetime | None) -> dict[s
     official_severity = min(40, level * 8) if level else 0
     if kp.get("source_kind") == "planetary" and isinstance(kp.get("value"), (int, float)):
         official_severity = max(official_severity, min(40, max(0, int(kp["value"]) - 4) * 8))
+    flare_class = str(flare.get("max_class") or "").upper()
+    if flare_class.startswith("X"):
+        official_severity = max(official_severity, 30)
+    elif flare_class.startswith("M"):
+        try:
+            official_severity = max(
+                official_severity, 20 if float(flare_class[1:]) >= 5 else 12
+            )
+        except ValueError:
+            pass
     if safety.get("official_alert"):
         official_severity = max(official_severity, 18)
     if swpc.get("cancelled"):

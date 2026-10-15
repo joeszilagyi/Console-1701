@@ -209,6 +209,10 @@ def parse_fixture_items(
         from console1701.news.cisa_advisories import parse_cisa_advisories_rss
 
         return parse_cisa_advisories_rss(source, payload_text)
+    if parser_name == "swpc_xray_flares_json":
+        from console1701.news.orbital_flares import parse_swpc_xray_flares_json
+
+        return parse_swpc_xray_flares_json(source, payload_text)
 
     if parser_name == "nws_alerts_json":
         return _parse_nws_alerts_json(source, payload_text)

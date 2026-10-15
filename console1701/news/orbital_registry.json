@@ -201,12 +201,12 @@
   },
   {
     "source_key": "swpc_xray_flux_summary",
-    "source_name": "SWPC X-ray flux summary",
+    "source_name": "SWPC GOES X-ray flare list",
     "source_family": "swpc",
     "source_class": "official_solar_data",
     "scope": "ORBITAL",
-    "raw_url": "https://services.swpc.noaa.gov/products/summary/x-ray-flux.json",
-    "expected_access_kind": "public official JSON product",
+    "raw_url": "https://services.swpc.noaa.gov/json/goes/primary/xray-flares-7-day.json",
+    "expected_access_kind": "public official JSON flare event list; fixture-only",
     "adapter": "swpc_json",
     "refresh_interval": "5 min",
     "priority": "80",
@@ -215,8 +215,8 @@
     "policy_risk": "low",
     "parser_risk": "medium",
     "retention_sensitivity": "low",
-    "verification_status": "official_page_seen",
-    "why_it_matters": "Solar flare ranking evidence.",
+    "verification_status": "official_feed_seen",
+    "why_it_matters": "M/X flare measurement evidence; not an operational alert.",
     "future_phase": "O6"
   },
   {
