@@ -146,6 +146,56 @@ def test_wsdot_official_rss_preserves_ids_and_strips_embedded_markup() -> None:
         )
 
 
+def test_wsdot_documented_json_shape_preserves_corridor_and_status_evidence() -> None:
+    source = {
+        "id": "wsdot_traveler_api", "scope": "REGIONAL", "kind": "api_json",
+        "parser": "wsdot_travel_alerts_json",
+        "url": "https://wsdot.wa.gov/traffic/api/",
+    }
+    fixture = (
+        Path(__file__).resolve().parent / "fixtures/news/regional_wsdot_traveler_alerts.json"
+    ).read_text()
+    items = parse_fixture_items(source, fixture)
+
+    assert len(items) == 3
+    pass_alert = items[0]["evidence"]["wsdot_alert"]
+    assert pass_alert["alert_id"] == "81001"
+    assert pass_alert["route_tokens"] == ["I-90"]
+    assert pass_alert["impact"] == "closure"
+    assert pass_alert["event_category"] == "Closure"
+    assert pass_alert["event_status"] == "Open"
+    assert pass_alert["start_roadway_location"]["direction"] == "Eastbound"
+    assert pass_alert["start_roadway_location"]["milepost"] == 52.0
+    assert pass_alert["end_roadway_location"]["milepost"] == 60.0
+    assert pass_alert["start_time"] == "2026-10-15T10:00:00+00:00"
+    assert pass_alert["end_time"] == "2026-10-16T00:00:00+00:00"
+    assert items[0]["source_published_at"] == "2026-10-15T11:00:00+00:00"
+    assert items[0]["url"].endswith("refnum=81001")
+    assert pass_alert["source_url_basis"] == "official_rss_refnum_link"
+    assert pass_alert["ranking"]["public_impact_score"] > 30
+
+    border = items[1]["evidence"]["wsdot_alert"]
+    assert border["start_roadway_location"]["direction"] == "Northbound"
+    assert border["county"] == "Whatcom"
+    closed = items[2]["evidence"]["wsdot_alert"]
+    assert closed["event_status"] == "Closed"
+    assert closed["impact"] == "resolved"
+    assert closed["ranking"]["public_impact_score"] == 0
+
+    duplicate = json.loads(fixture)
+    duplicate[1]["AlertID"] = duplicate[0]["AlertID"]
+    with pytest.raises(NewsParserError, match="duplicates alert ID"):
+        parse_fixture_items(source, json.dumps(duplicate))
+    malformed_time = json.loads(fixture)
+    malformed_time[0]["LastUpdatedTime"] = "/Date(invalid)/"
+    with pytest.raises(NewsParserError, match="timestamp"):
+        parse_fixture_items(source, json.dumps(malformed_time))
+    markup = json.loads(fixture)
+    markup[0]["HeadlineDescription"] = "<b>I-90</b> eastbound closed"
+    assert parse_fixture_items(source, json.dumps(markup))[0]["title"] == "I-90 eastbound closed"
+    assert parse_fixture_items(source, '{"alerts": []}') == []
+
+
 def test_parse_usgs_regional_geojson_filters_and_preserves_seismic_evidence() -> None:
     source = {
         "id": "usgs_eq_geojson",
