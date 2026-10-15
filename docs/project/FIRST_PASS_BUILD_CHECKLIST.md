@@ -169,7 +169,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-129** [GCN Notice Fixture Parser](../../BACKLOG.md#L2099) — not implemented.
 - [x] **RS-130** [GCN Circular Source Verification](../../BACKLOG.md#L2107) — official schema and archive classified; no narrow API verified, bulk export blocked, and metadata/privacy/status contract recorded.
 - [ ] **RS-131** [ATel RSS Parser](../../BACKLOG.md#L2115) — not implemented.
-- [ ] **RS-132** [GraceDB/LIGO Public Alert Policy Design](../../BACKLOG.md#L2132) — not implemented.
+- [x] **RS-132** [GraceDB/LIGO Public Alert Policy Design](../../BACKLOG.md#L2132) — public REST versus authenticated Kafka, bounded query, status/retraction, rate, and no-sky-map-download policy recorded.
 - [ ] **RS-133** [Minor Planet Center Science-Context Source Verification](../../BACKLOG.md#L2141) — not implemented.
 - [ ] **RS-134** [HEASARC Metadata Source Verification](../../BACKLOG.md#L2149) — not implemented.
 - [ ] **RS-135** [Deterministic Event Correlation For Transients, Exoplanets, Missions, And Telescope Releases](../../BACKLOG.md#L2173) — not implemented.
