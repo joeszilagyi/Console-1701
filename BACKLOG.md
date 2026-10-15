@@ -3110,7 +3110,7 @@ calls this ranker and persists the score and explanations on events, clusters, a
 
 ### Hype And Speculation Suppression Rules
 
-Status: partially implemented 2026-10-15; first-pass fixture policy exists.
+Status: implemented for current first-pass COSMIC sources.
 
 Add deterministic rules that suppress or carefully label alien-life claims, UFO material,
 sensationalized astronomy headlines, social rumors, image-only clickbait, generic astronomy
@@ -3121,9 +3121,11 @@ metadata.
 Current state: `science_policy.py` runs before COSMIC item persistence. Explicit UFO/UAP,
 unsupported alien-life discovery, and unverified social-rumor claims are dropped; sensational,
 image-led, generic explainer, and explicitly old-study headlines retain bounded metadata with
-background attention evidence and a low-public-value rank penalty. No scientific discovery is
-inferred from headline wording. Additional source-specific and literature/preprint variants need
-fixture review before enabling those sources.
+background attention evidence and a low-public-value rank penalty. Unreviewed preprint claims
+are background, and Exoplanet Archive, MAST, and PDS metadata-only items are background even
+when freshly updated. No scientific discovery is inferred from headline wording or an archive
+update timestamp. Any future literature or social source needs a separate fixture/policy review
+before enablement.
 
 ### Archive Firehose Blocking Rules
 
@@ -3139,8 +3141,8 @@ registry candidate, even when broad-category flags are enabled. Exoplanet Archiv
 fixture parsers enforce named tables/collections/targets, exact columns, row caps, time windows,
 and response shape. Query-contract or overbroad-response violations raise a distinct archive
 firehose error that `news-scan` records as `archive_firehose_blocked` source health before storing
-any item. No live archive transport exists; any later API adapter needs a pre-request gate with
-its own bounds before promotion.
+any item. One exact Exoplanet Archive tiny metadata query now has app-owned pre-request bounds
+and a separate live signoff. Broad TAP/catalog and all other archive transports remain blocked.
 
 ### UI Disabled States After Naming Decision
 

@@ -38,3 +38,22 @@ def test_science_policy_leaves_other_scope_and_legitimate_science_title_alone():
     assert legitimate["evidence"]["science_safety"]["attention_state"] == "eligible"
     other = _item("UFO report", scope="GLOBAL")
     assert classify_science_item(source, other) is other
+
+
+def test_archive_update_and_unreviewed_preprint_are_background_not_discoveries():
+    source = {"scope": "SYSTEM_SOLAR"}
+    archive = _item("Exoplanet Archive parameter update: TOI-4567 b")
+    archive["tags"] = ["official", "archive_metadata"]
+    archive["evidence"]["exoplanet_archive"] = {
+        "date_semantics": "parameter_update_not_discovery_date"
+    }
+    labeled = classify_science_item(source, archive)
+    assert labeled is not None
+    assert labeled["evidence"]["science_safety"]["attention_state"] == "background"
+    assert "archive metadata update" in " ".join(
+        labeled["evidence"]["science_safety"]["reasons"]
+    )
+    assert archive["evidence"]["science_identity"] == {"mission": "SPHEREx"}
+    preprint = classify_science_item(source, _item("Unreviewed preprint claims new cosmic signal"))
+    assert preprint is not None
+    assert preprint["evidence"]["science_safety"]["attention_state"] == "background"

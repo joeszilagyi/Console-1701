@@ -21,6 +21,10 @@ _HYPE_RE = re.compile(
 _IMAGE_RE = re.compile(r"\b(?:stunning image|photo gallery|see (?:these )?photos)\b", re.I)
 _EXPLAINER_RE = re.compile(r"\b(?:what is|how to|beginner'?s guide|explained:)\b", re.I)
 _OLD_PAPER_RE = re.compile(r"\b(?:old|archival|previous)\s+(?:study|paper|research)\b", re.I)
+_UNREVIEWED_RE = re.compile(
+    r"\b(?:unreviewed|not peer[- ]reviewed)\s+preprint\b|"
+    r"\bpreprint\s+(?:claims?|purports?|suggests?)\b", re.I
+)
 
 
 def classify_science_item(source: dict[str, Any], item: dict[str, Any]) -> dict[str, Any] | None:
@@ -41,8 +45,15 @@ def classify_science_item(source: dict[str, Any], item: dict[str, Any]) -> dict[
         reasons.append("generic explainer")
     if _OLD_PAPER_RE.search(title):
         reasons.append("old or archival study described as current")
+    if _UNREVIEWED_RE.search(text):
+        reasons.append("unreviewed preprint claim")
     output = dict(item)
     evidence = dict(item.get("evidence") or {})
+    if (
+        evidence.get("exoplanet_archive") or evidence.get("mast_caom")
+        or evidence.get("pds_collection") or "archive_metadata" in (item.get("tags") or [])
+    ):
+        reasons.append("archive metadata update without a source-backed science release")
     identity = dict(evidence.get("science_identity") or {})
     if reasons:
         identity["public_value_class"] = "background"

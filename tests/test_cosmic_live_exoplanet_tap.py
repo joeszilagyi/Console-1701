@@ -84,6 +84,7 @@ def test_exoplanet_live_tap_query_is_app_built_and_scan_is_bounded(tmp_path, mon
         assert evidence["ingest"]["fixture_only"] is False
         assert evidence["exoplanet_archive"]["query_bounds"] == source["query_contract"]
         assert evidence["exoplanet_archive"]["catalog_downloaded"] is False
+        assert evidence["science_safety"]["attention_state"] == "background"
 
 
 @pytest.mark.parametrize("override", [
