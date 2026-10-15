@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from console1701.config import LOCAL_SOCIAL_SOURCE_FAMILIES, NEWS_HOMEPAGE_SOURCE_KINDS
+from console1701.news.national_registry import NATIONAL_AUTH_REQUIRED_SOURCE_KEYS
 from console1701.news.official_http import is_supported_official_source
 
 
@@ -53,7 +54,10 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
     url = str(source.get("url") or "").strip()
     kind = str(source.get("kind") or "").strip()
     auth_cfg = source.get("auth") if isinstance(source.get("auth"), dict) else None
-    auth_required = bool(auth_cfg)
+    scope = str(source.get("scope") or "").upper()
+    auth_required = bool(auth_cfg) or (
+        scope == "NATIONAL" and str(source.get("id") or "") in NATIONAL_AUTH_REQUIRED_SOURCE_KEYS
+    )
     auth_configured = bool(auth_cfg and any(str(value).strip() for value in auth_cfg.values()))
     is_local_fixture = url.startswith("file://")
     scope_policy_enabled = (
@@ -77,7 +81,6 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
     source_family = str(source.get("source_family") or "").strip().lower()
     source_class = str(source.get("source_class") or "").strip().lower()
     is_social = source_class == "social_candidate" or source_family in LOCAL_SOCIAL_SOURCE_FAMILIES
-    scope = str(source.get("scope") or "").upper()
     national_social_blocked = (
         scope == "NATIONAL"
         and is_social

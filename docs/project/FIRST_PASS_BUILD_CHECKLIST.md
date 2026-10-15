@@ -86,7 +86,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-055** [NATIONAL Official-Source Live Ingest Phase](../../BACKLOG.md#L1213) — not implemented.
 - [ ] **RS-056** [Documentation For Source Verification](../../BACKLOG.md#L1240) — partially implemented.
 - [x] **RS-057** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L1253) — NATIONAL/SYSTEM GET and state regressions run without scan, fixture read, or official HTTP fetch.
-- [ ] **RS-058** [Tests For No API-Key Source Running Without Config](../../BACKLOG.md#L1261) — not implemented.
+- [x] **RS-058** [Tests For No API-Key Source Running Without Config](../../BACKLOG.md#L1261) — known key-based candidates and a custom auth source fail before fixture/HTTP access with `auth_required` health.
 
 ### GLOBAL World Recent Signal Layer
 
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-058. The scanner now records `auth_required` before fixture or official HTTP access when declared credentials are absent. Congress.gov, BEA, FRED, and AirNow API candidates default to a local key requirement; a custom auth source uses the same gate. The regression proves no item or network/fixture read occurs. Full pytest passed (248 tests); Ruff passed. Next: advance NATIONAL evidence/schema work.
 - **2026-10-15:** Completed RS-057. Extended the no-fetch GET regression to NATIONAL page/API and SYSTEM summary using a missing fixture, with scan and official HTTP fetch hooks set to fail. NATIONAL/SYSTEM source-state tests cover disabled/not configured, never-run, healthy, stale, parser failure, policy blocking, auth required, and failing aggregation. Full pytest passed (247 tests); Ruff passed. Next: continue NATIONAL API-key gating and schema evidence.
 - **2026-10-15:** Advanced RS-005, RS-015, and RS-033. Migrated configured `news_sources` to `(scope, source_key)` uniqueness while preserving primary IDs and dependent fetch/item rows. Config accepts the same source key in distinct scopes but still rejects duplicates within one scope; status lookup and live-success checks are scope-aware. A local/NATIONAL fixture scan proves independent ingest under the same documented ID. Full pytest passed (247 tests); Ruff passed. Next: add queryable geographic and agency/sector evidence to the shared schema.
 - **2026-10-15:** Completed RS-014 and RS-025. Verified REGIONAL defaults, geography/topic flag validation, social and homepage config gates, and page states for disabled/not configured/configured disabled/never run plus blocked and failure outcomes. Added a REGIONAL-specific social-disabled health message. Full pytest passed (245 tests); Ruff passed. Next: address scoped configured-source identity so overlapping LOCAL/NATIONAL source IDs can be used together; then continue broader REGIONAL parser and storage gaps.

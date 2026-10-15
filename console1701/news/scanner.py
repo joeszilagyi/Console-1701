@@ -67,6 +67,10 @@ _LOCAL_EVENT_STOPWORDS = {
 _LOCAL_EVENT_TOKEN_RE = re.compile(r"[a-z0-9]+")
 
 
+class AuthRequiredError(NewsIngestError):
+    """A configured source requires local credential material before ingest."""
+
+
 def run_news_scan(config_path: str | Path | None = None) -> dict[str, Any]:
     config = load_config(config_path)
     ensure_state_dirs(config)
@@ -529,6 +533,8 @@ def _ingest_source(
 
     try:
         policy = _policy_for_source(config, source)
+        if policy.get("auth_required") and not policy.get("auth_configured"):
+            raise AuthRequiredError("Source requires local auth material before ingest.")
         is_live = _is_allowed_live_source(config, source)
         fetch_evidence: dict[str, Any]
         fetch_columns: dict[str, Any] = {}
@@ -668,6 +674,18 @@ def _ingest_source(
             source=source,
         )
         return stored_count
+    except AuthRequiredError as exc:
+        _record_source_failure(
+            conn,
+            run_id,
+            source_id,
+            source,
+            status="auth_required",
+            error_class=type(exc).__name__,
+            error_message=str(exc),
+            message=str(exc),
+        )
+        raise
     except UnsupportedSourceError as exc:
         _record_source_failure(
             conn,
