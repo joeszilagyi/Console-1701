@@ -189,6 +189,10 @@ def parse_fixture_items(
         from console1701.news.cpsc_recalls import parse_cpsc_recalls_json
 
         return parse_cpsc_recalls_json(source, payload_text)
+    if parser_name == "cisa_advisories_rss":
+        from console1701.news.cisa_advisories import parse_cisa_advisories_rss
+
+        return parse_cisa_advisories_rss(source, payload_text)
 
     if parser_name == "nws_alerts_json":
         return _parse_nws_alerts_json(source, payload_text)

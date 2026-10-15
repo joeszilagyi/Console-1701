@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel>
+  <title>All CISA Advisories</title>
+  <item>
+    <title>Joint Cybersecurity Advisory on Critical Infrastructure Intrusion</title>
+    <link>https://www.cisa.gov/news-events/cybersecurity-advisories/aa26-281a</link>
+    <guid>/node/25593</guid><dc:creator>CISA</dc:creator>
+    <pubDate>Thu, 08 Oct 26 12:00:00 +0000</pubDate>
+    <description><![CDATA[<p>CISA and partners describe activity involving CVE-2026-12345.</p><h2>Mitigations</h2><p>Apply vendor guidance.</p>]]></description>
+  </item>
+  <item>
+    <title>Thermo Fisher Torrent Suite Software</title>
+    <link>https://www.cisa.gov/news-events/ics-medical-advisories/icsma-26-288-01</link>
+    <guid>/node/25627</guid><dc:creator>CISA</dc:creator>
+    <pubDate>Thu, 15 Oct 26 12:00:00 +0000</pubDate>
+    <description><![CDATA[<p>Critical Infrastructure Sectors: Healthcare and Public Health Countries/Areas Deployed: Worldwide</p><p>Vulnerabilities CVE-2026-107777</p><p>CVSS Version Base Score Base Severity Vector String 3.1 6.5 MEDIUM</p><h2>Remediations</h2>]]></description>
+  </item>
+  <item>
+    <title>CISA Urges Patching Newly Exploited Vulnerability</title>
+    <link>https://www.cisa.gov/news-events/alerts/2026/10/13/cisa-urges-patching-newly-exploited-vulnerability</link>
+    <guid>/node/25619</guid><dc:creator>CISA</dc:creator>
+    <pubDate>Tue, 13 Oct 26 12:00:00 +0000</pubDate>
+    <description><![CDATA[<p>CISA urges organizations to patch CVE-2026-104935.</p>]]></description>
+  </item>
+  <item>
+    <title>CISA Issues Emergency Directive ED 26-01</title>
+    <link>https://www.cisa.gov/news-events/directives/ed-26-01-mitigate-vulnerability</link>
+    <guid>/node/25655</guid><dc:creator>CISA</dc:creator>
+    <pubDate>Tue, 13 Oct 26 12:00:00 +0000</pubDate>
+    <description><![CDATA[<p>Actions to Take: apply the required mitigation.</p>]]></description>
+  </item>
+  <item>
+    <title>Industrial Control System Advisory for Pump Controller</title>
+    <link>https://www.cisa.gov/news-events/ics-advisories/icsa-26-288-02</link>
+    <guid>/node/25656</guid><dc:creator>CISA</dc:creator>
+    <pubDate>Thu, 15 Oct 26 12:00:00 +0000</pubDate>
+    <description><![CDATA[<p>Critical Infrastructure Sectors: Water and Wastewater Systems Countries/Areas Deployed: Worldwide</p><p>CVSS Version Base Score Base Severity Vector String 3.1 9.8 CRITICAL</p>]]></description>
+  </item>
+  <item>
+    <title>Cybersecurity Bulletin for Federal Agencies</title>
+    <link>https://www.cisa.gov/news-events/bulletins/2026/10/15/federal-cybersecurity-bulletin</link>
+    <guid>/node/25657</guid><dc:creator>CISA</dc:creator>
+    <pubDate>Thu, 15 Oct 26 12:00:00 +0000</pubDate>
+    <description><![CDATA[<p>Bulletin of guidance for federal agencies.</p>]]></description>
+  </item>
+  <item>
+    <title>CISA Adds One Known Exploited Vulnerability to Catalog</title>
+    <link>https://www.cisa.gov/news-events/alerts/2026/10/15/cisa-adds-one-known-exploited-vulnerability-catalog</link>
+    <guid>/node/25637</guid><dc:creator>CISA</dc:creator>
+    <pubDate>Thu, 15 Oct 26 12:00:00 +0000</pubDate>
+    <description><![CDATA[<p>Catalog publication, not a separate advisory.</p>]]></description>
+  </item>
+</channel></rss>
