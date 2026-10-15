@@ -9,8 +9,9 @@ from console1701.news.global_policy import classify_global_item
 from console1701.news.scanner import run_news_scan
 
 
-def _item(title, evidence=None):
-    return {"scope": "GLOBAL", "title": title, "evidence": evidence or {}}
+def _item(title, evidence=None, description=None):
+    return {"scope": "GLOBAL", "title": title, "description": description,
+            "evidence": evidence or {}}
 
 
 def test_routine_opinion_domestic_and_social_content_get_explicit_low_value_labels():
@@ -49,6 +50,25 @@ def test_explicit_rumor_and_graphic_headline_are_labeled_without_impact_inferenc
     assert rumor["evidence"]["global_attention_policy"]["attention_state"] == "background"
     assert graphic["evidence"]["sensitivity"]["graphic_violence"] is True
     assert graphic["evidence"]["global_attention_policy"]["attention_state"] == "suppressed"
+
+
+def test_sensitive_or_unverified_description_is_classified_before_storage():
+    source = {"scope": "GLOBAL", "source_family": "regional_media"}
+    graphic = classify_global_item(
+        source, _item("Incident update", description="The post includes graphic footage."),
+    )
+    private = classify_global_item(
+        source, _item("Incident update", description="Private distress of a named family."),
+    )
+    rumor = classify_global_item(
+        source, _item("Incident update", description="An unverified claim is circulating."),
+    )
+    assert graphic["evidence"]["sensitivity"]["graphic_violence"] is True
+    assert private["evidence"]["sensitivity"]["private_distress"] is True
+    assert rumor["evidence"]["global_identity"]["rumor"] is True
+    assert graphic["evidence"]["global_attention_policy"]["attention_state"] == "suppressed"
+    assert private["evidence"]["global_attention_policy"]["attention_state"] == "suppressed"
+    assert rumor["evidence"]["global_attention_policy"]["attention_state"] == "background"
 
 
 def test_scan_suppresses_graphic_title_before_sqlite_storage(tmp_path, monkeypatch):
@@ -99,3 +119,52 @@ def test_scan_suppresses_graphic_title_before_sqlite_storage(tmp_path, monkeypat
     assert "graphic_violence" in evidence["global"]["sensitivity_notes"]
     assert "redacted_before_storage" in evidence["global"]["sensitivity_notes"]
     assert "explicit graphic-content headline" in evidence["global"]["policy_notes"]
+
+
+def test_scan_redacts_graphic_description_with_neutral_title(tmp_path, monkeypatch):
+    monkeypatch.setattr("console1701.news.scanner.fetch_official_text", lambda *a, **kw: (
+        (_ for _ in ()).throw(AssertionError("unexpected HTTP"))
+    ))
+    fixture = tmp_path / "global.json"
+    fixture.write_text(json.dumps({"items": [{
+        "title": "Incident update from region",
+        "url": "https://example.test/global/incident-update",
+        "description": "Graphic footage of violence includes private distress.",
+        "published_at": "2026-10-15T12:00:00Z",
+    }]}))
+    config_path = tmp_path / "config.yml"
+    config_path.write_text(dedent(f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        global: {{enabled: true}}
+        news:
+          enabled: true
+          scopes:
+            GLOBAL:
+              enabled: true
+              sources:
+                - id: global_description_fixture
+                  name: GLOBAL description fixture
+                  kind: api_json
+                  parser: generic_json_items
+                  source_family: unocha
+                  source_class: official_conflict_humanitarian
+                  official_status: official
+                  policy_reviewed: true
+                  enabled: true
+                  url: "file://{fixture}"
+    """).strip() + "\n")
+    assert run_news_scan(config_path)["item_count"] == 1
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        row = conn.execute("SELECT title, description, evidence_json FROM news_items").fetchone()
+        cluster_count = conn.execute(
+            "SELECT COUNT(*) FROM news_clusters WHERE scope='GLOBAL'"
+        ).fetchone()[0]
+    assert row["title"] == "Sensitive humanitarian report"
+    assert row["description"] is None
+    assert cluster_count == 0
+    evidence = json_loads(row["evidence_json"], {})
+    assert evidence["sensitivity"]["graphic_violence"] is True
+    assert evidence["sensitivity"]["private_distress"] is True
+    assert evidence["sensitivity"]["redacted_before_storage"] is True
+    assert "explicit graphic-content description" in evidence["global"]["policy_notes"]

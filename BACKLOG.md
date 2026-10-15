@@ -2056,8 +2056,10 @@ is redacted before storage. Official alert metadata prevents a routine headline 
 an active alert. Exact article URLs and parser-provided syndication IDs now group duplicate stories
 without granting independent-family or temporal credit, and a bounded syndication penalty offsets
 their cluster-size contribution; a shared homepage URL alone cannot merge unrelated titles.
-Direct and offline scan tests verify those rules. Remaining work: source-specific coverage for
-broader public-impact categories and additional low-value/sensitive fixture variants.
+Direct and offline scan tests verify those rules. Sensitivity and explicit rumor phrases in
+descriptions now receive the same pre-storage policy check as titles; a neutral headline with
+graphic/private-person description is redacted before SQLite persistence. Remaining work:
+source-specific coverage for broader public-impact categories and additional low-value variants.
 
 ### GLOBAL UI Disabled States
 
