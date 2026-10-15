@@ -1,0 +1,15 @@
+{
+  "id": "urn:nasa:pds:msl_ice-dust:data_derived::1.0",
+  "type": "Product_Collection",
+  "title": "Mars Science Laboratory Atmospheric Ice and Dust Derived Data Collection",
+  "metadata": {"version": "1.0"},
+  "properties": {
+    "lid": ["urn:nasa:pds:msl_ice-dust:data_derived"],
+    "pds:Investigation_Area.pds:name": ["Mars Science Laboratory"],
+    "pds:Target_Identification.pds:name": ["Mars"],
+    "ops:Harvest_Info.ops:harvest_date_time": ["2026-06-10T17:06:51.258223Z"]
+  },
+  "targets": [
+    {"id": "urn:nasa:pds:context:target:planet.mars", "href": "https://example.test/no-fetch"}
+  ]
+}

@@ -2766,7 +2766,8 @@ verification status, source-health behavior, and future phase fields. Validate e
 every source disabled until explicitly configured.
 
 Current state: `console1701/news/science_registry.json` preserves all 170 source candidates from
-the design table plus four later RSS candidates and narrow Exoplanet Archive/MAST candidates,
+the design table plus four later RSS candidates and narrow Exoplanet Archive, MAST, and PDS
+candidates,
 under the internal `SYSTEM_SOLAR` working name. `science_registry.py` validates
 unique keys, required fields, URL shape, enums, intervals, and priorities, and derives a disabled
 source-health behavior for each candidate. The registry has no parser, route, news scope, or
@@ -2809,7 +2810,8 @@ exoplanet, Earth-only, launch, and nonofficial-link cases. The ESA fixture cover
 article, launch, image-only link, and nonofficial host. ESA telescope fixtures cover science
 releases, photo releases, and nonofficial links. The tiny Exoplanet Archive JSON fixture covers
 two bounded PS parameter updates. The MAST fixture covers two JWST observation metadata rows
-with complete paging. The other fixture families and source-health/policy states are pending.
+with complete paging. The PDS fixture covers one collection metadata record. The other fixture
+families and source-health/policy states are pending.
 
 ### NASA/JPL RSS Parser
 
@@ -2892,11 +2894,19 @@ and out-of-window rows. No product endpoint is called; the registry candidate st
 
 ### PDS Metadata-Only Parser
 
-Status: not implemented.
+Status: completed 2026-10-15 for fixture-first single-collection metadata.
 
 Build a fixture-first NASA PDS metadata parser for scoped collection/release checks. Preserve
 collection id, mission, target body, release time, product-count metadata only if source-provided,
 source URL, query bounds, row cap, and no-data-product-download evidence.
+
+Current state: `science_pds.py` parses one `Product_Collection` resolved by an explicitly
+allowlisted PDS LID. A bounded official Search API response returned collection ID/version,
+mission, target, and registry harvest time; the parser records that timestamp as registry
+harvest, not science release. It stores a product count only when explicitly present, and
+rejects mismatched IDs, observational products, broad IDs, oversized payloads, or long
+retention/timeout contracts. It never traverses collection members or downloads label,
+inventory, or science files. The registry candidate remains disabled.
 
 ### GCN Notice Fixture Parser
 
