@@ -61,7 +61,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 
 - [x] **RS-031** [NATIONAL Source Registry Design Implementation](../../BACKLOG.md#L973) — 227 disabled design entries, validated metadata, config defaults, SQLite sync, and summary.
 - [x] **RS-032** [Disabled-By-Default NATIONAL Config](../../BACKLOG.md#L982) — validated national policy tree, separate scope gate, social-source rejection, and disabled defaults.
-- [ ] **RS-033** [NATIONAL SQLite Schema Or Extension](../../BACKLOG.md#L993) — partial: scoped registry/configured-source migrations and persisted NATIONAL inventory; query indexes and purge evidence remain.
+- [x] **RS-033** [NATIONAL SQLite Schema Or Extension](../../BACKLOG.md#L993) — scoped storage, agency/sector/state indexed facets, migration backfill and expiry purge verified.
 - [ ] **RS-034** [NATIONAL Fixture Pack](../../BACKLOG.md#L1003) — not implemented.
 - [x] **RS-035** [NWS Active Alert Parser](../../BACKLOG.md#L1012) — fixture parser preserves national alert geography, timing, instruction, and ranking evidence; focused tests pass.
 - [ ] **RS-036** [NHC Advisory/Feed Verification](../../BACKLOG.md#L1020) — partial: official feed ownership/endpoints and advisory semantics documented; actual XML item shape remains unverified.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-033. Added NATIONAL agency/sector/state/source-family facets on the shared indexed facet table, active scoped lookup, old-row backfill, and tests for NWS/USGS labels and expiry purge. Full pytest passed (330 tests); Ruff passed. Progress: 48/150.
 - **2026-10-15:** Completed RS-029 and RS-030. Expanded the REGIONAL verification guide with the shared per-source signoff, regional scope checks and worked decisions; audited existing REGIONAL/SYSTEM state coverage and extended the opt-in HTTP GET no-fetch regression to REGIONAL. Full pytest passed (330 tests); Ruff passed. Progress: 47/150.
 - **2026-10-15:** Completed RS-021 as a cross-county source review. Recorded official access and RSS candidates or signup-only fallbacks for eight counties, with parser, policy, privacy, health and activation gates. No county feed was enabled. Progress: 45/150.
 - **2026-10-15:** Completed RS-020 and advanced RS-016. Verified the official King County Emergency News RSS source, added a synthetic warning/recovery/test fixture, source-specific classification and public-impact ranking, and exercised a configured offline scan. Live ingest remains disabled pending a separate release gate. Full pytest passed (330 tests); Ruff passed. Progress: 44/150.

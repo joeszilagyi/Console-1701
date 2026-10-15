@@ -56,6 +56,46 @@ def _list_values(value: Any) -> list[Any]:
     return value if isinstance(value, list) else []
 
 
+def national_item_facets(evidence: dict[str, Any]) -> set[tuple[str, str]]:
+    """Use official parser fields for query labels; never infer a state from prose."""
+    facets: set[tuple[str, str]] = set()
+
+    def add(kind: str, value: Any) -> None:
+        if not isinstance(value, str):
+            return
+        text = value.strip().casefold()
+        if text and len(text) <= 120:
+            facets.add((kind, text))
+
+    source = evidence.get("source") or {}
+    if isinstance(source, dict):
+        add("source_family", source.get("source_family"))
+    nws = evidence.get("nws_alert") or {}
+    if isinstance(nws, dict):
+        add("agency", "nws")
+        add("sector", "weather")
+        for state in _list_values(nws.get("affected_states"))[:16]:
+            add("state", state)
+    usgs = evidence.get("usgs_earthquake") or {}
+    if isinstance(usgs, dict):
+        add("agency", "usgs")
+        add("sector", "seismic")
+    return facets
+
+
+def replace_national_item_facets(
+    conn: sqlite3.Connection,
+    item_id: int,
+    evidence: dict[str, Any],
+) -> None:
+    conn.execute("DELETE FROM news_item_facets WHERE item_id = ?", (item_id,))
+    conn.executemany(
+        "INSERT INTO news_item_facets (item_id, scope, facet_kind, facet_value) "
+        "VALUES (?, 'NATIONAL', ?, ?)",
+        [(item_id, kind, value) for kind, value in sorted(national_item_facets(evidence))],
+    )
+
+
 def regional_item_facets(evidence: dict[str, Any]) -> set[tuple[str, str]]:
     facets: set[tuple[str, str]] = set()
 
