@@ -200,6 +200,26 @@
     "future_phase": "S7"
   },
   {
+    "source_key": "nasa_jpl_science_feed",
+    "source_name": "NASA JPL center feed",
+    "source_family": "nasa_jpl",
+    "source_class": "official_planetary_science",
+    "scope": "SYSTEM_SOLAR",
+    "raw_url": "https://www.nasa.gov/centers-and-facilities/jpl/feed/",
+    "expected_access_kind": "public official RSS feed",
+    "adapter": "rss_atom",
+    "refresh_interval": "60 min",
+    "priority": "90",
+    "official_status": "official",
+    "privacy_risk": "low",
+    "policy_risk": "low",
+    "parser_risk": "medium",
+    "retention_sensitivity": "low",
+    "verification_status": "candidate_needs_verification",
+    "why_it_matters": "NASA-hosted parseable JPL feed; science routing requires strict topic filter.",
+    "future_phase": "S7"
+  },
+  {
     "source_key": "jpl_missions",
     "source_name": "JPL missions",
     "source_family": "nasa_jpl",

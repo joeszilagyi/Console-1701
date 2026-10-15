@@ -101,3 +101,9 @@ The signoff status is endpoint-specific. Record parser failure and HTTP 403 as s
 evidence, then move to an independent candidate while access remains unresolved. Any future
 exoplanet, MAST, PDS, HEASARC, GCN, TNS or literature source needs its own record with row caps,
 terms, and domain-specific relevance tests.
+
+The NASA-hosted JPL center feed now has a fixture-only science parser and a disabled registry
+candidate. A 2026-10-15 bounded read returned HTTP 200, `application/rss+xml`, a parseable
+`Jet Propulsion Laboratory – NASA` channel, and ten mixed-topic entries. The parser keeps
+science-category headlines and rejects Earth-only and operational launch/testing headlines; it
+does not authorize live science ingest or the inaccessible direct JPL feed.

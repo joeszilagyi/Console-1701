@@ -2766,7 +2766,8 @@ verification status, source-health behavior, and future phase fields. Validate e
 every source disabled until explicitly configured.
 
 Current state: `console1701/news/science_registry.json` preserves all 170 source candidates from
-the design table under the internal `SYSTEM_SOLAR` working name. `science_registry.py` validates
+the design table plus the NASA-hosted JPL RSS endpoint verified later, under the internal
+`SYSTEM_SOLAR` working name. `science_registry.py` validates
 unique keys, required fields, URL shape, enums, intervals, and priorities, and derives a disabled
 source-health behavior for each candidate. The registry has no parser, route, news scope, or
 runtime fetch wiring; the final UI label remains a user decision. Focused tests check inventory
@@ -2794,7 +2795,7 @@ verify registry sync, no configured science fetch sources, migration idempotence
 
 ### Solar System And Beyond Fixture Pack
 
-Status: not implemented.
+Status: partially implemented.
 
 Create local-only fixtures for NASA/JPL RSS, ESA RSS, Hubble/JWST RSS, NASA Exoplanet Archive tiny
 metadata, MAST tiny metadata, PDS tiny metadata, GCN notice, GCN circular, ATel RSS, TNS
@@ -2803,14 +2804,25 @@ feeds, oversized payloads, source-health states, disabled sources, stale sources
 sources, heavy-archive-blocked sources, and hype-blocked items. Fixture ingest must not perform
 network calls.
 
+Current state: `tests/fixtures/science/nasa_jpl_science.rss` covers NASA-hosted JPL astrophysics,
+exoplanet, Earth-only, launch, and nonofficial-link cases. The remaining fixture families and
+source-health/policy states are still pending.
+
 ### NASA/JPL RSS Parser
 
-Status: not implemented.
+Status: completed 2026-10-15 for fixture-first NASA-hosted JPL science RSS.
 
 Build a fixture-first RSS/Atom parser for verified NASA and JPL science feeds. Preserve title, URL,
 published time, bounded description, categories, source family, mission/object tokens where
 available, and official science evidence. Store headline metadata only and do not fetch article
 bodies.
+
+Current state: `science_rss.py` parses only the exact NASA-hosted JPL channel and URL under the
+internal science scope. It requires a source-provided science category and nonoperational title,
+rejects unrelated hosts and malformed/oversized XML, and keeps bounded headline metadata,
+publication time, categories, official provenance, and no-download evidence. Synthetic fixtures
+cover scope filtering and safety. The registry candidate stays disabled; no science live fetch or
+UI route exists yet.
 
 ### ESA RSS Parser
 
