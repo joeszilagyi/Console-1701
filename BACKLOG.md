@@ -2455,7 +2455,7 @@ refine cross-product space-weather correlation without joining separate forecast
 
 ### ORBITAL Deterministic Ranking
 
-Status: not implemented.
+Status: completed 2026-10-15 for first-pass algorithm.
 
 Implement explainable ORBITAL ranking with recency, official severity, source diversity, temporal
 proximity, operational impact, public impact, active alert or launch windows, source priority,
@@ -2463,14 +2463,29 @@ cluster size, local/global impact tags, duplicate-family penalty, stale-source p
 low-confidence penalty, low-public-value penalty, out-of-scope penalty, sensitivity penalty, and
 rumor penalty. Store score features and ranking reasons in JSON evidence.
 
+Current state: ORBITAL clusters use a bounded stored-metadata score with recency, source-backed
+SWPC severity, independent family diversity, temporal proximity, operational and public impact,
+active alert/launch-window signals, source priority, cluster size, explicit local/global tags,
+and the specified duplicate, stale, confidence, low-value, out-of-scope, sensitivity, and rumor
+penalties. Factors and reasons are persisted in linked item and cluster evidence. JPL close
+approach distance alone does not create a threat score. Hard tactical/restricted flags suppress
+clusters and hide items from scope and direct-detail views. Tests cover each major score class,
+duplicate handling, non-inferred NEO risk, and stored sensitive-item rendering.
+
 ### ORBITAL Safety And Sensitivity Rules
 
-Status: not implemented.
+Status: partially implemented.
 
 Add deterministic rules that block or de-emphasize tactical satellite tracking, restricted/auth
 data, classified-activity inference, broad satellite catalog firehoses, Space-Track use without
 credentials and terms review, social-only claims, launch rumors, NEO panic language, reentry panic
 language, and debris fear-dashboard behavior. Prefer official public metadata and short retention.
+
+Current state: source-policy gates block restricted and sensitive catalog candidates before ingest;
+ORBITAL ranking hard-suppresses flagged tactical, restricted, classified-inference, private
+operator, and object-surveillance items and de-emphasizes other sensitivity flags. The scope and
+item-detail views hide hard-suppressed records. Remaining work: add deterministic classification
+at ingest for social-only, rumor, reentry, debris, and panic-language cases; validate retention.
 
 ### ORBITAL Local And Global Impact Tag Rules
 
@@ -2613,7 +2628,7 @@ slot and reports `auth_required`; the tests assert no fixture or network access.
 
 ### Tests For No Tactical Satellite Tracking Output
 
-Status: partially implemented.
+Status: completed 2026-10-15 for first-pass rendering gate.
 
 Add tests proving ORBITAL does not render tactical satellite tracking output, broad catalog
 firehose rows, sensitive military satellite inference, private operator monitoring, or
@@ -2621,9 +2636,9 @@ object-by-object surveillance. The UI should show aggregate, source-backed event
 honest disabled/sensitivity-blocked states instead.
 
 Current state: the CelesTrak elements, SATCAT, and SOCRATES candidates remain manual-review-only
-even when topic and restricted-source flags are set; a regression test confirms no rows or
-tactical output appear. Further stored-item and UI sensitivity tests belong with ORBITAL safety
-rules and rendering.
+even when topic and restricted-source flags are set. A stored tactical record is also hidden from
+ORBITAL scope cards, clusters, and direct item detail. Regression tests forbid network access and
+check both candidate and stored-item paths.
 
 ## Solar System and Beyond Recent Signal Layer
 

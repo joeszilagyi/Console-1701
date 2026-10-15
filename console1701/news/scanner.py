@@ -31,6 +31,7 @@ from console1701.news.official_http import (
     is_supported_official_source,
 )
 from console1701.news.orbital_events import correlate_orbital_items
+from console1701.news.orbital_ranking import rank_orbital_event
 from console1701.news.orbital_registry import list_orbital_source_registry
 from console1701.news.parsers import (
     NewsIngestError,
@@ -2700,6 +2701,9 @@ def _rebuild_orbital_clusters(conn: sqlite3.Connection) -> None:
     conn.execute("DELETE FROM news_clusters WHERE scope = 'ORBITAL'")
     for group in correlate_orbital_items(items):
         members = [by_id[item_id] for item_id in group["item_ids"]]
+        event_ranking = rank_orbital_event(
+            group, members, now=datetime.now(UTC).isoformat(timespec="seconds")
+        )
         representative = max(
             members, key=lambda item: (int(item["rank_score"]), item["last_seen_at"], item["id"])
         )
@@ -2720,11 +2724,14 @@ def _rebuild_orbital_clusters(conn: sqlite3.Connection) -> None:
                 "families": group["families"],
                 "matches": group["matches"],
                 "confidence": confidence,
+                "ranking": event_ranking,
             }
             conn.execute(
                 "UPDATE news_items SET evidence_json = ? WHERE id = ?",
                 (json_dumps(evidence), member["id"]),
             )
+        if event_ranking["sensitivity"]["hard_suppression_flags"]:
+            continue
         conn.execute(
             """
             INSERT INTO news_clusters (
@@ -2736,12 +2743,13 @@ def _rebuild_orbital_clusters(conn: sqlite3.Connection) -> None:
                 group["event_key"], representative["title"], representative["id"],
                 min(str(member["first_seen_at"]) for member in members),
                 max(str(member["last_seen_at"]) for member in members),
-                len(members), max(family_scores.values(), default=0),
+                len(members), event_ranking["score"],
                 json_dumps(list(dict.fromkeys(tags))),
                 json_dumps({
                     "fixture_only": fixture_only,
                     "orbital_event": {**group, "confidence": confidence,
-                                      "family_scores": family_scores},
+                                      "family_scores": family_scores,
+                                      "ranking": event_ranking},
                 }),
             ),
         )
