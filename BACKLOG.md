@@ -1551,7 +1551,15 @@ explicit configuration, use short retention, and never scrape HTML to bypass pla
 
 ### Documentation For Source Verification
 
-Status: partially implemented.
+Status: implemented for the first-pass NATIONAL source workflow.
+
+`docs/project/NATIONAL_SOURCE_VERIFICATION_WORKFLOW.md` now applies the shared per-source signoff
+and release gate to agency/sector, U.S. geography, public action, filtering, authentication,
+sensitivity, and source-health decisions. It links the completed exact USGS live signoff, fixture
+and research decisions for NHTSA, CISA KEV, FDA, FAA, Federal Register and GovInfo, and explicit
+CDC HAN/CISA advisory and FSIS/CPSC blockers. It distinguishes research and fixture evidence from
+live admission, requires a disabled registry default and exact transport tuple, and records the
+first isolated live smoke outcome. New sources need their own worked record before admission.
 
 Document the later NATIONAL source verification workflow: confirm endpoint ownership, access
 method, source terms, robots/policy notes, parser shape, auth/key requirements, rate limits,
