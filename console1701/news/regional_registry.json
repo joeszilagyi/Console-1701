@@ -1625,8 +1625,8 @@
     "source_family": "nwcc",
     "source_class": "official_wildfire",
     "scope": "REGIONAL",
-    "raw_url": "https://nwccinfo.blogspot.com/",
-    "expected_access_kind": "public official/interagency blog",
+    "raw_url": "https://nwccinfo.blogspot.com/feeds/posts/default",
+    "expected_access_kind": "linked public Atom feed; fixture parsing only",
     "adapter": "rss_atom",
     "refresh_interval": "30 min",
     "priority": "85",
@@ -1635,8 +1635,8 @@
     "policy_risk": "medium",
     "parser_risk": "medium",
     "retention_sensitivity": "medium",
-    "verification_status": "official_page_seen",
-    "why_it_matters": "Regional wildfire coordination and large-fire context.",
+    "verification_status": "verified",
+    "why_it_matters": "Interagency wildfire updates without inferred Washington impact.",
     "future_phase": "R7"
   },
   {

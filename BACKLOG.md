@@ -752,9 +752,10 @@ latest-continuous response to Cedar River at Renton station metadata, preserves 
 staleness evidence, and leaves flood stage unknown without a source threshold. A synthetic WSF
 alerts fixture now follows the official access-code API model and preserves bulletin IDs, route
 IDs, cancellation/delay classification and impact evidence while leaving absent terminal, vessel,
-and end-time fields unknown. Dedicated wildfire, other county emergency, AQI, outage, and other
-regional fixture shapes remain pending endpoint verification; do not invent live API shapes to
-close this pack.
+and end-time fields unknown. The NWCC blog's linked public Atom feed now has a curated observed
+metadata fixture for fire updates, with body and Washington impact excluded. Dedicated WA DNR
+incident, other county emergency, AQI, outage, and other regional fixture shapes remain pending
+endpoint verification; do not invent live API shapes to close this pack.
 
 ### NWS Alert Parser For Washington
 
@@ -827,11 +828,19 @@ no suitable endpoint exists, keep dashboard sources `source_health_probe_only` o
 
 ### NWCC Feed Verification
 
-Status: not implemented.
+Status: implemented (fixture source verification).
 
 Verify whether NWCC provides an RSS/Atom or stable public feed suitable for metadata ingestion.
 Record source ownership, feed URL, terms/policy notes, parser shape, refresh interval, and fallback
 behavior. Keep the source disabled until verification is complete.
+
+Current state: the NWCC About Us page identifies the interagency publisher and links a public
+Atom feed at `/feeds/posts/default`. A bounded direct GET returned HTTP 200, 43,548 bytes,
+`application/atom+xml`, and 25 entries with Blogger post IDs, title, publication/update time,
+and official blog article links. A curated fixture parser preserves only that metadata for
+named fire updates, excludes general fire-year notices/maps/briefs and all article content, and
+does not infer Washington impact or incident severity. The source remains disabled for live HTTP
+pending exact-feed signoff and source policy review. See the verification note.
 
 ### USGS Earthquake GeoJSON Parser
 
