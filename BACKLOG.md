@@ -1492,11 +1492,19 @@ there is no WHO live HTTP allowlist.
 
 ### ECDC RSS Parser
 
-Status: not implemented.
+Status: completed 2026-10-15 for fixture-first parser; live source remains disabled.
 
 Build a fixture-first ECDC RSS parser after feed shape is verified. Preserve title, published time,
 URL, category when provided, bounded description, public-health source evidence, and Europe/global
 impact tags. Keep it lower priority than WHO DON unless convergence or severity warrants elevation.
+
+The official ECDC RSS index links to a News/press releases RSS 2.0 feed. The fixture-first parser
+preserves title, official URL, publication time, optional category, creator/GUID, and bounded
+plain-text description. It labels Europe/GLOBAL public-health context without inventing event
+impact geography or severity. The disabled `ecdc_rss` registry entry now names the verified feed
+URL and retains priority 50 versus WHO DON's 100. Offline fixture, scan/health, policy, and
+ranking regressions pass; [verification notes](docs/project/GLOBAL_ECDC_RSS_SOURCE_VERIFICATION.md)
+record the observed shape. No ECDC HTTP URL is allowlisted for app ingest.
 
 ### WMO CAP Warning Source Verification
 

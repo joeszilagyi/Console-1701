@@ -123,6 +123,8 @@ def parse_fixture_items(
         return _parse_usgs_earthquake_geojson(source, payload_text)
     if parser_name == "gdacs_rss":
         return _parse_gdacs_rss(source, payload_text)
+    if parser_name == "ecdc_rss":
+        return _parse_ecdc_rss(source, payload_text)
     if parser_name == "gdacs_geojson":
         return _parse_gdacs_geojson(source, payload_text)
     if parser_name == "reliefweb_disasters_json":
@@ -345,6 +347,67 @@ def _gdacs_item(
         },
     }
     return item
+
+
+def _parse_ecdc_rss(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:
+    if str(source.get("scope") or "").upper() != "GLOBAL":
+        raise NewsParserError("ECDC RSS parser requires GLOBAL scope.")
+    try:
+        root = ET.fromstring(payload_text)
+    except ET.ParseError as exc:
+        raise NewsParserError(f"Malformed ECDC RSS fixture: {exc}") from exc
+    if _local_name(root.tag) != "rss":
+        raise NewsParserError("ECDC fixture must have an rss root.")
+    channel = root.find("./channel")
+    if channel is None:
+        raise NewsParserError("ECDC RSS fixture is missing a channel.")
+    items: list[dict[str, Any]] = []
+    for index, element in enumerate(channel.findall("./item")):
+        url = _element_text(element.find("./link"))
+        try:
+            parts = urlsplit(url or "")
+        except ValueError as exc:
+            raise NewsParserError(f"ECDC item {index} has an invalid URL.") from exc
+        if parts.scheme != "https" or parts.hostname not in {
+            "www.ecdc.europa.eu", "ecdc.europa.eu"
+        }:
+            raise NewsParserError(f"ECDC item {index} has no official HTTPS article URL.")
+        published = normalize_timestamp(_element_text(element.find("./pubDate")))
+        if not published:
+            raise NewsParserError(f"ECDC item {index} has no valid publication time.")
+        categories = _unique_texts(
+            [_element_text(node) for node in element.findall("./category")], max_chars=64
+        )
+        creator = _element_text(element.find("{http://purl.org/dc/elements/1.1/}creator"))
+        guid = _element_text(element.find("./guid"))
+        item = _normalize_item(
+            source,
+            {
+                "title": _element_text(element.find("./title")),
+                "url": url,
+                "description": _wsdot_plain_text(_element_text(element.find("./description"))),
+                "published_at": published,
+                "tags": ["official", "ecdc", "public-health", "europe-context", "global",
+                         *categories],
+            },
+            index=index,
+        )
+        item["evidence"]["ecdc_rss"] = {
+            "categories": categories,
+            "creator": bounded_text(creator, max_chars=120),
+            "guid": bounded_text(guid, max_chars=500),
+            "published_at": published,
+            "source_url": item["url"],
+            "source_region_scope": "Europe",
+            "impact_geography_assessed": False,
+            "summary_bounded": True,
+            "ranking": {
+                "official_public_health": True,
+                "source_weight": "below_who_don_until_convergence_or_severity",
+            },
+        }
+        items.append(item)
+    return items
 
 
 def _parse_gdacs_rss(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:
