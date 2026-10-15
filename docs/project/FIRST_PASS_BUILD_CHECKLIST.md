@@ -92,7 +92,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 
 - [x] **RS-059** [GLOBAL Source Registry Design Implementation](../../BACKLOG.md#L1275) — 172 disabled design entries, enum validation, config defaults, SQLite sync, and summary.
 - [x] **RS-060** [Disabled-By-Default GLOBAL Config](../../BACKLOG.md#L1285) — validated inclusion/attention flags and explicit social, auth, heavy-data, homepage, conflict gates.
-- [ ] **RS-061** [GLOBAL SQLite Schema Or Extension](../../BACKLOG.md#L1296) — partial: scoped registry persistence and summary; country/region indexes and purge evidence remain.
+- [x] **RS-061** [GLOBAL SQLite Schema Or Extension](../../BACKLOG.md#L1296) — scoped registry/cluster/item storage plus indexed geography, event, family, impact and sensitivity facets; migration, refresh, expiry and purge verified.
 - [ ] **RS-062** [GLOBAL Fixture Pack](../../BACKLOG.md#L1306) — partial: GDACS RSS/API, ReliefWeb disaster/report, and WHO DON fixtures with offline scan tests; other families/states pending.
 - [x] **RS-063** [GDACS Feed Parser](../../BACKLOG.md#L1316) — official RSS shape verified; dedicated GLOBAL parser, evidence, fixture, and scan persistence test.
 - [x] **RS-064** [GDACS API Fixture Parser](../../BACKLOG.md#L1324) — official Search GeoJSON shape verified; dedicated GLOBAL parser, evidence, fixture, and scan persistence test.

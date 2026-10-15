@@ -1388,7 +1388,7 @@ settings. No GLOBAL source is live allowlisted.
 
 ### GLOBAL SQLite Schema Or Extension
 
-Status: partially implemented.
+Status: completed 2026-10-15 for first-pass storage contract.
 
 Add or extend SQLite storage for GLOBAL source registry state, fetch runs, normalized items,
 `global_events` or scoped clusters, source health, ranking explanations, crisis sensitivity flags,
@@ -1397,9 +1397,11 @@ indexes for latest-by-scope, event ranking, source health, source family, event 
 country/region, and `expires_at` purge. Do not store full article bodies by default.
 
 Current state: the shared scoped source registry stores all 172 GLOBAL inventory rows and exposes a
-GLOBAL registry summary. Shared source, fetch, item, health, cluster, and retention tables can
-persist GLOBAL records. Dedicated affected-country/region and event-type query indexes, crisis
-sensitivity evidence, and retention/purge verification remain pending.
+GLOBAL registry summary. Shared source, fetch, item, health, cluster, and retention tables persist
+GLOBAL records without full article bodies. `news_item_facets` indexes country, verified region,
+event type, source family, impact tag, and explicit sensitivity flags; it backfills existing GLOBAL
+items, refreshes when item evidence changes, and cascades on retention purge. Query and purge tests
+verify those paths. Broader event correlation and sensitivity classification remain separate rows.
 
 ### GLOBAL Fixture Pack
 

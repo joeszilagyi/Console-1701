@@ -180,6 +180,44 @@ def _decode_news_item_row(row: sqlite3.Row) -> dict[str, Any]:
     return item
 
 
+GLOBAL_FACET_KINDS = {
+    "country", "region", "event_type", "source_family", "impact_tag", "sensitivity"
+}
+
+
+def list_global_items_by_facet(
+    conn: sqlite3.Connection,
+    facet_kind: str,
+    facet_value: str,
+    *,
+    limit: int = 50,
+) -> list[dict[str, Any]]:
+    if facet_kind not in GLOBAL_FACET_KINDS:
+        raise ValueError(f"Unsupported GLOBAL facet kind: {facet_kind}")
+    if not 1 <= limit <= 100:
+        raise ValueError("GLOBAL facet query limit must be 1..100")
+    value = facet_value.strip().casefold()
+    if not value:
+        return []
+    now = datetime.now(UTC).isoformat(timespec="seconds")
+    rows = conn.execute(
+        """
+        SELECT item.*
+        FROM news_item_facets AS facet
+        JOIN news_items AS item ON item.id = facet.item_id
+        WHERE facet.scope = 'GLOBAL'
+          AND facet.facet_kind = ?
+          AND facet.facet_value = ?
+          AND item.status = 'active'
+          AND item.expires_at >= ?
+        ORDER BY item.rank_score DESC, item.last_seen_at DESC, item.id DESC
+        LIMIT ?
+        """,
+        (facet_kind, value, now, limit),
+    ).fetchall()
+    return [_decode_news_item_row(row) for row in rows]
+
+
 def _decode_news_cluster_row(row: sqlite3.Row) -> dict[str, Any]:
     cluster = dict(row)
     cluster["tags"] = json_loads(cluster.pop("tags_json"), [])
