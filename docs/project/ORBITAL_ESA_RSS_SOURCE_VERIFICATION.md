@@ -15,6 +15,9 @@ path. It filters routine media and unrelated titles. Reentry and debris headline
 of this parser pending their own source and policy review; no safety classification is inferred
 from a generic ESA RSS item.
 
-Both registry candidates remain disabled and neither exact feed is in the live HTTP allowlist.
-Before live admission, verify freshness, cadence, conditional requests, and filter recall under
-an explicit opt-in scan.
+Both registry candidates remain disabled by default. The two exact feeds are now in the live
+HTTP allowlist, subject to an explicit source opt-in, `verification_status: verified`, and the
+parent `allow_official_http` gate. Live items must be published within seven days (with one hour
+of future clock tolerance). The shared official HTTP transport handles validators and response
+bounds. Mocked scans cover article filtering, provenance, stale items, and closed gates; no
+application live scan was run.

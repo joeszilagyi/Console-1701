@@ -2379,7 +2379,8 @@ channel and official article URL, preserves headline, opaque GUID, timezone-awar
 time, bounded description, source URL and explicit mission label, and filters routine media and
 unrelated stories. Reentry/debris headlines remain outside this parser pending their separate
 review; no safety impact is inferred from generic feed metadata. Offline scans and indexed
-mission/source tests pass. No live HTTP allowlist entry was added. See
+mission/source tests pass. Both exact feeds now have disabled-by-default live HTTP allowlist
+entries with seven-day freshness, source and parent gates, and mocked scan coverage. See
 `docs/project/ORBITAL_ESA_RSS_SOURCE_VERIFICATION.md`.
 
 ### Official Launch Provider Source Verification
@@ -2570,14 +2571,16 @@ API, NASA RSS, ESA RSS, and JPL RSS after verification. Require explicit command
 fetches.
 
 Current state: NOAA SWPC alerts, NOAA scales, planetary Kp summary/one-minute, Boulder K-index
-one-minute, OVATION aurora JSON, and six exact NASA RSS feeds are allowlisted ORBITAL endpoints.
+one-minute, OVATION aurora JSON, six exact NASA RSS feeds, and two exact ESA RSS feeds are
+allowlisted ORBITAL endpoints.
 Their headers were rechecked on 2026-10-15; explicit parent/news/HTTP/source enablement and
 `verification_status: verified` are required. Live alerts outside 72 hours are discarded; scales
 have six-hour/96-hour current/forecast windows; K-index keeps latest measurements within six
 hours/one hour and requires K >= 5. OVATION requires configured LOCAL/REGIONAL coordinate windows
 with modeled intensity >= 50, stores no grid, makes no visibility claim, and uses a two-hour
 observation freshness window. NASA RSS keeps only seven-day-old or newer source-dated orbital
-stories, and NASA/JPL channel variants do not create false independent corroboration. Alert
+stories; ESA RSS uses the same seven-day freshness window. NASA/JPL and ESA channel variants
+do not create false independent corroboration. Alert
 validity and cancellation affect active-alert scoring. Mocked-transport tests cover source gates,
 200/304 handling, provenance, freshness, and offline GET. Defaults remain disabled and no live
 app scan was run. Remaining candidates need endpoint, parser, response size, freshness, and policy
