@@ -30,6 +30,7 @@ from console1701.news.official_http import (
     fetch_official_text,
     is_supported_official_source,
 )
+from console1701.news.orbital_events import correlate_orbital_items
 from console1701.news.orbital_registry import list_orbital_source_registry
 from console1701.news.parsers import (
     NewsIngestError,
@@ -2381,6 +2382,9 @@ def _latest_health_state_for_rank(conn: sqlite3.Connection, source_id: int) -> s
 
 
 def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
+    if scope == "ORBITAL":
+        _rebuild_orbital_clusters(conn)
+        return
     if scope == "GLOBAL":
         _rebuild_global_clusters(conn)
         return
@@ -2673,6 +2677,72 @@ def _rebuild_national_clusters(conn: sqlite3.Connection) -> None:
                     ],
                     "member_evidence_truncated": len(members) > 30,
                 }}),
+            ),
+        )
+
+
+def _rebuild_orbital_clusters(conn: sqlite3.Connection) -> None:
+    rows = conn.execute(
+        """
+        SELECT id, scope, title, source_published_at, first_seen_at, last_seen_at,
+               expires_at, rank_score, tags_json, evidence_json
+        FROM news_items
+        WHERE scope = 'ORBITAL' AND status = 'active' AND expires_at >= ?
+        ORDER BY id
+        """,
+        (datetime.now(UTC).isoformat(timespec="seconds"),),
+    ).fetchall()
+    items = [
+        {**dict(row), "evidence": json_loads(str(row["evidence_json"]), {})}
+        for row in rows
+    ]
+    by_id = {int(item["id"]): item for item in items}
+    conn.execute("DELETE FROM news_clusters WHERE scope = 'ORBITAL'")
+    for group in correlate_orbital_items(items):
+        members = [by_id[item_id] for item_id in group["item_ids"]]
+        representative = max(
+            members, key=lambda item: (int(item["rank_score"]), item["last_seen_at"], item["id"])
+        )
+        family_scores: dict[str, int] = {}
+        tags: list[str] = []
+        fixture_only = True
+        confidence = "corroborated" if group["corroborated"] else "source_reported"
+        for member in members:
+            evidence = member["evidence"]
+            family = str((evidence.get("source") or {}).get("source_family") or "unknown")
+            family_scores[family] = max(family_scores.get(family, 0), int(member["rank_score"]))
+            fixture_only = fixture_only and bool((evidence.get("ingest") or {}).get("fixture_only"))
+            tags.extend(json_loads(str(member["tags_json"]), []))
+            evidence["orbital_event"] = {
+                "event_key": group["event_key"],
+                "item_ids": group["item_ids"],
+                "source_keys": group["source_keys"],
+                "families": group["families"],
+                "matches": group["matches"],
+                "confidence": confidence,
+            }
+            conn.execute(
+                "UPDATE news_items SET evidence_json = ? WHERE id = ?",
+                (json_dumps(evidence), member["id"]),
+            )
+        conn.execute(
+            """
+            INSERT INTO news_clusters (
+              scope, cluster_key, title, representative_item_id, first_seen_at,
+              last_seen_at, item_count, score, tags_json, evidence_json
+            ) VALUES ('ORBITAL', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                group["event_key"], representative["title"], representative["id"],
+                min(str(member["first_seen_at"]) for member in members),
+                max(str(member["last_seen_at"]) for member in members),
+                len(members), max(family_scores.values(), default=0),
+                json_dumps(list(dict.fromkeys(tags))),
+                json_dumps({
+                    "fixture_only": fixture_only,
+                    "orbital_event": {**group, "confidence": confidence,
+                                      "family_scores": family_scores},
+                }),
             ),
         )
 
