@@ -28,6 +28,7 @@ def _signals(member: dict[str, Any]) -> dict[str, Any]:
     evidence = member.get("evidence") or {}
     identity = evidence.get("science_identity") or {}
     gcn = evidence.get("gcn_notice") or {}
+    circular = evidence.get("gcn_circular") or {}
     gracedb = evidence.get("gracedb_public_alert") or {}
     rss = evidence.get("science_rss") or {}
     archive = bool(evidence.get("exoplanet_archive") or evidence.get("mast_caom")
@@ -42,6 +43,7 @@ def _signals(member: dict[str, Any]) -> dict[str, Any]:
         rarity = max(rarity, 8)
     transient = 12 if (
         (gcn and gcn.get("status") == "preliminary")
+        or (circular and circular.get("status") == "preliminary_report")
         or (gracedb and gracedb.get("status") in {
             "early_warning", "preliminary", "initial", "update",
         })

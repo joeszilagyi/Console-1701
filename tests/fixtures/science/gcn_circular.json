@@ -1,0 +1,9 @@
+{
+  "circularId": 33603,
+  "eventId": "GRB 230410A",
+  "subject": "GRB 230410A: Fermi GBM Final Real-time Localization",
+  "createdOn": 1681126581000,
+  "submitter": "Fixture Contributor <fixture@example.test>",
+  "email": "fixture@example.test",
+  "body": "Synthetic fixture text with a private contact fixture@example.test and a sky-map URL https://example.test/map.fits that must never be stored."
+}

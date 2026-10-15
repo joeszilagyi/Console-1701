@@ -42,8 +42,9 @@ def science_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     mast = evidence.get("mast_caom") or {}
     pds = evidence.get("pds_collection") or {}
     gcn = evidence.get("gcn_notice") or {}
+    circular = evidence.get("gcn_circular") or {}
     identity = evidence.get("science_identity") or {}
-    if gcn:
+    if gcn or circular:
         kind = "transient"
     elif planet:
         kind = "exoplanet"
@@ -59,6 +60,8 @@ def science_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     for field, value in (
         ("gcn_event", gcn.get("event_name") or gcn.get("event_id")),
         ("gcn_trigger", gcn.get("trigger_id")),
+        ("gcn_event", circular.get("event_id")),
+        ("gcn_circular", circular.get("circular_id")),
         ("planet", planet.get("planet_name")),
         ("mast_observation", mast.get("observation_id")),
         ("mast_dataset", mast.get("dataset_id")),

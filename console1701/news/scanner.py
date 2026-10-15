@@ -2848,6 +2848,7 @@ def _rebuild_science_clusters(conn: sqlite3.Connection) -> None:
         event_type = group["event_kinds"][0] if group["event_kinds"] else "science_release"
         status = "retracted" if any(
             (member["evidence"].get("gcn_notice") or {}).get("status") == "retracted"
+            or (member["evidence"].get("gcn_circular") or {}).get("status") == "retracted"
             or (member["evidence"].get("gracedb_public_alert") or {}).get("status")
             == "retracted"
             for member in members
@@ -2904,7 +2905,8 @@ def _rebuild_science_clusters(conn: sqlite3.Connection) -> None:
                         or (e.get("science_rss") or {}).get("mission_label")
                         or (e.get("pds_collection") or {}).get("mission") for e in identities),
                 first((e.get("science_rss") or {}).get("telescope") for e in identities),
-                first((e.get("gcn_notice") or {}).get("event_id") for e in identities),
+                first((e.get("gcn_notice") or {}).get("event_id")
+                      or (e.get("gcn_circular") or {}).get("event_id") for e in identities),
                 status, ranking["score"], first_seen, last_seen, expires,
                 json_dumps(group["source_keys"]), json_dumps(group["families"]),
                 json_dumps(group["item_ids"]), json_dumps(ranking), json_dumps(event),

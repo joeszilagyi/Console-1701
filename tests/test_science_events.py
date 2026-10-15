@@ -24,6 +24,18 @@ def test_shared_gcn_event_groups_preliminary_and_retraction_without_false_corrob
     assert "gcn_event:grb 261015a" in groups[0]["identifiers"]
 
 
+def test_gcn_circular_correlates_by_event_but_not_by_a_shared_source_family():
+    notice = _item(1, "GCN GRB 261015A initial", "gcn", extra={
+        "gcn_notice": {"event_name": "GRB 261015A"}})
+    circular = _item(2, "GRB 261015A: optical follow-up", "gcn", extra={
+        "gcn_circular": {"circular_id": 33603, "event_id": "GRB 261015A"}})
+    unrelated = _item(3, "GRB 261015B: optical follow-up", "gcn", extra={
+        "gcn_circular": {"circular_id": 33604, "event_id": "GRB 261015B"}})
+    groups = correlate_science_items([notice, circular, unrelated])
+    assert [group["item_ids"] for group in groups] == [[1, 2], [3]]
+    assert groups[0]["corroborated"] is False
+
+
 def test_just_a_shared_mission_or_planet_does_not_merge_unrelated_releases():
     items = [
         _item(1, "Webb finds water on planet K2", "esa_webb", identity={"mission": "JWST"}),

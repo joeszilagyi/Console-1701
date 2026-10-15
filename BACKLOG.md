@@ -2954,7 +2954,9 @@ article, launch, image-only link, and nonofficial host. ESA telescope fixtures c
 releases, photo releases, and nonofficial links. The tiny Exoplanet Archive JSON fixture covers
 two bounded PS parameter updates. The MAST fixture covers two JWST observation metadata rows
 with complete paging. The PDS fixture covers one collection metadata record. The GCN fixture
-covers an official-schema notice, coordinates, test gates, update, and retraction. The ATel
+covers an official-schema notice, coordinates, test gates, update, and retraction. The Circular
+fixture covers one official page-linked JSON shape, subject-prefix status labels, and a strict
+body/contact/sky-map exclusion; direct HTTP and archive discovery remain blocked. The ATel
 RSS 1.0 fixture covers two telegrams, preliminary labels, and no full bodies. Other fixture
 families and some source-health/policy variants remain pending.
 
@@ -2964,7 +2966,8 @@ test assert no network call, while a repeat scan confirms event rebuild idempote
 fixture families and blocked-state variants still need end-to-end coverage.
 
 A parameterized scan regression also exercises the Hubble, Webb, Exoplanet Archive, MAST, PDS,
-and GCN fixture adapters through the real scanner, with local-only input, stored event evidence,
+and GCN notice/Circular fixture adapters through the real scanner, with local-only input,
+stored event evidence,
 and no product-download flags. `docs/project/COSMIC_FIXTURE_INGEST.md` gives the exact local
 configuration shape. ATel and the broader source-health/policy matrix remain pending.
 
