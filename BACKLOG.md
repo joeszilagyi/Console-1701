@@ -2222,8 +2222,9 @@ after verification, source-health states, disabled sources, stale sources, auth-
 policy-blocked sources, and parser failures. Fixture ingest must not perform network calls and
 must be safe for pytest.
 
-Current state: a small official-shape SWPC alerts JSON fixture covers a warning, cancelled watch,
-and incomplete row. Its parser and offline scan are tested. Remaining ORBITAL products and
+Current state: small official-shape SWPC alerts and NOAA scales JSON fixtures cover warning,
+cancelled watch, incomplete row, current and forecast scale, and zero state. Their parsers and
+offline scans are tested. Remaining ORBITAL products and
 source-health variants are pending in this pack.
 
 ### SWPC Alerts JSON Parser
@@ -2244,11 +2245,18 @@ disabled, and no live HTTP allowlist entry was added. See
 
 ### SWPC NOAA Scales Parser
 
-Status: not implemented.
+Status: completed 2026-10-15 for fixture-first ingest.
 
 Build a fixture-first parser for SWPC NOAA G/R/S scale JSON. Preserve geomagnetic, radio blackout,
 and radiation storm scale state, observed or update time, source URL, and ranking features used for
 official severity. Do not invent impacts beyond source-provided scale meanings.
+
+Current state: verified the official period-keyed JSON shape and added a dedicated ORBITAL parser
+for nonzero G/R/S scale entries, source text, probabilities, timestamp, current/forecast distinction,
+official URL, indexed event identity, and ranking input evidence. Missing or malformed rows fail
+soft; a missing current period fails clearly. The registry names the parser but remains disabled;
+no live HTTP allowlist entry was added. See
+`docs/project/ORBITAL_SWPC_SCALES_SOURCE_VERIFICATION.md`.
 
 ### SWPC Kp And Aurora Fixture Parsers
 

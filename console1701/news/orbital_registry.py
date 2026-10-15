@@ -130,7 +130,10 @@ def _load_registry() -> tuple[dict[str, Any], ...]:
         entry["interval_minutes"] = _interval_minutes(str(row["refresh_interval"]))
         entry["kind"] = kind
         entry["enabled"] = False
-        entry["parser"] = "swpc_alerts_json" if key == "swpc_alerts_json" else None
+        entry["parser"] = {
+            "swpc_alerts_json": "swpc_alerts_json",
+            "swpc_noaa_scales_json": "swpc_noaa_scales_json",
+        }.get(key)
         entry["source_health_behavior"] = (
             "unsupported" if row["verification_status"] == "reject_for_now" else
             "auth_required" if row["verification_status"] == "restricted_auth_required" else

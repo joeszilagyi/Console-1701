@@ -11,6 +11,7 @@ from urllib.parse import urlencode
 from console1701.news.normalize import bounded_text, normalize_timestamp
 
 SWPC_ALERTS_URL = "https://services.swpc.noaa.gov/products/alerts.json"
+SWPC_SCALES_URL = "https://services.swpc.noaa.gov/products/noaa-scales.json"
 _PRODUCT_ID_RE = re.compile(r"^[A-Z0-9]{3,8}$")
 _MESSAGE_CODE_RE = re.compile(r"^Space Weather Message Code:\s*(\S+)", re.I | re.M)
 _SERIAL_RE = re.compile(r"^Serial Number:\s*(\d+)", re.I | re.M)
@@ -115,4 +116,80 @@ def parse_swpc_alerts_json(source: dict[str, Any], payload_text: str) -> list[di
             and kind != "CANCEL WATCH",
         }
         items.append(item)
+    return items
+
+
+def parse_swpc_noaa_scales_json(
+    source: dict[str, Any], payload_text: str
+) -> list[dict[str, Any]]:
+    """Parse only explicit nonzero G/R/S scales; distinguish current from forecast."""
+    from console1701.news.parsers import NewsParserError, _normalize_item
+
+    if str(source.get("scope") or "").upper() != "ORBITAL":
+        raise NewsParserError("SWPC NOAA scales parser requires ORBITAL scope")
+    try:
+        payload = json.loads(payload_text)
+    except json.JSONDecodeError as exc:
+        raise NewsParserError(f"Malformed SWPC NOAA scales JSON: {exc}") from exc
+    if not isinstance(payload, dict) or not isinstance(payload.get("0"), dict):
+        raise NewsParserError("SWPC NOAA scales JSON requires current period 0")
+    items: list[dict[str, Any]] = []
+    labels = {"G": "Geomagnetic storm", "R": "Radio blackout", "S": "Solar radiation storm"}
+    for period in ("0", "1", "2", "3"):
+        row = payload.get(period)
+        if not isinstance(row, dict):
+            continue
+        date = row.get("DateStamp")
+        time = row.get("TimeStamp")
+        if not isinstance(date, str) or not isinstance(time, str):
+            continue
+        stamp = normalize_timestamp(f"{date}T{time}+00:00")
+        if not stamp:
+            continue
+        for category in ("G", "R", "S"):
+            scale = row.get(category)
+            if not isinstance(scale, dict):
+                continue
+            raw_level = scale.get("Scale")
+            if not isinstance(raw_level, (str, int)) or str(raw_level) not in {
+                "1", "2", "3", "4", "5"
+            }:
+                continue
+            level = int(raw_level)
+            period_kind = "current" if period == "0" else "forecast"
+            scale_label = f"{category}{level}"
+            source_text = bounded_text(scale.get("Text"), max_chars=120)
+            query = urlencode({
+                "period": period, "scale": scale_label, "timestamp": stamp,
+            })
+            title = f"NOAA {scale_label} {labels[category]} ({period_kind})"
+            item = _normalize_item(source, {
+                "title": title,
+                "url": f"{SWPC_SCALES_URL}?{query}",
+                "description": source_text or title,
+                "published_at": stamp,
+            }, index=len(items))
+            item["evidence"]["swpc_noaa_scale"] = {
+                "category": category,
+                "level": level,
+                "scale": scale_label,
+                "source_text": source_text,
+                "period": period,
+                "period_kind": period_kind,
+                "timestamp": stamp,
+                "minor_probability": scale.get("MinorProb") if category == "R" else None,
+                "major_probability": scale.get("MajorProb") if category == "R" else None,
+                "probability": scale.get("Prob") if category == "S" else None,
+                "source_url": SWPC_SCALES_URL,
+                "link_note": "Period-specific deep links are unavailable in this JSON product.",
+            }
+            item["evidence"]["orbital_identity"] = {
+                "event_type": "space_weather_scale",
+                "object_id": f"{period}:{scale_label}:{stamp}",
+            }
+            item["evidence"]["orbital_safety"] = {
+                "official_current_scale": period_kind == "current",
+                "official_forecast_scale": period_kind == "forecast",
+            }
+            items.append(item)
     return items
