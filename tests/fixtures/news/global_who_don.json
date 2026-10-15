@@ -1,0 +1,17 @@
+{
+  "@odata.context": "http://www.who.int/api/hubs/$metadata#diseaseoutbreaknews",
+  "value": [
+    {
+      "Id": "9cca163d-6ef3-4d3e-b149-2cd7acf408f6",
+      "UrlName": "2026-DON620",
+      "ItemDefaultUrl": "/2026-DON620",
+      "Title": "Pneumonia of undetermined etiology - the Russian Federation",
+      "PublicationDate": "2026-10-10T15:53:19Z",
+      "PublicationDateAndTime": "2026-10-10T15:00:00Z",
+      "LastModified": "2026-10-13T09:22:55Z",
+      "Summary": "WHO reported an event under investigation and described its current risk assessment.",
+      "Overview": "Full article body is not retained by Recent Signal.",
+      "DonId": "2026-DON620"
+    }
+  ]
+}

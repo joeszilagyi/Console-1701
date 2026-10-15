@@ -129,6 +129,8 @@ def parse_fixture_items(
         return _parse_reliefweb_disasters_json(source, payload_text)
     if parser_name == "reliefweb_reports_json":
         return _parse_reliefweb_reports_json(source, payload_text)
+    if parser_name == "who_don_json":
+        return _parse_who_don_json(source, payload_text)
     if parser_name == "wsdot_highway_alerts_rss":
         return _parse_wsdot_highway_alerts_rss(source, payload_text)
     if parser_name == "alertseattle_rss":
@@ -641,6 +643,69 @@ def _parse_reliefweb_disasters_json(
                 "active": fields.get("status") in {"current", "alert"},
                 "featured": fields.get("featured") is True,
             },
+        }
+        items.append(item)
+    return items
+
+
+_WHO_DON_SLUG_RE = re.compile(r"^[A-Za-z0-9_-]{1,120}$")
+
+
+def _parse_who_don_json(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:
+    if str(source.get("scope") or "").upper() != "GLOBAL":
+        raise NewsParserError("WHO DON parser requires GLOBAL scope.")
+    try:
+        payload = json.loads(payload_text)
+    except json.JSONDecodeError as exc:
+        raise NewsParserError(f"Malformed WHO DON fixture: {exc}") from exc
+    if not isinstance(payload, dict) or not isinstance(payload.get("value"), list):
+        raise NewsParserError("WHO DON fixture must have an OData value list.")
+    items = []
+    for index, row in enumerate(payload["value"]):
+        if not isinstance(row, dict):
+            raise NewsParserError(f"WHO DON row {index} must be an object.")
+        slug = str(row.get("UrlName") or "").strip()
+        if not slug:
+            path = str(row.get("ItemDefaultUrl") or "").strip()
+            slug = path.rsplit("/", 1)[-1]
+        if not _WHO_DON_SLUG_RE.fullmatch(slug):
+            raise NewsParserError(f"WHO DON row {index} has no safe article slug.")
+        title_value = row.get("OverrideTitle") if row.get("UseOverrideTitle") is True else None
+        title = bounded_text(title_value or row.get("Title"), max_chars=MAX_TITLE_LENGTH)
+        published_at = normalize_timestamp(
+            row.get("PublicationDateAndTime") or row.get("PublicationDate")
+        )
+        if not title or not published_at:
+            raise NewsParserError(f"WHO DON row {index} lacks title or publication date.")
+        url = f"https://www.who.int/emergencies/disease-outbreak-news/item/{slug}"
+        hazard_label, geography_label = title, None
+        for separator in (" - ", " – "):
+            if separator in title:
+                hazard_label, geography_label = title.rsplit(separator, 1)
+                break
+        item = _normalize_item(
+            source,
+            {
+                "title": title,
+                "url": url,
+                "description": row.get("Summary"),
+                "published_at": published_at,
+                "tags": ["official", "who", "global", "public-health", "outbreak-news"],
+            },
+            index=index,
+        )
+        item["evidence"]["who_don"] = {
+            "id": bounded_text(row.get("Id"), max_chars=64),
+            "don_id": bounded_text(row.get("DonId") or slug, max_chars=120),
+            "hazard_label": bounded_text(hazard_label, max_chars=160),
+            "geography_label": bounded_text(geography_label, max_chars=160),
+            "geography_basis": "title_suffix_unverified" if geography_label else "not_provided",
+            "published_at": published_at,
+            "updated_at": normalize_timestamp(row.get("LastModified")),
+            "source_url": url,
+            "summary_bounded": True,
+            "case_counts_extracted": False,
+            "ranking": {"official_public_health": True, "who_don": True},
         }
         items.append(item)
     return items
