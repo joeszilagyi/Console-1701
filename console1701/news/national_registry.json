@@ -2225,8 +2225,9 @@
     "source_family": "cisa",
     "source_class": "official_cybersecurity",
     "scope": "NATIONAL",
-    "raw_url": "https://www.cisa.gov/news-events/cybersecurity-advisories",
-    "expected_access_kind": "public official webpage/feed candidate",
+    "raw_url": "https://www.cisa.gov/cybersecurity-advisories/all.xml",
+    "homepage_url": "https://www.cisa.gov/news-events/cybersecurity-advisories",
+    "expected_access_kind": "public official RSS feed",
     "adapter": "rss_atom",
     "refresh_interval": "60 min",
     "priority": "95",
@@ -2235,8 +2236,8 @@
     "policy_risk": "low",
     "parser_risk": "medium",
     "retention_sensitivity": "medium",
-    "verification_status": "official_page_seen",
-    "why_it_matters": "High-priority cyber advisory source.",
+    "verification_status": "candidate_needs_verification",
+    "why_it_matters": "Bounded metadata from CISA's official mixed advisory feed; body excluded.",
     "future_phase": "U6"
   },
   {

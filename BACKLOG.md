@@ -1183,7 +1183,9 @@ windows, low-value suppression, and offline scan. `national_govinfo_enrolled_bil
 allowlisted collection, title filtering, identity and offline scan. `national_fda_recalls.rss`
 covers bounded FDA-hosted notice metadata, translated-notice uncertainty and offline scan. The
 `tests/fixtures/national/cpsc_recalls_2026_10_01.json` sample covers the CPSC recall API parser
-and offline scan. The other NATIONAL source-family fixtures listed above remain pending.
+and offline scan. `national_cisa_advisories.rss` covers the verified mixed CISA feed shape,
+advisory classes, CVE/CVSS/sector metadata, KEV announcement suppression, and offline scan.
+The other NATIONAL source-family fixtures listed above remain pending.
 
 ### NWS Active Alert Parser
 
@@ -1352,12 +1354,15 @@ ranking evidence.
 
 ### CISA Advisory Parser
 
-Status: not implemented.
+Status: implemented for offline fixture ingest; live remains disabled.
 
-2026-10-15 endpoint check: CISA's advisory page documents categories, but a candidate RSS query
-returned HTTP 403 and a guessed XML path returned HTTP 404. No verified machine-readable schema
-exists for this parser yet; see `docs/project/NATIONAL_CISA_ADVISORY_ENDPOINT_BLOCKER.md`. Keep
-disabled while other source work proceeds.
+2026-10-15: the earlier candidate query returned HTTP 403, but CISA's exact
+`/cybersecurity-advisories/all.xml` RSS feed returned HTTP 200 and a 30-item, 1.24 MB snapshot.
+The fixture parser validates CISA identity, filters routine KEV catalog notices, preserves
+bounded CVE/CVSS/sector and mitigation-page metadata, marks directives and public alerts,
+and supplies cyber ranking. Its offline scan performs no HTTP and stores no advisory body.
+The live response exceeds the default 1 MiB fetch cap; source-specific live signoff and an
+explicit cap decision remain open. See `docs/project/NATIONAL_CISA_ADVISORY_ENDPOINT_BLOCKER.md`.
 
 Build a fixture-first parser for CISA cybersecurity advisories, alerts, ICS advisories, bulletins,
 and emergency directives after feed/API shapes are verified. Preserve advisory id, title, CVE ids,

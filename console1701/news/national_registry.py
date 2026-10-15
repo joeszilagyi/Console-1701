@@ -156,6 +156,7 @@ def _load_registry() -> tuple[dict[str, Any], ...]:
         entry["parser"] = {
             "nws_active_alerts_api": "nws_alerts_json",
             "usgs_eq_geojson": "usgs_earthquake_geojson",
+            "cisa_advisories": "cisa_advisories_rss",
         }.get(key)
         entries.append(entry)
     return tuple(entries)

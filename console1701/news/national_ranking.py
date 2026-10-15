@@ -29,6 +29,7 @@ def _member_signals(member: dict[str, Any], now: datetime | None) -> dict[str, A
     usgs = evidence.get("usgs_earthquake") or {}
     nhtsa = evidence.get("nhtsa_recall") or {}
     cisa = evidence.get("cisa_kev") or {}
+    advisory = evidence.get("cisa_advisory") or {}
     faa = evidence.get("faa_nas_status") or {}
     federal_register = evidence.get("federal_register") or {}
     govinfo = evidence.get("govinfo_publication") or {}
@@ -42,6 +43,7 @@ def _member_signals(member: dict[str, Any], now: datetime | None) -> dict[str, A
         _bounded_int(usgs_rank.get("national_severity_score"), 45),
         _bounded_int((nhtsa.get("ranking") or {}).get("vehicle_safety_score"), 35),
         _bounded_int((cisa.get("ranking") or {}).get("cyber_score"), 22),
+        _bounded_int((advisory.get("ranking") or {}).get("cyber_score"), 35),
         _bounded_int((faa.get("ranking") or {}).get("aviation_impact_score"), 45),
         _bounded_int(identity.get("official_severity_score"), 45),
     )
@@ -70,7 +72,9 @@ def _member_signals(member: dict[str, Any], now: datetime | None) -> dict[str, A
         "severity": severity,
         "public_impact": impact,
         "active_alert": alert_active,
-        "publication_only": bool(govinfo) and not bool(nws or nhtsa or faa or cisa),
+        "publication_only": bool(govinfo) and not bool(
+            nws or nhtsa or faa or cisa or advisory
+        ),
         "health": str((evidence.get("ingest") or {}).get("source_health_state_at_ingest") or ""),
     }
 

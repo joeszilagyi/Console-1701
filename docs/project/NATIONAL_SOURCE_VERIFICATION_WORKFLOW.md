@@ -56,9 +56,11 @@ fixture and live-path checks are recorded; `official_page_seen` remains a resear
   feed, so live admission is still closed.
 - [CISA KEV research](NATIONAL_CISA_KEV_ENDPOINT_RESEARCH.md): official JSON and due-date
   semantics are known; the full snapshot and rollout/cadence policy need a separate live decision.
-- [CISA advisory blocker](NATIONAL_CISA_ADVISORY_ENDPOINT_BLOCKER.md) and
-  [CDC HAN blocker](NATIONAL_CDC_HAN_ENDPOINT_BLOCKER.md): no verified machine-readable item
-  shape from the tested paths; no invented fixture or live request.
+- [CISA advisory feed verification](NATIONAL_CISA_ADVISORY_ENDPOINT_BLOCKER.md): an exact
+  CISA-hosted RSS feed and fixture parser are verified, while its 1.24 MB snapshot exceeds the
+  default live fetch cap; live admission remains closed.
+- [CDC HAN blocker](NATIONAL_CDC_HAN_ENDPOINT_BLOCKER.md): no verified current
+  machine-readable item shape from the tested paths; no invented fixture or live request.
 - [FDA recall source review](NATIONAL_FDA_RECALL_SOURCE_VERIFICATION.md): RSS metadata lacks
   classification, severity and distribution, so title metadata must not become a high-risk claim.
 - [FAA NAS XML fixture](NATIONAL_FAA_NAS_XML_FIXTURE_VERIFICATION.md),
