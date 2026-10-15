@@ -2879,12 +2879,17 @@ require credentials outside the repo, and represent missing credentials as `auth
 
 ### GraceDB/LIGO Public Alert Policy Design
 
-Status: not implemented.
+Status: completed 2026-10-15 for first-pass public-alert policy.
 
 Review GraceDB/LIGO/Virgo/KAGRA public-alert access, auth requirements, API/client needs, terms,
 rate limits, public alert fields, retraction handling, and sky-map download policy. Keep it disabled
 by default, preserve preliminary/update/retraction state, and do not download sky maps unless a
 future explicit config allows metadata-only references.
+
+Current state: `docs/project/SCIENCE_GRACEDB_PUBLIC_ALERT_POLICY.md` records public-only
+unauthenticated REST access, bounded superevent query requirements, Kafka credential/dependency
+separation, preliminary/update/retraction semantics, row/rate/source-health gates, and a strict
+no-sky-map-download rule. No live adapter or Kafka dependency is enabled.
 
 ### Minor Planet Center Science-Context Source Verification
 
