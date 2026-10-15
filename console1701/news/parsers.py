@@ -137,6 +137,10 @@ def parse_fixture_items(
         from console1701.news.cneos_parsers import parse_jpl_cad_json
 
         return parse_jpl_cad_json(source, payload_text)
+    if parser_name == "jpl_fireball_json":
+        from console1701.news.cneos_parsers import parse_jpl_fireball_json
+
+        return parse_jpl_fireball_json(source, payload_text)
 
     if parser_name == "nws_alerts_json":
         return _parse_nws_alerts_json(source, payload_text)

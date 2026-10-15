@@ -2224,8 +2224,8 @@ must be safe for pytest.
 
 Current state: small official-shape SWPC alerts, NOAA scales, planetary and Boulder K-index, and
 OVATION aurora and JPL CAD JSON fixtures cover warning, cancelled watch, incomplete row, current
-and forecast scale, zero state, K-index thresholds, a tiny aurora grid, and close-approach
-threshold cases. Their parsers and offline scans are
+and forecast scale, zero state, K-index thresholds, a tiny aurora grid, close-approach thresholds,
+and fireball energy/location variants. Their parsers and offline scans are
 tested. Remaining ORBITAL products and
 source-health variants are pending in this pack.
 
@@ -2297,11 +2297,19 @@ candidate remains disabled and has no live HTTP allowlist entry. See
 
 ### JPL CNEOS Fireball Parser
 
-Status: not implemented.
+Status: completed 2026-10-15 for fixture-first ingest.
 
 Build a fixture-first JPL/CNEOS fireball parser. Preserve event time, source-provided location,
 altitude, velocity, energy, source URL, and official fireball evidence. Apply configured energy and
 freshness thresholds so the dashboard does not become a firehose.
+
+Current state: the NASA/JPL Fireball API v1.2 parser preserves UTC peak-brightness time,
+source-provided location and altitude, radiated and estimated impact energies in their source
+units, optional entry velocity components and derived magnitude, official URL, and explicit
+no-ground-damage-inference wording. Configurable energy and age filters suppress routine or
+stale rows. Version, bounded row shape, local-only scan, and indexed event identity are tested.
+The candidate remains disabled with no live HTTP allowlist entry. See
+`docs/project/ORBITAL_JPL_FIREBALL_SOURCE_VERIFICATION.md`.
 
 ### JPL Sentry And Scout Source Verification
 
