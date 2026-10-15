@@ -139,6 +139,7 @@
                   {% set science_rss = evidence.science_rss or {} %}
                   {% set gcn = evidence.gcn_notice or {} %}
                   {% set archive = evidence.exoplanet_archive or evidence.mast_caom or evidence.pds_collection or {} %}
+                  {% set science_safety = evidence.science_safety or {} %}
                   <div class="news-evidence-grid">
                     <div><span>Source ID</span><strong>{{ source.source_key or "unknown" }}</strong></div>
                     <div><span>Family / class</span><strong>{{ source.source_family or "unknown" }} / {{ source.source_class or "unknown" }}</strong></div>
@@ -149,6 +150,7 @@
                     <div><span>Event type / status</span><strong>{{ science.event_type or "unclassified" }} / {{ science.status or "unknown" }}</strong></div>
                     <div><span>Mission / telescope</span><strong>{{ science_rss.mission_label or science_rss.telescope or gcn.mission or archive.mission or "not provided" }}</strong></div>
                     <div><span>Source date meaning</span><strong>{{ archive.date_semantics or "source publication or alert time" }}</strong></div>
+                    <div><span>Attention</span><strong>{{ science_safety.attention_state or "unclassified" }}</strong></div>
                   </div>
                   <ul class="news-evidence-list">
                     <li><b>Item URL</b><span>{{ item.url }}</span></li>
@@ -156,6 +158,7 @@
                     <li><b>Rank factors</b><span>{{ science.ranking.factors | tojson if science.ranking else "not scored" }}</span></li>
                     <li><b>Query bounds</b><span>{{ science.query_bounds | tojson if science.query_bounds else "not applicable" }}</span></li>
                     <li><b>Policy flags</b><span>{{ science.policy_flags | join(", ") if science.policy_flags else "none recorded" }}</span></li>
+                    <li><b>Attention reasons</b><span>{{ science_safety.reasons | join("; ") if science_safety.reasons else "none recorded" }}</span></li>
                     <li><b>Data products</b><span>Metadata only; no product downloaded by this fixture.</span></li>
                   </ul>
                 {% endif %}

@@ -174,7 +174,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-134** [HEASARC Metadata Source Verification](../../BACKLOG.md#L2149) — official Xamin/TAP/cone interfaces, bounded VOTable probe, row-cap/overflow policy, mission conditions, and disabled promotion gates recorded.
 - [x] **RS-135** [Deterministic Event Correlation For Transients, Exoplanets, Missions, And Telescope Releases](../../BACKLOG.md#L2173) — complete-link matcher runs during offline COSMIC scans and persists event, cluster, and item evidence.
 - [x] **RS-136** [Deterministic Ranking For Official Science And Rarity](../../BACKLOG.md#L2182) — explainable science rank runs during offline COSMIC scans and persists score features and reasons.
-- [ ] **RS-137** [Hype And Speculation Suppression Rules](../../BACKLOG.md#L2192) — not implemented.
+- [ ] **RS-137** [Hype And Speculation Suppression Rules](../../BACKLOG.md#L2192) — pre-storage COSMIC claim blocking and background labels exist; source-specific and literature variants pending.
 - [ ] **RS-138** [Archive Firehose Blocking Rules](../../BACKLOG.md#L2202) — not implemented.
 - [ ] **RS-139** [UI Disabled States After Naming Decision](../../BACKLOG.md#L2211) — COSMIC route and truthful disabled/not-configured states exist; source-specific states pending.
 - [ ] **RS-140** [Source Health States](../../BACKLOG.md#L2220) — not implemented.
@@ -187,7 +187,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-147** [Tests For No Heavy Archive Source Running Without Explicit Config](../../BACKLOG.md#L2316) — not implemented.
 - [ ] **RS-148** [Tests For No Auth Source Running Without Config](../../BACKLOG.md#L2325) — not implemented.
 - [ ] **RS-149** [Tests For No Data Product Downloads](../../BACKLOG.md#L2333) — not implemented.
-- [ ] **RS-150** [Tests For No Alien-Life Or UFO Hype Leakage](../../BACKLOG.md#L2342) — not implemented.
+- [x] **RS-150** [Tests For No Alien-Life Or UFO Hype Leakage](../../BACKLOG.md#L2342) — direct and offline SQLite scan tests block explicit claims before storage and reject journalism source impersonation.
 
 ## Deferred from this first pass
 
