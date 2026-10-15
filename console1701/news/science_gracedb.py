@@ -1,4 +1,4 @@
-"""Fixture-only public GraceDB metadata assembled from bounded REST reads."""
+"""Public GraceDB metadata assembled from bounded REST reads or fixtures."""
 
 from __future__ import annotations
 
@@ -20,6 +20,10 @@ _STATUS = {
 }
 
 
+def public_gracedb_event_id(value: Any) -> bool:
+    return isinstance(value, str) and _ID.fullmatch(value) is not None
+
+
 def _gracedb_time(value: Any) -> str | None:
     text = str(value or "").strip()
     if text.endswith(" UTC"):
@@ -32,8 +36,13 @@ def parse_gracedb_public_alert_fixture(
 ) -> list[dict[str, Any]]:
     if source.get("scope") != "SYSTEM_SOLAR" or source.get("id") != "gracedb_public_alerts":
         raise NewsParserError("GraceDB parser requires its exact COSMIC source")
-    if not source.get("fixture_only") or not exact_science_endpoint(source, _ENDPOINT):
-        raise NewsParserError("GraceDB parser requires an official-attributed local fixture")
+    if not exact_science_endpoint(source, _ENDPOINT):
+        raise NewsParserError("GraceDB parser requires its exact official source")
+    fixture_only = source.get("fixture_only") is True
+    if not fixture_only and (
+        source.get("url") != _ENDPOINT or source.get("verification_status") != "verified"
+    ):
+        raise NewsParserError("GraceDB live parser requires its verified exact endpoint")
     if len(payload_text.encode("utf-8")) > 65_536:
         raise PayloadTooLargeError("GraceDB fixture exceeds the 64 KiB cap")
     try:
@@ -59,7 +68,7 @@ def parse_gracedb_public_alert_fixture(
         if not isinstance(event, dict) or not isinstance(notices, dict):
             raise NewsParserError("GraceDB fixture needs superevent and VOEvent metadata")
         event_id = str(event.get("superevent_id") or "")
-        if not _ID.fullmatch(event_id) or event_id in seen:
+        if not public_gracedb_event_id(event_id) or event_id in seen:
             raise NewsParserError("GraceDB fixture has invalid or duplicate superevent ID")
         seen.add(event_id)
         if event.get("category") != "Production":
@@ -132,7 +141,7 @@ def parse_gracedb_public_alert_fixture(
             "source_url": public_url,
             "source_rest_url": links["self"],
             "query_bounds": query,
-            "fixture_only": True,
+            "fixture_only": fixture_only,
             "sky_map_downloaded": False,
             "earth_impact_inferred": False,
         }

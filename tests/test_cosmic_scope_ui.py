@@ -164,7 +164,7 @@ def test_cosmic_candidate_summary_and_sqlite_health_render_without_get_fetch(
         state = get_news_scope_states(conn, config)["SYSTEM_SOLAR"]
     assert state["science_candidates"]["candidate_count"] >= 170
     assert state["science_candidates"]["state_counts"]["heavy_archive_disabled"] >= 10
-    assert state["science_candidates"]["state_counts"]["disabled"] == 3
+    assert state["science_candidates"]["state_counts"]["disabled"] == 4
     monkeypatch.setattr("console1701.news.scanner.fetch_official_text", lambda *a, **kw: (
         (_ for _ in ()).throw(AssertionError("COSMIC GET fetched HTTP"))
     ))

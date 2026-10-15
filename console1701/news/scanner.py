@@ -667,6 +667,8 @@ def _ingest_source(
             max_bytes = min(max_bytes, 65_536)
         if source.get("id") == "astronomers_telegram_rss":
             max_bytes = min(max_bytes, 65_536)
+        if source.get("id") == "gracedb_public_alerts":
+            max_bytes = min(max_bytes, 65_536)
     default_retention_days = int(
         ((config.get("news") or {}).get("retention") or {}).get("items_days", 7)
     )
