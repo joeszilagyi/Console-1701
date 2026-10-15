@@ -12,6 +12,7 @@ from console1701.news.normalize import bounded_text, normalize_timestamp
 from console1701.news.parsers import NewsParserError, PayloadTooLargeError, _normalize_item
 
 NASA_JPL_SCIENCE_FEED = "https://www.nasa.gov/centers-and-facilities/jpl/feed/"
+ESA_SPACE_SCIENCE_FEED = "https://www.esa.int/rssfeed/Our_Activities/Space_Science"
 _CHANNEL_TITLE = "Jet Propulsion Laboratory – NASA"
 _TAG_RE = re.compile(r"<[^>]+>")
 _SCIENCE_CATEGORY_RE = re.compile(
@@ -90,6 +91,63 @@ def parse_nasa_jpl_science_rss(
             "categories": categories,
             "science_categories": science_categories,
             "scope_basis": "official_science_category_and_nonoperational_title",
+            "published_at": published,
+            "article_body_fetched": False,
+            "data_product_downloaded": False,
+        }
+        items.append(item)
+    return items
+
+
+def parse_esa_science_rss(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:
+    if source.get("scope") != "SYSTEM_SOLAR" or source.get("id") != "esa_space_science_feed":
+        raise NewsParserError("ESA science parser requires its exact working scope and source")
+    if source.get("url") != ESA_SPACE_SCIENCE_FEED:
+        raise NewsParserError("ESA science parser requires the verified feed URL")
+    if len(payload_text.encode("utf-8")) > 1_048_576:
+        raise PayloadTooLargeError("ESA science RSS exceeds the 1 MiB parser cap")
+    try:
+        root = ET.fromstring(payload_text)
+    except ET.ParseError as exc:
+        raise NewsParserError(f"Malformed ESA science RSS: {exc}") from exc
+    channel = root.find("channel") if root.tag == "rss" else None
+    if channel is None or _text(channel.find("title")) != "ESA Space Science":
+        raise NewsParserError("ESA science RSS requires the verified channel")
+
+    items: list[dict[str, Any]] = []
+    for index, row in enumerate(channel.findall("item")[:100]):
+        title = bounded_text(_text(row.find("title")), max_chars=280)
+        url = _text(row.find("link"))
+        parts = urlsplit(url)
+        path = parts.path
+        if (
+            not title or parts.scheme != "https" or parts.hostname not in {"esa.int", "www.esa.int"}
+            or not path.startswith("/Science_Exploration/Space_Science/")
+            or _OPERATIONS_RE.search(title)
+        ):
+            continue
+        published = normalize_timestamp(_text(row.find("pubDate")))
+        if not published:
+            continue
+        path_parts = path.split("/")
+        mission_label = path_parts[3].replace("_", " ") if len(path_parts) > 4 else None
+        description = " ".join(html.unescape(
+            _TAG_RE.sub(" ", _text(row.find("description")))
+        ).split())
+        item = _normalize_item(source, {
+            "title": title,
+            "url": url,
+            "description": bounded_text(description, max_chars=500),
+            "published_at": published,
+            "tags": ["official", "esa", "science"],
+        }, index=index)
+        item["evidence"]["science_rss"] = {
+            "feed_url": ESA_SPACE_SCIENCE_FEED,
+            "source_family": "esa_science",
+            "official": True,
+            "guid": bounded_text(_text(row.find("guid")), max_chars=120),
+            "mission_label": mission_label,
+            "scope_basis": "dedicated_space_science_feed_and_article_path",
             "published_at": published,
             "article_body_fetched": False,
             "data_product_downloaded": False,
