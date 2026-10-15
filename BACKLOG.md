@@ -1168,7 +1168,7 @@ nonofficial instruction links remain absent. This does not enable NATIONAL live 
 
 ### NHC Advisory/Feed Verification
 
-Status: partially implemented.
+Status: implemented (source verification; parser and live ingest remain disabled).
 
 Verify National Hurricane Center advisory/feed endpoints before implementation. Record feed/API
 ownership, advisory cycle fields, storm name/id handling, watch/warning fields, parser shape,
@@ -1177,8 +1177,10 @@ policy notes, refresh interval, and source-health behavior. Keep sources disable
 Current state: `docs/project/NATIONAL_NHC_SOURCE_VERIFICATION.md` records NHC/CPHC ownership,
 official basin RSS URLs, the regular/intermediate advisory cycles, storm/wallet identity limits,
 watch/warning product distinctions, a proposed disabled polling policy, and source-health behavior.
-An actual bounded basin-feed XML capture and item-field check are still needed before parser or
-live-source admission. No NHC endpoint is allowlisted or enabled.
+Bounded Atlantic, Eastern Pacific and Central Pacific XML reads confirmed RSS 2.0 item fields,
+cyclone-summary namespace fields, advisory product differences, conditional-request headers and
+empty-basin sentinel behavior. The future NATIONAL fixture parser and exact-URL live signoff remain
+separate tasks; no NHC endpoint is allowlisted or enabled.
 
 ### USGS Earthquake GeoJSON Parser
 
