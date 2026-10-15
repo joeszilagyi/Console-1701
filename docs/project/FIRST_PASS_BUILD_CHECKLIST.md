@@ -51,7 +51,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-023** [REGIONAL Deterministic Ranking](../../BACKLOG.md#L831) — partially implemented.
 - [ ] **RS-024** [REGIONAL Privacy And Public-Impact Rules](../../BACKLOG.md#L846) — not implemented.
 - [ ] **RS-025** [REGIONAL UI Disabled States](../../BACKLOG.md#L855) — partially implemented.
-- [ ] **RS-026** [REGIONAL Source Health States](../../BACKLOG.md#L869) — partially implemented.
+- [x] **RS-026** [REGIONAL Source Health States](../../BACKLOG.md#L869) — implemented; REGIONAL API/page state matrix test passes.
 - [ ] **RS-027** [REGIONAL Evidence Drawer Contract](../../BACKLOG.md#L883) — partially implemented.
 - [ ] **RS-028** [REGIONAL Official-Source Live Ingest Phase](../../BACKLOG.md#L898) — partially implemented.
 - [ ] **RS-029** [Documentation For Source Verification](../../BACKLOG.md#L942) — partially implemented.
@@ -247,4 +247,5 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-026. Expanded the REGIONAL source-state regression to include robots-blocked, auth-required, rate-limited, and unsupported states through the SQLite-only page/API path. Focused pytest passed. Next: inspect the remaining REGIONAL config/fixture and official-source gaps, then take the smallest verified slice.
 - **2026-10-15:** Goal contract saved. Selection frozen at 150 selected / 45 deferred / 7 host-console entries. Next: inspect shared news code and choose the smallest unfinished foundation or LOCAL/REGIONAL slice; implement and verify it.

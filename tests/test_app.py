@@ -724,6 +724,14 @@ news:
            url: 'file:///tmp/regional-disabled.json'}
         - {id: regional_manual, name: Manual, kind: rss, adapter: manual_review_only,
            enabled: true, url: 'file:///tmp/regional-manual.rss'}
+        - {id: regional_robots, name: Robots blocked, kind: local_file_json,
+           enabled: true, url: 'file:///tmp/regional-robots.json'}
+        - {id: regional_limited, name: Rate limited, kind: local_file_json,
+           enabled: true, url: 'file:///tmp/regional-limited.json'}
+        - {id: regional_unsupported, name: Unsupported, kind: local_file_json,
+           enabled: true, url: 'file:///tmp/regional-unsupported.json'}
+        - {id: regional_auth, name: Auth required, kind: local_file_json,
+           enabled: true, url: 'file:///tmp/regional-auth.json', auth: {token: ''}}
 """.strip() + "\n",
         encoding="utf-8",
     )
@@ -737,6 +745,18 @@ news:
             conn, "regional_failed", scope="REGIONAL", name="Parser failed",
             url="file:///tmp/regional-failed.json",
         )
+        robots_id = _insert_news_source(
+            conn, "regional_robots", scope="REGIONAL", name="Robots blocked",
+            url="file:///tmp/regional-robots.json",
+        )
+        limited_id = _insert_news_source(
+            conn, "regional_limited", scope="REGIONAL", name="Rate limited",
+            url="file:///tmp/regional-limited.json",
+        )
+        unsupported_id = _insert_news_source(
+            conn, "regional_unsupported", scope="REGIONAL", name="Unsupported",
+            url="file:///tmp/regional-unsupported.json",
+        )
         _insert_news_source_health(
             conn, stale_id, observed_at="2020-01-01T00:00:00+00:00", state="healthy",
             stale_after="2020-01-01T00:00:00+00:00",
@@ -747,6 +767,15 @@ news:
             state="parser_failed", last_failure_at="2026-10-08T00:00:00+00:00",
             message="REGIONAL parser failed",
         )
+        for source_id, state in (
+            (robots_id, "robots_blocked"),
+            (limited_id, "rate_limited"),
+            (unsupported_id, "unsupported"),
+        ):
+            _insert_news_source_health(
+                conn, source_id, observed_at="2026-10-08T00:00:00+00:00",
+                state=state, message=f"REGIONAL {state}",
+            )
 
     router = build_router(str(config_path))
     page = _route_endpoint(router, "/{scope}")(_request("/REGIONAL"), "REGIONAL")
@@ -761,7 +790,13 @@ news:
     assert states["configured_never_run"] == 1
     assert states["disabled"] == 1
     assert states["manual_review_only"] == 1
+    assert states["robots_blocked"] == 1
+    assert states["rate_limited"] == 1
+    assert states["unsupported"] == 1
+    assert states["auth_required"] == 1
     assert "REGIONAL parser failed" in page.body.decode()
+    for state in ("robots blocked", "rate limited", "unsupported", "auth required"):
+        assert state in page.body.decode().lower()
 
 
 def test_local_scope_ui_shows_social_and_homepage_disabled_states(tmp_path, monkeypatch):

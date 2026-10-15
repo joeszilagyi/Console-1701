@@ -868,7 +868,7 @@ scope-specific presentation remain pending.
 
 ### REGIONAL Source Health States
 
-Status: partially implemented.
+Status: implemented.
 
 Implement source health states for REGIONAL: `disabled`, `not_configured`,
 `configured_never_run`, `healthy`, `stale`, `failing`, `parser_failed`, `policy_blocked`,
@@ -876,9 +876,10 @@ Implement source health states for REGIONAL: `disabled`, `not_configured`,
 these states in SYSTEM later and summarize them on REGIONAL.
 
 Current state: the shared source-health derivation and REGIONAL page/API surface the listed states.
-The REGIONAL matrix regression covers the common disabled/never-run/stale/parser-failed/
-policy-blocked/manual-review cases. Explicit REGIONAL robots, auth, rate-limit, and unsupported
-state regressions remain pending.
+The REGIONAL matrix regression covers disabled, never-run, stale, parser-failed, policy-blocked,
+manual-review, robots-blocked, auth-required, rate-limited, and unsupported states without fetching.
+Healthy and failing behavior is covered by the shared source and scope tests. Scope-specific visual
+presentation remains tracked under REGIONAL UI Disabled States.
 
 ### REGIONAL Evidence Drawer Contract
 
