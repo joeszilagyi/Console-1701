@@ -70,6 +70,7 @@ _SDOT_BLOG_IMPACT_RE = re.compile(
     r"flood|storm|closure|delay|accident)\b",
     re.IGNORECASE,
 )
+_NWS_US_ZONE_RE = re.compile(r"\b([A-Z]{2})[ZC]\d{3}\b")
 
 
 def resolve_file_url(url: str, *, config_dir: Path) -> Path:
@@ -1493,6 +1494,16 @@ def _normalize_nws_alert(
     status = bounded_text(properties.get("status"), max_chars=64)
     affected_zones = _string_list(properties.get("affectedZones"), max_chars=240)
     geocode = properties.get("geocode") if isinstance(properties.get("geocode"), dict) else {}
+    ugc = _string_list(geocode.get("UGC"), max_chars=32)
+    affected_states = sorted({
+        match.group(1)
+        for value in [*affected_zones, *ugc]
+        for match in _NWS_US_ZONE_RE.finditer(value.upper())
+    })
+    instruction = bounded_text(properties.get("instruction"), max_chars=500)
+    instruction_url = _nws_official_instruction_url(
+        properties.get("instructionUrl") or properties.get("web")
+    )
     references = properties.get("references")
     reference_count = len(references) if isinstance(references, list) else 0
     ranking = _nws_alert_ranking_evidence(
@@ -1537,6 +1548,11 @@ def _normalize_nws_alert(
         "category": properties.get("category"),
         "area_desc": area_desc,
         "affected_zones": affected_zones,
+        "affected_states": affected_states,
+        "geography_basis": "official_ugc_zone_ids" if affected_states else "area_description_only",
+        "instruction": instruction,
+        "instruction_url": instruction_url,
+        "source_url": item["url"],
         "sent": normalize_timestamp(properties.get("sent")),
         "effective": normalize_timestamp(properties.get("effective")),
         "onset": normalize_timestamp(properties.get("onset")),
@@ -1549,6 +1565,21 @@ def _normalize_nws_alert(
         "filter": _nws_filter_evidence(source, properties),
     }
     return item
+
+
+def _nws_official_instruction_url(value: Any) -> str | None:
+    if not value:
+        return None
+    try:
+        parts = urlsplit(str(value).strip())
+    except ValueError:
+        return None
+    host = (parts.hostname or "").lower()
+    if parts.scheme.lower() != "https" or not (
+        host == "weather.gov" or host.endswith(".weather.gov")
+    ):
+        return None
+    return normalize_url(value)
 
 
 def _nws_alert_matches_scope(source: dict[str, Any], properties: dict[str, Any]) -> bool:

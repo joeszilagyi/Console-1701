@@ -63,7 +63,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-032** [Disabled-By-Default NATIONAL Config](../../BACKLOG.md#L982) — not implemented.
 - [ ] **RS-033** [NATIONAL SQLite Schema Or Extension](../../BACKLOG.md#L993) — not implemented.
 - [ ] **RS-034** [NATIONAL Fixture Pack](../../BACKLOG.md#L1003) — not implemented.
-- [ ] **RS-035** [NWS Active Alert Parser](../../BACKLOG.md#L1012) — not implemented.
+- [x] **RS-035** [NWS Active Alert Parser](../../BACKLOG.md#L1012) — fixture parser preserves national alert geography, timing, instruction, and ranking evidence; focused tests pass.
 - [ ] **RS-036** [NHC Advisory/Feed Verification](../../BACKLOG.md#L1020) — not implemented.
 - [ ] **RS-037** [USGS Earthquake GeoJSON Parser](../../BACKLOG.md#L1028) — not implemented.
 - [ ] **RS-038** [FEMA/OpenFEMA Disaster Declarations Research](../../BACKLOG.md#L1037) — not implemented.
@@ -247,5 +247,6 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-035 and advanced RS-034. Added a NATIONAL NWS fixture with Washington and Puerto Rico alerts, UGC-derived state/territory evidence, official instruction-link validation, parser tests, and an end-to-end fixture `news-scan` regression. Full pytest passed (219 tests); Ruff passed. NATIONAL live HTTP remains disabled.
 - **2026-10-15:** Completed RS-026. Expanded the REGIONAL source-state regression to include robots-blocked, auth-required, rate-limited, and unsupported states through the SQLite-only page/API path. Focused pytest passed. Next: inspect the remaining REGIONAL config/fixture and official-source gaps, then take the smallest verified slice.
 - **2026-10-15:** Goal contract saved. Selection frozen at 150 selected / 45 deferred / 7 host-console entries. Next: inspect shared news code and choose the smallest unfinished foundation or LOCAL/REGIONAL slice; implement and verify it.

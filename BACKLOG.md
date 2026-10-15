@@ -1003,20 +1003,30 @@ store full article bodies by default.
 
 ### NATIONAL Fixture Pack
 
-Status: not implemented.
+Status: partially implemented.
 
 Create local-only fixtures for NWS active alert JSON, NHC advisory/RSS data, USGS earthquake
 GeoJSON, CDC HAN, FDA recalls, FSIS Recall API, CPSC Recalls API, NHTSA recalls, CISA advisories,
 CISA KEV, FAA NAS status, Federal Register API, BLS releases, and national news RSS. Fixture ingest
 must not perform network calls and must be safe for pytest.
 
+Current state: `tests/fixtures/news/national_nws_alerts.json` covers two official active-alert
+features, including a U.S. territory and an untrusted instruction-link candidate. The other
+NATIONAL source-family fixtures listed above remain pending.
+
 ### NWS Active Alert Parser
 
-Status: not implemented.
+Status: implemented for fixture ingest.
 
 Build a fixture-first NWS active alert parser for NATIONAL scope. Preserve alert id, event type,
 severity, urgency, certainty, affected states/zones, effective time, expiration time, source URL,
 instruction URL, and official-alert ranking evidence.
+
+Current state: the shared `nws_alerts_json` parser handles NATIONAL fixtures and stores alert ID,
+event, severity, urgency, certainty, affected UGC-derived states or territories and zone URLs,
+effective/expiration timestamps, source URL, bounded instruction text, an official HTTPS
+weather.gov instruction link when present, and deterministic alert ranking evidence. Invalid or
+nonofficial instruction links remain absent. This does not enable NATIONAL live HTTP ingestion.
 
 ### NHC Advisory/Feed Verification
 

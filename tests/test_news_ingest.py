@@ -977,6 +977,46 @@ def test_run_news_scan_ingests_regional_nws_alert_fixture(tmp_path):
     )
 
 
+def test_run_news_scan_ingests_national_nws_alert_fixture(tmp_path):
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        news:
+          enabled: true
+          scopes:
+            NATIONAL:
+              enabled: true
+              sources:
+                - id: nws_active_alerts_national_fixture
+                  name: NWS national active alerts fixture
+                  kind: api_json
+                  parser: nws_alerts_json
+                  source_family: nws
+                  official_status: official
+                  tags: [official]
+                  enabled: true
+                  url: "{_file_url(FIXTURE_DIR / 'national_nws_alerts.json')}"
+        """,
+    )
+
+    result = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        rows = conn.execute(
+            "SELECT evidence_json FROM news_items WHERE scope = 'NATIONAL' ORDER BY id"
+        ).fetchall()
+
+    assert result["status"] == "complete"
+    assert result["item_count"] == 2
+    evidence_rows = [json_loads(row["evidence_json"], {}) for row in rows]
+    assert [row["nws_alert"]["affected_states"] for row in evidence_rows] == [
+        ["WA"], ["PR"]
+    ]
+    assert all(row["ranking"]["score"] == sum(row["ranking"]["factors"].values())
+               for row in evidence_rows)
+
+
 def test_run_news_scan_ingests_regional_wsdot_alert_fixture(tmp_path):
     config_path = _write_config(
         tmp_path / "config.yml",

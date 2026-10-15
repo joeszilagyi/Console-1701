@@ -1,0 +1,45 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "id": "https://api.weather.gov/alerts/national-wa-flood",
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/national-wa-flood",
+        "id": "national-wa-flood",
+        "event": "Flood Warning",
+        "headline": "Flood Warning for Washington counties",
+        "areaDesc": "King County; Snohomish County",
+        "affectedZones": ["https://api.weather.gov/zones/county/WAC033"],
+        "geocode": {"UGC": ["WAC033", "WAC061"]},
+        "effective": "2026-10-15T13:00:00Z",
+        "expires": "2026-10-16T13:00:00Z",
+        "severity": "Severe",
+        "urgency": "Immediate",
+        "certainty": "Observed",
+        "status": "Actual",
+        "instruction": "Move to higher ground.",
+        "web": "https://www.weather.gov/sew/",
+        "description": "River flooding affects multiple communities."
+      }
+    },
+    {
+      "id": "https://api.weather.gov/alerts/national-pr-wind",
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/national-pr-wind",
+        "id": "national-pr-wind",
+        "event": "Wind Advisory",
+        "headline": "Wind Advisory for Puerto Rico",
+        "areaDesc": "San Juan, Puerto Rico",
+        "affectedZones": ["https://api.weather.gov/zones/forecast/PRZ001"],
+        "effective": "2026-10-15T14:00:00Z",
+        "expires": "2026-10-15T23:00:00Z",
+        "severity": "Moderate",
+        "urgency": "Expected",
+        "certainty": "Likely",
+        "status": "Actual",
+        "instruction": "Use caution outdoors.",
+        "instructionUrl": "https://example.invalid/not-official"
+      }
+    }
+  ]
+}
