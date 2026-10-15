@@ -1,0 +1,97 @@
+from __future__ import annotations
+
+import json
+from textwrap import dedent
+
+from console1701.config import load_config
+from console1701.db import connect_db, json_loads
+from console1701.news.global_policy import classify_global_item
+from console1701.news.scanner import run_news_scan
+
+
+def _item(title, evidence=None):
+    return {"scope": "GLOBAL", "title": title, "evidence": evidence or {}}
+
+
+def test_routine_opinion_domestic_and_social_content_get_explicit_low_value_labels():
+    source = {"scope": "GLOBAL", "source_family": "un_press"}
+    routine = classify_global_item(source, _item("Routine diplomatic statement on visit"))
+    opinion = classify_global_item(source, _item("Opinion: A broad geopolitical view"))
+    domestic = classify_global_item(source, _item("Candidate endorsement in domestic election"))
+    social = classify_global_item(
+        {"scope": "GLOBAL", "source_family": "reddit"}, _item("People discuss a claim"),
+    )
+    assert routine["evidence"]["global_identity"]["public_value_class"] == "routine"
+    assert opinion["evidence"]["global_identity"]["public_value_class"] == "opinion"
+    assert domestic["evidence"]["global_identity"]["out_of_scope"] is True
+    assert social["evidence"]["global_identity"]["public_value_class"] == "background"
+    assert social["evidence"]["global_attention_policy"]["impact_from_headline_inferred"] is False
+
+
+def test_official_alert_metadata_prevents_routine_suppression():
+    item = _item("Routine update on cyclone", {"gdacs": {"alert_level": "Red"}})
+    result = classify_global_item({"scope": "GLOBAL", "source_family": "gdacs"}, item)
+    assert result["evidence"]["global_attention_policy"]["official_alert_evidence"] is True
+    assert result["evidence"]["global_attention_policy"]["attention_state"] == "eligible"
+    assert "public_value_class" not in result["evidence"]["global_identity"]
+
+
+def test_explicit_rumor_and_graphic_headline_are_labeled_without_impact_inference():
+    rumor = classify_global_item(
+        {"scope": "GLOBAL", "source_family": "regional_media"},
+        _item("Unverified claim about an incident"),
+    )
+    graphic = classify_global_item(
+        {"scope": "GLOBAL", "source_family": "regional_media"},
+        _item("Graphic footage of violence"),
+    )
+    assert rumor["evidence"]["global_identity"]["rumor"] is True
+    assert rumor["evidence"]["global_attention_policy"]["attention_state"] == "background"
+    assert graphic["evidence"]["sensitivity"]["graphic_violence"] is True
+    assert graphic["evidence"]["global_attention_policy"]["attention_state"] == "suppressed"
+
+
+def test_scan_suppresses_graphic_title_before_sqlite_storage(tmp_path, monkeypatch):
+    monkeypatch.setattr("console1701.news.scanner.fetch_official_text", lambda *a, **kw: (
+        (_ for _ in ()).throw(AssertionError("unexpected HTTP"))
+    ))
+    fixture = tmp_path / "global.json"
+    fixture.write_text(json.dumps({"items": [{
+        "title": "Graphic footage of violence in public square",
+        "url": "https://example.test/global/story-1",
+        "description": "Unconfirmed graphic footage",
+        "published_at": "2026-10-15T12:00:00Z",
+    }]}))
+    config_path = tmp_path / "config.yml"
+    config_path.write_text(dedent(f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        global: {{enabled: true}}
+        news:
+          enabled: true
+          scopes:
+            GLOBAL:
+              enabled: true
+              sources:
+                - id: global_policy_fixture
+                  name: GLOBAL policy fixture
+                  kind: api_json
+                  parser: generic_json_items
+                  source_family: unocha
+                  source_class: official_conflict_humanitarian
+                  official_status: official
+                  policy_reviewed: true
+                  enabled: true
+                  url: "file://{fixture}"
+    """).strip() + "\n")
+    assert run_news_scan(config_path)["item_count"] == 1
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        row = conn.execute("SELECT title, description, evidence_json FROM news_items").fetchone()
+        clusters = conn.execute(
+            "SELECT COUNT(*) FROM news_clusters WHERE scope='GLOBAL'"
+        ).fetchone()[0]
+    assert row["title"] == "Sensitive humanitarian report"
+    assert row["description"] is None
+    assert clusters == 0
+    evidence = json_loads(row["evidence_json"], {})
+    assert evidence["global_attention_policy"]["attention_state"] == "suppressed"
