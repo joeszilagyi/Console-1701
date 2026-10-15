@@ -7,6 +7,7 @@ from textwrap import dedent
 from console1701.config import load_config
 from console1701.db import connect_db, json_loads
 from console1701.news.national_events import correlate_national_items
+from console1701.news.parsers import parse_fixture_items
 from console1701.news.scanner import run_news_scan
 
 
@@ -62,6 +63,35 @@ def test_national_correlation_shared_official_id_does_not_fake_diversity():
     assert [group["item_ids"] for group in groups] == [[1, 2]]
     assert groups[0]["matches"][0]["basis"] == ["shared_official_event_id"]
     assert groups[0]["corroborated"] is False
+
+
+def test_cpsc_official_recall_id_correlates_url_revision_without_impact_inference():
+    fixture = Path(__file__).parent / "fixtures/national/cpsc_recalls_2026_10_01.json"
+    source = {
+        "id": "cpsc_recalls_api", "scope": "NATIONAL", "kind": "api_json",
+        "parser": "cpsc_recalls_json", "fixture_only": True,
+        "url": "https://www.saferproducts.gov/RestWebServices/Recall",
+        "query_contract": {"recall_date_start": "2026-10-01", "recall_date_end": "2026-10-02",
+                           "format": "json", "timeout_seconds": 10},
+    }
+    parsed = parse_fixture_items(source, fixture.read_text())
+    first = {**parsed[0], "id": 1}
+    first["evidence"]["source"] = {"source_family": "cpsc", "source_key": "cpsc_a"}
+    revision = deepcopy(first)
+    revision["id"] = 2
+    revision["url"] = revision["canonical_url"] = (
+        "https://www.cpsc.gov/Recalls/2026/updated-recall-page"
+    )
+    revision["evidence"]["source"] = {"source_family": "cpsc", "source_key": "cpsc_b"}
+    revision["evidence"].pop("national_identity")  # Earlier stored rows lack this contract.
+    other = {**parsed[1], "id": 3}
+    other["evidence"]["source"] = {"source_family": "cpsc", "source_key": "cpsc_c"}
+    groups = correlate_national_items([first, revision, other])
+    assert [group["item_ids"] for group in groups] == [[1, 2], [3]]
+    assert groups[0]["matches"][0]["basis"] == ["shared_official_event_id"]
+    assert groups[0]["corroborated"] is False
+    assert groups[0]["affected_states"] == []
+    assert groups[0]["multi_state_impact"] is False
 
 
 def test_national_syndicated_article_does_not_count_as_independent_confirmation():

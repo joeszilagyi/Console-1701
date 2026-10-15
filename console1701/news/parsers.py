@@ -2514,6 +2514,14 @@ def _parse_fda_recalls_rss(
             "ranking": {"public_hazard_score": 0},
             "body_stored": False,
         }
+        item["evidence"]["national_identity"] = {
+            "event_type": "fda_recall_notice",
+            "agency": "FDA",
+            "affected_states": [],
+            "distribution_areas": [],
+            "multi_state_impact": False,
+            "distribution_basis": "not_in_feed",
+        }
         normalized.append(item)
     return normalized
 

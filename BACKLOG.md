@@ -1512,15 +1512,19 @@ independent convergence.
 
 Status: partially implemented.
 
-NATIONAL clusters now use official USGS, NWS, NHTSA, CISA KEV, Federal Register, and GovInfo IDs
+NATIONAL clusters now use official USGS, NWS, NHTSA, CPSC, CISA KEV, Federal Register, and GovInfo IDs
 where present, plus cautious cross-family matching on event type, explicit state/territory,
 FEMA/NWS region, storm basin, airport, distribution area, infrastructure sector, population group,
 or jurisdiction context, title tokens, and a 72-hour window. Match evidence, families, confidence,
 and identity are persisted in item and cluster JSON. Same-family repeats are not marked
 corroborated; complete-link grouping prevents a broad bridge from merging two incompatible events.
-The currently verified fixture parsers supply only some of these fields, so coverage of all
-specified dimensions and source-specific event mappings remains open. An offline duplicate-campaign
-scan and synthetic context tests pass.
+The CPSC fixture now labels official recall ID, consumer-product event type and agency while
+leaving distribution geography and multi-state impact unknown; the matcher can recover that ID
+from older stored evidence lacking the newer identity contract. FDA's RSS parser labels FDA notice
+type and agency without inventing a recall class or affected state. Duplicate CPSC IDs in a single
+API response fail parsing. The currently verified fixture parsers supply only some dimensions,
+so source-specific coverage remains open. Offline duplicate-campaign, CPSC URL-revision and
+synthetic context tests pass.
 
 Implement deterministic NATIONAL event matching by source family, time window, normalized title
 tokens, event type, agency, affected states, affected territories, FEMA region, NWS region, storm

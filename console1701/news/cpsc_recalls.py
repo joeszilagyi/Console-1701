@@ -55,10 +55,14 @@ def parse_cpsc_recalls_json(source: dict[str, Any], payload_text: str) -> list[d
     if not isinstance(rows, list) or len(rows) > 100:
         raise NewsParserError("CPSC recall response exceeds the 100-row cap")
     items: list[dict[str, Any]] = []
+    seen_ids: set[int] = set()
     for index, row in enumerate(rows):
         if not isinstance(row, dict) or type(row.get("RecallID")) is not int:
             raise NewsParserError(f"CPSC row {index} lacks a recall ID")
         recall_id = row["RecallID"]
+        if recall_id in seen_ids:
+            raise NewsParserError(f"CPSC row {index} duplicates a recall ID")
+        seen_ids.add(recall_id)
         recall_number = bounded_text(row.get("RecallNumber"), max_chars=30)
         title = bounded_text(row.get("Title"), max_chars=280)
         url = str(row.get("URL") or "")
@@ -106,6 +110,15 @@ def parse_cpsc_recalls_json(source: dict[str, Any], payload_text: str) -> list[d
             "images_downloaded": False,
             "ranking": {"consumer_safety_score": score,
                         "basis": "CPSC title and source-provided hazard risk language"},
+        }
+        item["evidence"]["national_identity"] = {
+            "event_type": "consumer_product_recall",
+            "agency": "CPSC",
+            "official_event_ids": [f"cpsc:{recall_id}"],
+            "affected_states": [],
+            "distribution_areas": [],
+            "multi_state_impact": False,
+            "distribution_basis": "not_structured_in_api",
         }
         items.append(item)
     return items
