@@ -29,6 +29,7 @@ from console1701.news.official_http import (
     fetch_official_text,
     is_supported_official_source,
 )
+from console1701.news.orbital_registry import list_orbital_source_registry
 from console1701.news.parsers import (
     NewsIngestError,
     NewsParserError,
@@ -106,6 +107,7 @@ def run_news_scan(config_path: str | Path | None = None) -> dict[str, Any]:
     _sync_regional_source_registry(conn, synced_at=sync_time)
     _sync_national_source_registry(conn, synced_at=sync_time)
     _sync_global_source_registry(conn, synced_at=sync_time)
+    _sync_orbital_source_registry(conn, synced_at=sync_time)
 
     scanned_sources = 0
     skipped_sources = 0
@@ -366,6 +368,10 @@ def _sync_national_source_registry(conn: sqlite3.Connection, synced_at: str) -> 
 
 def _sync_global_source_registry(conn: sqlite3.Connection, synced_at: str) -> int:
     return _sync_source_registry(conn, synced_at, "GLOBAL", list_global_source_registry())
+
+
+def _sync_orbital_source_registry(conn: sqlite3.Connection, synced_at: str) -> int:
+    return _sync_source_registry(conn, synced_at, "ORBITAL", list_orbital_source_registry())
 
 
 def _count_rows(conn: sqlite3.Connection, table: str) -> int:

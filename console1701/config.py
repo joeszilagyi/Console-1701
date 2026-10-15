@@ -538,7 +538,7 @@ def _normalize_optional_keyword(
 
 
 def _apply_scope_registry_defaults(source_cfg: dict[str, Any], scope: str) -> dict[str, Any]:
-    if scope not in {"LOCAL", "REGIONAL", "NATIONAL", "GLOBAL"}:
+    if scope not in {"LOCAL", "REGIONAL", "NATIONAL", "GLOBAL", "ORBITAL"}:
         return source_cfg
     source_key = str(source_cfg.get("id") or "").strip()
     if not source_key:
@@ -555,10 +555,14 @@ def _apply_scope_registry_defaults(source_cfg: dict[str, Any], scope: str) -> di
         from console1701.news.national_registry import national_registry_config_defaults
 
         defaults = national_registry_config_defaults(source_key)
-    else:
+    elif scope == "GLOBAL":
         from console1701.news.global_registry import global_registry_config_defaults
 
         defaults = global_registry_config_defaults(source_key)
+    else:
+        from console1701.news.orbital_registry import orbital_registry_config_defaults
+
+        defaults = orbital_registry_config_defaults(source_key)
     if not defaults:
         return source_cfg
     return deep_merge(defaults, source_cfg)
@@ -956,6 +960,31 @@ def _normalize_news_source(
         _normalize_global_source_metadata(source_cfg, path=path, global_cfg=global_cfg)
         if str(source_cfg.get("parser") or "").strip().lower() == "usgs_earthquake_geojson":
             source_cfg.setdefault("min_magnitude", global_cfg["earthquake_min_magnitude"])
+    if source_scope == "ORBITAL":
+        from console1701.news.orbital_registry import (
+            ORBITAL_ADAPTER_TYPES,
+            ORBITAL_OFFICIAL_STATUSES,
+            ORBITAL_RISK_LEVELS,
+            ORBITAL_SOURCE_CLASSES,
+            ORBITAL_SOURCE_FAMILIES,
+            ORBITAL_VERIFICATION_STATUSES,
+        )
+
+        _normalize_optional_keyword(
+            source_cfg, "source_family", path, allowed=ORBITAL_SOURCE_FAMILIES
+        )
+        _normalize_optional_keyword(
+            source_cfg, "source_class", path, allowed=ORBITAL_SOURCE_CLASSES
+        )
+        _normalize_optional_keyword(source_cfg, "adapter", path, allowed=ORBITAL_ADAPTER_TYPES)
+        _normalize_optional_keyword(
+            source_cfg, "official_status", path, allowed=ORBITAL_OFFICIAL_STATUSES
+        )
+        _normalize_optional_keyword(
+            source_cfg, "verification_status", path, allowed=ORBITAL_VERIFICATION_STATUSES
+        )
+        for key in ("privacy_risk", "policy_risk", "parser_risk", "retention_sensitivity"):
+            _normalize_optional_keyword(source_cfg, key, path, allowed=ORBITAL_RISK_LEVELS)
 
     source_cfg["enabled"] = _coerce_bool(source_cfg.get("enabled", False), f"{path}.enabled")
     source_cfg["priority"] = _coerce_int(source_cfg.get("priority", 50), f"{path}.priority")

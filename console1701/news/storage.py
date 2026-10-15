@@ -10,6 +10,7 @@ from console1701.db import json_loads
 from console1701.news.global_registry import global_source_registry_summary
 from console1701.news.local_registry import local_source_registry_summary
 from console1701.news.national_registry import national_source_registry_summary
+from console1701.news.orbital_registry import orbital_source_registry_summary
 from console1701.news.regional_registry import regional_source_registry_summary
 from console1701.news.source_policy import evaluate_source_policy
 
@@ -621,6 +622,7 @@ def get_news_storage_summary(conn: sqlite3.Connection, config: dict[str, Any]) -
         "regional_registry": get_regional_registry_state(conn),
         "national_registry": get_national_registry_state(conn),
         "global_registry": get_global_registry_state(conn),
+        "orbital_registry": get_orbital_registry_state(conn),
         "scope_states": scope_states,
         "source_state_counts": source_state_counts,
         "failing_source_count": int(
@@ -683,6 +685,10 @@ def get_national_registry_state(conn: sqlite3.Connection) -> dict[str, Any]:
 
 def get_global_registry_state(conn: sqlite3.Connection) -> dict[str, Any]:
     return _get_source_registry_state(conn, "GLOBAL", global_source_registry_summary())
+
+
+def get_orbital_registry_state(conn: sqlite3.Connection) -> dict[str, Any]:
+    return _get_source_registry_state(conn, "ORBITAL", orbital_source_registry_summary())
 
 
 def get_news_sources_status(
