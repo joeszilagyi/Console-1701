@@ -146,6 +146,43 @@ def test_national_faa_nas_xml_fixture_groups_airport_events() -> None:
         parse_fixture_items(source, '<!DOCTYPE x SYSTEM "https://example.test/x">' + fixture)
 
 
+def test_national_federal_register_fixture_requires_all_filters() -> None:
+    source = {
+        "id": "federal_register_fixture", "scope": "NATIONAL", "kind": "api_json",
+        "parser": "federal_register_documents_json", "source_family": "federal_register",
+        "agency_slugs": ["federal-aviation-administration"],
+        "document_types": ["Proposed Rule", "Rule", "Notice"],
+        "impact_terms": ["airworthiness directive", "emergency"],
+    }
+    fixture = (
+        Path(__file__).resolve().parent / "fixtures/news/national_federal_register_documents.json"
+    ).read_text()
+    items = parse_fixture_items(source, fixture)
+    assert len(items) == 2
+    assert [item["evidence"]["federal_register"]["document_number"] for item in items] == [
+        "2026-21001", "2026-21002"
+    ]
+    first = items[0]["evidence"]["federal_register"]
+    assert first["agency_slugs"] == ["federal-aviation-administration"]
+    assert first["comment_end_date"] == "2026-11-15"
+    assert first["action"] == "Notice of proposed rulemaking."
+    assert first["matched_impact_terms"] == ["airworthiness directive"]
+    assert first["date_precision"] == "day"
+    assert first["legal_status"] == "informational_xml_rendition_verify_official_pdf"
+    assert items[1]["evidence"]["federal_register"]["effective_on"] == "2026-10-16"
+    rank = build_rank_result(source, items[1], seen_at="2026-10-15T18:00:00+00:00",
+                             combined_tags=items[1]["tags"], latest_health_state="healthy",
+                             repeat_count=0)
+    assert rank["factors"]["national_regulatory_bonus"] == 17
+
+    with pytest.raises(NewsParserError, match="requires agency, type and impact allowlists"):
+        parse_fixture_items({**source, "impact_terms": []}, fixture)
+    malformed = json.loads(fixture)
+    malformed["results"][1]["html_url"] = "https://example.com/documents/x"
+    with pytest.raises(NewsParserError, match="invalid document URL"):
+        parse_fixture_items(source, json.dumps(malformed))
+
+
 def test_regional_nws_fixture_preserves_official_county_zone_and_alert_evidence() -> None:
     source = {
         "id": "nws_active_alerts_wa", "scope": "REGIONAL", "kind": "api_json",

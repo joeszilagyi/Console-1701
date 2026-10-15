@@ -1,0 +1,56 @@
+{
+  "description": "Documents published in the Federal Register",
+  "count": 5,
+  "total_pages": 1,
+  "next_page_url": null,
+  "results": [
+    {
+      "document_number": "2026-21001",
+      "type": "Proposed Rule",
+      "title": "Airworthiness Directives; Example Aircraft",
+      "abstract": "The FAA proposes an airworthiness directive for an unsafe condition.",
+      "publication_date": "2026-10-15",
+      "comment_end_date": "2026-11-15",
+      "effective_on": null,
+      "action": "Notice of proposed rulemaking.",
+      "html_url": "https://www.federalregister.gov/documents/2026/10/15/2026-21001/airworthiness-directives-example-aircraft",
+      "agencies": [{"name": "Federal Aviation Administration", "slug": "federal-aviation-administration"}]
+    },
+    {
+      "document_number": "2026-21002",
+      "type": "Rule",
+      "title": "Emergency Airworthiness Directives; Example Aircraft",
+      "abstract": "The FAA adopts an emergency airworthiness directive.",
+      "publication_date": "2026-10-15",
+      "comment_end_date": null,
+      "effective_on": "2026-10-16",
+      "action": "Final rule.",
+      "html_url": "https://www.federalregister.gov/documents/2026/10/15/2026-21002/emergency-airworthiness-directives-example-aircraft",
+      "agencies": [{"name": "Federal Aviation Administration", "slug": "federal-aviation-administration"}]
+    },
+    {
+      "document_number": "2026-21003",
+      "type": "Notice",
+      "title": "Agency Information Collection Activities: Emergency Forms",
+      "publication_date": "2026-10-15",
+      "html_url": "https://www.federalregister.gov/documents/2026/10/15/2026-21003/agency-information-collection-activities",
+      "agencies": [{"slug": "federal-aviation-administration"}]
+    },
+    {
+      "document_number": "2026-21004",
+      "type": "Rule",
+      "title": "Emergency Aircraft Maintenance Standards",
+      "publication_date": "2026-10-15",
+      "html_url": "https://www.federalregister.gov/documents/2026/10/15/2026-21004/emergency-aircraft-maintenance-standards",
+      "agencies": [{"slug": "another-agency"}]
+    },
+    {
+      "document_number": "2026-21005",
+      "type": "Rule",
+      "title": "Routine Aircraft Maintenance Standards",
+      "publication_date": "2026-10-15",
+      "html_url": "https://www.federalregister.gov/documents/2026/10/15/2026-21005/routine-aircraft-maintenance-standards",
+      "agencies": [{"slug": "federal-aviation-administration"}]
+    }
+  ]
+}

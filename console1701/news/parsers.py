@@ -147,6 +147,8 @@ def parse_fixture_items(
         return _parse_cisa_kev_json(source, payload_text)
     if parser_name == "faa_nas_status_xml":
         return _parse_faa_nas_status_xml(source, payload_text)
+    if parser_name == "federal_register_documents_json":
+        return _parse_federal_register_documents_json(source, payload_text)
     if parser_name == "alertseattle_rss":
         return _parse_alertseattle_rss_feed(source, payload_text)
     if parser_name == "metro_rss":
@@ -1916,6 +1918,115 @@ def _parse_faa_nas_status_xml(
         }
         normalized.append(item)
     return normalized
+
+
+_FEDERAL_REGISTER_LOW_VALUE_RE = re.compile(
+    r"\b(information collection|notice of meeting|combined notice of filings|"
+    r"privacy act of 1974; system of records|submission for omb review)\b", re.I
+)
+_FEDERAL_REGISTER_DOC_RE = re.compile(r"\d{4}-\d{4,6}\Z")
+
+
+def _parse_federal_register_documents_json(
+    source: dict[str, Any], payload_text: str
+) -> list[dict[str, Any]]:
+    if str(source.get("scope") or "").upper() != "NATIONAL":
+        raise NewsParserError("Federal Register parser requires NATIONAL scope.")
+    agency_slugs = [
+        value.casefold() for value in _configured_texts(source.get("agency_slugs"), default=[])
+    ]
+    document_types = [
+        value.casefold() for value in _configured_texts(source.get("document_types"), default=[])
+    ]
+    impact_terms = [
+        value.casefold() for value in _configured_texts(source.get("impact_terms"), default=[])
+    ]
+    if not agency_slugs or not document_types or not impact_terms:
+        raise NewsParserError(
+            "Federal Register parser requires agency, type and impact allowlists."
+        )
+    try:
+        payload = json.loads(payload_text)
+    except json.JSONDecodeError as exc:
+        raise NewsParserError(f"Malformed Federal Register JSON: {exc}") from exc
+    rows = payload.get("results") if isinstance(payload, dict) else None
+    if not isinstance(rows, list) or len(rows) > 100:
+        raise NewsParserError("Federal Register response needs at most 100 results.")
+    normalized: list[dict[str, Any]] = []
+    seen_ids: set[str] = set()
+    for index, row in enumerate(rows):
+        if not isinstance(row, dict):
+            raise NewsParserError(f"Federal Register row {index} is not an object.")
+        document_number = str(row.get("document_number") or "").strip()
+        if not _FEDERAL_REGISTER_DOC_RE.fullmatch(document_number) or document_number in seen_ids:
+            raise NewsParserError(f"Federal Register row {index} has invalid document identity.")
+        seen_ids.add(document_number)
+        title = bounded_text(row.get("title"), max_chars=280)
+        doc_type = bounded_text(row.get("type"), max_chars=80)
+        agencies = row.get("agencies")
+        if not title or not doc_type or not isinstance(agencies, list):
+            raise NewsParserError(f"Federal Register row {index} lacks required metadata.")
+        matched_agencies = [
+            bounded_text(agency.get("slug"), max_chars=100)
+            for agency in agencies if isinstance(agency, dict)
+            and str(agency.get("slug") or "").casefold() in agency_slugs
+        ]
+        if not matched_agencies or doc_type.casefold() not in document_types:
+            continue
+        matched_terms = [term for term in impact_terms if term in title.casefold()]
+        if not matched_terms or _FEDERAL_REGISTER_LOW_VALUE_RE.search(title):
+            continue
+        published = str(row.get("publication_date") or "")
+        try:
+            published_date = datetime.strptime(published, "%Y-%m-%d").date()
+        except ValueError as exc:
+            raise NewsParserError(
+                f"Federal Register row {index} has invalid publication date."
+            ) from exc
+        url = str(row.get("html_url") or "").strip()
+        parts = urlsplit(url)
+        if (
+            parts.scheme != "https" or parts.hostname != "www.federalregister.gov"
+            or not parts.path.startswith(f"/documents/{published_date:%Y/%m/%d}/{document_number}/")
+        ):
+            raise NewsParserError(f"Federal Register row {index} has invalid document URL.")
+        comment_end = _federal_register_date(row.get("comment_end_date"), index)
+        effective_on = _federal_register_date(row.get("effective_on"), index)
+        item = _normalize_item(source, {
+            "title": title,
+            "url": url,
+            "description": bounded_text(row.get("abstract"), max_chars=500),
+            "published_at": published_date.isoformat(),
+            "tags": ["official", "federal-register", doc_type.lower().replace(" ", "-")],
+        }, index=index)
+        impact_score = min(25, 12 + (5 if doc_type.casefold() == "rule" else 0)
+                           + (3 if comment_end else 0))
+        item["evidence"]["federal_register"] = {
+            "document_number": document_number,
+            "document_type": doc_type,
+            "agency_slugs": matched_agencies[:10],
+            "matched_impact_terms": matched_terms[:10],
+            "publication_date": published_date.isoformat(),
+            "date_precision": "day",
+            "comment_end_date": comment_end,
+            "effective_on": effective_on,
+            "action": bounded_text(row.get("action"), max_chars=300),
+            "source_url": url,
+            "legal_status": "informational_xml_rendition_verify_official_pdf",
+            "ranking": {"public_impact_score": impact_score},
+            "body_stored": False,
+        }
+        normalized.append(item)
+    return normalized
+
+
+def _federal_register_date(value: Any, index: int) -> str | None:
+    if value in (None, ""):
+        return None
+    try:
+        return datetime.strptime(str(value), "%Y-%m-%d").date().isoformat()
+    except ValueError as exc:
+        raise NewsParserError(f"Federal Register row {index} has invalid action date.") from exc
 
 
 def _parse_nhtsa_recalls_json(
