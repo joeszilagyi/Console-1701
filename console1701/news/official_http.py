@@ -109,6 +109,9 @@ OFFICIAL_SOURCES = {
         "https://www.nasa.gov/centers-and-facilities/jpl/feed/", "rss",
         "nasa_jpl_science_rss", "application/rss+xml"
     ),
+    ("SYSTEM_SOLAR", "astronomers_telegram_rss"): (
+        "https://www.astronomerstelegram.org/?rss", "rss", "atel_rss", "text/xml"
+    ),
     ("SYSTEM_SOLAR", "nasa_exoplanet_ps_tap"): (
         "https://exoplanetarchive.ipac.caltech.edu/TAP/sync", "api_json",
         "exoplanet_ps_json", "application/json"
@@ -253,6 +256,8 @@ def fetch_official_text(
 
         request_url = live_exoplanet_request_url(source)
         limit = min(limit, 65_536)
+    if (source["scope"], source["id"]) == ("SYSTEM_SOLAR", "astronomers_telegram_rss"):
+        limit = min(limit, 65_536)
     request = Request(request_url, headers=headers, method="GET")
     # Do not honor environment proxies or follow redirects to an unapproved host.
     opener = build_opener(ProxyHandler({}), HTTPSHandler(), _NoRedirect())
@@ -266,6 +271,8 @@ def fetch_official_text(
                 {"application/rss+xml"} if source["kind"] == "rss"
                 else {"application/geo+json", "application/json", "application/ld+json"}
             )
+            if (source["scope"], source["id"]) == ("SYSTEM_SOLAR", "astronomers_telegram_rss"):
+                allowed_types = {"text/xml"}
             if content_type.split(";", 1)[0].strip() not in allowed_types:
                 raise NewsIngestError("Official feed returned an unexpected content type.")
             payload = response.read(limit + 1)

@@ -93,20 +93,20 @@ items into science.
 | Candidate | Observed evidence and current decision |
 | --- | --- |
 | [NASA Science News blog](https://science.nasa.gov/blogs/science-news/) | The exact `/feed/` URL returned `application/rss+xml` on 2026-10-15, but a bounded read failed strict XML parsing because the root namespace attributes were malformed. `reference_only` until the publisher fixes the feed or an official alternative is verified; do not silently repair live XML. |
-| [JPL RSS directory](https://www.jpl.nasa.gov/rss/) | JPL lists `/feeds/news/`, but a direct bounded request returned HTTP 403 on 2026-10-15. `reference_only`; no bypass or copied third-party feed. [NASA's JPL center feed](https://www.nasa.gov/centers-and-facilities/jpl/feed/) returned parseable RSS but mixes Earth and mission science, so it needs a separate scope-specific fixture/parser and is not a substitute approval. |
+| [JPL RSS directory](https://www.jpl.nasa.gov/rss/) | JPL lists `/feeds/news/`, but the identifying scanner agent received HTTP 403 on 2026-10-15. `reference_only` for that endpoint. [NASA's JPL center feed](https://www.nasa.gov/centers-and-facilities/jpl/feed/) has a separate exact COSMIC science parser and [live signoff](COSMIC_JPL_RSS_LIVE_SIGNOFF.md). |
 | [ESA RSS directory](https://www.esa.int/Services/RSS_Feeds) | Top News and Human Spaceflight exact feeds are parseable for ORBITAL, as recorded in [ESA source verification](ORBITAL_ESA_RSS_SOURCE_VERIFICATION.md). The dedicated Space Science feed is verified separately for one opt-in COSMIC live path; routine images and broad agency news cannot become science events by default. |
 | [NASA Science Photojournal feeds](https://science.nasa.gov/photojournal/rss-feeds/) | The official directory lists topic-specific image feeds. `reference_only` for Recent Signal; an image release is not automatically a major science finding and image files must not be downloaded. |
+| [ATel Feeds page](https://www.astronomerstelegram.org/?listxml) | The exact `?rss` all-telegrams RSS 1.0 feed has a bounded metadata parser and [live signoff](COSMIC_ATEL_RSS_LIVE_SIGNOFF.md). Reports remain preliminary because the publisher does not edit them. |
 
 The signoff status is endpoint-specific. Record parser failure and HTTP 403 as source-health
 evidence, then move to an independent candidate while access remains unresolved. Any future
 exoplanet, MAST, PDS, HEASARC, GCN, TNS or literature source needs its own record with row caps,
 terms, and domain-specific relevance tests.
 
-The NASA-hosted JPL center feed now has a fixture-only science parser and a disabled registry
-candidate. A 2026-10-15 bounded read returned HTTP 200, `application/rss+xml`, a parseable
-`Jet Propulsion Laboratory – NASA` channel, and ten mixed-topic entries. The parser keeps
-science-category headlines and rejects Earth-only and operational launch/testing headlines; it
-does not authorize live science ingest or the inaccessible direct JPL feed.
+The NASA-hosted JPL center feed has an exact disabled-by-default COSMIC live opt-in. A
+2026-10-15 isolated live scan returned HTTP 200 and two science items. Its parser keeps
+science-category headlines and rejects Earth-only and operational launch/testing headlines;
+the inaccessible JPL-hosted feed remains a separate blocked endpoint.
 
 ESA's [official RSS directory](https://www.esa.int/Services/RSS_Feeds) links a dedicated
 [Space Science feed](https://www.esa.int/rssfeed/Our_Activities/Space_Science). A bounded

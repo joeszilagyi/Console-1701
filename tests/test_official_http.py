@@ -91,6 +91,33 @@ def test_official_http_requires_exact_verified_nws_endpoint():
         )
 
 
+def test_atel_live_transport_accepts_only_exact_text_xml(monkeypatch):
+    url = "https://www.astronomerstelegram.org/?rss"
+    source = {
+        "id": "astronomers_telegram_rss", "scope": "SYSTEM_SOLAR", "kind": "rss",
+        "parser": "atel_rss", "url": url, "official_url": url,
+        "verification_status": "verified", "fixture_only": False,
+    }
+    assert is_supported_official_source(source)
+    seen = {}
+
+    class _ATelResponse(_Response):
+        headers = {"Content-Type": "text/xml; charset=UTF-8"}
+
+    class _Opener:
+        def open(self, request, *, timeout):
+            seen["url"] = request.full_url
+            seen["accept"] = request.get_header("Accept")
+            return _ATelResponse(b"<rdf:RDF />")
+
+    monkeypatch.setattr("console1701.news.official_http.build_opener", lambda *handlers: _Opener())
+    response = fetch_official_text(
+        source, user_agent="console-1701 test", timeout_seconds=5, max_bytes=1_048_576,
+    )
+    assert response.status_code == 200
+    assert seen == {"url": url, "accept": "text/xml"}
+
+
 def test_official_http_requires_exact_verified_usgs_feed(monkeypatch):
     source = _usgs_source()
     assert is_supported_official_source(source)
