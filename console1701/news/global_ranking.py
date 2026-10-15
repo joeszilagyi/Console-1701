@@ -157,6 +157,27 @@ def rank_global_event(
     } else 20 if "background" in low_value_classes else 0
     out_of_scope = 60 if any(identity.get("out_of_scope") is True for identity in identities) else 0
     rumor = 70 if any(identity.get("rumor") is True for identity in identities) else 0
+    sensitivity_flags = sorted({
+        key for member in members
+        for key, value in (
+            (member.get("evidence") or {}).get("sensitivity")
+            if isinstance((member.get("evidence") or {}).get("sensitivity"), dict) else {}
+        ).items() if value is True
+    })
+    conflict_adjacent = (
+        "conflict_adjacent" in sensitivity_flags
+        or any(((member.get("evidence") or {}).get("source") or {}).get(
+            "conflict_sensitive"
+        ) is True for member in members)
+    )
+    hard_suppression_flags = {
+        "war_ticker", "graphic_violence", "casualty_speculation",
+        "targeted_person_tracking", "private_distress", "doxxing", "source_laundering",
+    }
+    hard_flags = sorted(hard_suppression_flags & set(sensitivity_flags))
+    independent_confirmed = bool(group.get("corroborated")) and len(families) >= 2
+    official_confirmed = bool(official_families)
+    elevation_allowed = official_confirmed or independent_confirmed
     factors = {
         "recency_score": recency,
         "official_severity_score": severity,
@@ -178,7 +199,14 @@ def rank_global_event(
     }
     bonuses = sum(value for key, value in factors.items() if key.endswith("_score"))
     penalties = sum(value for key, value in factors.items() if key.endswith("_penalty"))
-    score = max(0, bonuses - penalties)
+    score_before_sensitivity = max(0, bonuses - penalties)
+    sensitivity_penalty = (
+        score_before_sensitivity if hard_flags else
+        max(0, score_before_sensitivity - 20)
+        if (conflict_adjacent or rumor) and not elevation_allowed else 0
+    )
+    factors["sensitivity_penalty"] = sensitivity_penalty
+    score = score_before_sensitivity - sensitivity_penalty
     impact_basis = [
         "GDACS alert level" if any(
             str(((member.get("evidence") or {}).get("gdacs") or {}).get("alert_level") or "")
@@ -217,4 +245,19 @@ def rank_global_event(
         "span_hours": span_hours,
         "public_impact_basis": [value for value in impact_basis if value],
         "impact_tags": sorted(impact_tags),
+        "sensitivity": {
+            "score_before_sensitivity": score_before_sensitivity,
+            "score_after_sensitivity": score,
+            "conflict_adjacent": conflict_adjacent,
+            "flags": sensitivity_flags,
+            "hard_suppression_flags": hard_flags,
+            "official_confirmed": official_confirmed,
+            "independent_confirmed": independent_confirmed,
+            "elevation_allowed": elevation_allowed and not hard_flags,
+            "label": (
+                "suppressed_sensitive_content" if hard_flags else
+                "unconfirmed_conflict_or_rumor" if sensitivity_penalty else
+                "confirmed_conflict_context" if conflict_adjacent else "ordinary"
+            ),
+        },
     }

@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+import json
 from copy import deepcopy
+from textwrap import dedent
 
+from console1701.config import load_config
+from console1701.db import connect_db, json_loads
 from console1701.news.global_ranking import rank_global_event
+from console1701.news.scanner import _redact_global_sensitive_item, run_news_scan
 
 NOW = "2026-10-15T20:00:00+00:00"
 
@@ -147,3 +152,109 @@ def test_global_rank_humanitarian_age_priority_cluster_size_and_confidence():
     assert correlated["factors"]["cluster_size_score"] == 2
     assert correlated["factors"]["low_confidence_penalty"] == 0
     assert correlated["factors"]["humanitarian_impact_score"] == 25
+
+
+def test_conflict_context_needs_official_or_independent_confirmation():
+    unconfirmed = _member(1, family="community")
+    unconfirmed["evidence"]["source"]["official_status"] = "candidate"
+    unconfirmed["evidence"]["source"]["conflict_sensitive"] = True
+    unconfirmed["evidence"]["gdacs"]["alert_level"] = "Red"
+    isolated = rank_global_event(_group("community"), [unconfirmed], now=NOW)
+    assert isolated["score"] <= 20
+    assert isolated["factors"]["sensitivity_penalty"] > 0
+    assert isolated["sensitivity"]["label"] == "unconfirmed_conflict_or_rumor"
+
+    official = deepcopy(unconfirmed)
+    official["evidence"]["source"]["official_status"] = "official"
+    confirmed = rank_global_event(_group("community"), [official], now=NOW)
+    assert confirmed["sensitivity"]["elevation_allowed"] is True
+    assert confirmed["score"] > isolated["score"]
+
+    independent = deepcopy(unconfirmed)
+    independent["id"] = 2
+    independent["evidence"]["source"]["source_family"] = "humanitarian"
+    corroborated = rank_global_event(
+        _group("community", "humanitarian", corroborated=True),
+        [unconfirmed, independent], now=NOW,
+    )
+    assert corroborated["sensitivity"]["independent_confirmed"] is True
+    assert corroborated["score"] > isolated["score"]
+
+
+def test_sensitive_content_is_suppressed_and_redacted_before_storage():
+    member = _member(1)
+    member["evidence"]["sensitivity"] = {
+        "graphic_violence": True, "targeted_person_tracking": True,
+    }
+    member["evidence"]["gdacs"]["alert_level"] = "Red"
+    result = rank_global_event(_group("gdacs"), [member], now=NOW)
+    assert result["score"] == 0
+    assert result["sensitivity"]["label"] == "suppressed_sensitive_content"
+    assert result["sensitivity"]["hard_suppression_flags"] == [
+        "graphic_violence", "targeted_person_tracking"
+    ]
+    original = {
+        "title": "Graphic detail about a private person",
+        "description": "Private identifying detail",
+        "evidence": {"sensitivity": {"targeted_person_tracking": True}},
+    }
+    redacted = _redact_global_sensitive_item(original)
+    assert redacted["title"] == "Sensitive humanitarian report"
+    assert redacted["description"] is None
+    assert redacted["evidence"]["sensitivity"]["redacted_before_storage"] is True
+    assert original["title"] == "Graphic detail about a private person"
+
+
+def test_global_sensitive_fixture_scan_redacts_and_suppresses(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        "console1701.news.scanner.fetch_official_text",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("unexpected HTTP")),
+    )
+    fixture = tmp_path / "sensitive.json"
+    fixture.write_text(json.dumps({"items": [{
+        "title": "Private identifying headline",
+        "url": "https://example.test/report/one",
+        "description": "Private identifying description",
+        "published_at": "2026-10-15T12:00:00Z",
+    }]}))
+    config_path = tmp_path / "config.yml"
+    config_path.write_text(dedent(f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        global: {{enabled: true}}
+        news:
+          enabled: true
+          scopes:
+            GLOBAL:
+              enabled: true
+              sources:
+                - id: sensitive_fixture
+                  name: Sensitive fixture
+                  kind: api_json
+                  parser: generic_json_items
+                  source_family: unocha
+                  source_class: official_conflict_humanitarian
+                  official_status: official
+                  policy_reviewed: true
+                  sensitivity_flags: [conflict_adjacent, targeted_person_tracking]
+                  enabled: true
+                  url: "file://{fixture}"
+    """).strip() + "\n")
+    result = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        row = conn.execute(
+            "SELECT title, description, evidence_json FROM news_items WHERE scope = 'GLOBAL'"
+        ).fetchone()
+        cluster = conn.execute(
+            "SELECT title, score, evidence_json FROM news_clusters WHERE scope = 'GLOBAL'"
+        ).fetchone()
+    assert result["status"] == "complete"
+    assert row["title"] == "Sensitive humanitarian report"
+    assert row["description"] is None
+    assert cluster is None
+    evidence = json_loads(row["evidence_json"], {})
+    assert evidence["sensitivity"]["redacted_before_storage"] is True
+    assert evidence["global_event"]["ranking"]["sensitivity"]["label"] == (
+        "suppressed_sensitive_content"
+    )
+    assert "Private identifying" not in str(dict(row))

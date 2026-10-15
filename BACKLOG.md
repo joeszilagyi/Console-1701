@@ -1822,7 +1822,15 @@ expiration, policy notes, and whether people-at-risk metadata is source-provided
 
 ### Conflict-Humanitarian Sensitivity Rules
 
-Status: not implemented.
+Status: implemented for the first-pass explicit-evidence policy.
+
+GLOBAL sources now have validated conflict-sensitive and sensitivity-flag policy. Ranking caps
+unconfirmed conflict/rumor context unless an official source or two independently corroborated
+families support elevation. Graphic/private/speculative/source-laundered flags suppress clusters;
+identifying headline and description fields are redacted before storage for personal/graphic
+cases. Ranking evidence stores flags, confirmation basis and cautious labels. Offline tests verify
+redaction and no attention cluster. See
+`docs/project/GLOBAL_CONFLICT_HUMANITARIAN_SENSITIVITY_RULES.md`.
 
 Add deterministic rules for conflict and humanitarian signals that avoid war-ticker behavior,
 graphic violence amplification, rumor elevation, casualty speculation, targeted-person tracking,

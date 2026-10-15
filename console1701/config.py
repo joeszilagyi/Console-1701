@@ -821,6 +821,21 @@ def _normalize_global_source_metadata(
         source_cfg["future_phase"] = future_phase.upper()
     for key in ("privacy_risk", "policy_risk", "parser_risk", "retention_sensitivity"):
         _normalize_optional_keyword(source_cfg, key, path, allowed=GLOBAL_RISK_LEVELS)
+    source_cfg["conflict_sensitive"] = _coerce_bool(
+        source_cfg.get(
+            "conflict_sensitive", source_class == "official_conflict_humanitarian"
+        ),
+        f"{path}.conflict_sensitive",
+    )
+    source_cfg["sensitivity_flags"] = _normalize_string_list(
+        source_cfg.get("sensitivity_flags", []), f"{path}.sensitivity_flags"
+    )
+    supported_sensitivity_flags = {
+        "conflict_adjacent", "war_ticker", "graphic_violence", "casualty_speculation",
+        "targeted_person_tracking", "private_distress", "doxxing", "source_laundering",
+    }
+    if any(flag not in supported_sensitivity_flags for flag in source_cfg["sensitivity_flags"]):
+        raise ConfigError(f"{path}.sensitivity_flags contains an unsupported value.")
 
     source_enabled = _coerce_bool(source_cfg.get("enabled", False), f"{path}.enabled")
     auth_required = (
