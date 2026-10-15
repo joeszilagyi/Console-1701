@@ -49,7 +49,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-021** [County Emergency Alert Source Verification](../../BACKLOG.md#L795) — eight county access paths, feed candidates, risks and fallbacks recorded; no live feed enabled.
 - [ ] **RS-022** [REGIONAL Deterministic Event Correlation](../../BACKLOG.md#L816) — partially implemented.
 - [ ] **RS-023** [REGIONAL Deterministic Ranking](../../BACKLOG.md#L831) — partially implemented.
-- [ ] **RS-024** [REGIONAL Privacy And Public-Impact Rules](../../BACKLOG.md#L846) — not implemented.
+- [x] **RS-024** [REGIONAL Privacy And Public-Impact Rules](../../BACKLOG.md#L846) — completed 2026-10-15; pre-storage address redaction, low-value/outage penalty, official-impact exception, and offline scan test.
 - [x] **RS-025** [REGIONAL UI Disabled States](../../BACKLOG.md#L855) — page/API state matrix and scope-specific social/homepage blocked messaging verified without fetch.
 - [x] **RS-026** [REGIONAL Source Health States](../../BACKLOG.md#L869) — implemented; REGIONAL API/page state matrix test passes.
 - [ ] **RS-027** [REGIONAL Evidence Drawer Contract](../../BACKLOG.md#L883) — partially implemented.
