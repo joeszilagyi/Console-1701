@@ -64,7 +64,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-033** [NATIONAL SQLite Schema Or Extension](../../BACKLOG.md#L993) — partial: scoped registry key migration and persisted NATIONAL source inventory; query indexes and purge evidence remain.
 - [ ] **RS-034** [NATIONAL Fixture Pack](../../BACKLOG.md#L1003) — not implemented.
 - [x] **RS-035** [NWS Active Alert Parser](../../BACKLOG.md#L1012) — fixture parser preserves national alert geography, timing, instruction, and ranking evidence; focused tests pass.
-- [ ] **RS-036** [NHC Advisory/Feed Verification](../../BACKLOG.md#L1020) — not implemented.
+- [ ] **RS-036** [NHC Advisory/Feed Verification](../../BACKLOG.md#L1020) — partial: official feed ownership/endpoints and advisory semantics documented; actual XML item shape remains unverified.
 - [ ] **RS-037** [USGS Earthquake GeoJSON Parser](../../BACKLOG.md#L1028) — partial: national coordinate regions, threshold, and fixture ingest work; nuanced cross-border and multi-state impact routing remains.
 - [ ] **RS-038** [FEMA/OpenFEMA Disaster Declarations Research](../../BACKLOG.md#L1037) — not implemented.
 - [ ] **RS-039** [CDC HAN Parser](../../BACKLOG.md#L1046) — not implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Advanced RS-036 through official NHC/CPHC documentation. Recorded basin RSS endpoints, advisory timing, storm identity/watch-warning distinctions, health policy, and the remaining need for a bounded official XML fixture. No live source admitted. Next: obtain a verifiable XML shape through the allowed research/fixture path, then implement the parser.
 - **2026-10-15:** Completed RS-031 and advanced RS-033. Added all 227 disabled NATIONAL design inventory entries as checked-in data with enum validation and config defaults. Generalized registry sync/summary across LOCAL, REGIONAL, and NATIONAL; migrated SQLite uniqueness to `(scope, source_key)` so overlapping documented IDs coexist. The inventory is metadata only and does not add a live URL allowlist. Full pytest passed (233 tests); Ruff passed. A wheel build check could not run because setuptools is absent from the local virtual environment; `pyproject.toml` declares the JSON as package data. Next: continue NATIONAL schema/query work.
 - **2026-10-15:** Completed RS-052. Extended page tests to NATIONAL for configured-disabled, not-configured, never-run, stale/failure, and social/homepage-blocked states. Added NATIONAL social-source policy and a scope-specific health message for read-only status. No ingest or page-load fetch is used. Full pytest passed (228 tests); Ruff passed. Next: build NATIONAL registry and storage foundation.
 - **2026-10-15:** Completed RS-053. Reused the REGIONAL page/API source-health matrix for NATIONAL with isolated SQLite state and no scan/fetch, verifying ten source states including stale, parser failure, policy blocking, and auth/rate/policy outcomes. A NATIONAL baseline regression covers disabled, not-configured, never-run, and healthy scope outcomes. Full pytest passed (225 tests); Ruff passed. Next: continue NATIONAL storage/registry foundation and UI disabled-state acceptance.
