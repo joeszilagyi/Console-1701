@@ -112,8 +112,8 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-078** [GLOBAL Deterministic Event Correlation](../../BACKLOG.md#L1485) — not implemented.
 - [ ] **RS-079** [GLOBAL Deterministic Ranking](../../BACKLOG.md#L1494) — not implemented.
 - [ ] **RS-080** [GLOBAL Low-Public-Value, Rumor, And Public-Impact Rules](../../BACKLOG.md#L1504) — not implemented.
-- [ ] **RS-081** [GLOBAL UI Disabled States](../../BACKLOG.md#L1515) — not implemented.
-- [ ] **RS-082** [GLOBAL Source Health States](../../BACKLOG.md#L1525) — not implemented.
+- [ ] **RS-081** [GLOBAL UI Disabled States](../../BACKLOG.md#L1515) — partial: shared GLOBAL page shows stored/source states; dedicated gated-source messaging and breadth remain.
+- [ ] **RS-082** [GLOBAL Source Health States](../../BACKLOG.md#L1525) — partial: shared states work; heavy/homepage gate states and pre-validation visibility remain.
 - [ ] **RS-083** [GLOBAL Evidence Drawer Contract](../../BACKLOG.md#L1535) — not implemented.
 - [ ] **RS-084** [GLOBAL Official-Source Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L1545) — not implemented.
 - [ ] **RS-085** [Documentation For Source Verification](../../BACKLOG.md#L1581) — partially implemented.

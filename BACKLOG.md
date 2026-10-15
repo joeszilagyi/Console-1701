@@ -1648,7 +1648,7 @@ multi-source public-impact events.
 
 ### GLOBAL UI Disabled States
 
-Status: not implemented.
+Status: partially implemented.
 
 Replace GLOBAL placeholders only after storage/config support exists. Show honest states for
 disabled, not configured, configured but disabled, never scanned, stale, policy blocked, parser
@@ -1656,15 +1656,26 @@ failed, auth required, rate limited, social disabled, homepage extraction disabl
 disabled, token/account source not configured, and manual-review-only sources. Do not show fake
 headlines.
 
+Current state: the shared scope page already renders GLOBAL state, source health, and real stored
+items without placeholder headlines. Dedicated GLOBAL coverage for heavy open-data and homepage
+extractor gate states is missing, and source cards show only the first six configured sources.
+
 ### GLOBAL Source Health States
 
-Status: not implemented.
+Status: partially implemented.
 
 Implement source health states for GLOBAL: `disabled`, `not_configured`, `configured_never_run`,
 `healthy`, `stale`, `failing`, `parser_failed`, `policy_blocked`, `robots_blocked`,
 `auth_required`, `rate_limited`, `unsupported`, `manual_review_only`,
 `heavy_open_data_disabled`, `social_disabled`, and `homepage_extract_disabled`. Surface these
 states in SYSTEM later and summarize them on GLOBAL.
+
+Current state: shared health reporting covers disabled, never-run, healthy, stale, parser failure,
+policy block, auth required, rate limit, robots block, manual review, unsupported, and social block.
+It does not yet expose dedicated `heavy_open_data_disabled` or
+`homepage_extract_disabled` GLOBAL states. The current GLOBAL config rejects several gated
+sources before they can appear in a source-health list, so the UI and validation contract need a
+coherent blocked-source path.
 
 ### GLOBAL Evidence Drawer Contract
 
