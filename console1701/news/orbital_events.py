@@ -26,6 +26,15 @@ def _time(value: Any) -> datetime | None:
     return parsed.astimezone(UTC) if parsed.tzinfo else parsed.replace(tzinfo=UTC)
 
 
+def orbital_independent_family(value: Any) -> str:
+    family = _normalized(value).replace(" ", "_")
+    if family in {"nasa", "jpl"} or family.startswith(("nasa_", "jpl_")):
+        return "nasa"
+    if family == "esa" or family.startswith("esa_"):
+        return "esa"
+    return family or "unknown"
+
+
 def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     evidence = item.get("evidence") or {}
     identity = evidence.get("orbital_identity") or {}
@@ -68,7 +77,9 @@ def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         "context": {key: value for key, value in context.items() if value},
         "tokens": set(_TOKEN_RE.findall(str(item.get("title") or "").lower())) - _STOPWORDS,
         "published_at": _time(item.get("source_published_at") or item.get("first_seen_at")),
-        "family": _normalized((evidence.get("source") or {}).get("source_family")) or "unknown",
+        "family": orbital_independent_family(
+            (evidence.get("source") or {}).get("source_family")
+        ),
         "source_key": str((evidence.get("source") or {}).get("source_key") or ""),
     }
 

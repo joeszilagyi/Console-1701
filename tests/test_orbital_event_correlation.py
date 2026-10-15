@@ -55,6 +55,17 @@ def test_orbital_identity_is_type_scoped_time_bounded_and_not_corroboration():
     assert groups[0]["corroborated"] is False
 
 
+def test_nasa_channel_variants_and_jpl_do_not_count_as_independent_sources():
+    title = "Crew Dragon docks with International Space Station"
+    release = _item(1, "nasa", title)
+    station = _item(2, "nasa_space_station", title)
+    blog = _item(3, "nasa_blogs", title)
+    jpl = _item(4, "jpl_cneos", title)
+    groups = correlate_orbital_items([release, station, blog, jpl])
+    assert [group["item_ids"] for group in groups] == [[1], [2], [3], [4]]
+    assert all(group["families"] == ["nasa"] for group in groups)
+
+
 def test_orbital_mission_context_needs_title_and_complete_link():
     nasa = _item(1, "nasa", "Artemis II crew launches mission",
                  context={"mission_name": "Artemis II"})

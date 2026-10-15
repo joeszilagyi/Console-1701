@@ -13,9 +13,15 @@ with an ORBITAL path and title action, then stores URL, GUID, date, categories, 
 bounded plain-text description. Routine or unrelated stories are skipped. It does not store
 article bodies or treat NASA science news as operational ORBITAL events by default.
 
-The source remains disabled and the exact feed is not live allowlisted. Before live admission,
-check current feed size, conditional requests, cadence, title/path filter recall, and source
-health under an explicit opt-in scan.
+On 2026-10-15, read-only HEAD checks of the news-release feed and the five dedicated feeds
+returned HTTP 200, `application/rss+xml`, `ETag`, and `Last-Modified`. The exact six URL/parser
+pairs are now in the live allowlist, while registry/config defaults remain disabled. A live scan
+requires the explicit news/ORBITAL/source/HTTP switches and `verification_status: verified`.
+Articles older than seven days or more than one hour in the future are dropped before storage.
+Mocked-transport tests exercise all six feed parsers, exact URLs, channel/path filters, disabled
+gates, and the old Kennedy-feed case; no live app scan was run. NASA news, station, blog, and JPL
+family variants count as one NASA provenance family for independent-source corroboration, while
+their original channel family remains in source evidence.
 
 Five dedicated NASA feeds were also checked with HTTP 200 and RSS 2.0 parse on 2026-10-15:
 the [Station mission feed](https://www.nasa.gov/missions/station/feed/),
@@ -25,8 +31,8 @@ the [Station mission feed](https://www.nasa.gov/missions/station/feed/),
 [Kennedy blog feed](https://www.nasa.gov/blogs/kennedy/feed/). Their channel titles and canonical
 NASA article links were observed. The older `blogs.nasa.gov` pages redirect to `www.nasa.gov`.
 The registry now points to the exact feeds and the parser applies each feed's channel and path
-boundary. Kennedy's sample feed contained old material, so a future live admission needs a
-content-date freshness gate.
+boundary. Kennedy's sample feed contained old material, which the seven-day live freshness gate
+now drops.
 
 JPL's [RSS directory](https://www.jpl.nasa.gov/rss/) links a news feed, but a direct bounded read
 of that endpoint returned HTTP 403 in this environment. The `science.nasa.gov/feed/` candidate

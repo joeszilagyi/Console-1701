@@ -6,6 +6,8 @@ from collections import Counter
 from datetime import UTC, datetime
 from typing import Any
 
+from console1701.news.orbital_events import orbital_independent_family
+
 
 def _time(value: Any) -> datetime | None:
     if not value:
@@ -107,10 +109,12 @@ def rank_orbital_event(
     signals = [_member_signals(member, observed) for member in members]
     families = list(group.get("families") or [])
     family_counts = Counter(
-        str(signal["source"].get("source_family") or "unknown") for signal in signals
+        orbital_independent_family(signal["source"].get("source_family"))
+        for signal in signals
     )
     official_families = {
-        str(signal["source"].get("source_family")) for signal in signals
+        orbital_independent_family(signal["source"].get("source_family"))
+        for signal in signals
         if signal["source"].get("official_status") == "official"
         and signal["source"].get("source_family")
     }

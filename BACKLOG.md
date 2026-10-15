@@ -2570,16 +2570,18 @@ API, NASA RSS, ESA RSS, and JPL RSS after verification. Require explicit command
 fetches.
 
 Current state: NOAA SWPC alerts, NOAA scales, planetary Kp summary/one-minute, Boulder K-index
-one-minute, and OVATION aurora JSON are exact allowlisted ORBITAL endpoints. Their headers were
-rechecked on 2026-10-15; explicit parent/news/HTTP/source enablement and
+one-minute, OVATION aurora JSON, and six exact NASA RSS feeds are allowlisted ORBITAL endpoints.
+Their headers were rechecked on 2026-10-15; explicit parent/news/HTTP/source enablement and
 `verification_status: verified` are required. Live alerts outside 72 hours are discarded; scales
 have six-hour/96-hour current/forecast windows; K-index keeps latest measurements within six
 hours/one hour and requires K >= 5. OVATION requires configured LOCAL/REGIONAL coordinate windows
 with modeled intensity >= 50, stores no grid, makes no visibility claim, and uses a two-hour
-observation freshness window. Alert validity and cancellation affect active-alert scoring.
-Mocked-transport tests cover source gates, 200/304 handling, provenance, freshness, and offline
-GET. Defaults remain disabled and no live app scan was run. Remaining candidates need endpoint,
-parser, response size, freshness, and policy review; JPL RSS remains unverified here.
+observation freshness window. NASA RSS keeps only seven-day-old or newer source-dated orbital
+stories, and NASA/JPL channel variants do not create false independent corroboration. Alert
+validity and cancellation affect active-alert scoring. Mocked-transport tests cover source gates,
+200/304 handling, provenance, freshness, and offline GET. Defaults remain disabled and no live
+app scan was run. Remaining candidates need endpoint, parser, response size, freshness, and policy
+review; JPL RSS remains unverified here.
 
 ### ORBITAL Launch/Event API Ingest Phase, Disabled By Default
 
