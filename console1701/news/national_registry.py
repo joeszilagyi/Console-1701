@@ -73,6 +73,7 @@ NATIONAL_VERIFICATION_STATUSES = {
     "official_page_seen",
     "unofficial_secondary",
     "user_seeded",
+    "verified",
 }
 NATIONAL_RISK_LEVELS = {"low", "medium", "high"}
 NATIONAL_AUTH_REQUIRED_SOURCE_KEYS = {

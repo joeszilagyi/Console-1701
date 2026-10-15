@@ -1085,8 +1085,8 @@
     "source_family": "usgs",
     "source_class": "official_seismic_volcano",
     "scope": "NATIONAL",
-    "raw_url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php",
-    "expected_access_kind": "public official GeoJSON feed docs",
+    "raw_url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson",
+    "expected_access_kind": "public official GeoJSON summary feed",
     "adapter": "geojson_feed",
     "refresh_interval": "5 min",
     "priority": "90",
@@ -1095,8 +1095,8 @@
     "policy_risk": "low",
     "parser_risk": "medium",
     "retention_sensitivity": "medium",
-    "verification_status": "official_page_seen",
-    "why_it_matters": "Strong first live candidate for U.S. seismic events.",
+    "verification_status": "verified",
+    "why_it_matters": "Exact public USGS M2.5+ day feed; NATIONAL coordinate and magnitude filters.",
     "future_phase": "U6"
   },
   {

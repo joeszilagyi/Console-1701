@@ -1514,7 +1514,17 @@ policy notes, low-public-value penalty, and out-of-scope penalty.
 
 ### NATIONAL Official-Source Live Ingest Phase
 
-Status: not implemented.
+Status: implemented at the first-source boundary; other candidates remain disabled.
+
+The exact official USGS M2.5+ past-day GeoJSON feed is now allowlisted for NATIONAL
+`usgs_eq_geojson` only after every parent, source, verification, magnitude, and HTTP opt-in gate.
+The NATIONAL parser retains only earthquake-type features within coarse U.S./territory coordinate
+regions and at/above its configured threshold; it does not infer cross-border or multi-state
+impact. A bounded isolated explicit live scan returned HTTP 200, healthy source state, and one
+stored NATIONAL item at the default 5.0 threshold. Mocked tests cover default blocking, gate
+rejection, conditional refresh, and no test HTTP. The standing config remains disabled. See
+`docs/project/NATIONAL_USGS_LIVE_SOURCE_SIGNOFF.md`. NWS, CISA, FSIS, FAA and other live candidates
+require their own source-specific verification and admission.
 
 After fixtures, correlation, ranking, retention, source health, and tests exist, add opt-in live
 ingest for one safe official source at a time. First candidates are NWS active alerts, USGS
