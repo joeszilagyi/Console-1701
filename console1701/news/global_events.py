@@ -42,6 +42,7 @@ def global_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     disaster = evidence.get("reliefweb_disaster") or {}
     report = evidence.get("reliefweb_report") or {}
     who = evidence.get("who_don") or {}
+    identity = evidence.get("global_identity") or {}
     identifiers: set[str] = set()
     if gdacs.get("event_id") and gdacs.get("event_type"):
         identifiers.add(
@@ -55,6 +56,13 @@ def global_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     )
     if who.get("don_id"):
         identifiers.add(f"who_don:{_normalized(who['don_id'])}")
+    if (evidence.get("usgs_earthquake") or {}).get("id"):
+        identifiers.add(
+            f"usgs_earthquake:{_normalized(evidence['usgs_earthquake']['id'])}"
+        )
+    for field in ("storm_id", "earthquake_id", "cyber_incident_id"):
+        if identity.get(field):
+            identifiers.add(f"{field}:{_normalized(identity[field])}")
     event_type = _normalized(contract.get("event_type"))
     event_type = _TYPE_ALIASES.get(event_type, event_type.replace(" ", "_"))
     countries = {
@@ -63,11 +71,38 @@ def global_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     }
     if contract.get("geography_basis") != "official_source_fields":
         countries = set()
+    regions = {
+        _normalized(value) for value in contract.get("affected_regions") or []
+        if _normalized(value)
+    }
+    if contract.get("geography_basis") != "official_source_fields":
+        regions = set()
     return {
         "id": int(item["id"]),
         "identifiers": identifiers,
         "event_type": event_type,
         "countries": countries,
+        "regions": regions,
+        "basins": {_normalized(identity["basin"])} if identity.get("basin") else set(),
+        "volcanoes": (
+            {_normalized(identity["volcano_name"])} if identity.get("volcano_name") else set()
+        ),
+        "diseases": {_normalized(identity["disease"])} if identity.get("disease") else set(),
+        "institutions": (
+            {_normalized(identity["institution"])} if identity.get("institution") else set()
+        ),
+        "transport_sectors": (
+            {_normalized(identity["transport_sector"])}
+            if identity.get("transport_sector") else set()
+        ),
+        "cyber_identifiers": {
+            _normalized(value) for value in identity.get("cyber_identifiers") or []
+            if _normalized(value)
+        },
+        "impact_tags": {
+            _normalized(value) for value in contract.get("impact_tags") or []
+            if _normalized(value)
+        },
         "tokens": set(_TOKEN_RE.findall(str(item.get("title") or "").lower())) - _STOPWORDS,
         "published_at": _time(item.get("source_published_at") or item.get("first_seen_at")),
         "family": _normalized((evidence.get("source") or {}).get("source_family")) or "unknown",
@@ -82,7 +117,13 @@ def global_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str]
         return []
     if not left["event_type"] or left["event_type"] != right["event_type"]:
         return []
-    if not left["countries"] or not left["countries"] & right["countries"]:
+    geography = [
+        label for field, label in (
+            ("countries", "country"), ("regions", "region"),
+            ("basins", "basin"), ("volcanoes", "volcano_name"),
+        ) if left[field] & right[field]
+    ]
+    if not geography:
         return []
     if len(left["tokens"] & right["tokens"]) < 2:
         return []
@@ -91,13 +132,24 @@ def global_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str]
     hours = abs((left["published_at"] - right["published_at"]).total_seconds()) / 3600
     if hours > MATCH_WINDOW_HOURS:
         return []
-    return ["event_type", "country", "title_tokens", "time_window", "independent_family"]
+    context = [
+        label for field, label in (
+            ("diseases", "disease"), ("institutions", "institution"),
+            ("transport_sectors", "transport_sector"),
+            ("cyber_identifiers", "cyber_identifier"), ("impact_tags", "impact_tag"),
+        ) if left[field] & right[field]
+    ]
+    return [
+        "event_type", *geography, *context, "title_tokens", "time_window",
+        "independent_family",
+    ]
 
 
 def correlate_global_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Return groups of GLOBAL item ids with auditable pairwise match reasons."""
     signatures = [global_item_signature(item) for item in items if item.get("scope") == "GLOBAL"]
     parents = list(range(len(signatures)))
+    component_members = {index: [index] for index in range(len(signatures))}
 
     def root(index: int) -> int:
         while parents[index] != index:
@@ -110,7 +162,17 @@ def correlate_global_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
         for right in range(left + 1, len(signatures)):
             basis = global_match_basis(signatures[left], signatures[right])
             if basis:
-                parents[root(right)] = root(left)
+                left_root = root(left)
+                right_root = root(right)
+                if left_root != right_root:
+                    if not all(
+                        global_match_basis(signatures[a], signatures[b])
+                        for a in component_members[left_root]
+                        for b in component_members[right_root]
+                    ):
+                        continue
+                    parents[right_root] = left_root
+                    component_members[left_root].extend(component_members.pop(right_root))
                 matches.append({
                     "item_ids": [signatures[left]["id"], signatures[right]["id"]],
                     "basis": basis,

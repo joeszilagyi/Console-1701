@@ -1632,9 +1632,12 @@ title-token, and 96-hour convergence. Same-family title similarity alone cannot 
 event. Cluster evidence records matched item pairs and basis, known source families, identifiers,
 countries, event types, and source-reported versus independently corroborated confidence.
 Cluster scores count only the strongest item from each family, so duplicated same-family items do
-not inflate the total. Remaining work: region/basin, storm, earthquake, volcano, disease,
-institution, transport and cyber identity matching; richer cross-scope routing checks; and
-stronger safeguards against transitive bridge matches across distinct events.
+not inflate the total. A complete-link guard rejects a broad item that would bridge otherwise
+incompatible events. The matcher also accepts parser-supplied verified regions, basins, storm and
+earthquake IDs, volcano names, disease, institution, transport, cyber, and impact-tag context;
+USGS event IDs are recognized from parsed evidence. Remaining work: populate and validate those
+fields in the relevant future source parsers and fixtures, test convergence with their actual
+records, and broaden GLOBAL versus domestic scope-routing coverage.
 
 ### GLOBAL Deterministic Ranking
 

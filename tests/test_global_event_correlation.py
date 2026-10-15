@@ -48,10 +48,9 @@ def test_global_correlation_requires_independent_family_location_type_tokens_and
     groups = correlate_global_items([
         first, convergent, same_family, wrong_country, wrong_type, old, local
     ])
-    assert [group["item_ids"] for group in groups] == [[1, 2, 3], [4], [5], [6]]
-    # Item 3 is joined transitively through independent family 2; the audit trail
-    # never claims a direct match between two GDACS items.
-    assert all(match["item_ids"] != [1, 3] for match in groups[0]["matches"])
+    assert [group["item_ids"] for group in groups] == [[1, 2], [3], [4], [5], [6]]
+    # A same-family title duplicate cannot bridge into an already formed event.
+    assert [match["item_ids"] for match in groups[0]["matches"]] == [[1, 2]]
     assert groups[0]["corroborated"] is True
     assert groups[0]["families"] == ["gdacs", "reliefweb"]
     assert "independent_family" in groups[0]["matches"][0]["basis"]
@@ -74,6 +73,74 @@ def test_global_correlation_shared_official_id_and_unverified_location_rules():
     assert [group["item_ids"] for group in correlate_global_items([
         gdacs_rss, changed_id
     ])] == [[1], [2]]
+
+
+def test_global_correlation_rejects_multi_country_bridge():
+    island_a = _item(1, family="gdacs", country="Island A")
+    broad_report = _item(2, family="reliefweb", country="Island A")
+    broad_report["evidence"]["global"]["affected_countries"].append("Island C")
+    island_c = _item(3, family="wmo", country="Island C")
+    groups = correlate_global_items([island_a, broad_report, island_c])
+    assert [group["item_ids"] for group in groups] == [[1, 2], [3]]
+    assert groups[0]["matches"][0]["basis"][1] == "country"
+
+
+def test_global_correlation_uses_structured_ids_and_verified_region_context():
+    storm_a = _item(1, family="nhc", country="")
+    storm_b = _item(2, family="wmo", country="")
+    for item in (storm_a, storm_b):
+        item["evidence"]["global_identity"] = {
+            "storm_id": "AL012026", "basin": "Atlantic",
+            "institution": "WMO", "transport_sector": "aviation",
+        }
+        item["evidence"]["global"]["affected_regions"] = ["Caribbean"]
+    groups = correlate_global_items([storm_a, storm_b])
+    assert groups[0]["item_ids"] == [1, 2]
+    assert groups[0]["matches"][0]["basis"] == ["shared_event_id"]
+    assert groups[0]["identifiers"] == ["storm_id:al012026"]
+
+    for item in (storm_a, storm_b):
+        item["evidence"]["global_identity"].pop("storm_id")
+    groups = correlate_global_items([storm_a, storm_b])
+    basis = groups[0]["matches"][0]["basis"]
+    assert "region" in basis and "basin" in basis
+    assert "institution" in basis and "transport_sector" in basis
+
+
+def test_global_correlation_uses_volcano_disease_and_cyber_context():
+    volcano_a = _item(
+        1, family="gvs", country="", event_type="Volcanic eruption",
+        title="Mount Example volcanic eruption alert",
+    )
+    volcano_b = _item(
+        2, family="wmo", country="", event_type="Volcanic eruption",
+        title="Mount Example volcanic eruption advisory",
+    )
+    for item in (volcano_a, volcano_b):
+        item["evidence"]["global_identity"] = {"volcano_name": "Mount Example"}
+    assert "volcano_name" in correlate_global_items([
+        volcano_a, volcano_b
+    ])[0]["matches"][0]["basis"]
+
+    disease_a = _item(
+        3, family="who", event_type="outbreak", title="Measles outbreak on Example Island"
+    )
+    disease_b = _item(
+        4, family="ecdc", event_type="outbreak", title="Measles outbreak on Example Island"
+    )
+    for item in (disease_a, disease_b):
+        item["evidence"]["global_identity"] = {"disease": "measles"}
+    assert "disease" in correlate_global_items([
+        disease_a, disease_b
+    ])[0]["matches"][0]["basis"]
+
+    cyber_a = _item(5, family="cisa", title="Incident bulletin one")
+    cyber_b = _item(6, family="enisa", title="Incident bulletin two")
+    for item in (cyber_a, cyber_b):
+        item["evidence"]["global_identity"] = {"cyber_incident_id": "INC-104"}
+    assert correlate_global_items([cyber_a, cyber_b])[0]["matches"][0]["basis"] == [
+        "shared_event_id"
+    ]
 
 
 def test_global_scan_stores_shared_id_event_without_duplicate_family_score(tmp_path, monkeypatch):
