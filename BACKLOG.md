@@ -2505,7 +2505,7 @@ facts, NEO identity, unsupported geography, and persisted scan output.
 
 ### ORBITAL UI Disabled States
 
-Status: partially implemented.
+Status: completed 2026-10-15 for first-pass state presentation.
 
 Replace ORBITAL placeholders only after storage/config support exists. Show honest states for
 disabled, not configured, configured but disabled, never scanned, stale, policy blocked, parser
@@ -2513,21 +2513,29 @@ failed, auth required, rate limited, restricted source disabled, social disabled
 extraction disabled, manual-review-only, token/account source not configured, and source-health
 only. Do not show fake headlines.
 
-Current state: the shared scope page reads SQLite/config, shows honest empty cards and source
-health, and now renders ORBITAL item and cluster evidence including event confidence, source
-families, ranking reasons, impact tags/basis, and mission/object labels. A page test forbids fetch
-and fixture access during GET. Remaining work: expand the distinct ORBITAL source-health states
-and exercise each disabled/error presentation, including SYSTEM summary.
+Current state: the shared ORBITAL and SYSTEM pages read SQLite/config, show honest empty and
+source-health states, and render ORBITAL item and cluster evidence. ORBITAL counts distinguish
+restricted disabled, sensitivity blocked, terms review, scope filter needed, and source-health
+only, alongside auth, parser, social, homepage, rate, robots, and ordinary failure states. Tests
+exercise disabled, not configured, configured disabled, stale, parser failed, rate limited,
+failing, restricted, sensitivity, manual review, auth, policy, homepage, social, and health-only
+views without GET-time fetch or fixture access. No synthetic headline is rendered.
 
 ### ORBITAL Source Health States
 
-Status: not implemented.
+Status: completed 2026-10-15 for first-pass state taxonomy.
 
 Implement source health states for ORBITAL: `disabled`, `not_configured`,
 `configured_never_run`, `healthy`, `stale`, `failing`, `parser_failed`, `policy_blocked`,
 `robots_blocked`, `auth_required`, `rate_limited`, `unsupported`, `manual_review_only`,
 `restricted_source_disabled`, `needs_terms_review`, `needs_scope_filter`, and
 `sensitivity_blocked`. Surface these states in SYSTEM later and summarize them on ORBITAL.
+
+Current state: ORBITAL policy and storage now expose distinct restricted-source-disabled,
+needs-terms-review, needs-scope-filter, sensitivity-blocked, and source-health-only states in
+addition to the shared health taxonomy. Restricted Space-Track and broad tactical catalogs remain
+gated even with broad allowance flags. ORBITAL counters and SYSTEM readiness surface the states;
+tests cover policy precedence, persisted stale/parser/rate/failure states, and blocked access.
 
 ### ORBITAL Evidence Drawer Contract
 
@@ -2610,16 +2618,18 @@ follow-up.
 
 ### Tests For No Page-Load External Fetches
 
-Status: partially implemented.
+Status: completed 2026-10-15 for first-pass ORBITAL/SYSTEM routes.
 
 Add tests proving GET routes and page renders read SQLite/config only and never call ORBITAL
 network fetchers. Include disabled/not configured/stale/failing/auth-required/policy-blocked,
 restricted-source-disabled, social-disabled, homepage-extraction-disabled, source-health-only, and
 parser-failed state tests for ORBITAL and SYSTEM source health.
 
-Current state: `tests/test_orbital_safety_gates.py` exercises ORBITAL and SYSTEM GET/API routes
-with fetch and fixture access forbidden. It covers failing, auth-required, and policy-blocked
-source rows. The remaining state matrix needs explicit route assertions.
+Current state: `tests/test_orbital_safety_gates.py` and
+`tests/test_orbital_source_health_states.py` exercise ORBITAL and SYSTEM GET/API routes with
+fetch and fixture access forbidden. The tests cover disabled, not configured, configured disabled,
+stale, failing, parser failed, rate limited, auth required, policy/restricted/sensitivity blocked,
+social and homepage disabled, manual review, and source-health-only presentations.
 
 ### Tests For No Restricted Source Running Without Explicit Config
 

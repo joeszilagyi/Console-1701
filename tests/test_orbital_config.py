@@ -119,7 +119,7 @@ def test_orbital_topic_social_restricted_and_parser_gates(tmp_path, monkeypatch)
     assert states == {
         "swpc_alerts_json": "policy_blocked",
         "reddit_space": "social_disabled",
-        "celestrak_elements": "policy_blocked",
+        "celestrak_elements": "sensitivity_blocked",
         "nasa_news": "manual_review_only",
     }
 
@@ -147,7 +147,7 @@ def test_orbital_restricted_flags_do_not_admit_generic_tracking_parser(tmp_path)
     config = load_config(path)
     sources = ((config["news"]["scopes"])["ORBITAL"])["sources"]
     by_id = {source["id"]: evaluate_source_policy(config, source) for source in sources}
-    assert by_id["celestrak_elements"]["gate_state"] == "manual_review_only"
+    assert by_id["celestrak_elements"]["gate_state"] == "needs_scope_filter"
     assert by_id["space_track_home"]["gate_state"] == "policy_blocked"
 
 

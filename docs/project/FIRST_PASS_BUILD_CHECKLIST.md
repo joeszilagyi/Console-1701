@@ -142,12 +142,12 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-105** [ORBITAL Deterministic Ranking](../../BACKLOG.md#L1828) — completed 2026-10-15; factor score and reasons persist on ORBITAL events.
 - [ ] **RS-106** [ORBITAL Safety And Sensitivity Rules](../../BACKLOG.md#L1838) — partially implemented; policy gate and hard rendering suppression pass, ingest classification pending.
 - [x] **RS-107** [ORBITAL Local And Global Impact Tag Rules](../../BACKLOG.md#L1847) — completed 2026-10-15; canonical tags have source-backed field-level basis.
-- [ ] **RS-108** [ORBITAL UI Disabled States](../../BACKLOG.md#L1856) — partially implemented; stored evidence renders, state matrix pending.
-- [ ] **RS-109** [ORBITAL Source Health States](../../BACKLOG.md#L1866) — not implemented.
+- [x] **RS-108** [ORBITAL UI Disabled States](../../BACKLOG.md#L1856) — completed 2026-10-15; distinct ORBITAL and SYSTEM states render without GET fetch.
+- [x] **RS-109** [ORBITAL Source Health States](../../BACKLOG.md#L1866) — completed 2026-10-15; restricted, sensitivity, terms, scope-filter, and health-only states are explicit.
 - [ ] **RS-110** [ORBITAL Evidence Drawer Contract](../../BACKLOG.md#L1876) — partially implemented; visible core fields pass, formal impact/diversity basis pending.
 - [ ] **RS-111** [ORBITAL Official-Source Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L1887) — not implemented.
 - [ ] **RS-112** [Documentation For ORBITAL Source Verification](../../BACKLOG.md#L1933) — partially implemented.
-- [ ] **RS-113** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L1948) — partially implemented; remaining source-health state matrix.
+- [x] **RS-113** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L1948) — completed 2026-10-15; ORBITAL/SYSTEM GET state matrix stays offline.
 - [x] **RS-114** [Tests For No Restricted Source Running Without Explicit Config](../../BACKLOG.md#L1957) — completed 2026-10-15; regression gate covers restricted and policy-sensitive candidates.
 - [x] **RS-115** [Tests For No API-Key Source Running Without Config](../../BACKLOG.md#L1966) — completed 2026-10-15; missing keys stop NASA, Space-Track, and future keyed sources.
 - [x] **RS-116** [Tests For No Tactical Satellite Tracking Output](../../BACKLOG.md#L1974) — completed 2026-10-15; candidate and stored-item rendering gates pass.

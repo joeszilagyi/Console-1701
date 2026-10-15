@@ -1,7 +1,7 @@
 {% macro tone_for_state(state) -%}
 {%- if state in ["healthy"] -%}ok
   {%- elif state in ["failing"] -%}critical
-  {%- elif state in ["social_disabled", "homepage_disabled", "homepage_extract_disabled", "heavy_open_data_disabled"] -%}warning
+  {%- elif state in ["social_disabled", "homepage_disabled", "homepage_extract_disabled", "heavy_open_data_disabled", "restricted_source_disabled", "needs_terms_review", "needs_scope_filter", "sensitivity_blocked"] -%}warning
   {%- elif state in ["stale", "configured_never_run", "configured_disabled"] -%}warning
   {%- else -%}muted
   {%- endif -%}
@@ -296,6 +296,13 @@
       {% if state.scope == "GLOBAL" %}
         <div><span>GLOBAL homepage blocked</span><strong>{{ (state.source_state_counts or {}).get("homepage_extract_disabled", 0) }}</strong></div>
         <div><span>Heavy data blocked</span><strong>{{ (state.source_state_counts or {}).get("heavy_open_data_disabled", 0) }}</strong></div>
+      {% endif %}
+      {% if state.scope == "ORBITAL" %}
+        <div><span>Restricted disabled</span><strong>{{ (state.source_state_counts or {}).get("restricted_source_disabled", 0) }}</strong></div>
+        <div><span>Sensitivity blocked</span><strong>{{ (state.source_state_counts or {}).get("sensitivity_blocked", 0) }}</strong></div>
+        <div><span>Terms review</span><strong>{{ (state.source_state_counts or {}).get("needs_terms_review", 0) }}</strong></div>
+        <div><span>Scope filter needed</span><strong>{{ (state.source_state_counts or {}).get("needs_scope_filter", 0) }}</strong></div>
+        <div><span>Health only</span><strong>{{ (state.source_state_counts or {}).get("source_health_only", 0) }}</strong></div>
       {% endif %}
       <div><span>Manual review</span><strong>{{ (state.source_state_counts or {}).get("manual_review_only", 0) }}</strong></div>
       <div><span>Rate limited</span><strong>{{ (state.source_state_counts or {}).get("rate_limited", 0) }}</strong></div>

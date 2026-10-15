@@ -207,13 +207,22 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
             gate_state = "policy_blocked"
         elif orbital_social_blocked:
             gate_state = "social_disabled"
-        elif (
-            orbital_auth_policy_blocked or orbital_restricted_blocked
-            or orbital_tactical_blocked or orbital_topic_blocked
-        ):
+        elif orbital_tactical_blocked:
+            gate_state = "sensitivity_blocked"
+        elif orbital_restricted_blocked:
+            gate_state = "restricted_source_disabled"
+        elif orbital_auth_policy_blocked or orbital_topic_blocked:
             gate_state = "policy_blocked"
         elif orbital_homepage_blocked:
             gate_state = "homepage_disabled"
+        elif orbital_class in {
+            "official_satellite_catalog", "official_conjunction_awareness",
+        }:
+            gate_state = "needs_scope_filter"
+        elif orbital_class == "restricted_auth_candidate":
+            gate_state = "needs_terms_review"
+        elif reference_only and orbital_adapter == "source_health_probe_only":
+            gate_state = "source_health_only"
         elif reference_only and orbital_adapter != "manual_review_only":
             gate_state = "unsupported"
         elif orbital_manual:
