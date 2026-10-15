@@ -173,7 +173,9 @@ def build_rank_result(
         _local_active_alert_state(item, seen, age_hours)
         if scope == "LOCAL" else {"bonus": 0, "state": None, "reason": None}
     )
-    regional_signal = _regional_signal_factors(item) if scope == "REGIONAL" else {
+    regional_signal = _regional_signal_factors(
+        item, seen=seen, health_state=latest_health_state
+    ) if scope == "REGIONAL" else {
         "factors": {}, "reasons": []
     }
     regional_seismic_boost = 0
@@ -346,7 +348,9 @@ def _local_active_alert_state(
     return {"bonus": 0, "state": state, "reason": None}
 
 
-def _regional_signal_factors(item: dict[str, Any]) -> dict[str, Any]:
+def _regional_signal_factors(
+    item: dict[str, Any], *, seen: datetime | None, health_state: str | None
+) -> dict[str, Any]:
     evidence = item.get("evidence") if isinstance(item.get("evidence"), dict) else {}
     contract = (
         evidence.get("regional_event")
@@ -364,6 +368,14 @@ def _regional_signal_factors(item: dict[str, Any]) -> dict[str, Any]:
     nws_rank = nws.get("ranking") if isinstance(nws.get("ranking"), dict) else {}
     wsdot_rank = wsdot.get("ranking") if isinstance(wsdot.get("ranking"), dict) else {}
     county_rank = county.get("ranking") if isinstance(county.get("ranking"), dict) else {}
+    usgs = evidence.get("usgs_earthquake") if isinstance(
+        evidence.get("usgs_earthquake"), dict
+    ) else {}
+    usgs_filter = usgs.get("filter") if isinstance(usgs.get("filter"), dict) else {}
+    active_until = _parse_time(nws.get("ends") or nws.get("expires"))
+    active_alert = bool(
+        nws_rank.get("active_alert") and seen and active_until and active_until > seen
+    )
     public_impact = min(25, max(
         _int_value(nws_rank.get("total_alert_weight")) // 2,
         _int_value(wsdot_rank.get("public_impact_score")) // 2,
@@ -373,6 +385,11 @@ def _regional_signal_factors(item: dict[str, Any]) -> dict[str, Any]:
     factors = {
         "regional_geography_bonus": 8 if geography.get("matched") else 0,
         "regional_public_impact_bonus": public_impact,
+        "regional_active_alert_bonus": 10 if active_alert else 0,
+        "regional_stale_source_penalty": -6 if health_state == "stale" else 0,
+        "regional_out_of_region_penalty": (
+            -30 if usgs and usgs_filter.get("matched") is False else 0
+        ),
         "regional_low_confidence_penalty": -8 if contract.get("confidence") == "low" else 0,
         "regional_privacy_penalty": -20 if privacy.get("low_acuity_private") else 0,
     }
@@ -381,6 +398,12 @@ def _regional_signal_factors(item: dict[str, Any]) -> dict[str, Any]:
         reasons.append("REGIONAL official geography evidence adds 8.")
     if public_impact:
         reasons.append(f"REGIONAL public-impact evidence adds {public_impact}.")
+    if active_alert:
+        reasons.append("REGIONAL NWS alert remains active and adds 10.")
+    if factors["regional_out_of_region_penalty"]:
+        reasons.append("REGIONAL official seismic filter rejects this location; subtract 30.")
+    if factors["regional_stale_source_penalty"]:
+        reasons.append("REGIONAL stale source state subtracts 6.")
     if factors["regional_low_confidence_penalty"]:
         reasons.append("REGIONAL isolated headline confidence subtracts 8.")
     if factors["regional_privacy_penalty"]:
@@ -389,7 +412,8 @@ def _regional_signal_factors(item: dict[str, Any]) -> dict[str, Any]:
 
 
 def apply_regional_cluster_ranking_adjustments(
-    ranking: dict[str, Any], *, family_count: int, same_family_count: int, item_count: int
+    ranking: dict[str, Any], *, family_count: int, same_family_count: int, item_count: int,
+    temporal_proximity_hours: float | None = None,
 ) -> dict[str, Any]:
     factors = dict(ranking.get("factors") or {})
     reasons = [
@@ -400,20 +424,30 @@ def apply_regional_cluster_ranking_adjustments(
         "regional_source_diversity_bonus",
         "regional_cluster_size_bonus",
         "regional_duplicate_family_penalty",
+        "regional_temporal_proximity_bonus",
     ):
         factors.pop(key, None)
     diversity_bonus = min(15, max(0, family_count - 1) * 5)
     size_bonus = min(8, max(0, item_count - 1) * 2)
     duplicate_penalty = -min(8, max(0, same_family_count - 1) * 2)
+    temporal_bonus = (
+        6 if family_count >= 2 and temporal_proximity_hours is not None
+        and temporal_proximity_hours <= 6 else
+        3 if family_count >= 2 and temporal_proximity_hours is not None
+        and temporal_proximity_hours <= 24 else 0
+    )
     factors["regional_source_diversity_bonus"] = diversity_bonus
     factors["regional_cluster_size_bonus"] = size_bonus
     factors["regional_duplicate_family_penalty"] = duplicate_penalty
+    factors["regional_temporal_proximity_bonus"] = temporal_bonus
     if diversity_bonus:
         reasons.append(f"REGIONAL event independent families add {diversity_bonus}.")
     if size_bonus:
         reasons.append(f"REGIONAL event size adds {size_bonus}.")
     if duplicate_penalty:
         reasons.append(f"REGIONAL event same-family duplication subtracts {-duplicate_penalty}.")
+    if temporal_bonus:
+        reasons.append(f"REGIONAL event reports within 24 hours add {temporal_bonus}.")
     return {
         **ranking,
         "score": sum(int(value) for value in factors.values()),

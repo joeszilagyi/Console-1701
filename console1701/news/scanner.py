@@ -2672,6 +2672,7 @@ def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
                 "id": int(row["id"]),
                 "title": str(row["title"]),
                 "family": family,
+                "source_published_at": row["source_published_at"],
                 "evidence": evidence,
                 "rank_score": int(row["rank_score"]),
             }
@@ -2685,6 +2686,14 @@ def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
         cluster_evidence: dict[str, Any] = {"fixture_only": group["fixture_only"]}
         if scope == "REGIONAL":
             family_counts: dict[str, int] = {}
+            published = [
+                stamp for member in group["members"]
+                if (stamp := _safe_parse_time(member["source_published_at"])) is not None
+            ]
+            temporal_hours = (
+                (max(published) - min(published)).total_seconds() / 3600
+                if len(published) == group["item_count"] and len(published) >= 2 else None
+            )
             for member in group["members"]:
                 family = member["family"] or "unknown"
                 family_counts[family] = family_counts.get(family, 0) + 1
@@ -2700,6 +2709,7 @@ def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
                                   if (group["correlation"] or {}).get("corroborated") else 1),
                     same_family_count=family_counts[member["family"] or "unknown"],
                     item_count=group["item_count"],
+                    temporal_proximity_hours=temporal_hours,
                 )
                 evidence["ranking"] = ranking
                 regional = dict(evidence.get("regional") or {})

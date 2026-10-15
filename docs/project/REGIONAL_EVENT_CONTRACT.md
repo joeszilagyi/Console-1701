@@ -38,6 +38,9 @@ show those decisions.
 
 REGIONAL ranking keeps shared recency/priority/health factors, then adds explicit geography,
 public-impact, confidence, privacy, source-diversity, cluster-size, and same-family duplicate factors.
+An active NWS alert receives an expiry-bounded bonus; a stale source and rejected seismic geography
+receive explicit penalties. Corroborated reports receive a bounded publication-time proximity bonus
+when all member timestamps are present. These factors and reasons are stored on each item.
 The cluster adjustment is recalculated from base evidence on every rebuild, so repeated scans do
 not accumulate a bonus. Two items from the same family increase event size but do not count as
 independent corroboration. Current source health uses the shared state model; REGIONAL route tests

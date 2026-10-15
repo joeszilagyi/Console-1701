@@ -229,6 +229,9 @@ def test_regional_scan_correlates_distinct_official_family_reports(tmp_path):
     correlated = [cluster for cluster in scope["clusters"] if cluster["item_count"] == 2]
     assert len(correlated) == 1
     assert correlated[0]["evidence"]["corroborated"] is True
+    assert correlated[0]["evidence"]["member_evidence"][0]["ranking_features"][
+        "regional_temporal_proximity_bonus"
+    ] == 6
     assert "independent_family" in correlated[0]["evidence"]["correlation"]["matches"][0][
         "basis"
     ]

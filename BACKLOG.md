@@ -935,18 +935,23 @@ source families. The remaining regional token families await source parsers; see
 
 ### REGIONAL Deterministic Ranking
 
-Status: partially implemented.
+Status: implemented for first pass.
 
 Implement explainable REGIONAL ranking with recency, official severity, source diversity, temporal
 proximity, public impact, geographic relevance, active alert state, source priority, cluster size,
 privacy penalty, duplicate-family penalty, stale-source penalty, low-confidence penalty, and
 out-of-region penalty. Store score features and ranking reasons in JSON evidence.
 
-Current state: shared deterministic ranking now stores an explicit capped
-`regional_seismic_boost` for registry-backed USGS earthquake fixtures. It now also records
-geography, public-impact, low-confidence, and privacy terms plus recalculated event-size,
-distinct-family, and duplicate-family factors. Broader cross-family matching, nuanced stale-source
-and out-of-region penalties, and sensitivity policy remain pending.
+Current state: shared deterministic ranking stores recency, source priority/health, official
+severity (including a capped USGS seismic boost), geography, public impact, and confidence/privacy
+terms. REGIONAL adds a bounded active NWS alert boost only before its official expiry, an explicit
+stale-source penalty, and an out-of-region seismic guard for rejected filter evidence. Cluster
+rebuilds recalculate event size, genuinely independent family diversity, same-family duplication,
+and temporal proximity from source publication times without accumulating bonuses on repeat scans.
+Every factor and reason is persisted in the item evidence contract and shown in the drawer. The
+out-of-region term normally stays zero because REGIONAL parsers exclude rejected events before
+storage; it is a deterministic guard for malformed or historical stored evidence. New source
+families still need source-specific severity and sensitivity reviews when admitted.
 
 ### REGIONAL Privacy And Public-Impact Rules
 
