@@ -31,6 +31,14 @@ planetary summary records older than six hours, minute records older than one ho
 more than ten minutes in the future. Mocked-transport tests cover those gates and persisted
 provenance; no live app scan was run.
 
-The OVATION candidate remains disabled and outside the live allowlist. Its response can approach
-the current default fetch-size cap; live admission still needs an explicit bounded cap and
-freshness check. The parser's configured coordinate window and model-only wording remain required.
+On 2026-10-15, a read-only HEAD check of OVATION returned HTTP 200, `application/json`,
+`ETag`, `Last-Modified`, and a 919 KB response. The exact endpoint is now in the live allowlist,
+but registry and config defaults remain disabled. Live opt-in requires at least one validated
+LOCAL/REGIONAL coordinate window with a modeled intensity floor of 50, verified status, and
+explicit news/ORBITAL/source/HTTP enablement. The parser stores only a per-window peak and sample
+count, never the full grid or a visibility claim. The scanner drops live model rows older than two
+hours and forecasts outside one hour past to three hours ahead. The current response fits under
+the default 1 MiB cap; if NOAA's grid grows, the scan fails with a bounded payload error until the
+operator explicitly raises the configured cap (still subject to the transport's 4 MiB ceiling).
+Mocked-transport tests cover the location gate, model-only provenance, and freshness. No live app
+scan was run.

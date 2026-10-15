@@ -21,6 +21,7 @@ SWPC_NOAA_SCALES_URL = "https://services.swpc.noaa.gov/products/noaa-scales.json
 SWPC_PLANETARY_K_URL = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json"
 SWPC_PLANETARY_K_1M_URL = "https://services.swpc.noaa.gov/json/planetary_k_index_1m.json"
 SWPC_BOULDER_K_URL = "https://services.swpc.noaa.gov/json/boulder_k_index_1m.json"
+SWPC_OVATION_AURORA_URL = "https://services.swpc.noaa.gov/json/ovation_aurora_latest.json"
 OFFICIAL_SOURCES = {
     ("LOCAL", "nws_active_alerts_api"): (
         NWS_WASHINGTON_ALERTS_URL, "api_json", "nws_alerts_json", "application/geo+json"
@@ -53,6 +54,9 @@ OFFICIAL_SOURCES = {
     ),
     ("ORBITAL", "swpc_boulder_k_json"): (
         SWPC_BOULDER_K_URL, "api_json", "swpc_kp_json", "application/json"
+    ),
+    ("ORBITAL", "swpc_aurora_json"): (
+        SWPC_OVATION_AURORA_URL, "api_json", "swpc_aurora_json", "application/json"
     ),
 }
 MAX_HTTP_BYTES = 4 * 1024 * 1024
@@ -98,6 +102,11 @@ def is_supported_official_source(source: dict[str, Any]) -> bool:
             }
             or _orbital_k_threshold_safe(source.get("min_k_index", 5.0))
         )
+        and (
+            source.get("scope") != "ORBITAL"
+            or source.get("id") != "swpc_aurora_json"
+            or _orbital_aurora_locations_safe(source.get("aurora_locations"))
+        )
     )
 
 
@@ -115,6 +124,24 @@ def _orbital_k_threshold_safe(value: Any) -> bool:
     except (TypeError, ValueError):
         return False
     return isfinite(minimum) and 5.0 <= minimum <= 9.0
+
+
+def _orbital_aurora_locations_safe(value: Any) -> bool:
+    if not isinstance(value, list) or not 1 <= len(value) <= 8:
+        return False
+    try:
+        return all(
+            isinstance(location, dict)
+            and location.get("scope") in {"LOCAL", "REGIONAL"}
+            and bool(str(location.get("name") or "").strip())
+            and 50 <= float(location.get("min_intensity")) <= 100
+            and 0.5 <= float(location.get("radius_degrees")) <= 10
+            and -90 <= float(location.get("latitude")) <= 90
+            and -180 <= float(location.get("longitude")) <= 180
+            for location in value
+        )
+    except (TypeError, ValueError):
+        return False
 
 
 def _bounded_header(headers: Any, name: str) -> str | None:
