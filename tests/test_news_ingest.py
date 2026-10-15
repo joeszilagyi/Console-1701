@@ -930,7 +930,6 @@ def test_run_news_scan_ingests_regional_nws_alert_fixture(tmp_path):
                 - id: nws_active_alerts_wa
                   enabled: true
                   url: "{_file_url(FIXTURE_DIR / "local_nws_alerts.json")}"
-                  zone_ids: [WAZ558]
         """,
     )
 
@@ -978,6 +977,40 @@ def test_run_news_scan_ingests_regional_nws_alert_fixture(tmp_path):
         evidence["ranking"]["factors"]["scope_priority_boost"] == 14
         for evidence in evidence_rows
     )
+
+
+def test_regional_nws_county_filter_survives_config_and_scan(tmp_path):
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        news:
+          enabled: true
+          scopes:
+            REGIONAL:
+              enabled: true
+              sources:
+                - id: nws_active_alerts_wa
+                  enabled: true
+                  url: "{_file_url(FIXTURE_DIR / 'regional_nws_alerts.json')}"
+                  county_codes: ['053033']
+        """,
+    )
+
+    result = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        init_db(conn)
+        rows = conn.execute(
+            "SELECT title, evidence_json FROM news_items WHERE scope = 'REGIONAL'"
+        ).fetchall()
+
+    assert result["status"] == "complete"
+    assert result["item_count"] == 1
+    assert [row["title"] for row in rows] == ["Flood Warning for King County"]
+    evidence = json_loads(str(rows[0]["evidence_json"]), {})
+    assert evidence["nws_alert"]["filter"]["matched_county_codes"] == ["053033"]
+    assert evidence["nws_alert"]["county_area_labels"] == ["King County"]
 
 
 def test_run_news_scan_ingests_national_nws_alert_fixture(tmp_path):

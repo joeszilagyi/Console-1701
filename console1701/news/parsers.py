@@ -2370,11 +2370,17 @@ def _normalize_nws_alert(
     affected_zones = _string_list(properties.get("affectedZones"), max_chars=240)
     geocode = properties.get("geocode") if isinstance(properties.get("geocode"), dict) else {}
     ugc = _string_list(geocode.get("UGC"), max_chars=32)
+    same_codes = _string_list(geocode.get("SAME"), max_chars=16)
+    county_codes = [code for code in same_codes if re.fullmatch(r"0?53\d{3}", code)]
+    county_area_labels = [
+        segment.strip() for segment in area_desc.split(";")
+        if re.search(r"\bCounty\b", segment, re.IGNORECASE)
+    ]
     affected_states = sorted({
         match.group(1)
         for value in [*affected_zones, *ugc]
         for match in _NWS_US_ZONE_RE.finditer(value.upper())
-    })
+    } | ({"WA"} if county_codes else set()))
     instruction = bounded_text(properties.get("instruction"), max_chars=500)
     instruction_url = _nws_official_instruction_url(
         properties.get("instructionUrl") or properties.get("web")
@@ -2423,8 +2429,14 @@ def _normalize_nws_alert(
         "category": properties.get("category"),
         "area_desc": area_desc,
         "affected_zones": affected_zones,
+        "county_codes": county_codes,
+        "county_area_labels": county_area_labels,
         "affected_states": affected_states,
-        "geography_basis": "official_ugc_zone_ids" if affected_states else "area_description_only",
+        "geography_basis": (
+            "official_ugc_zone_ids" if any(
+                _NWS_US_ZONE_RE.search(value.upper()) for value in [*affected_zones, *ugc]
+            ) else "official_same_county_codes" if county_codes else "area_description_only"
+        ),
         "instruction": instruction,
         "instruction_url": instruction_url,
         "source_url": item["url"],
@@ -2463,9 +2475,20 @@ def _nws_alert_matches_scope(source: dict[str, Any], properties: dict[str, Any])
         affected_zones = _string_list(properties.get("affectedZones"), max_chars=240)
         geocode = properties.get("geocode") if isinstance(properties.get("geocode"), dict) else {}
         ugc = _string_list(geocode.get("UGC"), max_chars=32)
+        same_codes = _string_list(geocode.get("SAME"), max_chars=16)
         zone_text = " ".join([*affected_zones, *ugc]).upper()
-        return bool(re.search(r"\bWA[ZC]\d{3}\b", zone_text)) or (
+        in_washington = bool(re.search(r"\bWA[ZC]\d{3}\b", zone_text)) or (
             "washington" in str(properties.get("areaDesc") or "").lower()
+        ) or any(re.fullmatch(r"0?53\d{3}", code) for code in same_codes)
+        if not in_washington:
+            return False
+        filters = _nws_filter_evidence(source, properties)
+        if not any((source.get("zone_ids"), source.get("county_codes"),
+                    source.get("county_keywords"), source.get("area_keywords"))):
+            return True
+        return bool(
+            filters["matched_zone_ids"] or filters["matched_county_codes"]
+            or filters["matched_county_keywords"] or filters["matched_keywords"]
         )
     if scope != "LOCAL":
         return True
@@ -2474,13 +2497,18 @@ def _nws_alert_matches_scope(source: dict[str, Any], properties: dict[str, Any])
 
 
 def _nws_filter_evidence(source: dict[str, Any], properties: dict[str, Any]) -> dict[str, Any]:
+    regional = str(source.get("scope") or "").upper() == "REGIONAL"
     area_keywords = _configured_texts(
         source.get("area_keywords"),
-        default=["Seattle", "King County", "Puget Sound"],
+        default=[] if regional else ["Seattle", "King County", "Puget Sound"],
     )
     zone_ids = _configured_texts(source.get("zone_ids"), default=[])
+    county_codes = _configured_texts(source.get("county_codes"), default=[])
+    county_keywords = _configured_texts(source.get("county_keywords"), default=[])
     area_desc = str(properties.get("areaDesc") or "")
     affected_zones = _string_list(properties.get("affectedZones"), max_chars=240)
+    geocode = properties.get("geocode") if isinstance(properties.get("geocode"), dict) else {}
+    same_codes = _string_list(geocode.get("SAME"), max_chars=16)
     area_lower = area_desc.lower()
     matched_keywords = [keyword for keyword in area_keywords if keyword.lower() in area_lower]
     matched_zone_ids = [
@@ -2491,7 +2519,13 @@ def _nws_filter_evidence(source: dict[str, Any], properties: dict[str, Any]) -> 
     return {
         "area_keywords": area_keywords,
         "zone_ids": zone_ids,
+        "county_codes": county_codes,
+        "county_keywords": county_keywords,
         "matched_keywords": matched_keywords,
+        "matched_county_codes": [code for code in county_codes if code in same_codes],
+        "matched_county_keywords": [
+            county for county in county_keywords if county.lower() in area_lower
+        ],
         "matched_zone_ids": matched_zone_ids,
     }
 

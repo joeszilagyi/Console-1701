@@ -10,6 +10,46 @@ from console1701.news.parsers import NewsParserError, parse_fixture_items
 from console1701.news.ranking import build_rank_result
 
 
+def test_regional_nws_fixture_preserves_official_county_zone_and_alert_evidence() -> None:
+    source = {
+        "id": "nws_active_alerts_wa", "scope": "REGIONAL", "kind": "api_json",
+        "parser": "nws_alerts_json",
+    }
+    fixture = (
+        Path(__file__).resolve().parent / "fixtures/news/regional_nws_alerts.json"
+    ).read_text()
+    items = parse_fixture_items(source, fixture)
+
+    assert [item["evidence"]["nws_alert"]["id"] for item in items] == [
+        "regional-king-flood", "regional-spokane-wind"
+    ]
+    king = items[0]["evidence"]["nws_alert"]
+    assert king["county_codes"] == ["053033"]
+    assert king["county_area_labels"] == ["King County"]
+    assert king["affected_states"] == ["WA"]
+    assert king["affected_zones"] == ["https://api.weather.gov/zones/forecast/WAZ558"]
+    assert king["effective"] == "2026-10-15T11:00:00+00:00"
+    assert king["expires"] == "2026-10-16T11:00:00+00:00"
+    assert king["instruction_url"] == "https://www.weather.gov/sew/"
+    assert king["ranking"]["total_alert_weight"] > 0
+
+    county_items = parse_fixture_items({**source, "county_codes": ["053033"]}, fixture)
+    assert [item["title"] for item in county_items] == ["Flood Warning for King County"]
+    zone_items = parse_fixture_items({**source, "zone_ids": ["WAZ036"]}, fixture)
+    assert [item["title"] for item in zone_items] == ["Wind Advisory for Spokane County"]
+    out_of_region = parse_fixture_items({**source, "county_keywords": ["Oregon"]}, fixture)
+    assert out_of_region == []
+
+    same_only = json.loads(fixture)
+    same_only["features"] = [dict(same_only["features"][0])]
+    same_only["features"][0]["properties"] = dict(same_only["features"][0]["properties"])
+    same_only["features"][0]["properties"]["affectedZones"] = []
+    same_only["features"][0]["properties"]["geocode"] = {"SAME": ["053033"]}
+    county_item = parse_fixture_items(source, json.dumps(same_only))[0]["evidence"]["nws_alert"]
+    assert county_item["affected_states"] == ["WA"]
+    assert county_item["geography_basis"] == "official_same_county_codes"
+
+
 def test_national_nws_fixture_preserves_territory_and_official_instructions() -> None:
     source = {
         "id": "nws_active_alerts_api",
