@@ -166,7 +166,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-126** [NASA Exoplanet Archive Tiny Metadata Parser](../../BACKLOG.md#L2074) — fixture-only bounded PS JSON parser with exact columns, ten-row/seven-day caps, update-date semantics, and no catalog download.
 - [x] **RS-127** [MAST Tiny Metadata Parser](../../BACKLOG.md#L2083) — fixture-only bounded CAOM parser with exact columns, target/time/page caps, observation identity, and no product requests.
 - [x] **RS-128** [PDS Metadata-Only Parser](../../BACKLOG.md#L2091) — fixture-only exact collection lookup with mission/target/version, honest harvest-date semantics, optional source count, and no member/product traversal.
-- [ ] **RS-129** [GCN Notice Fixture Parser](../../BACKLOG.md#L2099) — not implemented.
+- [x] **RS-129** [GCN Notice Fixture Parser](../../BACKLOG.md#L2099) — fixture-only unified-schema parser with IDs, times, coordinates, preliminary/retraction states, and no sky-map or live transport.
 - [x] **RS-130** [GCN Circular Source Verification](../../BACKLOG.md#L2107) — official schema and archive classified; no narrow API verified, bulk export blocked, and metadata/privacy/status contract recorded.
 - [ ] **RS-131** [ATel RSS Parser](../../BACKLOG.md#L2115) — not implemented.
 - [x] **RS-132** [GraceDB/LIGO Public Alert Policy Design](../../BACKLOG.md#L2132) — public REST versus authenticated Kafka, bounded query, status/retraction, rate, and no-sky-map-download policy recorded.

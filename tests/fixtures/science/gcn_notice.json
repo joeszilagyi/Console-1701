@@ -1,0 +1,14 @@
+{
+  "$schema": "https://gcn.nasa.gov/schema/v7.2.3/gcn/notices/dsa110/frb.schema.json",
+  "alert_type": "initial",
+  "alert_tense": "current",
+  "alert_datetime": "2026-10-15T18:00:00Z",
+  "trigger_time": "2026-10-15T17:59:10Z",
+  "event_name": "FRB 20261015A",
+  "id": "261015aaaa",
+  "mission": "DSA-110",
+  "instrument": "DSA-110",
+  "ra": 346.7785,
+  "dec": 12.6325,
+  "healpix_file": "ignored base64 sky-map payload"
+}

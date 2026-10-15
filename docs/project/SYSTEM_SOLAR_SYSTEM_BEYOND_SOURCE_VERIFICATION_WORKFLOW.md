@@ -148,3 +148,12 @@ HTTP 200 JSON after redirect to another NASA PDS host. The fixture parser keeps 
 identity, mission, target, version, and registry harvest time only; it neither traverses
 `/members` nor treats the harvest timestamp as a release date. Live access remains blocked
 pending exact URL/redirect, source-use, and heavy-archive signoff.
+
+GCN's [unified notice guide](https://gcn.nasa.gov/docs/notices/schema) and official
+[Alert](https://gcn.nasa.gov/docs/schema/v7.1.0/gcn/notices/core/Alert.schema.json),
+[Event](https://gcn.nasa.gov/docs/schema/v7.1.0/gcn/notices/core/Event.schema.json),
+and [Localization](https://gcn.nasa.gov/docs/schema/v7.1.0/gcn/notices/core/Localization.schema.json)
+definitions support a local metadata fixture parser. It preserves source-provided alert type,
+event/trigger ID, times, mission/instrument and coordinates while dropping sky-map content.
+The [notice transport guide](https://gcn.nasa.gov/docs/notices) lists Kafka/email subscription
+paths, so this parser is fixture-only and has no live transport or verified notice permalink.
