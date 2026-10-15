@@ -23,6 +23,8 @@ FAILING_SOURCE_HEALTH_STATES = {
     "auth_required",
     "failing",
     "homepage_disabled",
+    "homepage_extract_disabled",
+    "heavy_open_data_disabled",
     "manual_review_only",
     "parser_failed",
     "policy_blocked",
@@ -47,6 +49,8 @@ SOURCE_HEALTH_STATE_MESSAGES = {
         "LOCAL social source is blocked until local.allow_social_sources is enabled."
     ),
     "homepage_disabled": "Homepage extraction is disabled by config.",
+    "homepage_extract_disabled": "GLOBAL homepage extraction is disabled by config.",
+    "heavy_open_data_disabled": "GLOBAL heavy open-data source is disabled by config.",
     "manual_review_only": "Source is gated for manual review in this phase.",
     "unsupported": "Source is configured in an unsupported way for this phase.",
 }
@@ -97,6 +101,11 @@ def _base_source_state(
         return "disabled", SOURCE_HEALTH_STATE_MESSAGES["disabled"]
     if policy.get("auth_required") and not policy.get("auth_configured"):
         return "auth_required", SOURCE_HEALTH_STATE_MESSAGES["auth_required"]
+    global_gate_state = str(policy.get("gate_state") or "")
+    if global_gate_state:
+        return global_gate_state, SOURCE_HEALTH_STATE_MESSAGES.get(
+            global_gate_state, SOURCE_HEALTH_STATE_MESSAGES["policy_blocked"]
+        )
     if policy.get("social_source_blocked"):
         if policy.get("scope") == "GLOBAL":
             return "social_disabled", "GLOBAL social source allowance is disabled."
@@ -721,6 +730,10 @@ def get_news_config_warnings(config: dict[str, Any]) -> list[str]:
         url = str(source.get("url") or "").strip()
         if source.get("enabled") and not url:
             warnings.append(f"{source_key} is enabled but has no URL configured.")
+        elif source.get("enabled") and policy.get("gate_state"):
+            warnings.append(
+                f"{source_key} is enabled but blocked by {policy['gate_state']} policy."
+            )
         elif source.get("enabled") and policy.get("policy_state") == "blocked_fixture_phase":
             warnings.append(
                 f"{source_key} is enabled but blocked by the official HTTP opt-in or allowlist."

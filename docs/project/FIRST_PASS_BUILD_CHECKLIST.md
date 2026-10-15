@@ -112,14 +112,14 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-078** [GLOBAL Deterministic Event Correlation](../../BACKLOG.md#L1485) — not implemented.
 - [ ] **RS-079** [GLOBAL Deterministic Ranking](../../BACKLOG.md#L1494) — not implemented.
 - [ ] **RS-080** [GLOBAL Low-Public-Value, Rumor, And Public-Impact Rules](../../BACKLOG.md#L1504) — not implemented.
-- [ ] **RS-081** [GLOBAL UI Disabled States](../../BACKLOG.md#L1515) — partial: shared GLOBAL page shows stored/source states; dedicated gated-source messaging and breadth remain.
-- [ ] **RS-082** [GLOBAL Source Health States](../../BACKLOG.md#L1525) — partial: shared states work; heavy/homepage gate states and pre-validation visibility remain.
+- [ ] **RS-081** [GLOBAL UI Disabled States](../../BACKLOG.md#L1515) — partial: shared page shows real items and dedicated heavy/homepage gate counts; wider state matrix and source-list breadth remain.
+- [ ] **RS-082** [GLOBAL Source Health States](../../BACKLOG.md#L1525) — partial: new heavy/homepage/manual gate health and fetch states; transition and SYSTEM presentation matrix remains.
 - [ ] **RS-083** [GLOBAL Evidence Drawer Contract](../../BACKLOG.md#L1535) — not implemented.
 - [ ] **RS-084** [GLOBAL Official-Source Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L1545) — not implemented.
 - [ ] **RS-085** [Documentation For Source Verification](../../BACKLOG.md#L1581) — partially implemented.
-- [ ] **RS-086** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L1596) — not implemented.
-- [ ] **RS-087** [Tests For No Heavy Source Running Without Explicit Config](../../BACKLOG.md#L1605) — not implemented.
-- [ ] **RS-088** [Tests For No Token/Account Source Running Without Config](../../BACKLOG.md#L1613) — not implemented.
+- [ ] **RS-086** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L1596) — partial: GLOBAL/SYSTEM/API GETs trapped under gated-source failure matrix; remaining state transitions pending.
+- [x] **RS-087** [Tests For No Heavy Source Running Without Explicit Config](../../BACKLOG.md#L1605) — all 20 heavy registry candidates blocked before file/network access.
+- [x] **RS-088** [Tests For No Token/Account Source Running Without Config](../../BACKLOG.md#L1613) — known auth/account/social candidates blocked before file/network access.
 
 ### ORBITAL Space Recent Signal Layer
 

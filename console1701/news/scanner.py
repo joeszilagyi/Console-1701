@@ -73,6 +73,14 @@ class AuthRequiredError(NewsIngestError):
     """A configured source requires local credential material before ingest."""
 
 
+class SourceGateError(NewsIngestError):
+    """A configured GLOBAL source is blocked before file or network access."""
+
+    def __init__(self, state: str, message: str) -> None:
+        super().__init__(message)
+        self.state = state
+
+
 def run_news_scan(config_path: str | Path | None = None) -> dict[str, Any]:
     config = load_config(config_path)
     ensure_state_dirs(config)
@@ -544,6 +552,11 @@ def _ingest_source(
         policy = _policy_for_source(config, source)
         if policy.get("auth_required") and not policy.get("auth_configured"):
             raise AuthRequiredError("Source requires local auth material before ingest.")
+        if policy.get("gate_state"):
+            raise SourceGateError(
+                str(policy["gate_state"]),
+                f"GLOBAL source blocked by {policy['gate_state']} policy gate.",
+            )
         is_live = _is_allowed_live_source(config, source)
         fetch_evidence: dict[str, Any]
         fetch_columns: dict[str, Any] = {}
@@ -690,6 +703,18 @@ def _ingest_source(
             source_id,
             source,
             status="auth_required",
+            error_class=type(exc).__name__,
+            error_message=str(exc),
+            message=str(exc),
+        )
+        raise
+    except SourceGateError as exc:
+        _record_source_failure(
+            conn,
+            run_id,
+            source_id,
+            source,
+            status=exc.state,
             error_class=type(exc).__name__,
             error_message=str(exc),
             message=str(exc),

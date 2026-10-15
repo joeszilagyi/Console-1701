@@ -20,6 +20,7 @@ from console1701.news.global_registry import (
     list_global_source_registry,
 )
 from console1701.news.scanner import run_news_scan
+from console1701.news.source_policy import evaluate_source_policy
 from console1701.news.storage import get_news_storage_summary
 
 
@@ -134,26 +135,46 @@ def test_global_config_flags_and_thresholds_are_validated(tmp_path):
             load_config(_write_config(tmp_path / "invalid.yml", invalid))
 
 
-def test_global_social_heavy_homepage_auth_and_conflict_gates(tmp_path):
+def test_global_social_heavy_homepage_gates_remain_visible_in_source_health(tmp_path):
     cases = (
         (
             "social",
-            "{id: reddit_worldnews, kind: rss}",
-            "GLOBAL social source",
+            "{id: reddit_worldnews, kind: rss, enabled: true}",
+            "social_disabled",
             "global: {include_social_sources: true}",
         ),
         (
             "heavy",
-            "{id: hdx_home, kind: api_json}",
-            "allow_heavy_open_data_sources true",
+            "{id: hdx_home, kind: api_json, enabled: true}",
+            "heavy_open_data_disabled",
             "global: {allow_heavy_open_data_sources: true}",
         ),
         (
             "homepage",
-            "{id: gdacs_home}",
-            "global.allow_homepage_extractors true",
+            "{id: gdacs_home, enabled: true}",
+            "homepage_extract_disabled",
             "global: {allow_homepage_extractors: true}",
         ),
+    )
+    for label, source, blocked_state, allowed_global in cases:
+        shared_policy = "news: {fetch_policy: {allow_homepage_extractors: true}, "
+        blocked_text = "global: {}\n" + shared_policy + (
+            f"scopes: {{GLOBAL: {{sources: [{source}]}}}}}}"
+        )
+        blocked = load_config(_write_config(tmp_path / f"{label}-blocked.yml", blocked_text))
+        blocked_source = iter_news_sources(blocked)[0]
+        assert evaluate_source_policy(blocked, blocked_source)["gate_state"] == blocked_state
+
+        allowed_text = allowed_global + "\n" + shared_policy + (
+            f"scopes: {{GLOBAL: {{sources: [{source}]}}}}}}"
+        )
+        allowed = load_config(_write_config(tmp_path / f"{label}-allowed.yml", allowed_text))
+        allowed_source = iter_news_sources(allowed)[0]
+        assert evaluate_source_policy(allowed, allowed_source)["gate_state"] != blocked_state
+
+
+def test_global_auth_and_conflict_config_require_explicit_gates(tmp_path):
+    cases = (
         (
             "auth",
             "{id: nasa_firms_api, enabled: true}",
