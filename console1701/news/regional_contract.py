@@ -29,6 +29,7 @@ def build_regional_event_contract(
     usgs = evidence.get("usgs_earthquake")
     nws = evidence.get("nws_alert")
     wsdot = evidence.get("wsdot_alert")
+    water = evidence.get("usgs_water")
     identity = f"isolated:{source.get('id')}:{hashed_url}"
     event_type = "regional_headline"
     matching_basis = "isolated_url"
@@ -71,6 +72,19 @@ def build_regional_event_contract(
         }
         match_tokens = [str(nws["id"])[:120], *zone_ids[:8]]
         public_impact_basis = "NWS severity, urgency, and active-alert state"
+    elif isinstance(water, dict) and water.get("gauge_id"):
+        identity = f"usgs-water:{water['gauge_id']}:{water.get('observation_timestamp')}"
+        event_type = "hydrology_observation"
+        matching_basis = "official_gauge_id_and_observation_time"
+        confidence = "high"
+        geography = {
+            "basis": "official_station_huc_and_county",
+            "matched": bool((water.get("filter") or {}).get("matched")),
+            "county": water.get("county"),
+            "river_basin": water.get("huc8"),
+        }
+        match_tokens = [str(water["gauge_id"])[:120], str(water.get("huc8") or "")]
+        public_impact_basis = "Observation only; no USGS flood-stage threshold in fixture"
     elif isinstance(wsdot, dict) and wsdot.get("alert_id"):
         identity = f"wsdot-alert:{wsdot['alert_id']}"
         event_type = "traveler_alert"

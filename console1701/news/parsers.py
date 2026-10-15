@@ -202,6 +202,10 @@ def parse_fixture_items(
         return _parse_nws_alerts_json(source, payload_text)
     if parser_name == "usgs_earthquake_geojson":
         return _parse_usgs_earthquake_geojson(source, payload_text)
+    if parser_name == "usgs_water_latest_fixture":
+        from console1701.news.regional_water import parse_usgs_water_latest_fixture
+
+        return parse_usgs_water_latest_fixture(source, payload_text)
     if parser_name == "gdacs_rss":
         return _parse_gdacs_rss(source, payload_text)
     if parser_name == "ecdc_rss":
