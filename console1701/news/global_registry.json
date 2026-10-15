@@ -801,6 +801,26 @@
     "future_phase": "G8"
   },
   {
+    "source_key": "iaea_topnews_rss",
+    "source_name": "IAEA Top News RSS",
+    "source_family": "iaea",
+    "source_class": "official_nuclear_safety",
+    "scope": "GLOBAL",
+    "raw_url": "https://www.iaea.org/feeds/topnews",
+    "expected_access_kind": "public official RSS feed",
+    "adapter": "rss_atom",
+    "refresh_interval": "60 min",
+    "priority": "65",
+    "official_status": "official",
+    "privacy_risk": "low",
+    "policy_risk": "low",
+    "parser_risk": "medium",
+    "retention_sensitivity": "medium",
+    "verification_status": "official_feed_seen",
+    "why_it_matters": "Official nuclear safety and institution news metadata; live remains disabled.",
+    "future_phase": "G7"
+  },
+  {
     "source_key": "iaea_news",
     "source_name": "IAEA news",
     "source_family": "iaea",

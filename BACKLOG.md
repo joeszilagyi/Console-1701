@@ -1555,8 +1555,8 @@ refresh interval, priority, official status, privacy risk, policy risk, parser r
 sensitivity, verification status, source-health behavior, and future phase fields. Validate enum
 values and keep every GLOBAL source disabled until explicitly configured.
 
-Current state: `console1701/news/global_registry.json` contains all 172 GLOBAL source targets from
-the checked-in design inventory, preserving provenance, access, risk, verification, priority, and
+Current state: `console1701/news/global_registry.json` contains all 172 original GLOBAL source
+targets plus one verified IAEA Top News RSS entry, preserving provenance, access, risk, verification, priority, and
 future-phase fields. The loader validates scope, URL shape, enum values, and duplicate keys, and
 adds source-health planning behavior. Config defaults remain disabled, known metadata fields reject
 unknown values, and explicit `news-scan` persists the inventory in `news_source_registry`. This is
@@ -1590,7 +1590,7 @@ impact tags, retention purge evidence, and source verification metadata. Use JSO
 indexes for latest-by-scope, event ranking, source health, source family, event type, affected
 country/region, and `expires_at` purge. Do not store full article bodies by default.
 
-Current state: the shared scoped source registry stores all 172 GLOBAL inventory rows and exposes a
+Current state: the shared scoped source registry stores all 173 GLOBAL inventory rows and exposes a
 GLOBAL registry summary. Shared source, fetch, item, health, cluster, and retention tables persist
 GLOBAL records without full article bodies. `news_item_facets` indexes country, verified region,
 event type, source family, impact tag, and explicit sensitivity flags; it backfills existing GLOBAL
@@ -1805,7 +1805,15 @@ URL, publication time, organ/category where available, and official institution 
 
 ### IAEA RSS Parser
 
-Status: not implemented.
+Status: implemented for first-pass GLOBAL fixture ingest; live disabled.
+
+The official IAEA Top News RSS endpoint and its numeric GUID, HTTP article URL, category-when-
+available, and timezone-free publication date shape were checked. `iaea_rss` canonicalizes official
+article links to HTTPS, stores a bounded description and explicit day-precision date evidence,
+and retains narrow nuclear emergency titles or Director General situation updates matching a
+configured active crisis. Routine training, science, and institutional content is suppressed.
+The parser stores source, institution, and cautious nuclear-safety ranking evidence; a synthetic
+fixture and offline scan test pass. See `docs/project/GLOBAL_IAEA_RSS_SOURCE_VERIFICATION.md`.
 
 Build a fixture-first IAEA RSS parser for nuclear safety and international nuclear institution
 signals. Preserve title, URL, publication time, category when available, bounded description,
