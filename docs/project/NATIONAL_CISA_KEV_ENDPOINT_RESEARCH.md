@@ -1,7 +1,7 @@
 # CISA KEV machine-readable endpoint research
 
-Reviewed 2026-10-15 for RS-046. Decision: **JSON catalog and schema verified; KEV ingest stays
-disabled pending a fixture parser and a separate live-source signoff**.
+Reviewed 2026-10-15 for RS-046. Decision: **JSON catalog and schema verified; an offline fixture
+parser is implemented, while live KEV ingest stays disabled pending a separate signoff**.
 
 ## Ownership and access
 
@@ -49,10 +49,22 @@ publication guarantee. The next live signoff must verify redirects, current term
 robots guidance, response-size growth, conditional 304 behavior, allowed cadence, and exact URL
 allowlisting.
 
-For future ingest, a 304 should mean a healthy unchanged catalog, while malformed JSON, schema
+For future live ingest, a 304 should mean a healthy unchanged catalog, while malformed JSON, schema
 failure, duplicate CVE or count mismatch should be `parser_failed` and retain the last good
 snapshot under retention. Network failure should be `failing` or `stale`; 429 should be
 `rate_limited`; an auth response should be `auth_required`. An unexpectedly empty catalog should
 not wipe prior rows. Show catalog admission separately from remediation due date and use
 source-provided fields for cyber ranking. A KEV entry without local applicability evidence belongs
 in NATIONAL context, not a claim of host compromise.
+
+## Offline fixture adapter
+
+`cisa_kev_json` now validates the nonempty snapshot envelope, count, unique CVE IDs and calendar
+dates. It preserves bounded title/description/action fields, `Known` versus `Unknown` ransomware
+evidence, forensic-triage flag, CWE list, catalog version and release time. Each CVE gets a CISA
+catalog search URL for a distinct item identity; this is a search link, not a guaranteed per-row
+permalink. The shared NATIONAL ranking adds a capped cyber factor, and indexed facets label CISA
+and cybersecurity. The synthetic fixture covers two records and an offline `news-scan`; tests
+confirm that an empty or inconsistent snapshot fails rather than deleting prior entries. The
+parser records `local_applicability: unknown` and labels the due date as a federal civilian
+executive branch deadline. It does not fetch the live catalog.

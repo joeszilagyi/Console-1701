@@ -1159,6 +1159,46 @@ def test_run_news_scan_ingests_national_nhtsa_recall_fixture(tmp_path):
                for row in evidence_rows)
 
 
+def test_run_news_scan_ingests_national_cisa_kev_fixture(tmp_path):
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        news:
+          enabled: true
+          scopes:
+            NATIONAL:
+              enabled: true
+              sources:
+                - id: cisa_kev
+                  name: CISA KEV fixture
+                  kind: api_json
+                  parser: cisa_kev_json
+                  source_family: cisa
+                  official_status: official
+                  tags: [official]
+                  enabled: true
+                  url: "{_file_url(FIXTURE_DIR / 'national_cisa_kev.json')}"
+        """,
+    )
+    result = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        rows = conn.execute(
+            "SELECT evidence_json FROM news_items WHERE scope = 'NATIONAL' ORDER BY id"
+        ).fetchall()
+        agency_items = list_national_items_by_facet(conn, "agency", "CISA")
+        sector_items = list_national_items_by_facet(conn, "sector", "cybersecurity")
+    assert result["status"] == "complete"
+    assert result["item_count"] == 2
+    assert len(rows) == len(agency_items) == len(sector_items) == 2
+    evidence_rows = [json_loads(row["evidence_json"], {}) for row in rows]
+    assert {row["cisa_kev"]["cve_id"] for row in evidence_rows} == {
+        "CVE-2026-12345", "CVE-2026-12346"
+    }
+    assert all(row["ingest"]["fixture_only"] is True for row in evidence_rows)
+
+
 def test_run_news_scan_uses_national_usgs_threshold_for_fixture(tmp_path):
     config_path = _write_config(
         tmp_path / "config.yml",

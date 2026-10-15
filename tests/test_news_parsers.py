@@ -59,6 +59,53 @@ def test_national_nhtsa_recall_fixture_groups_campaign_and_preserves_safety_evid
         parse_fixture_items({**source, "scope": "LOCAL"}, fixture)
 
 
+def test_national_cisa_kev_fixture_preserves_dates_and_cyber_evidence() -> None:
+    source = {
+        "id": "cisa_kev", "scope": "NATIONAL", "kind": "api_json",
+        "parser": "cisa_kev_json", "source_family": "cisa",
+    }
+    fixture = (
+        Path(__file__).resolve().parent / "fixtures/news/national_cisa_kev.json"
+    ).read_text()
+    items = parse_fixture_items(source, fixture)
+    assert len(items) == 2
+    first = items[0]
+    evidence = first["evidence"]["cisa_kev"]
+    assert evidence["cve_id"] == "CVE-2026-12345"
+    assert evidence["date_added"] == "2026-10-15"
+    assert evidence["due_date"] == "2026-10-18"
+    assert evidence["date_precision"] == "day"
+    assert evidence["due_date_applies_to"] == "federal_civilian_executive_branch"
+    assert evidence["known_ransomware_campaign_use"] == "Known"
+    assert evidence["forensic_triage"] == "Yes"
+    assert evidence["local_applicability"] == "unknown"
+    assert evidence["ranking"]["cyber_score"] == 22
+    assert first["url"].endswith("search_api_fulltext=CVE-2026-12345")
+    assert items[1]["evidence"]["cisa_kev"]["ranking"]["cyber_score"] == 10
+    assert items[1]["evidence"]["cisa_kev"]["known_ransomware_campaign_use"] == "Unknown"
+
+    rank = build_rank_result(source, first, seen_at="2026-10-15T18:00:00+00:00",
+                             combined_tags=first["tags"], latest_health_state="healthy",
+                             repeat_count=0)
+    assert rank["factors"]["national_cyber_bonus"] == 22
+
+    malformed = json.loads(fixture)
+    malformed["count"] = 1
+    with pytest.raises(NewsParserError, match="matching snapshot envelope"):
+        parse_fixture_items(source, json.dumps(malformed))
+    malformed["count"] = 2
+    malformed["vulnerabilities"][1]["cveID"] = "CVE-2026-12345"
+    with pytest.raises(NewsParserError, match="duplicate CVE"):
+        parse_fixture_items(source, json.dumps(malformed))
+    malformed = json.loads(fixture)
+    del malformed["vulnerabilities"][0]["shortDescription"]
+    with pytest.raises(NewsParserError, match="lacks required fields"):
+        parse_fixture_items(source, json.dumps(malformed))
+    with pytest.raises(NewsParserError, match="nonempty"):
+        parse_fixture_items(source, '{"count": 0, "catalogVersion": "1", '
+                            '"dateReleased": "2026-10-15", "vulnerabilities": []}')
+
+
 def test_regional_nws_fixture_preserves_official_county_zone_and_alert_evidence() -> None:
     source = {
         "id": "nws_active_alerts_wa", "scope": "REGIONAL", "kind": "api_json",

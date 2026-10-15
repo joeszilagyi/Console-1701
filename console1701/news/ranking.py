@@ -186,6 +186,7 @@ def build_rank_result(
                     55, max(0, _int_value(seismic_ranking.get("regional_seismic_weight")))
                 )
     national_vehicle_safety_bonus = 0
+    national_cyber_bonus = 0
     if scope == "NATIONAL":
         item_evidence = item.get("evidence") if isinstance(item.get("evidence"), dict) else {}
         recall = item_evidence.get("nhtsa_recall")
@@ -194,6 +195,13 @@ def build_rank_result(
             if isinstance(recall_ranking, dict):
                 national_vehicle_safety_bonus = min(
                     35, max(0, _int_value(recall_ranking.get("vehicle_safety_score")))
+                )
+        kev = item_evidence.get("cisa_kev")
+        if isinstance(kev, dict):
+            kev_ranking = kev.get("ranking")
+            if isinstance(kev_ranking, dict):
+                national_cyber_bonus = min(
+                    22, max(0, _int_value(kev_ranking.get("cyber_score")))
                 )
 
     factors = {
@@ -207,6 +215,7 @@ def build_rank_result(
         "source_health_confidence": health_confidence,
         "regional_seismic_boost": regional_seismic_boost,
         "national_vehicle_safety_bonus": national_vehicle_safety_bonus,
+        "national_cyber_bonus": national_cyber_bonus,
         **({"local_active_alert_bonus": local_active_alert["bonus"]} if scope == "LOCAL" else {}),
         **local_signal["factors"],
         **regional_signal["factors"],
@@ -235,6 +244,8 @@ def build_rank_result(
         reasons.append(
             f"NATIONAL NHTSA vehicle-safety evidence adds {national_vehicle_safety_bonus}."
         )
+    if national_cyber_bonus:
+        reasons.append(f"NATIONAL CISA KEV evidence adds {national_cyber_bonus}.")
     reasons.extend(local_signal["reasons"])
     if local_active_alert["reason"]:
         reasons.append(local_active_alert["reason"])

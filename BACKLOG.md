@@ -1151,8 +1151,9 @@ Current state: `tests/fixtures/news/national_nws_alerts.json` covers two officia
 features, including a U.S. territory and an untrusted instruction-link candidate.
 `national_usgs_earthquakes.json` covers California, Alaska, Puerto Rico, an out-of-region event,
 and a below-threshold event. `national_nhtsa_recalls.json` covers campaign grouping, model rows,
-park instructions and missing optional population data. The other NATIONAL source-family fixtures
-listed above remain pending.
+park instructions and missing optional population data. `national_cisa_kev.json` covers full
+catalog envelope, CVE identity, due dates, ransomware/triage evidence, and offline scan. The other
+NATIONAL source-family fixtures listed above remain pending.
 
 ### NWS Active Alert Parser
 
@@ -1317,7 +1318,8 @@ Documented envelope, CVE identity, required/optional fields, date semantics, ful
 behavior, due-date interpretation, conditional headers, proposed cadence, policy gate, and
 source-health states. The website advertises CSV but the guessed sibling CSV URL returned 404;
 its exact current path is not signed off. See `docs/project/NATIONAL_CISA_KEV_ENDPOINT_RESEARCH.md`.
-No KEV source was enabled.
+An offline fixture parser now validates the catalog envelope and CVE rows, preserves bounded
+source evidence, and supplies cyber ranking and NATIONAL facets. No live KEV source was enabled.
 
 Research CISA Known Exploited Vulnerabilities machine-readable endpoint options, including JSON/CSV
 availability, schema fields, due date handling, update behavior, source policy, refresh interval,
