@@ -1839,7 +1839,7 @@ def _global_evidence_contract(
         "sensitivity_notes": [
             str(source[key]) for key in ("policy_risk", "retention_sensitivity")
             if source.get(key)
-        ],
+        ] + (["conflict_sensitive_source"] if source.get("conflict_sensitive") is True else []),
     }
 
 
@@ -1880,6 +1880,21 @@ def _humanitarian_evidence_contract(
     }
 
 
+def _redact_global_sensitive_item(item: dict[str, Any]) -> dict[str, Any]:
+    sensitivity = (item.get("evidence") or {}).get("sensitivity") or {}
+    if not isinstance(sensitivity, dict) or not any(sensitivity.get(key) is True for key in (
+        "graphic_violence", "casualty_speculation", "targeted_person_tracking",
+        "private_distress", "doxxing",
+    )):
+        return item
+    redacted = dict(item)
+    redacted["title"] = "Sensitive humanitarian report"
+    redacted["description"] = None
+    redacted["evidence"] = dict(item.get("evidence") or {})
+    redacted["evidence"]["sensitivity"] = {**sensitivity, "redacted_before_storage": True}
+    return redacted
+
+
 def _upsert_item(
     conn: sqlite3.Connection,
     source_id: int,
@@ -1891,6 +1906,15 @@ def _upsert_item(
     default_retention_days: int,
     policy: dict[str, Any],
 ) -> int:
+    if str(source.get("scope") or "").upper() == "GLOBAL":
+        source_flags = source.get("sensitivity_flags") or []
+        if source_flags:
+            item = dict(item)
+            item["evidence"] = dict(item.get("evidence") or {})
+            item_sensitivity = dict(item["evidence"].get("sensitivity") or {})
+            item_sensitivity.update({str(flag): True for flag in source_flags})
+            item["evidence"]["sensitivity"] = item_sensitivity
+        item = _redact_global_sensitive_item(item)
     combined_tags = list(dict.fromkeys([*(source.get("tags") or []), *(item.get("tags") or [])]))
     hashed_url = url_hash(str(item["canonical_url"] or item["url"]))
     cluster = cluster_key(str(item["title"]), hashed_url)
@@ -1933,6 +1957,7 @@ def _upsert_item(
         "scope": source["scope"],
         "kind": source["kind"],
         "source_family": source.get("source_family"),
+        "conflict_sensitive": source.get("conflict_sensitive") is True,
         "source_class": source.get("source_class"),
         "official_status": source.get("official_status"),
         "verification_status": source.get("verification_status"),
@@ -2457,6 +2482,8 @@ def _rebuild_global_clusters(conn: sqlite3.Connection) -> None:
                 "family_scores": family_scores,
             },
         }
+        if event_ranking["sensitivity"]["hard_suppression_flags"]:
+            continue
         conn.execute(
             """
             INSERT INTO news_clusters (

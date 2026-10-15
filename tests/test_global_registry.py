@@ -247,3 +247,5 @@ def test_global_auth_and_conflict_config_require_explicit_gates(tmp_path):
         )
         allowed = load_config(_write_config(tmp_path / f"{label}-allowed.yml", allowed_text))
         assert len(iter_news_sources(allowed)) == 1
+        if label == "conflict":
+            assert iter_news_sources(allowed)[0]["conflict_sensitive"] is True
