@@ -138,6 +138,7 @@ def _load_registry() -> tuple[dict[str, Any], ...]:
             "swpc_boulder_k_json": "swpc_kp_json",
             "swpc_aurora_json": "swpc_aurora_json",
             "jpl_cad_api": "jpl_cad_json",
+            "jpl_fireball_api": "jpl_fireball_json",
         }.get(key)
         entry["source_health_behavior"] = (
             "unsupported" if row["verification_status"] == "reject_for_now" else

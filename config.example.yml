@@ -154,6 +154,8 @@ orbital:
   neo_max_lunar_distance: 5.0
   neo_min_diameter_km: 0.05
   include_fireballs: true
+  fireball_min_impact_kt: 0.1
+  fireball_max_age_days: 30
   include_launches: true
   include_crewed_spaceflight: true
   include_iss: true

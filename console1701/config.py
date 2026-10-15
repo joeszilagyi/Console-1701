@@ -248,6 +248,8 @@ DEFAULT_ORBITAL_CONFIG: dict[str, Any] = {
     "neo_max_lunar_distance": 5.0,
     "neo_min_diameter_km": 0.05,
     "include_fireballs": True,
+    "fireball_min_impact_kt": 0.1,
+    "fireball_max_age_days": 30,
     "include_launches": True,
     "include_crewed_spaceflight": True,
     "include_iss": True,
@@ -756,6 +758,7 @@ def normalize_orbital_config(config: dict[str, Any]) -> None:
     for key, default, lower, upper in (
         ("neo_max_lunar_distance", 5.0, 0.1, 50.0),
         ("neo_min_diameter_km", 0.05, 0.0, 10.0),
+        ("fireball_min_impact_kt", 0.1, 0.0, 1000.0),
     ):
         try:
             value = float(orbital.get(key, default))
@@ -764,6 +767,12 @@ def normalize_orbital_config(config: dict[str, Any]) -> None:
         if not isfinite(value) or not lower <= value <= upper:
             raise ConfigError(f"orbital.{key} must be between {lower} and {upper}")
         orbital[key] = value
+    orbital["fireball_max_age_days"] = _coerce_int(
+        orbital.get("fireball_max_age_days", 30),
+        "orbital.fireball_max_age_days", minimum=1,
+    )
+    if orbital["fireball_max_age_days"] > 365:
+        raise ConfigError("orbital.fireball_max_age_days must be at most 365")
     locations = orbital.get("aurora_locations", [])
     if not isinstance(locations, list) or len(locations) > 8:
         raise ConfigError("orbital.aurora_locations must be a list of at most 8 locations")
@@ -1085,6 +1094,9 @@ def _normalize_news_source(
         if str(source_cfg.get("parser") or "").strip().lower() == "jpl_cad_json":
             source_cfg["max_lunar_distance"] = orbital_cfg["neo_max_lunar_distance"]
             source_cfg["min_diameter_km"] = orbital_cfg["neo_min_diameter_km"]
+        if str(source_cfg.get("parser") or "").strip().lower() == "jpl_fireball_json":
+            source_cfg["min_impact_kt"] = orbital_cfg["fireball_min_impact_kt"]
+            source_cfg["max_age_days"] = orbital_cfg["fireball_max_age_days"]
 
     source_cfg["enabled"] = _coerce_bool(source_cfg.get("enabled", False), f"{path}.enabled")
     source_cfg["priority"] = _coerce_int(source_cfg.get("priority", 50), f"{path}.priority")
