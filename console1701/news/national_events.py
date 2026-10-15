@@ -167,6 +167,12 @@ def correlate_national_items(items: list[dict[str, Any]]) -> list[dict[str, Any]
             "affected_states": sorted(set().union(*(
                 member["affected_states"] for member in members
             ))),
+            "affected_territories": sorted(set().union(*(
+                member["affected_territories"] for member in members
+            ))),
+            "affected_airports": sorted(set().union(*(
+                member["affected_airports"] for member in members
+            ))),
             "national_impact": any(member["national_impact"] for member in members),
             "multi_state_impact": any(member["multi_state_impact"] for member in members),
             "matches": [match for match in matches if set(match["item_ids"]) <= set(ids)],

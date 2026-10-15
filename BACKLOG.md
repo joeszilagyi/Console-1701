@@ -1411,8 +1411,8 @@ or jurisdiction context, title tokens, and a 72-hour window. Match evidence, fam
 and identity are persisted in item and cluster JSON. Same-family repeats are not marked
 corroborated; complete-link grouping prevents a broad bridge from merging two incompatible events.
 The currently verified fixture parsers supply only some of these fields, so coverage of all
-specified dimensions and source-specific event mappings remains open. The legacy cluster item
-score sum remains until RS-050. An offline duplicate-campaign scan and synthetic context tests pass.
+specified dimensions and source-specific event mappings remains open. An offline duplicate-campaign
+scan and synthetic context tests pass.
 
 Implement deterministic NATIONAL event matching by source family, time window, normalized title
 tokens, event type, agency, affected states, affected territories, FEMA region, NWS region, storm
@@ -1422,7 +1422,17 @@ hidden cloud calls.
 
 ### NATIONAL Deterministic Ranking
 
-Status: not implemented.
+Status: implemented for first-pass NATIONAL event clusters.
+
+`national_ranking.py` scores stored clusters using bounded recency, official severity, independent
+family diversity, temporal proximity, source-evidenced public impact, verified state/territory
+reach, active alert state, source priority, cluster size, and explicit local/regional impact. It
+subtracts duplicate-family, stale-source, low-confidence, low-public-value, and out-of-scope
+penalties. Every nonzero factor has a stored reason and cluster/item JSON evidence; source-reported
+NWS, USGS, NHTSA, CISA KEV, FAA NAS, and Federal Register metadata feed cautious signals. Headlines
+alone cannot establish severity, impact, or reach. The cluster score no longer sums duplicate item
+scores. Focused factor tests and an offline duplicate-campaign scan pass. Source-specific policy
+classification and suppression remain in RS-051.
 
 Implement explainable NATIONAL ranking with recency, official severity, source diversity, temporal
 proximity, public impact, geographic reach, active alert state, source priority, cluster size,

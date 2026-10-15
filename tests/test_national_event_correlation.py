@@ -89,13 +89,15 @@ def test_national_scan_persists_correlation_without_http(tmp_path, monkeypatch):
     config = load_config(config_path)
     with connect_db(config["_db_path"]) as conn:
         clusters = conn.execute(
-            "SELECT item_count, evidence_json FROM news_clusters WHERE scope = 'NATIONAL'"
+            "SELECT item_count, score, evidence_json FROM news_clusters WHERE scope = 'NATIONAL'"
         ).fetchall()
         rows = conn.execute(
             "SELECT evidence_json FROM news_items WHERE scope = 'NATIONAL'"
         ).fetchall()
     assert any(row["item_count"] == 2 for row in clusters)
     events = [json_loads(row["evidence_json"], {})["national_event"] for row in clusters]
+    assert all(row["score"] == event["ranking"]["score"]
+               for row, event in zip(clusters, events, strict=True))
     assert any(event["matches"][0]["basis"] == ["shared_official_event_id"]
                for event in events if event["matches"])
     assert all("national_event" in json_loads(row["evidence_json"], {}) for row in rows)
