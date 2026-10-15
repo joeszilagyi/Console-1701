@@ -947,12 +947,22 @@ and out-of-region penalties, and sensitivity policy remain pending.
 
 ### REGIONAL Privacy And Public-Impact Rules
 
-Status: not implemented.
+Status: implemented 2026-10-15 for first-pass REGIONAL ingest.
 
 Add deterministic REGIONAL privacy and public-impact rules. Suppress exact private addresses for
 low-value incidents, avoid amplifying residential outages below threshold, keep routine
 public-safety and social-only reports low priority, and prefer county, corridor, zone, basin,
 facility, or regional labels unless official public-impact evidence requires more detail.
+
+Current state: `regional_policy.py` runs before REGIONAL SQLite storage and replaces exact street
+address patterns in titles, descriptions, tags, and parser evidence with a withheld marker.
+Official URL attribution is preserved. Residential/isolated outages, routine public-safety
+headlines, and social-only reports remain background unless an official NWS, WSDOT, USGS, or county
+impact score crosses its explicit threshold. The stored privacy contract states redaction and
+impact basis, and the existing REGIONAL rank applies a 20-point low-acuity penalty. Direct and
+offline scan tests verify address redaction before persistence, background treatment, and an
+official-impact exception. Broader source-specific address and geography handling can be
+refined as new parsers are added.
 
 ### REGIONAL UI Disabled States
 

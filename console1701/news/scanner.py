@@ -50,6 +50,7 @@ from console1701.news.ranking import (
     build_rank_result,
 )
 from console1701.news.regional_contract import build_regional_event_contract
+from console1701.news.regional_policy import apply_regional_privacy_policy
 from console1701.news.regional_registry import list_regional_source_registry
 from console1701.news.science_registry import list_science_source_registry
 from console1701.news.source_policy import evaluate_source_policy
@@ -2058,6 +2059,8 @@ def _upsert_item(
     default_retention_days: int,
     policy: dict[str, Any],
 ) -> int:
+    if str(source.get("scope") or "").upper() == "REGIONAL":
+        item = apply_regional_privacy_policy(source, item)
     if str(source.get("scope") or "").upper() == "NATIONAL":
         item = dict(item)
         item["evidence"] = dict(item.get("evidence") or {})
