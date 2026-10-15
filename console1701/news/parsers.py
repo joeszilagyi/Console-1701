@@ -127,6 +127,8 @@ def parse_fixture_items(
         return _parse_ecdc_rss(source, payload_text)
     if parser_name == "nhc_basin_rss":
         return _parse_nhc_basin_rss(source, payload_text)
+    if parser_name == "un_news_rss":
+        return _parse_un_news_rss(source, payload_text)
     if parser_name == "gdacs_geojson":
         return _parse_gdacs_geojson(source, payload_text)
     if parser_name == "reliefweb_disasters_json":
@@ -542,6 +544,80 @@ def _parse_nhc_basin_rss(source: dict[str, Any], payload_text: str) -> list[dict
         item["evidence"]["global_identity"] = {
             "basin": basin, "storm_id": summary.get("storm_id"),
         }
+        items.append(item)
+    return items
+
+
+_UN_NEWS_LOW_VALUE_PREFIXES = (
+    "world news in brief:", "un news in brief:", "in pictures:",
+    "photo story:", "interview:", "podcast:", "opening remarks:",
+    "secretary-general's remarks:",
+)
+_UN_NEWS_LOW_VALUE_CATEGORIES = {
+    "feature", "features", "podcast", "interview", "photo story",
+}
+
+
+def _parse_un_news_rss(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:
+    if str(source.get("scope") or "").upper() != "GLOBAL":
+        raise NewsParserError("UN News RSS parser requires GLOBAL scope.")
+    try:
+        root = ET.fromstring(payload_text)
+    except ET.ParseError as exc:
+        raise NewsParserError(f"Malformed UN News RSS fixture: {exc}") from exc
+    channel = root.find("./channel") if _local_name(root.tag) == "rss" else None
+    if channel is None or not (_element_text(channel.find("./title")) or "").startswith(
+        "UN News"
+    ):
+        raise NewsParserError("UN News fixture must have the official RSS channel.")
+    items: list[dict[str, Any]] = []
+    for index, element in enumerate(channel.findall("./item")):
+        title = _element_text(element.find("./title")) or ""
+        categories = _unique_texts(
+            [_element_text(node) for node in element.findall("./category")], max_chars=64
+        )
+        if title.casefold().startswith(_UN_NEWS_LOW_VALUE_PREFIXES) or any(
+            category.casefold() in _UN_NEWS_LOW_VALUE_CATEGORIES for category in categories
+        ):
+            continue
+        feed_link = _element_text(element.find("./link"))
+        guid = _element_text(element.find("./guid"))
+        try:
+            feed_parts = urlsplit(feed_link or "")
+            story_parts = urlsplit(guid or "")
+        except ValueError as exc:
+            raise NewsParserError(f"UN News item {index} has an invalid URL.") from exc
+        if (
+            feed_parts.scheme != "https" or feed_parts.hostname != "news.un.org"
+            or story_parts.scheme != "https" or story_parts.hostname != "news.un.org"
+            or not story_parts.path.startswith("/en/story/")
+        ):
+            raise NewsParserError(f"UN News item {index} lacks an official story URL.")
+        published = normalize_timestamp(_element_text(element.find("./pubDate")))
+        if not published:
+            raise NewsParserError(f"UN News item {index} lacks a valid publication time.")
+        item = _normalize_item(source, {
+            "title": title,
+            "url": guid,
+            "description": _wsdot_plain_text(_element_text(element.find("./description"))),
+            "published_at": published,
+            "tags": ["official", "un-news", "global", *categories],
+        }, index=index)
+        item["evidence"]["un_news_rss"] = {
+            "categories": categories,
+            "feed_link": bounded_text(feed_link, max_chars=500),
+            "guid": bounded_text(guid, max_chars=500),
+            "source_label": bounded_text(_element_text(element.find("./source")), max_chars=120),
+            "published_at": published,
+            "source_url": item["url"],
+            "institution": "United Nations",
+            "impact_geography_assessed": False,
+            "ranking": {
+                "official_institution_source": True,
+                "impact_requires_other_evidence": True,
+            },
+        }
+        item["evidence"]["global_identity"] = {"institution": "United Nations"}
         items.append(item)
     return items
 

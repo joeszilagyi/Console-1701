@@ -1557,11 +1557,18 @@ record exact URLs and limitations. No NHC HTTP URL is allowlisted by the app.
 
 ### Smithsonian GVP Weekly Report Parser
 
-Status: not implemented.
+Status: partially researched; official RSS XML access blocked from this environment.
 
 Build a fixture-first parser for Smithsonian Global Volcanism Program weekly report candidates.
 Preserve volcano name, country/region, activity type when structured, report window, source URL,
 and volcano ranking evidence. Keep parser conservative where page structure is not stable.
+
+The official weekly report page links `https://volcano.si.edu/news/WeeklyVolcanoRSS.xml` and
+documents report categories, weekly cadence, and preliminary status. A bounded direct request to
+that exact RSS URL returned HTTP 403 on 2026-10-15, so its item XML shape remains unverified.
+Keep the parser row open until a legitimate official sample can be inspected; do not bypass the
+site access control or infer feed fields from the HTML page. The report page remains a reference
+source only.
 
 ### NASA FIRMS API Review And Filtered Fixture Parser
 
@@ -1574,11 +1581,19 @@ default and require explicit local configuration.
 
 ### UN News RSS Parser
 
-Status: not implemented.
+Status: completed 2026-10-15 for fixture-first parser; live source remains disabled.
 
 Build a fixture-first UN News RSS parser for institution and global public-impact signals. Preserve
 headline, URL, published time, category when present, bounded description, source family, and
 diplomacy/institution ranking evidence. Suppress routine speeches and low-impact feature stories.
+
+The official RSS endpoint and item shape were inspected. The parser stores official story GUIDs,
+feed links, publication time, optional categories, source label, bounded plain-text descriptions,
+and institution identity. Narrow roundup/feature/routine-remarks exclusions avoid low-value
+entries without claiming that every remaining story has public impact. The website registry row
+is reference-only; the RSS row names the exact feed and remains disabled for HTTP. Offline fixture
+scan and source-health tests pass. [Verification notes](docs/project/GLOBAL_UN_NEWS_RSS_SOURCE_VERIFICATION.md)
+record the observed shape and limitations.
 
 ### UN Press RSS Parser
 
