@@ -9,7 +9,7 @@ from typing import Any
 
 from console1701.config import ensure_state_dirs, iter_news_sources, load_config
 from console1701.db import connect_db, init_db, json_dumps, json_loads, utc_now
-from console1701.news.facets import replace_global_item_facets
+from console1701.news.facets import replace_global_item_facets, replace_regional_item_facets
 from console1701.news.global_events import correlate_global_items
 from console1701.news.global_ranking import rank_global_event
 from console1701.news.global_registry import list_global_source_registry
@@ -2009,6 +2009,8 @@ def _upsert_item(
 
         if str(source.get("scope") or "").upper() == "GLOBAL":
             replace_global_item_facets(conn, item_id, evidence, combined_tags)
+        elif str(source.get("scope") or "").upper() == "REGIONAL":
+            replace_regional_item_facets(conn, item_id, evidence)
         return item_id
 
     item_id = int(existing["id"])
@@ -2088,6 +2090,8 @@ def _upsert_item(
 
     if str(source.get("scope") or "").upper() == "GLOBAL":
         replace_global_item_facets(conn, item_id, evidence, combined_tags)
+    elif str(source.get("scope") or "").upper() == "REGIONAL":
+        replace_regional_item_facets(conn, item_id, evidence)
     return item_id
 
 

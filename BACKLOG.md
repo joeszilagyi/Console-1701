@@ -659,7 +659,7 @@ remain disabled unless individually configured.
 
 ### REGIONAL SQLite Schema Or Extension
 
-Status: partially implemented.
+Status: completed 2026-10-15 for the first-pass REGIONAL storage contract.
 
 Add or extend SQLite storage for REGIONAL source registry state, fetch runs, normalized items,
 `regional_events` or scoped clusters, source health, ranking explanations, geographic labels, and
@@ -667,12 +667,15 @@ retention purge evidence. Use JSON-heavy columns and indexes for latest-by-scope
 source health, source family, geographic filters, and `expires_at` purge. Do not store full article
 bodies by default.
 
-Current state: the shared `news_source_registry` table persists REGIONAL registry rows, and
-`get_news_storage_summary()` exposes a regional registry summary. REGIONAL official-ID events now
-use scoped `news_clusters` with member, family, geography, confidence, and ranking evidence, so a
-separate `regional_events` table is not required for this slice. Dedicated geography indexes and
-broader event-query/purge evidence remain pending. Configured `news_sources` now supports the same
-scoped key identity as the registry.
+The shared schema persists all 230 REGIONAL registry rows, configured sources, fetch runs, items,
+source health, and scoped `news_clusters` with member, family, geography, confidence, and ranking
+evidence. `news_item_facets` now indexes source-provided REGIONAL zone, route, facility, county, and
+region labels, plus event type and source family. It excludes free-text USGS place labels from
+county/region facets. Tests verify indexed facet and cluster queries, no inferred county, and
+expiry-purge cascade for facets. Existing item, health, family, score, and expiry indexes cover the
+other first-pass queries. No full article body is stored. A separate `regional_events` table is
+unnecessary for this first-pass contract; richer event/geography behavior remains in the
+correlation and ranking rows.
 
 ### REGIONAL Fixture Pack
 

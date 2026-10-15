@@ -1,4 +1,4 @@
-"""Indexed, bounded facets derived from persisted GLOBAL item evidence."""
+"""Indexed, bounded facets derived from persisted scoped item evidence."""
 
 from __future__ import annotations
 
@@ -54,6 +54,52 @@ def global_item_facets(evidence: dict[str, Any], tags: list[Any]) -> set[tuple[s
 
 def _list_values(value: Any) -> list[Any]:
     return value if isinstance(value, list) else []
+
+
+def regional_item_facets(evidence: dict[str, Any]) -> set[tuple[str, str]]:
+    facets: set[tuple[str, str]] = set()
+
+    def add(kind: str, value: Any) -> None:
+        if not isinstance(value, str):
+            return
+        text = value.strip().casefold()
+        if text and len(text) <= 120:
+            facets.add((kind, text))
+
+    event = evidence.get("regional_event") or {}
+    if not isinstance(event, dict):
+        return facets
+    add("event_type", event.get("event_type"))
+    add("source_family", event.get("source_family"))
+    geography = event.get("geography") or {}
+    if not isinstance(geography, dict) or not geography.get("matched"):
+        return facets
+    basis = geography.get("basis")
+    if basis == "official_affected_zones":
+        for zone in _list_values(geography.get("zone_ids"))[:8]:
+            add("zone", zone)
+    elif basis == "official_route_county_facility":
+        for route in _list_values(geography.get("routes"))[:8]:
+            add("route", route)
+        for facility in _list_values(geography.get("facilities"))[:8]:
+            add("facility", facility)
+        add("county", geography.get("county"))
+        add("region", geography.get("region"))
+    # USGS coordinates prove a point, not a county or regional impact label.
+    return facets
+
+
+def replace_regional_item_facets(
+    conn: sqlite3.Connection,
+    item_id: int,
+    evidence: dict[str, Any],
+) -> None:
+    conn.execute("DELETE FROM news_item_facets WHERE item_id = ?", (item_id,))
+    conn.executemany(
+        "INSERT INTO news_item_facets (item_id, scope, facet_kind, facet_value) "
+        "VALUES (?, 'REGIONAL', ?, ?)",
+        [(item_id, kind, value) for kind, value in sorted(regional_item_facets(evidence))],
+    )
 
 
 def replace_global_item_facets(
