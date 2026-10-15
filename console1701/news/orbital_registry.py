@@ -130,7 +130,7 @@ def _load_registry() -> tuple[dict[str, Any], ...]:
         entry["interval_minutes"] = _interval_minutes(str(row["refresh_interval"]))
         entry["kind"] = kind
         entry["enabled"] = False
-        entry["parser"] = None
+        entry["parser"] = "swpc_alerts_json" if key == "swpc_alerts_json" else None
         entry["source_health_behavior"] = (
             "unsupported" if row["verification_status"] == "reject_for_now" else
             "auth_required" if row["verification_status"] == "restricted_auth_required" else
@@ -182,6 +182,7 @@ def orbital_registry_config_defaults(source_key: str) -> dict[str, Any] | None:
         "source_family": entry["source_family"],
         "source_class": entry["source_class"],
         "adapter": entry["adapter"],
+        "parser": entry["parser"],
         "privacy_risk": entry["privacy_risk"],
         "policy_risk": entry["policy_risk"],
         "parser_risk": entry["parser_risk"],

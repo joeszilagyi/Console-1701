@@ -117,6 +117,11 @@ def parse_fixture_items(
     parser_name = str(source.get("parser") or "").strip().lower()
     kind = str(source.get("kind") or "").strip().lower()
 
+    if parser_name == "swpc_alerts_json":
+        from console1701.news.orbital_parsers import parse_swpc_alerts_json
+
+        return parse_swpc_alerts_json(source, payload_text)
+
     if parser_name == "nws_alerts_json":
         return _parse_nws_alerts_json(source, payload_text)
     if parser_name == "usgs_earthquake_geojson":

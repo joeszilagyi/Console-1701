@@ -2212,7 +2212,7 @@ ORBITAL parsers and event correlation follow in separate rows.
 
 ### ORBITAL Fixture Pack
 
-Status: not implemented.
+Status: partially implemented.
 
 Create local-only fixtures for SWPC alerts JSON, SWPC NOAA scales JSON, SWPC Kp JSON, SWPC aurora
 JSON, JPL CNEOS close approach JSON, JPL CNEOS fireball JSON, JPL Sentry or Scout JSON, MPC MPEC
@@ -2222,14 +2222,25 @@ after verification, source-health states, disabled sources, stale sources, auth-
 policy-blocked sources, and parser failures. Fixture ingest must not perform network calls and
 must be safe for pytest.
 
+Current state: a small official-shape SWPC alerts JSON fixture covers a warning, cancelled watch,
+and incomplete row. Its parser and offline scan are tested. Remaining ORBITAL products and
+source-health variants are pending in this pack.
+
 ### SWPC Alerts JSON Parser
 
-Status: not implemented.
+Status: completed 2026-10-15 for fixture-first ingest.
 
 Build a fixture-first parser for SWPC alerts, watches, and warnings JSON. Preserve product id,
 message type, NOAA scale when provided, issue time, valid period, severity terms, affected systems
 when source-provided, source URL, and parser/source-health evidence. Handle missing fields and
 schema changes fail-soft.
+
+Current state: verified the official JSON array shape and added a dedicated ORBITAL parser for
+bounded product identity, issue and validity times, message kind, NOAA scale, source-provided
+potential-impact lines, cancellation state, official URL, and indexed event identity. Incomplete
+rows skip; malformed top-level JSON fails clearly. The registry names the parser but remains
+disabled, and no live HTTP allowlist entry was added. See
+`docs/project/ORBITAL_SWPC_ALERTS_SOURCE_VERIFICATION.md`.
 
 ### SWPC NOAA Scales Parser
 
