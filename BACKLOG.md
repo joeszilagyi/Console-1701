@@ -592,7 +592,7 @@ tests verify the contract without an external fetch.
 
 ### LOCAL Official-Source Live Ingest Phase
 
-Status: partially implemented.
+Status: implemented (first safe official source).
 
 After fixture parsing, correlation, ranking, retention, and tests exist, add opt-in live ingest for
 one safe official source at a time. First candidates are SFD Fire 911 Socrata, NWS alerts, King
@@ -604,7 +604,12 @@ when every opt-in gate is true. One controlled command successfully fetched that
 second immediate command was skipped by the interval gate. On this machine the standing config now
 opts in to this source at a 30-minute interval and the separate news timer runs every 30 minutes;
 new installs remain off by default. SFD Fire 911, King County Metro, WSDOT, and other sources still
-require endpoint signoff and allowlist additions before live ingest.
+require endpoint signoff and allowlist additions before live ingest. The first-pass acceptance is
+the single verified Washington NWS feed: exact scope/key/URL/parser/content-type allowlist,
+explicit `news-scan`, disabled new-install defaults, opt-in policy, bounded response/time,
+conditional requests, interval skip, source health, and no page-load fetch are covered by offline
+tests. Other named candidates remain separate source-verification and adapter work, not live
+capabilities claimed by this row.
 
 ### LOCAL News/Blog RSS Ingest Phase
 
