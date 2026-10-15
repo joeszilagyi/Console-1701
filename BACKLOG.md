@@ -2810,7 +2810,8 @@ exoplanet, Earth-only, launch, and nonofficial-link cases. The ESA fixture cover
 article, launch, image-only link, and nonofficial host. ESA telescope fixtures cover science
 releases, photo releases, and nonofficial links. The tiny Exoplanet Archive JSON fixture covers
 two bounded PS parameter updates. The MAST fixture covers two JWST observation metadata rows
-with complete paging. The PDS fixture covers one collection metadata record. The other fixture
+with complete paging. The PDS fixture covers one collection metadata record. The GCN fixture
+covers an official-schema notice, coordinates, test gates, update, and retraction. The other fixture
 families and source-health/policy states are pending.
 
 ### NASA/JPL RSS Parser
@@ -2910,11 +2911,19 @@ inventory, or science files. The registry candidate remains disabled.
 
 ### GCN Notice Fixture Parser
 
-Status: not implemented.
+Status: completed 2026-10-15 for local unified-schema notice fixtures.
 
 Build a fixture-first NASA GCN notice parser. Preserve notice type, event id, coordinates if
 provided, event time, instrument, preliminary/update/retraction status, source URL, and transient
 ranking evidence. Do not add Kafka or other dependencies without explicit approval.
+
+Current state: `science_gcn.py` parses one fixture JSON object with an official GCN notice
+schema URL, source-provided event/trigger ID, mission/instrument, trigger and alert times,
+optional paired ICRS coordinates, and explicit initial/update/retraction status. It blocks
+test/injection/planned notices, invalid coordinates and schema hosts, oversized payloads, and
+non-fixture use. Sky-map fields and raw notice bodies are not retained. No Kafka, email,
+live notice adapter, or event-specific permalink is claimed; the disabled registry remains
+reference/source-health only.
 
 ### GCN Circular Source Verification
 

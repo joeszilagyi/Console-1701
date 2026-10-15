@@ -173,6 +173,10 @@ def parse_fixture_items(
         from console1701.news.science_pds import parse_pds_collection_metadata
 
         return parse_pds_collection_metadata(source, payload_text)
+    if parser_name == "gcn_notice_fixture":
+        from console1701.news.science_gcn import parse_gcn_notice_fixture
+
+        return parse_gcn_notice_fixture(source, payload_text)
 
     if parser_name == "nws_alerts_json":
         return _parse_nws_alerts_json(source, payload_text)
