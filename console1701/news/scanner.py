@@ -1778,6 +1778,7 @@ def _global_evidence_contract(
     disaster = evidence.get("reliefweb_disaster") or {}
     report = evidence.get("reliefweb_report") or {}
     who = evidence.get("who_don") or {}
+    usgs = evidence.get("usgs_earthquake") or {}
     countries = list(dict.fromkeys([
         *([gdacs["country"]] if gdacs.get("country") else []),
         *(gdacs.get("affected_countries") or []),
@@ -1786,9 +1787,11 @@ def _global_evidence_contract(
     ]))
     event_type = (
         gdacs.get("event_type") or disaster.get("primary_type")
-        or who.get("hazard_label")
+        or who.get("hazard_label") or usgs.get("event_type")
     )
-    regions = [who["geography_label"]] if who.get("geography_label") else []
+    regions = [who["geography_label"]] if who.get("geography_label") else (
+        [usgs["place"]] if usgs.get("place") else []
+    )
     return {
         "contract_version": 1,
         "item_url": item["url"],
@@ -1810,7 +1813,8 @@ def _global_evidence_contract(
         "affected_regions": regions,
         "geography_basis": (
             "official_source_fields" if countries else
-            who.get("geography_basis") if regions else "not_provided"
+            who.get("geography_basis") if who.get("geography_label") else
+            "source_place_unverified" if usgs.get("place") else "not_provided"
         ),
         "event_type": event_type,
         "event_confidence": None,

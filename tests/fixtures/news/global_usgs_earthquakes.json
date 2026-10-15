@@ -1,0 +1,67 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {"title": "Synthetic USGS global earthquake GeoJSON summary fixture"},
+  "features": [
+    {
+      "type": "Feature", "id": "global-fiji-001",
+      "properties": {
+        "type": "earthquake", "mag": 7.1, "place": "Fiji region",
+        "time": 1792072800000, "updated": 1792076400000,
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/global-fiji-001",
+        "felt": 110, "cdi": 6.4, "mmi": 6.2, "alert": "orange", "tsunami": 1,
+        "sig": 980, "magType": "mww", "status": "reviewed"
+      },
+      "geometry": {"type": "Point", "coordinates": [178.2, -17.7, 35.0]}
+    },
+    {
+      "type": "Feature", "id": "global-iceland-002",
+      "properties": {
+        "type": "earthquake", "mag": 6.2, "place": "Iceland region",
+        "time": 1792072800000, "updated": 1792076400000,
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/global-iceland-002",
+        "felt": 23, "cdi": 4.4, "mmi": 4.2, "alert": "yellow", "tsunami": 0,
+        "sig": 520, "magType": "mw", "status": "reviewed"
+      },
+      "geometry": {"type": "Point", "coordinates": [-18.6, 64.1, 12.0]}
+    },
+    {
+      "type": "Feature", "id": "global-deep-fiji-003",
+      "properties": {
+        "type": "earthquake", "mag": 6.6, "place": "Fiji region",
+        "time": 1792072800000,
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/global-deep-fiji-003",
+        "felt": 0, "mmi": 1.0, "tsunami": 0
+      },
+      "geometry": {"type": "Point", "coordinates": [178.0, -18.0, 650.0]}
+    },
+    {
+      "type": "Feature", "id": "global-low-fiji-004",
+      "properties": {
+        "type": "earthquake", "mag": 5.1, "place": "Fiji region",
+        "time": 1792072800000,
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/global-low-fiji-004",
+        "felt": 1, "mmi": 1.0, "tsunami": 0
+      },
+      "geometry": {"type": "Point", "coordinates": [177.0, -17.0, 10.0]}
+    },
+    {
+      "type": "Feature", "id": "global-japan-005",
+      "properties": {
+        "type": "earthquake", "mag": 6.8, "place": "Honshu, Japan",
+        "time": 1792072800000,
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/global-japan-005",
+        "felt": 55, "mmi": 5.0, "tsunami": 0
+      },
+      "geometry": {"type": "Point", "coordinates": [141.0, 39.0, 20.0]}
+    },
+    {
+      "type": "Feature", "id": "global-blast-006",
+      "properties": {
+        "type": "quarry blast", "mag": 7.0, "place": "Fiji region",
+        "time": 1792072800000,
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/global-blast-006"
+      },
+      "geometry": {"type": "Point", "coordinates": [178.0, -17.0, 5.0]}
+    }
+  ]
+}

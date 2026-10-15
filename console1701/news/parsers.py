@@ -721,7 +721,49 @@ def _usgs_number(value: Any) -> float | None:
     return number if math.isfinite(number) else None
 
 
+def _global_usgs_filter(source: dict[str, Any]) -> dict[str, Any]:
+    defaults = {
+        "min_magnitude": 6.0,
+        "min_depth_km": -100.0,
+        "max_depth_km": 1000.0,
+        "min_felt": 0.0,
+        "min_mmi": 0.0,
+    }
+    values: dict[str, Any] = {}
+    for key, default in defaults.items():
+        value = _usgs_number(source.get(key, default))
+        if value is None:
+            raise NewsParserError(f"GLOBAL USGS {key} must be a finite number.")
+        values[key] = value
+    if not (
+        values["min_magnitude"] >= 0
+        and -100 <= values["min_depth_km"] <= values["max_depth_km"] <= 1000
+        and values["min_felt"] >= 0
+        and 0 <= values["min_mmi"] <= 12
+    ):
+        raise NewsParserError("GLOBAL USGS magnitude, depth, felt, or intensity filter is invalid.")
+    max_age = source.get("max_age_hours")
+    if max_age is not None:
+        max_age = _usgs_number(max_age)
+        if max_age is None or not 1 <= max_age <= 24 * 31:
+            raise NewsParserError("GLOBAL USGS max_age_hours must be 1..744.")
+    values["max_age_hours"] = max_age
+    if not isinstance(source.get("tsunami_only", False), bool):
+        raise NewsParserError("GLOBAL USGS tsunami_only must be a boolean.")
+    values["tsunami_only"] = source.get("tsunami_only", False)
+    for key in ("country_terms", "region_terms"):
+        raw = source.get(key, [])
+        if not isinstance(raw, list) or len(raw) > 20 or any(
+            not isinstance(term, str) or not 1 <= len(term.strip()) <= 80 for term in raw
+        ):
+            raise NewsParserError(f"GLOBAL USGS {key} must have at most 20 bounded labels.")
+        values[key] = list(dict.fromkeys(term.strip().casefold() for term in raw))
+    return values
+
+
 def _usgs_filter(source: dict[str, Any]) -> dict[str, Any]:
+    if str(source.get("scope") or "").upper() == "GLOBAL":
+        return _global_usgs_filter(source)
     if str(source.get("scope") or "").upper() == "NATIONAL":
         magnitude = _usgs_number(source.get("min_magnitude", 5.0))
         if magnitude is None or magnitude < 0:
@@ -783,6 +825,7 @@ def _parse_usgs_earthquake_geojson(
     if not isinstance(features, list):
         raise NewsParserError("USGS fixture must contain a features list.")
     geo_filter = _usgs_filter(source)
+    global_scope = str(source.get("scope") or "").upper() == "GLOBAL"
     normalized: list[dict[str, Any]] = []
     for index, feature in enumerate(features):
         if not isinstance(feature, dict) or feature.get("type") != "Feature":
@@ -801,15 +844,20 @@ def _parse_usgs_earthquake_geojson(
         magnitude = _usgs_number(properties.get("mag"))
         if longitude is None or latitude is None or magnitude is None:
             continue
+        if not -180 <= longitude <= 180 or not -90 <= latitude <= 90:
+            continue
         national = str(source.get("scope") or "").upper() == "NATIONAL"
         national_region = _national_usgs_region(longitude, latitude) if national else None
         matches_geography = (
-            national_region is not None if national else
+            True if global_scope else national_region is not None if national else
             geo_filter["min_longitude"] <= longitude <= geo_filter["max_longitude"]
             and geo_filter["min_latitude"] <= latitude <= geo_filter["max_latitude"]
         )
         if not matches_geography or magnitude < geo_filter["min_magnitude"]:
             continue
+        event_id = bounded_text(feature.get("id"), max_chars=120)
+        if global_scope and not event_id:
+            raise NewsParserError(f"GLOBAL USGS feature {index} has no event id.")
         published_at = _usgs_timestamp(properties.get("time"))
         if published_at is None:
             raise NewsParserError(f"USGS feature {index} has no valid event time.")
@@ -821,13 +869,35 @@ def _parse_usgs_earthquake_geojson(
         if parts.scheme != "https" or parts.hostname != "earthquake.usgs.gov":
             raise NewsParserError(f"USGS feature {index} has no official HTTPS event URL.")
         place = bounded_text(properties.get("place"), max_chars=180) or (
-            "U.S. region" if national else "Washington region"
+            "World" if global_scope else "U.S. region" if national else "Washington region"
         )
         title = bounded_text(properties.get("title"), max_chars=MAX_TITLE_LENGTH)
         title = title or f"M {magnitude:.1f} - {place}"
         felt = _int_value(properties.get("felt")) or 0
         alert = bounded_text(properties.get("alert"), max_chars=32)
         depth_km = _usgs_number(coords[2]) if len(coords) > 2 else None
+        if global_scope:
+            mmi = _usgs_number(properties.get("mmi"))
+            if (
+                depth_km is None or
+                not geo_filter["min_depth_km"] <= depth_km <= geo_filter["max_depth_km"] or
+                felt < geo_filter["min_felt"] or
+                (geo_filter["min_mmi"] > 0 and (mmi is None or mmi < geo_filter["min_mmi"])) or
+                (geo_filter["tsunami_only"] and properties.get("tsunami") != 1)
+            ):
+                continue
+            if geo_filter["max_age_hours"] is not None:
+                age_hours = (
+                    datetime.now(UTC) - datetime.fromisoformat(published_at)
+                ).total_seconds() / 3600
+                if age_hours < -1 or age_hours > geo_filter["max_age_hours"]:
+                    continue
+            place_terms = geo_filter["country_terms"] + geo_filter["region_terms"]
+            if place_terms and not any(
+                re.search(rf"\b{re.escape(term)}\b", place.casefold())
+                for term in place_terms
+            ):
+                continue
         magnitude_weight = min(35, max(0, round((magnitude - 2.5) * 8)))
         felt_weight = min(10, max(0, felt // 10))
         alert_weight = {"red": 30, "orange": 20, "yellow": 10, "green": 3}.get(
@@ -848,8 +918,10 @@ def _parse_usgs_earthquake_geojson(
                         "usgs",
                         "earthquake",
                         "seismic",
-                        "national" if national else "regional",
-                        "public-impact" if magnitude >= 4.5 or felt >= 10 else None,
+                        "global" if global_scope else "national" if national else "regional",
+                        "public-impact" if (
+                            magnitude >= (6.5 if global_scope else 4.5) or felt >= 10
+                        ) else None,
                         "tsunami" if properties.get("tsunami") == 1 else None,
                     ],
                     max_chars=64,
@@ -858,7 +930,7 @@ def _parse_usgs_earthquake_geojson(
             index=index,
         )
         item["evidence"]["usgs_earthquake"] = {
-            "id": bounded_text(feature.get("id"), max_chars=120),
+            "id": event_id,
             "magnitude": magnitude,
             "magnitude_type": bounded_text(properties.get("magType"), max_chars=32),
             "place": place,
@@ -880,9 +952,11 @@ def _parse_usgs_earthquake_geojson(
                 **geo_filter,
                 "matched": True,
                 "geography_basis": (
+                    "source_place_label" if global_scope else
                     "coarse_us_region_coordinates" if national else "configured_bounds"
                 ),
                 "region": national_region,
+                "place_label": place if global_scope else None,
             },
             "ranking": {
                 "magnitude_weight": magnitude_weight,
@@ -891,6 +965,11 @@ def _parse_usgs_earthquake_geojson(
                 "regional_seismic_weight": seismic_weight,
             },
         }
+        if global_scope:
+            item["evidence"]["global_identity"] = {
+                "earthquake_id": item["evidence"]["usgs_earthquake"]["id"],
+                "impact_tags": ["tsunami"] if properties.get("tsunami") == 1 else [],
+            }
         normalized.append(item)
     return normalized
 
