@@ -5,6 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 SCIENCE_FIXTURE_SOURCES = {
+    "astronomers_telegram_rss": (
+        "atel_rss", "https://www.astronomerstelegram.org/?rss",
+    ),
     "nasa_jpl_science_feed": (
         "nasa_jpl_science_rss", "https://www.nasa.gov/centers-and-facilities/jpl/feed/",
     ),

@@ -2881,13 +2881,14 @@ article, launch, image-only link, and nonofficial host. ESA telescope fixtures c
 releases, photo releases, and nonofficial links. The tiny Exoplanet Archive JSON fixture covers
 two bounded PS parameter updates. The MAST fixture covers two JWST observation metadata rows
 with complete paging. The PDS fixture covers one collection metadata record. The GCN fixture
-covers an official-schema notice, coordinates, test gates, update, and retraction. The other fixture
-families and source-health/policy states are pending.
+covers an official-schema notice, coordinates, test gates, update, and retraction. The ATel
+RSS 1.0 fixture covers two telegrams, preliminary labels, and no full bodies. Other fixture
+families and some source-health/policy variants remain pending.
 
 The first offline `news-scan` integration now ingests configured NASA JPL and ESA RSS fixtures,
 persists COSMIC items and events, and rejects nonexact source identities. A scan and page-render
 test assert no network call, while a repeat scan confirms event rebuild idempotence. The remaining
-fixture families and blocked-state matrix still need end-to-end coverage.
+fixture families and blocked-state variants still need end-to-end coverage.
 
 A parameterized scan regression also exercises the Hubble, Webb, Exoplanet Archive, MAST, PDS,
 and GCN fixture adapters through the real scanner, with local-only input, stored event evidence,
@@ -3024,19 +3025,21 @@ enabled, and the future fixture/parser must retain preliminary/follow-up/retract
 
 ### ATel RSS Parser
 
-Status: blocked on feed access; not implemented.
+Status: implemented for offline fixture ingest; live remains disabled.
 
 Build a fixture-first Astronomers Telegram RSS parser. Preserve ATel number, title, URL, published
 time, object/transient tokens, bounded description if allowed, source family, and preliminary
 astronomy communication labels. Do not store full telegram bodies unless source policy and config
 explicitly allow bounded storage.
 
-Access check 2026-10-15: the official homepage advertises
-`https://www.astronomerstelegram.org/?rss` and a `?listxml` Feeds page, but both `www` and
-non-`www` HTTPS RSS requests returned HTTP 200 with an HTML "We're Sorry!" page rather than
-XML. The Feeds page returned the same error. This is a source-side access failure, not a valid
-empty feed. Keep the adapter disabled and avoid inventing a fixture schema until the official
-RSS response, fields, and policy can be verified.
+Access check 2026-10-15: the earlier request received an HTML "We're Sorry!" page, but a
+subsequent exact request to the [official Feeds page](https://www.astronomerstelegram.org/?listxml)
+and its `?rss` link returned RSS 1.0 XML. A bounded identifying-client GET returned HTTP 200,
+12,359 bytes and ten items. The namespace-aware fixture parser checks the ATel number in the
+title, identifier and article URL, keeps publication time and bounded summary/object tokens,
+labels communication preliminary, and stores no full telegram body or email/provenance fields.
+An offline `news-scan` passes without HTTP. The direct live source is still rejected by config;
+cadence, source terms, health and current-item filtering need a separate live admission review.
 
 ### TNS Auth/Policy Design
 
