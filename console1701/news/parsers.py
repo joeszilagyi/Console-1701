@@ -71,6 +71,15 @@ _SDOT_BLOG_IMPACT_RE = re.compile(
     re.IGNORECASE,
 )
 _NWS_US_ZONE_RE = re.compile(r"\b([A-Z]{2})[ZC]\d{3}\b")
+_NATIONAL_USGS_REGIONS = (
+    ("contiguous_us", -125.0, -66.0, 24.0, 50.0),
+    ("alaska", -180.0, -129.0, 50.0, 72.0),
+    ("aleutians", 170.0, 180.0, 50.0, 55.0),
+    ("hawaii", -161.5, -154.0, 18.0, 23.0),
+    ("puerto_rico_usvi", -68.5, -64.0, 17.0, 19.0),
+    ("guam_nmi", 143.0, 147.0, 13.0, 21.0),
+    ("american_samoa", -172.0, -168.0, -15.0, -10.0),
+)
 
 
 def resolve_file_url(url: str, *, config_dir: Path) -> Path:
@@ -225,6 +234,13 @@ def _usgs_number(value: Any) -> float | None:
 
 
 def _usgs_filter(source: dict[str, Any]) -> dict[str, Any]:
+    if str(source.get("scope") or "").upper() == "NATIONAL":
+        magnitude = _usgs_number(source.get("min_magnitude", 5.0))
+        if magnitude is None or magnitude < 0:
+            raise NewsParserError(
+                "NATIONAL USGS min_magnitude must be a finite nonnegative number."
+            )
+        return {"min_magnitude": magnitude}
     defaults = {
         "min_longitude": -130.0,
         "max_longitude": -116.5,
@@ -245,6 +261,13 @@ def _usgs_filter(source: dict[str, Any]) -> dict[str, Any]:
     ):
         raise NewsParserError("USGS source coordinate bounds or magnitude threshold are invalid.")
     return values
+
+
+def _national_usgs_region(longitude: float, latitude: float) -> str | None:
+    for name, min_lon, max_lon, min_lat, max_lat in _NATIONAL_USGS_REGIONS:
+        if min_lon <= longitude <= max_lon and min_lat <= latitude <= max_lat:
+            return name
+    return None
 
 
 def _usgs_timestamp(value: Any) -> str | None:
@@ -290,11 +313,14 @@ def _parse_usgs_earthquake_geojson(
         magnitude = _usgs_number(properties.get("mag"))
         if longitude is None or latitude is None or magnitude is None:
             continue
-        if not (
+        national = str(source.get("scope") or "").upper() == "NATIONAL"
+        national_region = _national_usgs_region(longitude, latitude) if national else None
+        matches_geography = (
+            national_region is not None if national else
             geo_filter["min_longitude"] <= longitude <= geo_filter["max_longitude"]
             and geo_filter["min_latitude"] <= latitude <= geo_filter["max_latitude"]
-            and magnitude >= geo_filter["min_magnitude"]
-        ):
+        )
+        if not matches_geography or magnitude < geo_filter["min_magnitude"]:
             continue
         published_at = _usgs_timestamp(properties.get("time"))
         if published_at is None:
@@ -306,7 +332,9 @@ def _parse_usgs_earthquake_geojson(
             raise NewsParserError(f"USGS feature {index} has an invalid event URL.") from exc
         if parts.scheme != "https" or parts.hostname != "earthquake.usgs.gov":
             raise NewsParserError(f"USGS feature {index} has no official HTTPS event URL.")
-        place = bounded_text(properties.get("place"), max_chars=180) or "Washington region"
+        place = bounded_text(properties.get("place"), max_chars=180) or (
+            "U.S. region" if national else "Washington region"
+        )
         title = bounded_text(properties.get("title"), max_chars=MAX_TITLE_LENGTH)
         title = title or f"M {magnitude:.1f} - {place}"
         felt = _int_value(properties.get("felt")) or 0
@@ -332,7 +360,7 @@ def _parse_usgs_earthquake_geojson(
                         "usgs",
                         "earthquake",
                         "seismic",
-                        "regional",
+                        "national" if national else "regional",
                         "public-impact" if magnitude >= 4.5 or felt >= 10 else None,
                         "tsunami" if properties.get("tsunami") == 1 else None,
                     ],
@@ -360,7 +388,14 @@ def _parse_usgs_earthquake_geojson(
             "status": bounded_text(properties.get("status"), max_chars=32),
             "event_type": "earthquake",
             "source_url": url,
-            "filter": {**geo_filter, "matched": True},
+            "filter": {
+                **geo_filter,
+                "matched": True,
+                "geography_basis": (
+                    "coarse_us_region_coordinates" if national else "configured_bounds"
+                ),
+                "region": national_region,
+            },
             "ranking": {
                 "magnitude_weight": magnitude_weight,
                 "felt_weight": felt_weight,

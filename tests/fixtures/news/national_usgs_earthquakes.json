@@ -1,0 +1,60 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {"title": "Synthetic U.S. and nearby USGS earthquakes"},
+  "features": [
+    {
+      "type": "Feature",
+      "id": "national-ca-001",
+      "properties": {
+        "type": "earthquake", "mag": 6.1, "place": "Northern California",
+        "time": 1792072800000, "updated": 1792076400000,
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/national-ca-001",
+        "felt": 247, "cdi": 5.1, "mmi": 5.0, "alert": "yellow",
+        "sig": 678, "magType": "mw", "status": "reviewed"
+      },
+      "geometry": {"type": "Point", "coordinates": [-122.1, 38.4, 12.7]}
+    },
+    {
+      "type": "Feature",
+      "id": "national-ak-002",
+      "properties": {
+        "type": "earthquake", "mag": 5.3, "place": "Southern Alaska",
+        "time": 1792072800000,
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/national-ak-002",
+        "felt": 4, "sig": 320
+      },
+      "geometry": {"type": "Point", "coordinates": [-150.3, 61.2, 38.0]}
+    },
+    {
+      "type": "Feature",
+      "id": "national-pr-003",
+      "properties": {
+        "type": "earthquake", "mag": 5.2, "place": "Near Puerto Rico",
+        "time": 1792072800000,
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/national-pr-003",
+        "felt": 52, "sig": 410
+      },
+      "geometry": {"type": "Point", "coordinates": [-66.3, 18.2, 8.0]}
+    },
+    {
+      "type": "Feature",
+      "id": "outside-bc-004",
+      "properties": {
+        "type": "earthquake", "mag": 6.0, "place": "British Columbia, Canada",
+        "time": 1792072800000,
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/outside-bc-004"
+      },
+      "geometry": {"type": "Point", "coordinates": [-127.0, 53.2, 10.0]}
+    },
+    {
+      "type": "Feature",
+      "id": "below-ca-005",
+      "properties": {
+        "type": "earthquake", "mag": 3.8, "place": "Northern California",
+        "time": 1792072800000,
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/below-ca-005"
+      },
+      "geometry": {"type": "Point", "coordinates": [-122.0, 38.1, 5.0]}
+    }
+  ]
+}

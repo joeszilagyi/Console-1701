@@ -1017,8 +1017,9 @@ CISA KEV, FAA NAS status, Federal Register API, BLS releases, and national news 
 must not perform network calls and must be safe for pytest.
 
 Current state: `tests/fixtures/news/national_nws_alerts.json` covers two official active-alert
-features, including a U.S. territory and an untrusted instruction-link candidate. The other
-NATIONAL source-family fixtures listed above remain pending.
+features, including a U.S. territory and an untrusted instruction-link candidate.
+`national_usgs_earthquakes.json` covers California, Alaska, Puerto Rico, an out-of-region event,
+and a below-threshold event. The other NATIONAL source-family fixtures listed above remain pending.
 
 ### NWS Active Alert Parser
 
@@ -1044,12 +1045,20 @@ policy notes, refresh interval, and source-health behavior. Keep sources disable
 
 ### USGS Earthquake GeoJSON Parser
 
-Status: not implemented.
+Status: partially implemented.
 
 Build a fixture-first parser for USGS earthquake GeoJSON filtered to U.S. national relevance,
 configured magnitude thresholds, territories, and felt/multi-state impact rules. Preserve event id,
 magnitude, depth, place, time, felt/intensity fields where present, source URL, bounding basis, and
 seismic ranking evidence.
+
+Current state: NATIONAL fixture parsing reuses the strict official-event URL and USGS GeoJSON
+contract, with a configurable magnitude threshold defaulting to `national.earthquake_min_magnitude`
+and coarse coordinate regions for the contiguous U.S., Alaska, Hawaii, Puerto Rico/U.S. Virgin
+Islands, Guam/Northern Mariana Islands, and American Samoa. It stores the region/bounding basis,
+event ID, magnitude, depth, place, time, felt/intensity, official URL, and seismic ranking terms.
+The coarse regions are a first-pass relevance filter, not a U.S. boundary determination; nuanced
+cross-border and multi-state felt-impact routing remains pending.
 
 ### FEMA/OpenFEMA Disaster Declarations Research
 

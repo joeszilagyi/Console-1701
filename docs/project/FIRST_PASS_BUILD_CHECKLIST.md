@@ -65,7 +65,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-034** [NATIONAL Fixture Pack](../../BACKLOG.md#L1003) — not implemented.
 - [x] **RS-035** [NWS Active Alert Parser](../../BACKLOG.md#L1012) — fixture parser preserves national alert geography, timing, instruction, and ranking evidence; focused tests pass.
 - [ ] **RS-036** [NHC Advisory/Feed Verification](../../BACKLOG.md#L1020) — not implemented.
-- [ ] **RS-037** [USGS Earthquake GeoJSON Parser](../../BACKLOG.md#L1028) — not implemented.
+- [ ] **RS-037** [USGS Earthquake GeoJSON Parser](../../BACKLOG.md#L1028) — partial: national coordinate regions, threshold, and fixture ingest work; nuanced cross-border and multi-state impact routing remains.
 - [ ] **RS-038** [FEMA/OpenFEMA Disaster Declarations Research](../../BACKLOG.md#L1037) — not implemented.
 - [ ] **RS-039** [CDC HAN Parser](../../BACKLOG.md#L1046) — not implemented.
 - [ ] **RS-040** [FDA Recall Endpoint/Feed Verification](../../BACKLOG.md#L1055) — not implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Advanced RS-037 and RS-034. Added a NATIONAL USGS fixture and coarse U.S./territory coordinate relevance filter with configurable magnitude threshold, stored geographic basis, and end-to-end fixture ingest coverage. Regional USGS parsing remains unchanged. Full pytest passed (222 tests); Ruff passed. Nuanced cross-border and multi-state impact routing is still open.
 - **2026-10-15:** Completed RS-032 on a stacked branch while PR #28 awaits the project merge gate. Added the disabled NATIONAL policy config and example, validated source and threshold settings, rejected unapproved social candidates, and connected the policy gate for future exact-allowlisted live sources. Full pytest passed (220 tests); Ruff passed. No NATIONAL live source was enabled.
 - **2026-10-15:** Completed RS-035 and advanced RS-034. Added a NATIONAL NWS fixture with Washington and Puerto Rico alerts, UGC-derived state/territory evidence, official instruction-link validation, parser tests, and an end-to-end fixture `news-scan` regression. Full pytest passed (219 tests); Ruff passed. NATIONAL live HTTP remains disabled.
 - **2026-10-15:** Completed RS-026. Expanded the REGIONAL source-state regression to include robots-blocked, auth-required, rate-limited, and unsupported states through the SQLite-only page/API path. Focused pytest passed. Next: inspect the remaining REGIONAL config/fixture and official-source gaps, then take the smallest verified slice.

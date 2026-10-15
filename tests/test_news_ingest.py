@@ -1017,6 +1017,45 @@ def test_run_news_scan_ingests_national_nws_alert_fixture(tmp_path):
                for row in evidence_rows)
 
 
+def test_run_news_scan_uses_national_usgs_threshold_for_fixture(tmp_path):
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        national:
+          earthquake_min_magnitude: 5.5
+        news:
+          enabled: true
+          scopes:
+            NATIONAL:
+              enabled: true
+              sources:
+                - id: usgs_national_fixture
+                  name: USGS national earthquake fixture
+                  kind: api_json
+                  parser: usgs_earthquake_geojson
+                  source_family: usgs
+                  official_status: official
+                  enabled: true
+                  url: "{_file_url(FIXTURE_DIR / 'national_usgs_earthquakes.json')}"
+        """,
+    )
+
+    result = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        rows = conn.execute(
+            "SELECT title, evidence_json FROM news_items WHERE scope = 'NATIONAL'"
+        ).fetchall()
+
+    assert result["status"] == "complete"
+    assert result["item_count"] == 1
+    assert "California" in rows[0]["title"]
+    evidence = json_loads(rows[0]["evidence_json"], {})
+    assert evidence["usgs_earthquake"]["filter"]["min_magnitude"] == 5.5
+    assert evidence["usgs_earthquake"]["filter"]["region"] == "contiguous_us"
+
+
 def test_run_news_scan_ingests_regional_wsdot_alert_fixture(tmp_path):
     config_path = _write_config(
         tmp_path / "config.yml",

@@ -733,6 +733,10 @@ def _normalize_news_source(
     if source_scope == "REGIONAL":
         _normalize_regional_source_metadata(source_cfg, path=path, regional_cfg=regional_cfg)
     if source_scope == "NATIONAL":
+        if str(source_cfg.get("parser") or "").strip().lower() == "usgs_earthquake_geojson":
+            source_cfg.setdefault(
+                "min_magnitude", national_cfg["earthquake_min_magnitude"]
+            )
         source_family = str(source_cfg.get("source_family") or "").strip().lower()
         source_class = str(source_cfg.get("source_class") or "").strip().lower()
         if (
