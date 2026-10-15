@@ -206,6 +206,10 @@ def parse_fixture_items(
         from console1701.news.regional_water import parse_usgs_water_latest_fixture
 
         return parse_usgs_water_latest_fixture(source, payload_text)
+    if parser_name == "wsf_alerts_fixture":
+        from console1701.news.regional_wsf import parse_wsf_alerts_fixture
+
+        return parse_wsf_alerts_fixture(source, payload_text)
     if parser_name == "gdacs_rss":
         return _parse_gdacs_rss(source, payload_text)
     if parser_name == "ecdc_rss":

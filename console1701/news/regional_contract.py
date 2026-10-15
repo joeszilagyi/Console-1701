@@ -30,6 +30,7 @@ def build_regional_event_contract(
     nws = evidence.get("nws_alert")
     wsdot = evidence.get("wsdot_alert")
     water = evidence.get("usgs_water")
+    wsf = evidence.get("wsf_alert")
     identity = f"isolated:{source.get('id')}:{hashed_url}"
     event_type = "regional_headline"
     matching_basis = "isolated_url"
@@ -85,6 +86,20 @@ def build_regional_event_contract(
         }
         match_tokens = [str(water["gauge_id"])[:120], str(water.get("huc8") or "")]
         public_impact_basis = "Observation only; no USGS flood-stage threshold in fixture"
+    elif isinstance(wsf, dict) and wsf.get("bulletin_id"):
+        identity = f"wsf-bulletin:{wsf['bulletin_id']}"
+        event_type = "ferry_alert"
+        matching_basis = "official_wsf_bulletin_id"
+        confidence = "high"
+        routes = [str(value) for value in wsf.get("affected_route_ids") or []][:30]
+        geography = {
+            "basis": "official_affected_route_ids",
+            "matched": bool(routes or wsf.get("all_routes")),
+            "ferry_route_ids": routes,
+            "all_routes": bool(wsf.get("all_routes")),
+        }
+        match_tokens = [str(wsf["bulletin_id"]), *routes]
+        public_impact_basis = "WSF bulletin cancellation or delay text; no vessel inference"
     elif isinstance(wsdot, dict) and wsdot.get("alert_id"):
         identity = f"wsdot-alert:{wsdot['alert_id']}"
         event_type = "traveler_alert"
