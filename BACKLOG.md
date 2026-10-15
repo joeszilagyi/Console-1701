@@ -2420,11 +2420,17 @@ credentials are absent, and no attempts to bypass login, account controls, or AP
 
 ### ESA Reentry Source Verification
 
-Status: not implemented.
+Status: completed 2026-10-15 for first-pass access classification.
 
 Verify ESA reentry prediction source ownership, access method, policy notes, parser shape,
 machine-readable endpoint availability, rate limits, uncertainty fields, and source-health states.
 Do not scrape dashboards or complex pages until a safe machine-readable path is verified.
+
+Current state: ESA's own front-end guide and press page confirm actual predictions require an
+account; public pages are background. No permitted machine-readable prediction endpoint or API
+contract was established. `esa_reentry` is now `restricted_auth_required`, disabled, and shown as
+`auth_required` without access. `docs/project/ORBITAL_ESA_REENTRY_SOURCE_VERIFICATION.md` records
+the endpoint, uncertainty, rate, retention, and safety gaps for any later adapter.
 
 ### NASA Orbital Debris Source Verification
 
