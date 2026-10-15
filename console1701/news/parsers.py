@@ -157,6 +157,10 @@ def parse_fixture_items(
         from console1701.news.science_rss import parse_nasa_jpl_science_rss
 
         return parse_nasa_jpl_science_rss(source, payload_text)
+    if parser_name == "atel_rss":
+        from console1701.news.science_atel import parse_atel_rss
+
+        return parse_atel_rss(source, payload_text)
     if parser_name == "esa_science_rss":
         from console1701.news.science_rss import parse_esa_science_rss
 

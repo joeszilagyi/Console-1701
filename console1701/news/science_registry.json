@@ -2015,8 +2015,8 @@
     "policy_risk": "low",
     "parser_risk": "medium",
     "retention_sensitivity": "medium",
-    "verification_status": "official_page_seen",
-    "why_it_matters": "Strong fixture-first transient follow-up source.",
+    "verification_status": "candidate_needs_verification",
+    "why_it_matters": "Official RSS 1.0 shape and offline fixture parser verified; live signoff remains pending.",
     "future_phase": "S9"
   },
   {
