@@ -1979,11 +1979,20 @@ def _global_evidence_contract(
         "low_public_value_penalty": None,
         "out_of_scope_penalty": None,
         "impact_tags": [],
-        "policy_notes": (evidence.get("policy") or {}).get("notes") or [],
+        "ranking_features": (evidence.get("ranking") or {}).get("factors") or {},
+        "retention_expires_at": (evidence.get("retention") or {}).get("expires_at"),
+        "policy_notes": [
+            *((evidence.get("policy") or {}).get("notes") or []),
+            *((evidence.get("global_attention_policy") or {}).get("reasons") or []),
+        ],
+        "attention_state": (evidence.get("global_attention_policy") or {}).get(
+            "attention_state"
+        ),
         "sensitivity_notes": [
             str(source[key]) for key in ("policy_risk", "retention_sensitivity")
             if source.get(key)
-        ] + (["conflict_sensitive_source"] if source.get("conflict_sensitive") is True else []),
+        ] + (["conflict_sensitive_source"] if source.get("conflict_sensitive") is True else [])
+        + [key for key, value in (evidence.get("sensitivity") or {}).items() if value is True],
     }
 
 
@@ -3197,6 +3206,7 @@ def _rebuild_global_clusters(conn: sqlite3.Connection) -> None:
             ]
             contract["out_of_scope_penalty"] = event_ranking["factors"]["out_of_scope_penalty"]
             contract["impact_tags"] = event_ranking["impact_tags"]
+            contract["ranking_features"] = event_ranking["factors"]
             evidence["global"] = contract
             evidence["global_event"] = {
                 "event_key": group["event_key"],
@@ -3218,6 +3228,11 @@ def _rebuild_global_clusters(conn: sqlite3.Connection) -> None:
                 "confidence": confidence,
                 "ranking": event_ranking,
                 "family_scores": family_scores,
+                "member_evidence": [
+                    {"item_id": member["id"], **(member["evidence"].get("global") or {})}
+                    for member in members[:30]
+                ],
+                "member_evidence_truncated": len(members) > 30,
             },
         }
         if event_ranking["sensitivity"]["hard_suppression_flags"]:
