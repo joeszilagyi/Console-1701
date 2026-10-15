@@ -348,6 +348,9 @@ CREATE INDEX IF NOT EXISTS idx_news_source_registry_scope
 CREATE INDEX IF NOT EXISTS idx_news_source_registry_family
   ON news_source_registry(source_family);
 
+CREATE INDEX IF NOT EXISTS idx_news_source_registry_scope_family
+  ON news_source_registry(scope, source_family, source_key);
+
 CREATE INDEX IF NOT EXISTS idx_news_source_registry_class
   ON news_source_registry(source_class);
 
@@ -365,6 +368,9 @@ CREATE INDEX IF NOT EXISTS idx_news_clusters_key
 
 CREATE INDEX IF NOT EXISTS idx_local_events_scope_time
   ON local_events(scope, status, last_seen_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_local_events_scope_impact
+  ON local_events(scope, status, public_impact_score DESC, last_seen_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_local_events_key
   ON local_events(event_key);
