@@ -4,13 +4,15 @@ import json
 from pathlib import Path
 from textwrap import dedent
 
+import pytest
+
 from console1701.config import load_config
 from console1701.db import connect_db, json_loads
 from console1701.news.parsers import parse_fixture_items
 from console1701.news.regional_contract import build_regional_event_contract
 from console1701.news.regional_registry import regional_registry_config_defaults
-from console1701.news.scanner import run_news_scan
-from console1701.news.storage import get_news_scope_view
+from console1701.news.scanner import purge_news_retention, run_news_scan
+from console1701.news.storage import get_news_scope_view, list_regional_items_by_facet
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures" / "news"
 
@@ -133,3 +135,59 @@ def test_regional_cluster_converges_same_official_event_without_family_inflation
             "regional_duplicate_family_penalty"
         ] == -2 for row in rows_after
     )
+
+
+def test_regional_geography_facets_are_official_scoped_and_expire(tmp_path):
+    config_path = tmp_path / "facets.yml"
+    config_path.write_text(dedent(f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        regional: {{enabled: true}}
+        news:
+          enabled: true
+          scopes:
+            REGIONAL:
+              enabled: true
+              sources:
+                - id: wsdot_traveler_api
+                  enabled: true
+                  url: "{_file_url('local_wsdot_alerts.json')}"
+                - id: usgs_eq_geojson
+                  enabled: true
+                  url: "{_file_url('regional_usgs_earthquakes.json')}"
+    """).strip() + "\n", encoding="utf-8")
+    assert run_news_scan(config_path)["item_count"] == 4
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        king = list_regional_items_by_facet(conn, "county", "KING COUNTY")
+        route = list_regional_items_by_facet(conn, "route", "i-5")
+        seismic = list_regional_items_by_facet(conn, "event_type", "earthquake")
+        assert len(king) == 1
+        assert len(route) == 1
+        assert king[0]["id"] == route[0]["id"]
+        assert len(seismic) == 2
+        assert list_regional_items_by_facet(conn, "county", "Seattle") == []
+        plan = conn.execute("""
+            EXPLAIN QUERY PLAN
+            SELECT item_id FROM news_item_facets
+            WHERE scope = 'REGIONAL' AND facet_kind = 'route' AND facet_value = 'i-5'
+        """).fetchall()
+        assert any("idx_news_item_facets_lookup" in row["detail"] for row in plan)
+        cluster_plan = conn.execute("""
+            EXPLAIN QUERY PLAN
+            SELECT id FROM news_clusters
+            WHERE scope = 'REGIONAL'
+            ORDER BY score DESC, last_seen_at DESC LIMIT 10
+        """).fetchall()
+        assert any("idx_news_clusters_scope_score" in row["detail"] for row in cluster_plan)
+        with pytest.raises(ValueError, match="Unsupported REGIONAL facet"):
+            list_regional_items_by_facet(conn, "headline", "Seattle")
+        conn.execute(
+            "UPDATE news_items SET expires_at = '2026-01-01T00:00:00+00:00' WHERE id = ?",
+            (route[0]["id"],),
+        )
+        purged = purge_news_retention(conn, config, now="2026-10-15T12:00:00+00:00")
+        assert purged["items"] == 1
+        remaining_facets = conn.execute(
+            "SELECT COUNT(*) FROM news_item_facets WHERE item_id = ?", (route[0]["id"],)
+        ).fetchone()[0]
+        assert remaining_facets == 0

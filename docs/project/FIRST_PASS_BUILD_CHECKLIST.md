@@ -40,7 +40,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 
 - [x] **RS-013** [REGIONAL Source Registry Design Implementation](../../BACKLOG.md#L620) — all 224 design rows plus six existing candidates disabled, validated, inherited by config, and synced to SQLite.
 - [x] **RS-014** [Disabled-By-Default REGIONAL Config](../../BACKLOG.md#L634) — validated geography/topic flags and explicit social/homepage gates; defaults remain off.
-- [ ] **RS-015** [REGIONAL SQLite Schema Or Extension](../../BACKLOG.md#L649) — partially implemented.
+- [x] **RS-015** [REGIONAL SQLite Schema Or Extension](../../BACKLOG.md#L649) — scoped clusters, ranking JSON, official geography facets, indexed queries, and expiry purge verified.
 - [ ] **RS-016** [REGIONAL Fixture Pack](../../BACKLOG.md#L665) — partially implemented.
 - [ ] **RS-017** [NWS Alert Parser For Washington](../../BACKLOG.md#L682) — partially implemented.
 - [ ] **RS-018** [WSDOT Traveler API Fixture Parser](../../BACKLOG.md#L697) — partially implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-015. Audited the shared REGIONAL item/health/cluster storage, then added indexed geography facets for official NWS zones and WSDOT routes, facilities, counties, and regions. USGS free-text place labels remain outside county facets. An offline scan regression verifies facet and cluster query plans, scoped lookups, and facet deletion on item expiry. Full pytest passed (322 tests); Ruff passed. Progress: 33/150.
 - **2026-10-15:** Completed RS-005. Audited the existing `local_events` and shared news schema, which already stored LOCAL event ranking explanations and linked items. Added scoped source-family and LOCAL impact-ranking indexes, with query-plan and expiry-purge checks; existing body-free item, health, fetch, and retention contracts remain covered. Full pytest passed (321 tests); Ruff passed. Progress: 32/150.
 - **2026-10-15:** Completed RS-013. Added all 224 REGIONAL design-table entries to the disabled registry and retained six reviewed operational candidates. Extended config enums, validated registry metadata and HTTPS URLs, and verified full SQLite persistence. Reference-only sources are blocked before file or HTTP access. Full pytest passed (319 tests); Ruff passed. Progress: 31/150.
 - **2026-10-15:** Completed RS-004. Added all 119 LOCAL design-table sources to the disabled registry while preserving reviewed core metadata. Validation covers unique keys, classes/adapters/kinds, risks/statuses, HTTPS URLs, priority, interval, and phase. Config and SQLite expose the complete inventory; a source-kind gate prevents reference-only pages from loading fixtures or fetching HTTP when configured. Full pytest passed (317 tests); Ruff passed. Progress: 30/150.
