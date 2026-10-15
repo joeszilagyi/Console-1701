@@ -62,7 +62,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-031** [NATIONAL Source Registry Design Implementation](../../BACKLOG.md#L973) — 227 disabled design entries, validated metadata, config defaults, SQLite sync, and summary.
 - [x] **RS-032** [Disabled-By-Default NATIONAL Config](../../BACKLOG.md#L982) — validated national policy tree, separate scope gate, social-source rejection, and disabled defaults.
 - [x] **RS-033** [NATIONAL SQLite Schema Or Extension](../../BACKLOG.md#L993) — scoped storage, agency/sector/state indexed facets, migration backfill and expiry purge verified.
-- [ ] **RS-034** [NATIONAL Fixture Pack](../../BACKLOG.md#L1003) — not implemented.
+- [ ] **RS-034** [NATIONAL Fixture Pack](../../BACKLOG.md#L1003) — partial: NWS, USGS and NHTSA fixtures; other selected source families pending.
 - [x] **RS-035** [NWS Active Alert Parser](../../BACKLOG.md#L1012) — fixture parser preserves national alert geography, timing, instruction, and ranking evidence; focused tests pass.
 - [x] **RS-036** [NHC Advisory/Feed Verification](../../BACKLOG.md#L1020) — official basin XML, summary/advisory fields, identity limits and empty-basin sentinel observed; live disabled.
 - [ ] **RS-037** [USGS Earthquake GeoJSON Parser](../../BACKLOG.md#L1028) — partial: national coordinate regions, threshold, and fixture ingest work; nuanced cross-border and multi-state impact routing remains.
@@ -71,7 +71,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-040** [FDA Recall Endpoint/Feed Verification](../../BACKLOG.md#L1055) — official RSS shapes and openFDA enforcement limits verified; no live source enabled.
 - [ ] **RS-041** [FSIS Recall API Parser](../../BACKLOG.md#L1064) — not implemented.
 - [ ] **RS-042** [CPSC Recalls API Parser](../../BACKLOG.md#L1072) — not implemented.
-- [ ] **RS-043** [NHTSA Recalls API Parser](../../BACKLOG.md#L1080) — not implemented.
+- [x] **RS-043** [NHTSA Recalls API Parser](../../BACKLOG.md#L1080) — official lookup-envelope fixture parser, grouped campaign evidence, safety ranking, facets and offline scan verified; live discovery remains disabled.
 - [ ] **RS-044** [FAA NAS Status Fixture Parser](../../BACKLOG.md#L1088) — not implemented.
 - [ ] **RS-045** [CISA Advisory Parser](../../BACKLOG.md#L1097) — not implemented.
 - [ ] **RS-046** [CISA KEV Endpoint Research](../../BACKLOG.md#L1106) — not implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-043 and advanced RS-034. Added a NATIONAL NHTSA lookup-envelope fixture parser with campaign grouping, bounded recall fields, vehicle-safety ranking, agency/sector facets, and offline scan coverage. Recorded the lookup-only live limitation and FSIS/CPSC access blockers. Full pytest passed (332 tests); Ruff passed. Progress: 52/150.
 - **2026-10-15:** Completed RS-040 and recorded the RS-039 endpoint blocker. Verified three official FDA RSS feeds, their overlapping headline metadata and conditional headers; documented openFDA enforcement's public-alert limitation. CDC HAN's former RSS paths no longer resolve to a current feed, so its parser stays open and disabled. Progress: 51/150.
 - **2026-10-15:** Completed RS-036. Bounded reads of the three official NHC/CPHC basin feeds confirmed RSS item and cyclone-summary fields, conditional headers, and no-storm sentinels; documented parser and watch/warning limits. No NHC source enabled. Progress: 50/150.
 - **2026-10-15:** Completed RS-038 as bounded official-source research. Verified the OpenFEMA v2 JSON envelope and query controls, composite primary key, record refresh semantics, declaration fields, policy and source-health gates. No live adapter enabled. Progress: 49/150.

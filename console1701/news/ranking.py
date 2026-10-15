@@ -185,6 +185,16 @@ def build_rank_result(
                 regional_seismic_boost = min(
                     55, max(0, _int_value(seismic_ranking.get("regional_seismic_weight")))
                 )
+    national_vehicle_safety_bonus = 0
+    if scope == "NATIONAL":
+        item_evidence = item.get("evidence") if isinstance(item.get("evidence"), dict) else {}
+        recall = item_evidence.get("nhtsa_recall")
+        if isinstance(recall, dict):
+            recall_ranking = recall.get("ranking")
+            if isinstance(recall_ranking, dict):
+                national_vehicle_safety_bonus = min(
+                    35, max(0, _int_value(recall_ranking.get("vehicle_safety_score")))
+                )
 
     factors = {
         "source_priority": source_priority,
@@ -196,6 +206,7 @@ def build_rank_result(
         "repeat_observation_bonus": repeat_bonus,
         "source_health_confidence": health_confidence,
         "regional_seismic_boost": regional_seismic_boost,
+        "national_vehicle_safety_bonus": national_vehicle_safety_bonus,
         **({"local_active_alert_bonus": local_active_alert["bonus"]} if scope == "LOCAL" else {}),
         **local_signal["factors"],
         **regional_signal["factors"],
@@ -220,6 +231,10 @@ def build_rank_result(
         )
     if regional_seismic_boost:
         reasons.append(f"REGIONAL USGS seismic evidence adds {regional_seismic_boost}.")
+    if national_vehicle_safety_bonus:
+        reasons.append(
+            f"NATIONAL NHTSA vehicle-safety evidence adds {national_vehicle_safety_bonus}."
+        )
     reasons.extend(local_signal["reasons"])
     if local_active_alert["reason"]:
         reasons.append(local_active_alert["reason"])

@@ -141,6 +141,8 @@ def parse_fixture_items(
         return _parse_wsdot_highway_alerts_rss(source, payload_text)
     if parser_name == "king_county_emergency_rss":
         return _parse_king_county_emergency_rss(source, payload_text)
+    if parser_name == "nhtsa_recalls_json":
+        return _parse_nhtsa_recalls_json(source, payload_text)
     if parser_name == "alertseattle_rss":
         return _parse_alertseattle_rss_feed(source, payload_text)
     if parser_name == "metro_rss":
@@ -1703,6 +1705,115 @@ def _king_county_emergency_classification(
     ):
         return "emergency_alert", 30
     return "county_notice", 4
+
+
+_NHTSA_CAMPAIGN_RE = re.compile(r"\d{2}[A-Z]\d{6}\Z")
+
+
+def _parse_nhtsa_recalls_json(
+    source: dict[str, Any], payload_text: str
+) -> list[dict[str, Any]]:
+    if str(source.get("scope") or "").upper() != "NATIONAL":
+        raise NewsParserError("NHTSA recall parser requires NATIONAL scope.")
+    try:
+        payload = json.loads(payload_text)
+    except json.JSONDecodeError as exc:
+        raise NewsParserError(f"Malformed NHTSA recall JSON: {exc}") from exc
+    if (
+        not isinstance(payload, dict)
+        or not isinstance(payload.get("Count"), int)
+        or isinstance(payload.get("Count"), bool)
+        or not isinstance(payload.get("results"), list)
+        or payload["Count"] != len(payload["results"])
+    ):
+        raise NewsParserError("NHTSA recall response needs matching Count and results.")
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for index, row in enumerate(payload["results"]):
+        if not isinstance(row, dict):
+            raise NewsParserError(f"NHTSA recall row {index} is not an object.")
+        campaign = str(row.get("NHTSACampaignNumber") or "").strip().upper()
+        if not _NHTSA_CAMPAIGN_RE.fullmatch(campaign):
+            raise NewsParserError(f"NHTSA recall row {index} has no valid campaign number.")
+        grouped.setdefault(campaign, []).append(row)
+
+    normalized: list[dict[str, Any]] = []
+    for index, (campaign, rows) in enumerate(grouped.items()):
+        first = rows[0]
+        report_date = str(first.get("ReportReceivedDate") or "").strip()
+        try:
+            published_at = datetime.strptime(report_date, "%m/%d/%Y").replace(
+                tzinfo=UTC
+            ).isoformat(timespec="seconds")
+        except ValueError as exc:
+            raise NewsParserError(f"NHTSA campaign {campaign} has invalid report date.") from exc
+        component = bounded_text(first.get("Component"), max_chars=140)
+        manufacturer = bounded_text(first.get("Manufacturer"), max_chars=140)
+        if not component or not manufacturer:
+            raise NewsParserError(f"NHTSA campaign {campaign} lacks manufacturer or component.")
+        for row in rows[1:]:
+            if (
+                str(row.get("ReportReceivedDate") or "").strip() != report_date
+                or bounded_text(row.get("Component"), max_chars=140) != component
+                or bounded_text(row.get("Manufacturer"), max_chars=140) != manufacturer
+            ):
+                raise NewsParserError(f"NHTSA campaign {campaign} has conflicting rows.")
+        vehicles = []
+        for row in rows:
+            vehicle = {
+                "model_year": bounded_text(row.get("ModelYear"), max_chars=8),
+                "make": bounded_text(row.get("Make"), max_chars=80),
+                "model": bounded_text(row.get("Model"), max_chars=100),
+            }
+            if vehicle not in vehicles:
+                vehicles.append(vehicle)
+        units = []
+        for row in rows:
+            raw = row.get("PotentialNumberofUnitsAffected")
+            try:
+                value = int(str(raw).replace(",", "")) if raw not in (None, "") else None
+            except ValueError as exc:
+                raise NewsParserError(f"NHTSA campaign {campaign} has invalid units.") from exc
+            if value is not None and value >= 0:
+                units.append(value)
+        affected_units = max(units) if units else None
+        park_it = any(str(row.get("parkIt") or "").strip().lower() in {"yes", "true", "1"}
+                      for row in rows)
+        park_outside = any(str(row.get("parkOutSide") or "").strip().lower() in {"yes", "true", "1"}
+                           for row in rows)
+        score = min(35, (20 if park_it else 0) + (15 if park_outside else 0)
+                    + (10 if affected_units is not None and affected_units >= 100_000 else 0))
+        campaign_url = (
+            "https://api.nhtsa.gov/recalls/campaignNumber?campaignNumber="
+            + quote(campaign)
+        )
+        item = _normalize_item(source, {
+            "title": f"NHTSA recall {campaign}: {manufacturer} {component}",
+            "url": campaign_url,
+            "description": bounded_text(first.get("Summary"), max_chars=500),
+            "published_at": published_at,
+            "tags": ["official", "vehicle-safety", "recall", "nhtsa"],
+        }, index=index)
+        item["evidence"]["nhtsa_recall"] = {
+            "campaign_number": campaign,
+            "manufacturer": manufacturer,
+            "component": component,
+            "vehicles": vehicles[:50],
+            "vehicles_truncated": len(vehicles) > 50,
+            "report_received_date": report_date,
+            "date_precision": "day",
+            "potential_units_affected": affected_units,
+            "summary": bounded_text(first.get("Summary"), max_chars=500),
+            "consequence": bounded_text(first.get("Consequence"), max_chars=500),
+            "remedy": bounded_text(first.get("Remedy"), max_chars=500),
+            "park_it": park_it,
+            "park_outside": park_outside,
+            "source_url": campaign_url,
+            "instruction_url": "https://www.nhtsa.gov/recalls",
+            "ranking": {"vehicle_safety_score": score},
+            "body_stored": False,
+        }
+        normalized.append(item)
+    return normalized
 
 
 def _normalize_wsdot_alert(

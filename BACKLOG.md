@@ -1150,7 +1150,9 @@ must not perform network calls and must be safe for pytest.
 Current state: `tests/fixtures/news/national_nws_alerts.json` covers two official active-alert
 features, including a U.S. territory and an untrusted instruction-link candidate.
 `national_usgs_earthquakes.json` covers California, Alaska, Puerto Rico, an out-of-region event,
-and a below-threshold event. The other NATIONAL source-family fixtures listed above remain pending.
+and a below-threshold event. `national_nhtsa_recalls.json` covers campaign grouping, model rows,
+park instructions and missing optional population data. The other NATIONAL source-family fixtures
+listed above remain pending.
 
 ### NWS Active Alert Parser
 
@@ -1252,6 +1254,10 @@ research/reference data for this feature. No FDA live source is enabled.
 
 Status: not implemented.
 
+2026-10-15 source check: FSIS confirms a public API, but its linked documentation and candidate
+API path returned HTTP 403 in bounded checks. Response shape and access remain unverified; see
+`docs/project/NATIONAL_NHTSA_RECALL_API_VERIFICATION.md`. Keep disabled.
+
 Build a fixture-first parser for the FSIS Recall API. Preserve recall id, product, firm, recall
 class, hazard, distribution geography, public instruction URL, recall date, active/update status,
 source URL, and food-safety ranking evidence.
@@ -1260,13 +1266,25 @@ source URL, and food-safety ranking evidence.
 
 Status: not implemented.
 
+2026-10-15 source check: CPSC's official API page and programmer guide document a REST/JSON
+service, but bounded GET and HEAD requests timed out without a response body. Direct service
+behavior remains unverified; see `docs/project/NATIONAL_NHTSA_RECALL_API_VERIFICATION.md`.
+
 Build a fixture-first parser for the CPSC Recalls API. Preserve recall id, product, firm, hazard,
 injury/death risk indicators when source-provided, recall date, URL, distribution scope, public
 instruction URL, and consumer-safety ranking evidence.
 
 ### NHTSA Recalls API Parser
 
-Status: not implemented.
+Status: implemented for fixture ingest; live integration remains disabled.
+
+`nhtsa_recalls_json` validates the official lookup response envelope, groups model rows by
+campaign, preserves bounded recall/safety fields, campaign source URL, day-precision report date,
+consumer instruction URL, and capped vehicle-safety ranking evidence. A synthetic fixture,
+parser tests and offline scan test pass. NATIONAL agency/sector facets include NHTSA and
+transportation. The official API is a lookup and has no verified recent-recall discovery stream;
+live polling requires separate signoff. See
+`docs/project/NATIONAL_NHTSA_RECALL_API_VERIFICATION.md`.
 
 Build a fixture-first parser for NHTSA recall APIs. Preserve recall campaign id, make/model/year or
 equipment fields, component, safety risk, remedy, recall date, source URL, affected population

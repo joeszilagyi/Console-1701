@@ -80,6 +80,10 @@ def national_item_facets(evidence: dict[str, Any]) -> set[tuple[str, str]]:
     if isinstance(usgs, dict):
         add("agency", "usgs")
         add("sector", "seismic")
+    nhtsa = evidence.get("nhtsa_recall") or {}
+    if isinstance(nhtsa, dict):
+        add("agency", "nhtsa")
+        add("sector", "transportation")
     return facets
 
 
