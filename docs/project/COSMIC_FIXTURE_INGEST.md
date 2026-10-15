@@ -26,7 +26,10 @@ news:
 
 The source ID, parser, and `official_url` must match the verified source identity. Fixture input
 must be `file://`. The same exact-identity rule applies to the ESA Space Science, ESA Hubble/Webb,
-NASA Exoplanet Archive, MAST, PDS, and GCN fixture parsers. Tiny archive fixtures
+NASA Science News, NASA Exoplanet Archive, MAST, PDS, and GCN fixture parsers. NASA Science News
+uses the official blog feed URL, accepts only a known one-separator XML repair in local fixture
+mode, and keeps live HTTP disabled while the source feed remains stale and malformed. Tiny
+archive fixtures
 also require their parser-specific `query_contract` with explicit columns, row and time bounds,
 or collection ID; see the parser fixtures and tests for accepted shapes.
 

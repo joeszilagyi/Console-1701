@@ -195,6 +195,8 @@ def test_cosmic_scan_drops_hype_claims_before_sqlite_storage(tmp_path, monkeypat
         "timeout_seconds": 10, "retention_days": 7,
     }, "pds_collection", 1),
     ("gcn_notices", "gcn_notice.json", "api_json", None, "gcn_notice", 1),
+    ("nasa_science_news", "nasa_science_news_malformed.rss", "rss", None,
+     "science_rss", 2),
     ("gcn_circulars", "gcn_circular.json", "api_json", None, "gcn_circular", 1),
     ("gracedb_public_alerts", "gracedb_public_alerts.json", "api_json", None,
      "gracedb_public_alert", 2),
@@ -247,14 +249,23 @@ def test_cosmic_fixture_adapters_run_offline_with_bounded_metadata(
         assert evidence["science_event"]["ranking"]["score"] >= 0
 
 
-def test_gcn_circular_live_source_is_rejected_by_config(tmp_path, monkeypatch):
+@pytest.mark.parametrize(("source_id", "parser", "kind", "official_url", "live_url"), [
+    ("gcn_circulars", "gcn_circular_fixture", "api_json",
+     "https://gcn.nasa.gov/circulars",
+     "https://gcn.nasa.gov/circulars/33603.json"),
+    ("nasa_science_news", "nasa_science_news_fixture", "rss",
+     "https://science.nasa.gov/blogs/science-news/feed/",
+     "https://science.nasa.gov/blogs/science-news/feed/"),
+])
+def test_cosmic_fixture_only_live_source_is_rejected_by_config(
+    tmp_path, monkeypatch, source_id, parser, kind, official_url, live_url
+):
     path = _config(tmp_path, monkeypatch)
     payload = yaml.safe_load(path.read_text())
     payload["news"]["scopes"]["SYSTEM_SOLAR"]["sources"] = [{
-        "id": "gcn_circulars", "name": "GCN Circulars", "kind": "api_json",
-        "parser": "gcn_circular_fixture", "enabled": True, "fixture_only": False,
-        "official_url": "https://gcn.nasa.gov/circulars",
-        "url": "https://gcn.nasa.gov/circulars/33603.json",
+        "id": source_id, "name": source_id, "kind": kind,
+        "parser": parser, "enabled": True, "fixture_only": False,
+        "official_url": official_url, "url": live_url,
     }]
     path.write_text(yaml.safe_dump(payload))
     with pytest.raises(ConfigError):

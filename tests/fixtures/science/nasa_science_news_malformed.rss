@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+  xmlns:apod="https://science.nasa.gov/apod/"xmlns:media="http://search.yahoo.com/mrss/">
+<channel>
+  <title>The Latest in NASA Science News - NASA Science</title>
+  <link>https://science.nasa.gov</link>
+  <item>
+    <title>NASA’s New Horizons Finds Evidence of Recent Liquid on Pluto’s Surface</title>
+    <link>https://science.nasa.gov/blogs/science-news/2026/08/05/nasas-new-horizons-finds-evidence-of-recent-liquid-on-plutos-surface/</link>
+    <pubDate>Wed, 05 Aug 2026 13:57:18 +0000</pubDate>
+    <category>Planetary Science</category><category>Pluto</category>
+    <description>Curated fixture body: private@example.test must not be stored.</description>
+  </item>
+  <item>
+    <title>ESA’s Euclid Space Telescope Finds Universe’s Most Ancient Quasars</title>
+    <link>https://science.nasa.gov/blogs/science-news/2026/07/06/esas-euclid-space-telescope-finds-universes-most-ancient-quasars/</link>
+    <pubDate>Mon, 06 Jul 2026 17:29:03 +0000</pubDate>
+    <category>Active Galaxies</category><category>Quasars</category>
+  </item>
+  <item>
+    <title>NASA-Supported Study Tracks Carbon Cost of Coastal Erosion</title>
+    <link>https://science.nasa.gov/blogs/science-news/2026/08/24/nasa-supported-study-tracks-carbon-cost-of-coastal-erosion/</link>
+    <pubDate>Mon, 24 Aug 2026 20:38:18 +0000</pubDate>
+    <category>Earth</category><category>Landsat</category>
+  </item>
+  <item>
+    <title>NASA Confirms Parker Solar Probe Mission Milestone</title>
+    <link>https://science.nasa.gov/blogs/science-news/2026/10/15/parker-mission-milestone/</link>
+    <pubDate>Thu, 15 Oct 2026 18:30:00 +0000</pubDate>
+    <category>Heliophysics</category>
+  </item>
+  <item>
+    <title>NASA Finds Exoplanet Atmosphere</title>
+    <link>https://example.test/blogs/science-news/2026/08/05/exoplanet/</link>
+    <pubDate>Wed, 05 Aug 2026 13:57:18 +0000</pubDate>
+    <category>Exoplanets</category>
+  </item>
+</channel></rss>

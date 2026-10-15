@@ -2960,7 +2960,10 @@ with complete paging. The PDS fixture covers one collection metadata record. The
 covers an official-schema notice, coordinates, test gates, update, and retraction. The Circular
 fixture covers one official page-linked JSON shape, subject-prefix status labels, and a strict
 body/contact/sky-map exclusion; direct HTTP and archive discovery remain blocked. The ATel
-RSS 1.0 fixture covers two telegrams, preliminary labels, and no full bodies. Other fixture
+RSS 1.0 fixture covers two telegrams, preliminary labels, and no full bodies. A NASA Science
+News fixture now covers the observed malformed RSS header, official category filtering,
+Earth-only and mission-action exclusions, and article-body omission. Live access stays blocked
+because the real feed is stale and still malformed. Other fixture
 families and some source-health/policy variants remain pending.
 
 The first offline `news-scan` integration now ingests configured NASA JPL and ESA RSS fixtures,
@@ -2969,7 +2972,7 @@ test assert no network call, while a repeat scan confirms event rebuild idempote
 fixture families and blocked-state variants still need end-to-end coverage.
 
 A parameterized scan regression also exercises the Hubble, Webb, Exoplanet Archive, MAST, PDS,
-and GCN notice/Circular fixture adapters through the real scanner, with local-only input,
+NASA Science News, and GCN notice/Circular fixture adapters through the real scanner, with local-only input,
 stored event evidence,
 and no product-download flags. `docs/project/COSMIC_FIXTURE_INGEST.md` gives the exact local
 configuration shape. ATel and the broader source-health/policy matrix remain pending.

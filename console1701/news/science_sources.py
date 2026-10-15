@@ -11,6 +11,9 @@ SCIENCE_FIXTURE_SOURCES = {
     "nasa_jpl_science_feed": (
         "nasa_jpl_science_rss", "https://www.nasa.gov/centers-and-facilities/jpl/feed/",
     ),
+    "nasa_science_news": (
+        "nasa_science_news_fixture", "https://science.nasa.gov/blogs/science-news/feed/",
+    ),
     "esa_space_science_feed": (
         "esa_science_rss", "https://www.esa.int/rssfeed/Our_Activities/Space_Science",
     ),

@@ -13,7 +13,11 @@ from console1701.news.parsers import NewsParserError, PayloadTooLargeError, _nor
 from console1701.news.science_sources import exact_science_endpoint
 
 NASA_JPL_SCIENCE_FEED = "https://www.nasa.gov/centers-and-facilities/jpl/feed/"
+NASA_SCIENCE_NEWS_FEED = "https://science.nasa.gov/blogs/science-news/feed/"
 ESA_SPACE_SCIENCE_FEED = "https://www.esa.int/rssfeed/Our_Activities/Space_Science"
+_NASA_SCIENCE_MALFORMED_HEADER = (
+    'xmlns:apod="https://science.nasa.gov/apod/"xmlns:media='
+)
 ESA_TELESCOPE_FEEDS = {
     "esa_hubble_science_rss": (
         "https://feeds.feedburner.com/hubble_news/", "ESAHubble News", "Hubble",
@@ -38,10 +42,99 @@ _OPERATIONS_RE = re.compile(
     r"landing schedule|crew|dock(?:ing|ed)?|deployment|mission operations)\b",
     re.I,
 )
+_NASA_SCIENCE_TOPIC_RE = re.compile(
+    r"\b(?:planetary science|pluto|new horizons|solar system|heliophysics|"
+    r"the sun|solar physics|active galaxies|galaxies|quasars|astrophysics|"
+    r"exoplanets?|cosmology|black holes?|james webb space telescope|"
+    r"hubble space telescope|euclid)\b", re.I,
+)
+_NASA_SCIENCE_OPERATIONS_RE = re.compile(
+    r"\b(?:launch(?:es|ed)?|liftoff|dock(?:ing|ed)?|undock(?:ing|ed)?|"
+    r"crew|deployment|"
+    r"mission milestone|mission operations|spacecraft test)\b", re.I,
+)
 
 
 def _text(element: ET.Element | None) -> str:
     return "" if element is None or element.text is None else element.text.strip()
+
+
+def parse_nasa_science_news_fixture(
+    source: dict[str, Any], payload_text: str
+) -> list[dict[str, Any]]:
+    if source.get("scope") != "SYSTEM_SOLAR" or source.get("id") != "nasa_science_news":
+        raise NewsParserError("NASA Science News parser requires its exact scope and source")
+    if not exact_science_endpoint(source, NASA_SCIENCE_NEWS_FEED):
+        raise NewsParserError("NASA Science News parser requires its exact official feed")
+    if source.get("fixture_only") is not True or not str(source.get("url") or "").startswith("file://"):
+        raise NewsParserError("NASA Science News parser is local fixture only")
+    if len(payload_text.encode("utf-8")) > 131_072:
+        raise PayloadTooLargeError("NASA Science News fixture exceeds 128 KiB")
+    repaired_header = False
+    if payload_text.count(_NASA_SCIENCE_MALFORMED_HEADER) == 1:
+        payload_text = payload_text.replace(
+            _NASA_SCIENCE_MALFORMED_HEADER,
+            'xmlns:apod="https://science.nasa.gov/apod/" xmlns:media=',
+            1,
+        )
+        repaired_header = True
+    try:
+        root = ET.fromstring(payload_text)
+    except ET.ParseError as exc:
+        raise NewsParserError(f"Malformed NASA Science News RSS: {exc}") from exc
+    channel = root.find("channel") if root.tag == "rss" else None
+    if channel is None or _text(channel.find("title")) != (
+        "The Latest in NASA Science News - NASA Science"
+    ):
+        raise NewsParserError("NASA Science News requires its official channel")
+
+    items: list[dict[str, Any]] = []
+    for index, row in enumerate(channel.findall("item")[:50]):
+        title = bounded_text(_text(row.find("title")), max_chars=280)
+        url = _text(row.find("link"))
+        parts = urlsplit(url)
+        if (
+            not title or parts.scheme != "https" or parts.hostname != "science.nasa.gov"
+            or not parts.path.startswith("/blogs/science-news/")
+        ):
+            continue
+        published = normalize_timestamp(_text(row.find("pubDate")))
+        if not published or _NASA_SCIENCE_OPERATIONS_RE.search(title):
+            continue
+        categories = [
+            bounded_text(_text(category), max_chars=100)
+            for category in row.findall("category")[:20] if _text(category)
+        ]
+        science_categories = [
+            category for category in categories
+            if category and _NASA_SCIENCE_TOPIC_RE.search(category)
+        ]
+        if not science_categories:
+            continue
+        item = _normalize_item(source, {
+            "title": title,
+            "url": url,
+            "description": "NASA Science News headline metadata.",
+            "published_at": published,
+            "tags": ["official", "nasa", "science"],
+        }, index=index)
+        item["evidence"]["science_rss"] = {
+            "feed_url": NASA_SCIENCE_NEWS_FEED,
+            "source_family": "nasa_science",
+            "official": True,
+            "categories": categories,
+            "science_categories": science_categories,
+            "scope_basis": "official_topic_category_and_nonoperational_title",
+            "published_at": published,
+            "xml_header_repair": (
+                "single_missing_namespace_separator" if repaired_header else None
+            ),
+            "fixture_only": True,
+            "article_body_fetched": False,
+            "data_product_downloaded": False,
+        }
+        items.append(item)
+    return items
 
 
 def parse_nasa_jpl_science_rss(
