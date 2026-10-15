@@ -309,18 +309,21 @@ unless a future `allow_homepage_extractors` flag is explicitly true.
 
 ### LOCAL SQLite Schema Or Extension
 
-Status: partially implemented.
+Status: completed 2026-10-15 for the first-pass LOCAL storage contract.
 
 Add SQLite storage for LOCAL source registry state, fetch runs, normalized items, event clusters or
 `local_events`, source health, ranking explanations, and retention purge evidence. Use JSON-heavy
 columns and indexes for latest-by-scope, source health, event ranking, source family, and
 `expires_at` purge. Do not store full article bodies by default.
 
-Current state: `news_source_registry` persists canonical LOCAL registry entries on each scan. Fetch
-runs/items/health/purge evidence and ranking data already persist via existing news tables. `local_events`
-(or equivalent local-event correlation table) and source-specific ranking explanation partitions remain
-pending. Configured `news_sources` now uses `(scope, source_key)` uniqueness, with existing IDs and
-dependent fetch/item rows preserved by the migration.
+The schema persists the 119-row LOCAL source registry, configured sources, fetch runs, normalized
+items, source health, local events, score components, ranking explanations, and retention evidence.
+`local_events` has a dedicated `ranking_explanation_json` field, item links, geography and family
+JSON, and expiry. Indexes cover latest items by scope/source, source health, scoped source family,
+LOCAL event time and impact ranking, and expiry purge. A schema/query-plan test verifies the new
+scoped impact index; a retention regression verifies expired LOCAL event deletion and purge counts.
+The item schema has no full article-body or raw-payload column. Existing databases receive the
+idempotent indexes on `init_db`, and the scoped source-key migration preserves dependent rows.
 
 ### LOCAL Fixture Pack
 

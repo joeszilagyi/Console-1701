@@ -27,7 +27,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 ### LOCAL Seattle Recent Signal Layer
 
 - [x] **RS-004** [LOCAL Source Registry Design Implementation](../../BACKLOG.md#L282) — all 119 design entries disabled, validated, inherited by config, and synced to SQLite; reference entries cannot ingest.
-- [ ] **RS-005** [LOCAL SQLite Schema Or Extension](../../BACKLOG.md#L310) — partially implemented.
+- [x] **RS-005** [LOCAL SQLite Schema Or Extension](../../BACKLOG.md#L310) — local events, ranking JSON, scoped family/impact indexes, item/source health, and expiry purge verified.
 - [ ] **RS-006** [FAA/SEA Airport Status Research](../../BACKLOG.md#L393) — partially implemented.
 - [ ] **RS-007** [LOCAL Deterministic Ranking](../../BACKLOG.md#L461) — partially implemented.
 - [ ] **RS-008** [LOCAL Privacy Redaction Rules](../../BACKLOG.md#L482) — partially implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-005. Audited the existing `local_events` and shared news schema, which already stored LOCAL event ranking explanations and linked items. Added scoped source-family and LOCAL impact-ranking indexes, with query-plan and expiry-purge checks; existing body-free item, health, fetch, and retention contracts remain covered. Full pytest passed (321 tests); Ruff passed. Progress: 32/150.
 - **2026-10-15:** Completed RS-013. Added all 224 REGIONAL design-table entries to the disabled registry and retained six reviewed operational candidates. Extended config enums, validated registry metadata and HTTPS URLs, and verified full SQLite persistence. Reference-only sources are blocked before file or HTTP access. Full pytest passed (319 tests); Ruff passed. Progress: 31/150.
 - **2026-10-15:** Completed RS-004. Added all 119 LOCAL design-table sources to the disabled registry while preserving reviewed core metadata. Validation covers unique keys, classes/adapters/kinds, risks/statuses, HTTPS URLs, priority, interval, and phase. Config and SQLite expose the complete inventory; a source-kind gate prevents reference-only pages from loading fixtures or fetching HTTP when configured. Full pytest passed (317 tests); Ruff passed. Progress: 30/150.
 - **2026-10-15:** Completed RS-073. Verified the official UN News all-news RSS endpoint and observed title/link/GUID/time/source fields with optional category. Added a GLOBAL fixture parser that keeps canonical story URL and feed-link evidence, bounded plain-text description, institution identity, and narrow routine/feature exclusions. The homepage is now reference-only and the exact RSS entry remains disabled for HTTP. Full pytest passed (315 tests); Ruff passed. Progress: 29/150.

@@ -6,7 +6,7 @@ from textwrap import dedent
 
 from console1701.config import load_config
 from console1701.db import connect_db, init_db, json_dumps
-from console1701.news.scanner import run_news_scan
+from console1701.news.scanner import purge_news_retention, run_news_scan
 from console1701.news.storage import (
     get_news_scope_states,
     get_news_sources_status,
@@ -144,7 +144,9 @@ def test_news_schema_creates_metadata_tables_and_indexes(tmp_path):
         "idx_news_items_expires_at",
         "idx_news_items_url_hash",
         "idx_news_items_rank_scope",
+        "idx_news_source_registry_scope_family",
         "idx_local_events_scope_time",
+        "idx_local_events_scope_impact",
         "idx_local_events_key",
         "idx_local_events_expires_at",
         "idx_news_clusters_scope_score",
@@ -167,6 +169,55 @@ def test_news_items_schema_does_not_store_full_article_bodies(tmp_path):
     assert "html" not in columns
     assert "raw_payload" not in columns
     assert "raw_payload_json" not in columns
+
+
+def test_local_event_storage_has_ranking_evidence_and_uses_scope_impact_index(tmp_path):
+    conn = connect_db(tmp_path / "console.sqlite")
+    init_db(conn)
+    columns = _column_names(conn, "local_events")
+    assert {
+        "scope", "event_key", "representative_item_id", "public_impact_score",
+        "source_diversity_score", "official_confirmation_score", "geography_json",
+        "source_ids_json", "families_json", "item_ids_json", "evidence_json",
+        "ranking_explanation_json", "expires_at", "status",
+    }.issubset(columns)
+    plan = conn.execute("""
+        EXPLAIN QUERY PLAN
+        SELECT id FROM local_events
+        WHERE scope = 'LOCAL' AND status = 'active'
+        ORDER BY public_impact_score DESC, last_seen_at DESC
+        LIMIT 10
+    """).fetchall()
+    assert any("idx_local_events_scope_impact" in str(row["detail"]) for row in plan)
+    conn.execute("DROP INDEX idx_local_events_scope_impact")
+    init_db(conn)
+    assert "idx_local_events_scope_impact" in _index_names(conn)
+
+
+def test_local_event_expiry_purge_reports_deleted_rows(tmp_path):
+    conn = connect_db(tmp_path / "console.sqlite")
+    init_db(conn)
+    for event_key, expiry in (
+        ("expired", "2026-04-01T00:00:00+00:00"),
+        ("active", "2026-05-20T00:00:00+00:00"),
+    ):
+        conn.execute("""
+            INSERT INTO local_events (
+              scope, event_key, event_type, title, first_seen_at,
+              last_seen_at, expires_at, ranking_explanation_json
+            ) VALUES ('LOCAL', ?, 'weather_alert', ?, ?, ?, ?, ?)
+        """, (
+            event_key, event_key, "2026-04-01T00:00:00+00:00",
+            "2026-04-01T00:00:00+00:00", expiry,
+            '{"score": 12, "reasons": ["official alert"]}',
+        ))
+    purged = purge_news_retention(
+        conn, {"news": {"retention": {"items_days": 7}}},
+        now="2026-05-11T10:00:00+00:00",
+    )
+    remaining = conn.execute("SELECT event_key FROM local_events").fetchall()
+    assert purged["local_events"] == 1
+    assert [row["event_key"] for row in remaining] == ["active"]
 
 
 def test_news_storage_round_trip_decodes_json_fields(tmp_path):
