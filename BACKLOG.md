@@ -2569,14 +2569,15 @@ NOAA scales JSON, SWPC Kp JSON, SWPC aurora JSON, JPL CNEOS close approach API, 
 API, NASA RSS, ESA RSS, and JPL RSS after verification. Require explicit commands and no page-load
 fetches.
 
-Current state: NOAA SWPC alerts JSON is the first exact allowlisted ORBITAL endpoint. The
-endpoint and HTTP headers were rechecked on 2026-10-15; explicit parent/news/HTTP/source enablement
+Current state: NOAA SWPC alerts and NOAA scales JSON are exact allowlisted ORBITAL endpoints.
+Both endpoint headers were rechecked on 2026-10-15; explicit parent/news/HTTP/source enablement
 and `verification_status: verified` are required. Live alerts outside a 72-hour freshness window
-are discarded, validity and cancellation affect active-alert scoring, and mocked-transport tests
-cover source gates, 200/304 handling, provenance, and offline GET. Registry defaults remain
-disabled and no live app scan was run. Remaining candidates should be admitted one at a time only
-after their endpoint, content type, parser, response size, freshness, and source policy are
-reviewed; JPL RSS remains unverified in this environment.
+are discarded; scale current/forecast periods have separate six-hour/96-hour freshness windows.
+Alert validity and cancellation affect active-alert scoring. Mocked-transport tests cover source
+gates, 200/304 handling, provenance, freshness, and offline GET. Registry defaults remain disabled
+and no live app scan was run. Remaining candidates should be admitted one at a time only after
+endpoint, content type, parser, response size, freshness, and source policy are reviewed; JPL RSS
+remains unverified in this environment.
 
 ### ORBITAL Launch/Event API Ingest Phase, Disabled By Default
 

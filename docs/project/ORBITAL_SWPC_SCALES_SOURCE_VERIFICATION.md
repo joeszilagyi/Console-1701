@@ -13,6 +13,17 @@ probability fields without turning them into inferred public impacts. Current an
 entries have distinct identity and safety flags. A missing current period fails clearly;
 incomplete period or category entries skip. The local fixture scan makes no HTTP request.
 
-The registry candidate remains disabled and the exact endpoint is not in the live HTTP
-allowlist. Live admission still needs cadence, conditional request, freshness, period semantics,
-and health verification under an explicit opt-in scan.
+On 2026-10-15, a read-only HEAD request to the exact NOAA endpoint returned HTTP 200,
+`application/json`, about 1.1 KB, `ETag`, and `Last-Modified`. A same-day JSON read showed period
+`0` stamped at the current update time and periods `1` through `3` at current/future forecast
+dates. This supports the parser's current-versus-forecast distinction, though it remains a
+layout-derived interpretation rather than a separate product-schema guarantee.
+
+The exact endpoint is now in the live HTTP allowlist. Its registry default remains disabled and
+unverified for local configuration. An opt-in live scan requires `orbital.enabled`,
+`news.enabled`, `news.scopes.ORBITAL.enabled`, `news.fetch_policy.allow_official_http`, and this
+source's `enabled` and `verification_status: verified`, with exact URL/parser/kind and no auth.
+The scanner retains current scale rows only when their source timestamp is within six hours and
+forecast rows within one hour past through 96 hours ahead. Zero and null scales remain omitted.
+Mocked-transport tests cover exact admission, 200/304 handling, period provenance, and freshness;
+no live app scan was run.
