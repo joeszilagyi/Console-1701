@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from starlette.requests import Request
 
 from console1701 import api as api_module
@@ -698,11 +699,11 @@ news:
     assert "forced parser failure" in body.lower()
 
 
-def test_regional_scope_source_health_matrix_is_visible_without_fetch(tmp_path, monkeypatch):
+@pytest.mark.parametrize("scope_name", ["REGIONAL", "NATIONAL"])
+def test_scope_source_health_matrix_is_visible_without_fetch(tmp_path, monkeypatch, scope_name):
     db_path = _use_temp_state(monkeypatch, tmp_path)
     config_path = tmp_path / "config.yml"
-    config_path.write_text(
-        """
+    config_text = """
 paths: {repo_roots: [], explicit_repos: []}
 logs: []
 projects: []
@@ -732,29 +733,30 @@ news:
            enabled: true, url: 'file:///tmp/regional-unsupported.json'}
         - {id: regional_auth, name: Auth required, kind: local_file_json,
            enabled: true, url: 'file:///tmp/regional-auth.json', auth: {token: ''}}
-""".strip() + "\n",
-        encoding="utf-8",
-    )
+"""
+    config_text = config_text.replace("REGIONAL", scope_name)
+    config_text = config_text.replace("regional_", f"{scope_name.lower()}_")
+    config_path.write_text(config_text.strip() + "\n", encoding="utf-8")
     with connect_db(db_path) as conn:
         init_db(conn)
         stale_id = _insert_news_source(
-            conn, "regional_stale", scope="REGIONAL", name="Stale",
+            conn, f"{scope_name.lower()}_stale", scope=scope_name, name="Stale",
             url="file:///tmp/regional-stale.json",
         )
         failed_id = _insert_news_source(
-            conn, "regional_failed", scope="REGIONAL", name="Parser failed",
+            conn, f"{scope_name.lower()}_failed", scope=scope_name, name="Parser failed",
             url="file:///tmp/regional-failed.json",
         )
         robots_id = _insert_news_source(
-            conn, "regional_robots", scope="REGIONAL", name="Robots blocked",
+            conn, f"{scope_name.lower()}_robots", scope=scope_name, name="Robots blocked",
             url="file:///tmp/regional-robots.json",
         )
         limited_id = _insert_news_source(
-            conn, "regional_limited", scope="REGIONAL", name="Rate limited",
+            conn, f"{scope_name.lower()}_limited", scope=scope_name, name="Rate limited",
             url="file:///tmp/regional-limited.json",
         )
         unsupported_id = _insert_news_source(
-            conn, "regional_unsupported", scope="REGIONAL", name="Unsupported",
+            conn, f"{scope_name.lower()}_unsupported", scope=scope_name, name="Unsupported",
             url="file:///tmp/regional-unsupported.json",
         )
         _insert_news_source_health(
@@ -765,7 +767,7 @@ news:
         _insert_news_source_health(
             conn, failed_id, observed_at="2026-10-08T00:00:00+00:00",
             state="parser_failed", last_failure_at="2026-10-08T00:00:00+00:00",
-            message="REGIONAL parser failed",
+            message=f"{scope_name} parser failed",
         )
         for source_id, state in (
             (robots_id, "robots_blocked"),
@@ -774,16 +776,16 @@ news:
         ):
             _insert_news_source_health(
                 conn, source_id, observed_at="2026-10-08T00:00:00+00:00",
-                state=state, message=f"REGIONAL {state}",
+                state=state, message=f"{scope_name} {state}",
             )
 
     router = build_router(str(config_path))
-    page = _route_endpoint(router, "/{scope}")(_request("/REGIONAL"), "REGIONAL")
-    scope = _route_endpoint(router, "/api/news/scopes/{scope}")("REGIONAL", 8)
-    states = scope["state"]["source_state_counts"]
+    page = _route_endpoint(router, "/{scope}")(_request(f"/{scope_name}"), scope_name)
+    scope_result = _route_endpoint(router, "/api/news/scopes/{scope}")(scope_name, 8)
+    states = scope_result["state"]["source_state_counts"]
 
     assert page.status_code == 200
-    assert scope["state"]["state"] == "failing"
+    assert scope_result["state"]["state"] == "failing"
     assert states["stale"] == 1
     assert states["parser_failed"] == 1
     assert states["policy_blocked"] == 1
@@ -794,7 +796,7 @@ news:
     assert states["rate_limited"] == 1
     assert states["unsupported"] == 1
     assert states["auth_required"] == 1
-    assert "REGIONAL parser failed" in page.body.decode()
+    assert f"{scope_name} parser failed" in page.body.decode()
     for state in ("robots blocked", "rate limited", "unsupported", "auth required"):
         assert state in page.body.decode().lower()
 

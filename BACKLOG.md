@@ -1220,12 +1220,18 @@ manual-review-only sources. Do not show fake headlines.
 
 ### NATIONAL Source Health States
 
-Status: not implemented.
+Status: implemented.
 
 Implement source health states for NATIONAL: `disabled`, `not_configured`,
 `configured_never_run`, `healthy`, `stale`, `failing`, `parser_failed`, `policy_blocked`,
 `robots_blocked`, `auth_required`, `rate_limited`, `unsupported`, and `manual_review_only`. Surface
 these states in SYSTEM later and summarize them on NATIONAL.
+
+Current state: the shared source-health calculation covers NATIONAL and the NATIONAL page/API
+expose its scope summary without fetching. The REGIONAL/NATIONAL matrix regression verifies stale,
+parser-failed, policy-blocked, configured-never-run, disabled, manual-review-only, robots-blocked,
+rate-limited, unsupported, and auth-required source states on both scopes. Shared scope-state tests
+also cover disabled, not-configured, and healthy outcomes.
 
 ### NATIONAL Evidence Drawer Contract
 
