@@ -114,3 +114,11 @@ ESA's [official RSS directory](https://www.esa.int/Services/RSS_Feeds) links a d
 15 mixed science, launch, and multimedia entries. Its fixture parser keeps only Space Science
 article paths and excludes launch and image-only links. The source remains disabled until a
 separate live promotion signoff.
+
+ESA/Hubble and ESA/Webb publisher news pages link FeedBurner RSS. Bounded reads on
+2026-10-15 returned parseable `ESAHubble News` and `ESAWebb News` channels, each with ten
+entries; science releases carry `heic`/`weic` IDs, official story URLs, and dates, while
+photo releases are interleaved. The ESA/Webb page also advertises a direct `webb.org` RSS
+URL that returned 404; its `esawebb.org/rss/feed.xml` variant redirected to Hubble's feed.
+The fixture parser uses the publisher-linked channels and official story hosts, but both
+FeedBurner endpoints remain live-policy blocked pending third-party hosting review.

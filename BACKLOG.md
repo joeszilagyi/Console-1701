@@ -2766,9 +2766,8 @@ verification status, source-health behavior, and future phase fields. Validate e
 every source disabled until explicitly configured.
 
 Current state: `console1701/news/science_registry.json` preserves all 170 source candidates from
-the design table plus the NASA-hosted JPL and ESA Space Science RSS endpoints verified later,
-under the internal
-`SYSTEM_SOLAR` working name. `science_registry.py` validates
+the design table plus four later JPL, ESA Space Science, and ESA Hubble/Webb RSS candidates,
+under the internal `SYSTEM_SOLAR` working name. `science_registry.py` validates
 unique keys, required fields, URL shape, enums, intervals, and priorities, and derives a disabled
 source-health behavior for each candidate. The registry has no parser, route, news scope, or
 runtime fetch wiring; the final UI label remains a user decision. Focused tests check inventory
@@ -2807,7 +2806,8 @@ network calls.
 
 Current state: `tests/fixtures/science/nasa_jpl_science.rss` covers NASA-hosted JPL astrophysics,
 exoplanet, Earth-only, launch, and nonofficial-link cases. The ESA fixture covers a science
-article, launch, image-only link, and nonofficial host. The remaining fixture families and
+article, launch, image-only link, and nonofficial host. ESA telescope fixtures cover science
+releases, photo releases, and nonofficial links. The remaining fixture families and
 source-health/policy states are still pending.
 
 ### NASA/JPL RSS Parser
@@ -2842,11 +2842,19 @@ disabled; no live science fetch or UI route exists yet.
 
 ### Hubble/JWST RSS Parser
 
-Status: not implemented.
+Status: completed 2026-10-15 for fixture-first ESA Hubble and Webb science releases.
 
 Build a fixture-first parser for verified Hubble and JWST feeds. Preserve telescope, instrument
 when source-provided, release id or URL, published time, bounded description, source family, and
 telescope-science ranking evidence. Do not download images or data products.
+
+Current state: ESA Hubble and Webb publisher pages link RSS feeds hosted by FeedBurner; their
+parseable channels and official story hosts are recorded in `science_rss.py`. The exact-source
+fixture parser accepts `Science Release` entries with validated Hubble/Webb release IDs,
+preserves telescope and publication metadata, leaves instrument unset when the feed omits it,
+and never downloads images or products. Photo releases and unrelated hosts are excluded.
+Both registry candidates remain policy blocked for live access because FeedBurner is a third-party
+feed host; the advertised Webb direct URL returned 404, and no redirect bypass is used.
 
 ### NASA Exoplanet Archive Tiny Metadata Parser
 

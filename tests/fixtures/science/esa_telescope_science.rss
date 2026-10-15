@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+  <title>ESAHubble News</title>
+  <item>
+    <title>Science Release: Hubble solves a merger mystery</title>
+    <link>https://esahubble.org/news/heic2611/</link>
+    <guid>https://esahubble.org/news/heic2611/</guid>
+    <pubDate>Mon, 17 Aug 2026 17:00:00 +0200</pubDate>
+    <description><![CDATA[<img src="https://example.test/no-download.jpg"/>A science release.]]></description>
+  </item>
+  <item>
+    <title>Photo Release: Hubble image of nebula</title>
+    <link>https://esahubble.org/news/heic2608/</link>
+    <pubDate>Tue, 01 Sep 2026 17:00:00 +0200</pubDate>
+  </item>
+  <item>
+    <title>Science Release: Wrong host</title>
+    <link>https://example.test/news/heic2612/</link>
+    <pubDate>Tue, 01 Sep 2026 17:00:00 +0200</pubDate>
+  </item>
+</channel></rss>
