@@ -31,6 +31,7 @@ from console1701.news.official_http import (
     is_supported_official_source,
 )
 from console1701.news.orbital_events import correlate_orbital_items
+from console1701.news.orbital_evidence import build_orbital_evidence_contract
 from console1701.news.orbital_impact import derive_orbital_impact
 from console1701.news.orbital_ranking import rank_orbital_event
 from console1701.news.orbital_registry import list_orbital_source_registry
@@ -2736,6 +2737,9 @@ def _rebuild_orbital_clusters(conn: sqlite3.Connection) -> None:
                 "confidence": confidence,
                 "ranking": event_ranking,
             }
+            evidence["orbital"] = build_orbital_evidence_contract(
+                member, group, event_ranking, confidence
+            )
             conn.execute(
                 "UPDATE news_items SET evidence_json = ? WHERE id = ?",
                 (json_dumps(evidence), member["id"]),

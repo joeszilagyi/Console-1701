@@ -53,12 +53,28 @@ def _member_signals(member: dict[str, Any]) -> dict[str, Any]:
         public = max(public, 12)
     if fireball.get("estimated_impact_energy_kt") is not None:
         public = max(public, 8)  # Reported event, never inferred ground damage.
+    operational_basis = [
+        "SWPC source-reported potential impacts" if swpc.get("potential_impacts") else None,
+        "Official SWPC alert" if safety.get("official_alert") else None,
+        "Official agency mission/ISS update" if event_type in {
+            "launch_update", "iss_update", "mission_update"
+        } else None,
+    ]
+    public_basis = [
+        "Parser-provided public impact score" if identity.get("public_impact_score") else None,
+        "Official current NOAA scale G3 or above"
+        if scale.get("period_kind") == "current" and level >= 3 else None,
+        "JPL reported fireball energy, not ground damage"
+        if fireball.get("estimated_impact_energy_kt") is not None else None,
+    ]
     return {
         "source": source, "ingest": evidence.get("ingest") or {},
         "identity": identity, "safety": safety,
         "official_severity": official_severity,
         "operational_impact": operational,
         "public_impact": public,
+        "operational_impact_basis": [value for value in operational_basis if value],
+        "public_impact_basis": [value for value in public_basis if value],
         "active_window": bool(safety.get("official_alert") or
                               safety.get("official_current_scale") or
                               identity.get("active_launch_window")),
@@ -163,6 +179,12 @@ def rank_orbital_event(
     )
     factors["sensitivity_penalty"] = sensitivity_penalty
     score = score_before_sensitivity - sensitivity_penalty
+    operational_basis = sorted({
+        reason for signal in signals for reason in signal["operational_impact_basis"]
+    })
+    public_basis = sorted({
+        reason for signal in signals for reason in signal["public_impact_basis"]
+    })
     return {
         "method": "bounded_orbital_metadata_factors_v1",
         "score": score,
@@ -175,6 +197,12 @@ def rank_orbital_event(
         "age_hours": age_hours,
         "span_hours": span_hours,
         "impact_tags": sorted(tags),
+        "operational_impact_basis": operational_basis,
+        "public_impact_basis": public_basis,
+        "source_diversity_basis": (
+            f"{len(families)} independent source families"
+            if group.get("corroborated") else "not_correlated"
+        ),
         "sensitivity": {
             "flags": sensitive_flags,
             "hard_suppression_flags": hard_flags,
