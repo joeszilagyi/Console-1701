@@ -2537,7 +2537,12 @@ evidence. Shared official identity can deduplicate same-family records without c
 corroboration; unrelated event types and observations outside 96 hours stay separate. Fixture
 integration and matcher tests pass. Remaining work: populate mission, launch, Kp, reentry, safe
 satellite, and impact identities in verified future adapters; test their real parsed records; and
-refine cross-product space-weather correlation without joining separate forecast periods.
+extend cross-product space-weather correlation beyond the verified SWPC warning/current-scale
+case. The SWPC matcher now joins only an active warning/alert and an observed current NOAA
+scale of the same level when the scale timestamp falls inside the alert's explicit valid
+window. Forecast scales, cancellations, different levels, and out-of-window observations
+remain separate; a joined SWPC pair is never independent corroboration. Parser-backed
+fixture and stored-cluster tests cover this case.
 
 ### ORBITAL Deterministic Ranking
 

@@ -116,6 +116,9 @@ def parse_swpc_alerts_json(source: dict[str, Any], payload_text: str) -> list[di
         item["evidence"]["orbital_identity"] = {
             "event_type": "space_weather_alert",
             "object_id": f"{product_id}:{issued_at}",
+            "noaa_scale": noaa_scale,
+            "valid_from": valid.get("from"),
+            "valid_until": valid.get("until"),
         }
         item["evidence"]["orbital_safety"] = {
             "official_alert": kind in {"ALERT", "WARNING", "EXTENDED WARNING", "WATCH"}
@@ -192,6 +195,9 @@ def parse_swpc_noaa_scales_json(
             item["evidence"]["orbital_identity"] = {
                 "event_type": "space_weather_scale",
                 "object_id": f"{period}:{scale_label}:{stamp}",
+                "noaa_scale": scale_label,
+                "scale_period": period_kind,
+                "scale_observed_at": stamp,
             }
             item["evidence"]["orbital_safety"] = {
                 "official_current_scale": period_kind == "current",
