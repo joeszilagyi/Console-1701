@@ -2893,11 +2893,16 @@ no-sky-map-download rule. No live adapter or Kafka dependency is enabled.
 
 ### Minor Planet Center Science-Context Source Verification
 
-Status: not implemented.
+Status: completed 2026-10-15 for first-pass MPC access classification.
 
 Verify MPC MPEC, NEOCP, observations, orbit, and designation API candidates for endpoint ownership,
 usage guidance, rate limits, parser shape, field stability, and ORBITAL overlap behavior. Keep
 hazard/close-approach operations canonical in ORBITAL and use this layer only for science context.
+
+Current state: `docs/project/SCIENCE_MPC_SOURCE_VERIFICATION.md` records official MPEC, orbit,
+observation/NEOCP, and list API shapes, MPC's five-requests-per-second ceiling, row-volume and
+tracking risks, a narrow MPEC metadata candidate, and the ORBITAL CNEOS boundary. Production
+response, terms, caching and parser gates remain before any live opt-in; no MPC adapter is enabled.
 
 ### HEASARC Metadata Source Verification
 
