@@ -99,7 +99,7 @@ def test_orbital_topic_social_restricted_and_parser_gates(tmp_path, monkeypatch)
                 - {id: reddit_space, enabled: true, url: file:///missing-reddit.json}
                 - {id: celestrak_elements, enabled: true,
                    url: file:///missing-celestrak.json, parser: generic_json_items}
-                - {id: nasa_rss_feeds, enabled: true, url: file:///missing-nasa.rss}
+                - {id: nasa_news, enabled: true, url: file:///missing-nasa.rss}
     """)
     monkeypatch.setattr(
         "console1701.news.scanner.load_fixture_text",
@@ -120,7 +120,7 @@ def test_orbital_topic_social_restricted_and_parser_gates(tmp_path, monkeypatch)
         "swpc_alerts_json": "policy_blocked",
         "reddit_space": "social_disabled",
         "celestrak_elements": "policy_blocked",
-        "nasa_rss_feeds": "manual_review_only",
+        "nasa_news": "manual_review_only",
     }
 
 
