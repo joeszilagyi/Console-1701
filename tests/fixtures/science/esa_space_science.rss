@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+  <title>ESA Space Science</title>
+  <item>
+    <title>Solar Orbiter tracks origin of magnetic switchbacks</title>
+    <link>https://www.esa.int/Science_Exploration/Space_Science/Solar_Orbiter/magnetic_switchbacks</link>
+    <guid>verified-esa-guid</guid>
+    <pubDate>Thu, 08 Oct 2026 11:00:00 +0200</pubDate>
+    <description><![CDATA[<img src="https://www.esa.int/never-fetch.jpg"/>Solar physics finding.]]></description>
+  </item>
+  <item>
+    <title>Mars moon lander set to launch on 19 October</title>
+    <link>https://www.esa.int/Science_Exploration/Space_Science/Mars_moon_lander</link>
+    <pubDate>Tue, 13 Oct 2026 14:00:00 +0200</pubDate>
+  </item>
+  <item>
+    <title>Webb captures nebula jets</title>
+    <link>https://www.esa.int/ESA_Multimedia/Images/2026/10/webb_nebula</link>
+    <pubDate>Tue, 06 Oct 2026 15:00:00 +0200</pubDate>
+  </item>
+  <item>
+    <title>Solar Orbiter result on another site</title>
+    <link>https://example.test/Science_Exploration/Space_Science/Solar_Orbiter/result</link>
+    <pubDate>Thu, 08 Oct 2026 11:00:00 +0200</pubDate>
+  </item>
+</channel></rss>

@@ -153,6 +153,10 @@ def parse_fixture_items(
         from console1701.news.science_rss import parse_nasa_jpl_science_rss
 
         return parse_nasa_jpl_science_rss(source, payload_text)
+    if parser_name == "esa_science_rss":
+        from console1701.news.science_rss import parse_esa_science_rss
+
+        return parse_esa_science_rss(source, payload_text)
 
     if parser_name == "nws_alerts_json":
         return _parse_nws_alerts_json(source, payload_text)

@@ -107,3 +107,10 @@ candidate. A 2026-10-15 bounded read returned HTTP 200, `application/rss+xml`, a
 `Jet Propulsion Laboratory – NASA` channel, and ten mixed-topic entries. The parser keeps
 science-category headlines and rejects Earth-only and operational launch/testing headlines; it
 does not authorize live science ingest or the inaccessible direct JPL feed.
+
+ESA's [official RSS directory](https://www.esa.int/Services/RSS_Feeds) links a dedicated
+[Space Science feed](https://www.esa.int/rssfeed/Our_Activities/Space_Science). A bounded
+2026-10-15 read returned HTTP 200, `application/rss+xml`, the `ESA Space Science` channel, and
+15 mixed science, launch, and multimedia entries. Its fixture parser keeps only Space Science
+article paths and excludes launch and image-only links. The source remains disabled until a
+separate live promotion signoff.

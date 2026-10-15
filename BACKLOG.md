@@ -2766,7 +2766,8 @@ verification status, source-health behavior, and future phase fields. Validate e
 every source disabled until explicitly configured.
 
 Current state: `console1701/news/science_registry.json` preserves all 170 source candidates from
-the design table plus the NASA-hosted JPL RSS endpoint verified later, under the internal
+the design table plus the NASA-hosted JPL and ESA Space Science RSS endpoints verified later,
+under the internal
 `SYSTEM_SOLAR` working name. `science_registry.py` validates
 unique keys, required fields, URL shape, enums, intervals, and priorities, and derives a disabled
 source-health behavior for each candidate. The registry has no parser, route, news scope, or
@@ -2805,7 +2806,8 @@ sources, heavy-archive-blocked sources, and hype-blocked items. Fixture ingest m
 network calls.
 
 Current state: `tests/fixtures/science/nasa_jpl_science.rss` covers NASA-hosted JPL astrophysics,
-exoplanet, Earth-only, launch, and nonofficial-link cases. The remaining fixture families and
+exoplanet, Earth-only, launch, and nonofficial-link cases. The ESA fixture covers a science
+article, launch, image-only link, and nonofficial host. The remaining fixture families and
 source-health/policy states are still pending.
 
 ### NASA/JPL RSS Parser
@@ -2826,11 +2828,17 @@ UI route exists yet.
 
 ### ESA RSS Parser
 
-Status: not implemented.
+Status: completed 2026-10-15 for fixture-first ESA Space Science RSS.
 
 Build a fixture-first ESA RSS parser after feed shape is verified. Preserve title, URL, published
 time, source family, bounded description, science/mission labels where available, and official
 agency evidence. Keep it disabled by default and metadata-only.
+
+Current state: `science_rss.py` parses the exact official ESA Space Science feed and channel,
+accepts only ESA Space Science article paths, rejects launch and image-only links, preserves the
+source path's mission label when present, and stores bounded headline metadata and no-download
+evidence. Focused fixtures cover endpoint/channel and payload gates. The registry source remains
+disabled; no live science fetch or UI route exists yet.
 
 ### Hubble/JWST RSS Parser
 

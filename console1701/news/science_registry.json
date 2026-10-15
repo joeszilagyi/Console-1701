@@ -2080,6 +2080,26 @@
     "future_phase": "S7"
   },
   {
+    "source_key": "esa_space_science_feed",
+    "source_name": "ESA Space Science RSS",
+    "source_family": "esa_science",
+    "source_class": "official_planetary_science",
+    "scope": "SYSTEM_SOLAR",
+    "raw_url": "https://www.esa.int/rssfeed/Our_Activities/Space_Science",
+    "expected_access_kind": "public official RSS feed",
+    "adapter": "rss_atom",
+    "refresh_interval": "60 min",
+    "priority": "85",
+    "official_status": "official",
+    "privacy_risk": "low",
+    "policy_risk": "low",
+    "parser_risk": "medium",
+    "retention_sensitivity": "low",
+    "verification_status": "candidate_needs_verification",
+    "why_it_matters": "Dedicated ESA Space Science feed; scope filter excludes launches and image-only releases.",
+    "future_phase": "S7"
+  },
+  {
     "source_key": "esa_science_exploration",
     "source_name": "ESA Science and Exploration",
     "source_family": "esa",
