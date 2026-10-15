@@ -116,7 +116,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-082** [GLOBAL Source Health States](../../BACKLOG.md#L1525) — configured health states surfaced on GLOBAL and SYSTEM and verified across transition and gate cases.
 - [ ] **RS-083** [GLOBAL Evidence Drawer Contract](../../BACKLOG.md#L1535) — partial: item and event payloads/drawers now include matching, score factors, public-impact basis, and penalties; wider source-specific coverage remains.
 - [ ] **RS-084** [GLOBAL Official-Source Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L1545) — not implemented.
-- [ ] **RS-085** [Documentation For Source Verification](../../BACKLOG.md#L1581) — partially implemented.
+- [x] **RS-085** [Documentation For Source Verification](../../BACKLOG.md#L1581) — endpoint signoff template, exact live gates, and six evidence-linked GLOBAL walkthrough groups complete.
 - [x] **RS-086** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L1596) — GLOBAL/SYSTEM/API GETs trapped across unstarted, stored-health, and gated-source states.
 - [x] **RS-087** [Tests For No Heavy Source Running Without Explicit Config](../../BACKLOG.md#L1605) — all 20 heavy registry candidates blocked before file/network access.
 - [x] **RS-088** [Tests For No Token/Account Source Running Without Config](../../BACKLOG.md#L1613) — known auth/account/social candidates blocked before file/network access.

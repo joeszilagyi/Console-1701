@@ -2099,7 +2099,7 @@ platform restrictions, and never treat social as primary evidence.
 
 ### Documentation For Source Verification
 
-Status: partially implemented.
+Status: completed 2026-10-15 for first-pass GLOBAL verification workflow.
 
 Document the later GLOBAL source verification workflow: confirm endpoint ownership, access method,
 source terms, robots/policy notes, parser shape, auth/key requirements, rate limits, retention
@@ -2107,10 +2107,11 @@ sensitivity, privacy risk, verification status, geography/relevance filters, sou
 behavior, and whether the source is official, media, nonprofit, platform, open-data, or manual
 review only.
 
-Current state: `docs/project/GLOBAL_SOURCE_VERIFICATION_WORKFLOW.md` now captures the shared
-verification checklist, required registry fields, and scope-specific geography/relevance and
-source-type filters. Per-source signoff templates and endpoint-specific walkthroughs still need a
-dedicated follow-up.
+Current state: `docs/project/GLOBAL_SOURCE_VERIFICATION_WORKFLOW.md` captures the shared
+verification checklist, registry fields, geography/relevance and source-type filters, per-endpoint
+signoff record, exact live promotion gates, and evidence-linked walkthroughs for GDACS, WHO,
+ReliefWeb, USGS, UN and IAEA. Each walkthrough states fixture-only status and its distinct live
+release work.
 
 ### Tests For No Page-Load External Fetches
 
