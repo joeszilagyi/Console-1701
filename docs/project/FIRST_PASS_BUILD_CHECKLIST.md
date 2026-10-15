@@ -42,7 +42,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-014** [Disabled-By-Default REGIONAL Config](../../BACKLOG.md#L634) — validated geography/topic flags and explicit social/homepage gates; defaults remain off.
 - [x] **RS-015** [REGIONAL SQLite Schema Or Extension](../../BACKLOG.md#L649) — scoped clusters, ranking JSON, official geography facets, indexed queries, and expiry purge verified.
 - [ ] **RS-016** [REGIONAL Fixture Pack](../../BACKLOG.md#L665) — partially implemented.
-- [ ] **RS-017** [NWS Alert Parser For Washington](../../BACKLOG.md#L682) — partially implemented.
+- [x] **RS-017** [NWS Alert Parser For Washington](../../BACKLOG.md#L682) — dedicated WA/OR fixture, official county/zone evidence, configurable filters, and offline scan verified.
 - [ ] **RS-018** [WSDOT Traveler API Fixture Parser](../../BACKLOG.md#L697) — partially implemented.
 - [ ] **RS-019** [USGS Earthquake GeoJSON Parser](../../BACKLOG.md#L738) — partially implemented.
 - [ ] **RS-020** [King County Emergency Feed Parser](../../BACKLOG.md#L787) — not implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-017 and advanced RS-016. Added a dedicated REGIONAL NWS WA/OR fixture, official UGC/SAME geography evidence, configured county/zone filters, and a scan regression. The broader pack remains open for sources whose machine-readable shapes require verification. Full pytest passed (327 tests); Ruff passed. Progress: 41/150.
 - **2026-10-15:** Completed RS-012. Expanded the shared verification workflow with a per-source signoff record and release gate, linking the existing NWS signoff and FAA/NAS reference-only decision. The record distinguishes documentation, bounded observations, fixture tests, and actual live smoke checks. Progress: 40/150.
 - **2026-10-15:** Completed RS-011 at its first-source boundary. Audited the existing exact NWS Washington allowlist and opt-in command; prior controlled scan evidence recorded successful fetch plus immediate interval skip. Focused offline tests passed (7 tests) for gate, conditional request, interval, retirement, rate limit, and GET isolation. Other candidate endpoints remain disabled. Progress: 39/150.
 - **2026-10-15:** Completed RS-010. Expanded LOCAL item drawer fields and event-member API provenance, added explicit deterministic event confidence, and verified linked item/event evidence. Full pytest passed (325 tests); Ruff passed. Progress: 38/150.

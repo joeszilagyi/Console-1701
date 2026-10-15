@@ -742,12 +742,15 @@ Current state: the registry-backed RSS parser now accepts `regional_news_rss`, a
 regression reuses the existing RSS fixture corpus to prove the REGIONAL ingest path. The shared
 local fixture corpus also now exercises REGIONAL NWS and WSDOT ingest paths. Dedicated regional
 USGS earthquake GeoJSON fixture and parser now cover Washington-area coordinate and magnitude
-filtering, event evidence, and a capped seismic ranking factor. Dedicated regional fixtures for
-the remaining Washington sources are still pending.
+filtering, event evidence, and a capped seismic ranking factor. A dedicated REGIONAL NWS fixture
+now covers King/Spokane WA alerts and an out-of-region Oregon alert, including official county/zone
+codes and configured filter behavior. Dedicated WSF, wildfire, hydrology, county emergency, AQI,
+outage, and other regional fixture shapes remain pending endpoint verification; do not invent
+live API shapes to close this pack.
 
 ### NWS Alert Parser For Washington
 
-Status: partially implemented.
+Status: implemented (first pass).
 
 Build a fixture-first NWS alert parser filtered to Washington, Puget Sound, configured counties,
 weather zones, and regional hazard rules. Preserve alert id, event type, severity, urgency,
@@ -755,10 +758,15 @@ certainty, affected zones, counties, effective time, expiration time, source URL
 and official-alert ranking evidence.
 
 Current state: the existing NWS fixture parser now runs in REGIONAL scope through the registry-
-backed ingest path. It now rejects alerts without Washington zone evidence or an explicit
-Washington area label; the disabled registry seed uses the documented `area=WA` endpoint. The
+backed ingest path. It rejects alerts without Washington zone, SAME county, or explicit state-label
+evidence; the disabled registry seed uses the documented `area=WA` endpoint. The
 REGIONAL regression covers in- and out-of-region fixture cases. Dedicated Washington-only fixture
-files and broader county/zone coverage remain pending.
+coverage now preserves official UGC zone ids, SAME county codes, explicit county area labels,
+alert timing, instruction URLs, severity/urgency/certainty, and ranking evidence. Optional
+`county_codes`, `county_keywords`, `zone_ids`, and `area_keywords` narrow REGIONAL ingest after a
+Washington geography gate. A Washington SAME county code alone is sufficient when zone ids are
+absent, with `official_same_county_codes` recorded as the geography basis. A dedicated fixture and
+end-to-end scan test cover filtering and retained evidence; out-of-region Oregon alerts stay out.
 
 ### WSDOT Traveler API Fixture Parser
 
