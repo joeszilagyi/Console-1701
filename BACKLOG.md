@@ -2474,18 +2474,21 @@ duplicate handling, non-inferred NEO risk, and stored sensitive-item rendering.
 
 ### ORBITAL Safety And Sensitivity Rules
 
-Status: partially implemented.
+Status: completed 2026-10-15 for first-pass deterministic rules.
 
 Add deterministic rules that block or de-emphasize tactical satellite tracking, restricted/auth
 data, classified-activity inference, broad satellite catalog firehoses, Space-Track use without
 credentials and terms review, social-only claims, launch rumors, NEO panic language, reentry panic
 language, and debris fear-dashboard behavior. Prefer official public metadata and short retention.
 
-Current state: source-policy gates block restricted and sensitive catalog candidates before ingest;
-ORBITAL ranking hard-suppresses flagged tactical, restricted, classified-inference, private
-operator, and object-surveillance items and de-emphasizes other sensitivity flags. The scope and
-item-detail views hide hard-suppressed records. Remaining work: add deterministic classification
-at ingest for social-only, rumor, reentry, debris, and panic-language cases; validate retention.
+Current state: source-policy gates block restricted and sensitive catalog candidates before ingest.
+`orbital_safety.py` classifies bounded title/description and source metadata for tactical tracking,
+restricted data, classified inference, private operator monitoring, social-only claims, launch
+rumors, NEO panic wording, reentry panic wording, and debris fear framing. Hard-sensitive text is
+redacted before storage and hidden from scope, cluster, and direct-detail output; soft flags and
+rumor carry ranking penalties. ORBITAL retention is capped at seven days and redacted records at
+one day. Tests cover ordinary official alerts and close approaches remaining unflagged as well as
+blocked and redacted cases. The wording rules are intentionally narrow and remain reviewable.
 
 ### ORBITAL Local And Global Impact Tag Rules
 
