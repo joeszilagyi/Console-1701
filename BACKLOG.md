@@ -982,7 +982,7 @@ enum values and keep all NATIONAL sources disabled until explicitly configured.
 
 ### Disabled-By-Default NATIONAL Config
 
-Status: not implemented.
+Status: implemented.
 
 Add a `national_sources:` or equivalent NATIONAL config tree that defaults to disabled. Include
 flags for federal alerts, weather hazards, disasters, public health, recalls, transportation,
@@ -990,6 +990,12 @@ aviation, cybersecurity, energy/grid, economic releases, Federal Register, Congr
 national news, social sources, and state events with national impact. Reject social sources unless
 explicitly allowed and reject homepage extraction unless a future `allow_homepage_extractors` flag
 is true.
+
+Current state: `national:` now has disabled defaults, type and threshold validation, explicit
+social-source gating, and a separate scope switch. Source policy and the live-source gate require
+the national policy switch before any future exact-allowlisted official HTTP source can run. The
+repository example config documents the defaults. No NATIONAL live source is allowlisted or
+enabled by this config work; homepage extraction remains blocked by the shared fetch policy.
 
 ### NATIONAL SQLite Schema Or Extension
 

@@ -82,6 +82,32 @@ local:
   allow_neighborhood_blogs: false
   allow_social_sources: false
 
+national:
+  enabled: false
+  default_place_label: "United States"
+  include_federal_alerts: true
+  include_weather_hazards: true
+  include_disasters: true
+  include_public_health: true
+  include_recalls: true
+  include_transportation: true
+  include_aviation: true
+  include_cybersecurity: true
+  include_energy_grid: true
+  include_economic_releases: true
+  include_federal_register: true
+  include_congress: false
+  include_courts: false
+  include_national_news: true
+  include_social_sources: false
+  include_state_events_when_national_impact: true
+  earthquake_min_magnitude: 5.0
+  hurricane_attention_minimum: watch
+  severe_weather_attention_minimum: warning
+  wildfire_national_attention_min_acres: 1000
+  recall_attention_classes: [Class I, high_public_impact]
+  cyber_attention_minimum: [known_exploited, emergency_directive, high_impact_advisory]
+
 news:
   enabled: false
   retention:

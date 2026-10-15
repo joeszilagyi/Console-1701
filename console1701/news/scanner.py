@@ -458,6 +458,7 @@ def _is_allowed_live_source(config: dict[str, Any], source: dict[str, Any]) -> b
     scope_policy_enabled = (
         bool((config.get("local") or {}).get("enabled")) if scope == "LOCAL"
         else bool((config.get("regional") or {}).get("enabled")) if scope == "REGIONAL"
+        else bool((config.get("national") or {}).get("enabled")) if scope == "NATIONAL"
         else False
     )
     return (

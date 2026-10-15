@@ -31,6 +31,9 @@ def test_news_defaults_are_disabled_and_empty(tmp_path):
     assert config["local"]["earthquake_min_magnitude"] == 3.0
     assert config["local"]["allow_neighborhood_blogs"] is False
     assert config["local"]["allow_social_sources"] is False
+    assert config["national"]["enabled"] is False
+    assert config["national"]["earthquake_min_magnitude"] == 5.0
+    assert config["national"]["include_social_sources"] is False
     assert list(config["news"]["scopes"]) == list(NEWS_SCOPES)
     assert iter_news_sources(config) == []
     assert all(not scope["enabled"] for scope in config["news"]["scopes"].values())
@@ -98,6 +101,47 @@ def test_news_rejects_unknown_scope(tmp_path):
                     GALACTIC:
                       enabled: false
                       sources: []
+                """,
+            )
+        )
+
+
+def test_national_config_validates_thresholds_and_social_gate(tmp_path):
+    config = load_config(
+        _write_config(
+            tmp_path / "national.yml",
+            """
+            national:
+              enabled: true
+              earthquake_min_magnitude: 4.5
+              include_congress: true
+              hurricane_attention_minimum: warning
+            """,
+        )
+    )
+    assert config["national"]["enabled"] is True
+    assert config["national"]["earthquake_min_magnitude"] == 4.5
+    assert config["national"]["include_congress"] is True
+    assert config["national"]["hurricane_attention_minimum"] == "warning"
+    assert config["news"]["scopes"]["NATIONAL"]["enabled"] is False
+
+    with pytest.raises(ConfigError, match="national.earthquake_min_magnitude must be finite"):
+        load_config(
+            _write_config(tmp_path / "bad.yml", "national: {earthquake_min_magnitude: .nan}")
+        )
+    with pytest.raises(ConfigError, match="NATIONAL social source"):
+        load_config(
+            _write_config(
+                tmp_path / "social.yml",
+                """
+                news:
+                  scopes:
+                    NATIONAL:
+                      sources:
+                        - id: national_social
+                          name: National social candidate
+                          kind: rss
+                          source_class: social_candidate
                 """,
             )
         )

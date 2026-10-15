@@ -61,6 +61,8 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
         if source.get("scope") == "LOCAL"
         else bool((config.get("regional") or {}).get("enabled"))
         if source.get("scope") == "REGIONAL"
+        else bool((config.get("national") or {}).get("enabled"))
+        if source.get("scope") == "NATIONAL"
         else False
     )
     is_allowed_official_http = (
