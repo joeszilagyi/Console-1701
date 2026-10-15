@@ -8,7 +8,12 @@ from typing import Any
 from urllib.parse import quote
 
 from console1701.news.normalize import bounded_text
-from console1701.news.parsers import NewsParserError, PayloadTooLargeError, _normalize_item
+from console1701.news.parsers import (
+    ArchiveFirehoseBlockedError,
+    NewsParserError,
+    PayloadTooLargeError,
+    _normalize_item,
+)
 from console1701.news.science_sources import exact_science_endpoint
 
 EXOPLANET_TAP_URL = "https://exoplanetarchive.ipac.caltech.edu/TAP/sync"
@@ -21,7 +26,7 @@ PS_COLUMNS = (
 def _query_contract(source: dict[str, Any]) -> dict[str, Any]:
     query = source.get("query_contract")
     if not isinstance(query, dict):
-        raise NewsParserError("Exoplanet metadata requires explicit query bounds")
+        raise ArchiveFirehoseBlockedError("Exoplanet metadata requires explicit query bounds")
     if (
         query.get("table") != "ps" or query.get("format") != "json"
         or query.get("columns") != list(PS_COLUMNS)
@@ -29,14 +34,14 @@ def _query_contract(source: dict[str, Any]) -> dict[str, Any]:
         or type(query.get("row_cap")) is not int
         or not 1 <= query["row_cap"] <= 10
     ):
-        raise NewsParserError("Exoplanet metadata query is not the tiny PS allowlist")
+        raise ArchiveFirehoseBlockedError("Exoplanet metadata query is not the tiny PS allowlist")
     try:
         since = date.fromisoformat(query["since"])
         until = date.fromisoformat(query["until"])
     except (KeyError, TypeError, ValueError) as exc:
-        raise NewsParserError("Exoplanet metadata requires ISO date bounds") from exc
+        raise ArchiveFirehoseBlockedError("Exoplanet metadata requires ISO date bounds") from exc
     if not since <= until <= since + timedelta(days=7):
-        raise NewsParserError("Exoplanet metadata window must be at most seven days")
+        raise ArchiveFirehoseBlockedError("Exoplanet metadata window must be at most seven days")
     return query
 
 
@@ -52,8 +57,10 @@ def parse_exoplanet_ps_json(source: dict[str, Any], payload_text: str) -> list[d
         rows = json.loads(payload_text)
     except json.JSONDecodeError as exc:
         raise NewsParserError(f"Malformed Exoplanet TAP JSON: {exc}") from exc
-    if not isinstance(rows, list) or len(rows) > query["row_cap"]:
-        raise NewsParserError("Exoplanet TAP response exceeds the configured row cap")
+    if not isinstance(rows, list):
+        raise NewsParserError("Exoplanet TAP response is not a JSON row list")
+    if len(rows) > query["row_cap"]:
+        raise ArchiveFirehoseBlockedError("Exoplanet TAP response exceeds the row cap")
     items: list[dict[str, Any]] = []
     for index, row in enumerate(rows):
         if not isinstance(row, dict) or set(row) != set(PS_COLUMNS):

@@ -38,6 +38,7 @@ from console1701.news.orbital_ranking import rank_orbital_event
 from console1701.news.orbital_registry import list_orbital_source_registry
 from console1701.news.orbital_safety import classify_orbital_item
 from console1701.news.parsers import (
+    ArchiveFirehoseBlockedError,
     NewsIngestError,
     NewsParserError,
     PayloadTooLargeError,
@@ -886,6 +887,18 @@ def _ingest_source(
             source_id,
             source,
             status="payload_too_large",
+            error_class=type(exc).__name__,
+            error_message=str(exc),
+            message=str(exc),
+        )
+        raise
+    except ArchiveFirehoseBlockedError as exc:
+        _record_source_failure(
+            conn,
+            run_id,
+            source_id,
+            source,
+            status="archive_firehose_blocked",
             error_class=type(exc).__name__,
             error_message=str(exc),
             message=str(exc),

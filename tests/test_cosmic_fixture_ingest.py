@@ -288,3 +288,36 @@ def test_cosmic_hype_only_fixture_reports_blocked_health_without_storing_claim(
         ).fetchone()
     assert health["state"] == "hype_blocked"
     assert json_loads(health["evidence_json"], {})["science_policy_dropped_count"] == 1
+
+
+def test_cosmic_broad_archive_query_reports_firehose_block_before_storage(
+    tmp_path, monkeypatch
+):
+    path = _config(tmp_path, monkeypatch)
+    payload = yaml.safe_load(path.read_text())
+    parser, official_url = SCIENCE_FIXTURE_SOURCES["nasa_exoplanet_ps_tap"]
+    payload["news"]["scopes"]["SYSTEM_SOLAR"]["sources"] = [{
+        "id": "nasa_exoplanet_ps_tap", "name": "Exoplanet metadata fixture",
+        "kind": "api_json", "parser": parser, "enabled": True, "fixture_only": True,
+        "official_url": official_url,
+        "url": f"file://{FIXTURES / 'exoplanet_ps_tiny.json'}",
+        "query_contract": {
+            "table": "ps", "format": "json", "columns": list(PS_COLUMNS),
+            "default_only": True, "row_cap": 100,
+            "since": "2026-10-14", "until": "2026-10-15",
+        },
+    }]
+    path.write_text(yaml.safe_dump(payload))
+    monkeypatch.setattr("console1701.news.scanner.fetch_official_text", lambda *a, **kw: (
+        (_ for _ in ()).throw(AssertionError("broad archive attempted HTTP"))
+    ))
+    result = run_news_scan(path)
+    assert result["status"] == "partial"
+    assert result["item_count"] == 0
+    config = load_config(path)
+    with connect_db(config["_db_path"]) as conn:
+        assert conn.execute("SELECT COUNT(*) FROM news_items").fetchone()[0] == 0
+        health = conn.execute(
+            "SELECT state FROM news_source_health ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+    assert health["state"] == "archive_firehose_blocked"

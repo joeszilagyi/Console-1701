@@ -9,7 +9,12 @@ from typing import Any
 from urllib.parse import quote
 
 from console1701.news.normalize import bounded_text
-from console1701.news.parsers import NewsParserError, PayloadTooLargeError, _normalize_item
+from console1701.news.parsers import (
+    ArchiveFirehoseBlockedError,
+    NewsParserError,
+    PayloadTooLargeError,
+    _normalize_item,
+)
 from console1701.news.science_sources import exact_science_endpoint
 
 MAST_INVOKE_URL = "https://mast.stsci.edu/api/v0/invoke"
@@ -22,7 +27,7 @@ _MJD_EPOCH = datetime(1858, 11, 17, tzinfo=UTC)
 def _contract(source: dict[str, Any]) -> dict[str, Any]:
     query = source.get("query_contract")
     if not isinstance(query, dict) or query.get("service") != "Mast.Caom.Filtered":
-        raise NewsParserError("MAST metadata requires the CAOM filtered service")
+        raise ArchiveFirehoseBlockedError("MAST metadata requires the CAOM filtered service")
     if (
         query.get("columns") != list(MAST_COLUMNS)
         or query.get("format") != "json"
@@ -33,12 +38,12 @@ def _contract(source: dict[str, Any]) -> dict[str, Any]:
         or not 1 <= query["timeout_seconds"] <= 15
         or query.get("mission") not in {"JWST", "HST"}
     ):
-        raise NewsParserError("MAST metadata query exceeds the tiny allowlist")
+        raise ArchiveFirehoseBlockedError("MAST metadata query exceeds the tiny allowlist")
     target = query.get("target_name")
     if not isinstance(target, str) or not 2 <= len(target) <= 100 or any(
         char in target for char in ("%", "*", "?", "\n")
     ):
-        raise NewsParserError("MAST metadata requires a named target without wildcards")
+        raise ArchiveFirehoseBlockedError("MAST metadata requires a named target without wildcards")
     start, end = query.get("t_min_start"), query.get("t_min_end")
     if (
         isinstance(start, bool) or isinstance(end, bool)
@@ -46,7 +51,9 @@ def _contract(source: dict[str, Any]) -> dict[str, Any]:
         or not math.isfinite(start) or not math.isfinite(end)
         or not 40_000 <= start < end <= start + 7
     ):
-        raise NewsParserError("MAST metadata requires a seven-day MJD observation window")
+        raise ArchiveFirehoseBlockedError(
+            "MAST metadata requires a seven-day MJD observation window"
+        )
     return query
 
 
@@ -86,7 +93,7 @@ def parse_mast_caom_tiny_json(source: dict[str, Any], payload_text: str) -> list
         or paging["rowsFiltered"] != len(rows)
         or len(rows) > query["row_cap"]
     ):
-        raise NewsParserError("MAST metadata response is truncated or exceeds row cap")
+        raise ArchiveFirehoseBlockedError("MAST metadata response is truncated or exceeds row cap")
     items: list[dict[str, Any]] = []
     for index, row in enumerate(rows):
         if not isinstance(row, dict) or set(row) != set(MAST_COLUMNS):

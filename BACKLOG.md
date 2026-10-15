@@ -3117,12 +3117,20 @@ fixture review before enabling those sources.
 
 ### Archive Firehose Blocking Rules
 
-Status: not implemented.
+Status: completed 2026-10-15 for the current COSMIC source allowlist.
 
 Add deterministic blocking for broad SIMBAD, VizieR, Gaia, MAST, PDS, HEASARC, Exoplanet Archive,
 ESO Archive, ESASky, ADS, TAP/ADQL, and catalog queries unless explicit source allowlists, row caps,
 timeouts, retention, and query bounds are configured. Source health should report
 `archive_firehose_blocked` or `heavy_archive_disabled`.
+
+Current state: exact COSMIC config validation rejects every heavy-archive and astronomy-catalog
+registry candidate, even when broad-category flags are enabled. Exoplanet Archive, MAST, and PDS
+fixture parsers enforce named tables/collections/targets, exact columns, row caps, time windows,
+and response shape. Query-contract or overbroad-response violations raise a distinct archive
+firehose error that `news-scan` records as `archive_firehose_blocked` source health before storing
+any item. No live archive transport exists; any later API adapter needs a pre-request gate with
+its own bounds before promotion.
 
 ### UI Disabled States After Naming Decision
 
@@ -3161,7 +3169,8 @@ Current state: configured fixture sources use the shared source-health table and
 An all-rejected fixture records `hype_blocked` without storing its claims. Disabled registry
 candidates are summarized separately, including heavy archive, auth, social, manual-review,
 unsupported, and health-only behaviors. Parser/rate/auth/policy/stale and archive-firehose states
-render from SQLite and appear in app-health SYSTEM. Later live adapters need real runtime gates
+render from SQLite and appear in app-health SYSTEM. Broad archive fixture queries now produce a
+real `archive_firehose_blocked` state. Later live adapters need real runtime gates
 for source-specific states beyond the current exact fixture allowlist.
 
 ### Evidence Drawer Contract
