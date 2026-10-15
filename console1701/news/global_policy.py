@@ -29,6 +29,8 @@ def classify_global_item(source: dict[str, Any], item: dict[str, Any]) -> dict[s
     identity = dict(evidence.get("global_identity") or {})
     sensitivity = dict(evidence.get("sensitivity") or {})
     title = str(item.get("title") or "")
+    description = str(item.get("description") or "")
+    content_text = f"{title} {description}"
     family = str(source.get("source_family") or "").casefold()
     official_alert = bool(
         (evidence.get("gdacs") or {}).get("alert_level") in {"Red", "Orange"}
@@ -37,13 +39,15 @@ def classify_global_item(source: dict[str, Any], item: dict[str, Any]) -> dict[s
         or (evidence.get("reliefweb_disaster") or {}).get("status") in {"current", "alert"}
     )
     reasons: list[str] = []
-    if _GRAPHIC_RE.search(title):
+    if _GRAPHIC_RE.search(content_text):
         sensitivity["graphic_violence"] = True
-        reasons.append("explicit graphic-content headline")
-    if _PRIVATE_RE.search(title):
+        reasons.append("explicit graphic-content headline" if _GRAPHIC_RE.search(title)
+                       else "explicit graphic-content description")
+    if _PRIVATE_RE.search(content_text):
         sensitivity["private_distress"] = True
-        reasons.append("explicit private-person headline")
-    if _RUMOR_RE.search(title) and not official_alert:
+        reasons.append("explicit private-person headline" if _PRIVATE_RE.search(title)
+                       else "explicit private-person description")
+    if _RUMOR_RE.search(content_text) and not official_alert:
         identity["rumor"] = True
         reasons.append("explicit unverified claim")
     if family in _SOCIAL_FAMILIES and not official_alert:
