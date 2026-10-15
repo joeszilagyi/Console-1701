@@ -100,7 +100,7 @@ def test_restricted_and_policy_sensitive_candidates_stop_before_access(tmp_path,
     for key in ("celestrak_elements", "celestrak_satcat", "celestrak_socrates"):
         assert status[key]["health_state"] == "sensitivity_blocked"
     assert status["nasa_orbital_debris_news"]["health_state"] == "policy_blocked"
-    assert status["esa_reentry"]["health_state"] == "unsupported"
+    assert status["esa_reentry"]["health_state"] == "auth_required"
     assert status["orbital_arcgis_reentry_candidate"]["health_state"] == "unsupported"
 
 

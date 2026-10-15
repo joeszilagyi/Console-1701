@@ -1773,8 +1773,8 @@
     "source_class": "official_reentry",
     "scope": "ORBITAL",
     "raw_url": "https://reentry.esoc.esa.int/",
-    "expected_access_kind": "public official page",
-    "adapter": "esa_reentry_page_candidate",
+    "expected_access_kind": "public background; prediction access requires account",
+    "adapter": "source_health_probe_only",
     "refresh_interval": "disabled",
     "priority": "55",
     "official_status": "official",
@@ -1782,8 +1782,8 @@
     "policy_risk": "medium",
     "parser_risk": "high",
     "retention_sensitivity": "medium",
-    "verification_status": "candidate_needs_verification",
-    "why_it_matters": "Reentry source candidate; no scraping before policy review.",
+    "verification_status": "restricted_auth_required",
+    "why_it_matters": "Prediction access requires login; public background is reference only.",
     "future_phase": "O8"
   },
   {

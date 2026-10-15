@@ -136,7 +136,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-099** [ESA RSS Parser](../../BACKLOG.md#L1757) — verified Top News/Human Spaceflight RSS parsers with official links, timing, mission labels, bounded descriptions and routine/reentry filters; live ingest disabled.
 - [ ] **RS-100** [Official Launch Provider Source Verification](../../BACKLOG.md#L1766) — not implemented.
 - [ ] **RS-101** [ISS And Crewed-Spaceflight Source Verification](../../BACKLOG.md#L1775) — not implemented.
-- [ ] **RS-102** [ESA Reentry Source Verification](../../BACKLOG.md#L1801) — not implemented.
+- [x] **RS-102** [ESA Reentry Source Verification](../../BACKLOG.md#L1801) — ESA guide confirms login for predictions; registry now blocks as auth-required and records machine-endpoint and uncertainty gaps.
 - [x] **RS-103** [NASA Orbital Debris Source Verification](../../BACKLOG.md#L1809) — official program, quarterly PDF index, and reentry methods classified as disabled reference/source-health entries; no event feed claimed.
 - [ ] **RS-104** [ORBITAL Deterministic Event Correlation](../../BACKLOG.md#L1818) — partially implemented; core matcher and stored evidence pass, future adapter identities pending.
 - [x] **RS-105** [ORBITAL Deterministic Ranking](../../BACKLOG.md#L1828) — completed 2026-10-15; factor score and reasons persist on ORBITAL events.
