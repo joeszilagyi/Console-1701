@@ -245,6 +245,8 @@ DEFAULT_ORBITAL_CONFIG: dict[str, Any] = {
     "kp_min_index": 5.0,
     "aurora_locations": [],
     "include_neo_close_approaches": True,
+    "neo_max_lunar_distance": 5.0,
+    "neo_min_diameter_km": 0.05,
     "include_fireballs": True,
     "include_launches": True,
     "include_crewed_spaceflight": True,
@@ -751,6 +753,17 @@ def normalize_orbital_config(config: dict[str, Any]) -> None:
     if not isfinite(kp_minimum) or not 0 <= kp_minimum <= 9:
         raise ConfigError("orbital.kp_min_index must be between 0 and 9")
     orbital["kp_min_index"] = kp_minimum
+    for key, default, lower, upper in (
+        ("neo_max_lunar_distance", 5.0, 0.1, 50.0),
+        ("neo_min_diameter_km", 0.05, 0.0, 10.0),
+    ):
+        try:
+            value = float(orbital.get(key, default))
+        except (TypeError, ValueError) as exc:
+            raise ConfigError(f"orbital.{key} must be numeric") from exc
+        if not isfinite(value) or not lower <= value <= upper:
+            raise ConfigError(f"orbital.{key} must be between {lower} and {upper}")
+        orbital[key] = value
     locations = orbital.get("aurora_locations", [])
     if not isinstance(locations, list) or len(locations) > 8:
         raise ConfigError("orbital.aurora_locations must be a list of at most 8 locations")
@@ -1069,6 +1082,9 @@ def _normalize_news_source(
             source_cfg["aurora_locations"] = orbital_cfg["aurora_locations"]
         if str(source_cfg.get("parser") or "").strip().lower() == "swpc_kp_json":
             source_cfg["min_k_index"] = orbital_cfg["kp_min_index"]
+        if str(source_cfg.get("parser") or "").strip().lower() == "jpl_cad_json":
+            source_cfg["max_lunar_distance"] = orbital_cfg["neo_max_lunar_distance"]
+            source_cfg["min_diameter_km"] = orbital_cfg["neo_min_diameter_km"]
 
     source_cfg["enabled"] = _coerce_bool(source_cfg.get("enabled", False), f"{path}.enabled")
     source_cfg["priority"] = _coerce_int(source_cfg.get("priority", 50), f"{path}.priority")
