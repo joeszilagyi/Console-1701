@@ -1319,11 +1319,17 @@ Per-source signoff templates and endpoint-specific walkthroughs still need a ded
 
 ### Tests For No Page-Load External Fetches
 
-Status: not implemented.
+Status: implemented.
 
 Add tests proving GET routes and page renders read SQLite/config only and never call NATIONAL
 network fetchers. Include disabled/not configured/stale/failing/auth-required/policy-blocked/parser
 failed state tests for NATIONAL and SYSTEM source health.
+
+Current state: the GET-route regression now includes NATIONAL page and API paths with a deliberately
+missing fixture, and fails if scan or official HTTP fetch is attempted. It also checks SYSTEM page
+and summary state. NATIONAL/SYSTEM baseline and source-state matrix regressions cover disabled,
+not configured, never run, stale, parser failure, policy blocking, auth required, and failing
+aggregation without a network call.
 
 ### Tests For No API-Key Source Running Without Config
 

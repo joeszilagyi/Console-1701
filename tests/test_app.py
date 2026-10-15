@@ -787,10 +787,14 @@ news:
     router = build_router(str(config_path))
     page = _route_endpoint(router, "/{scope}")(_request(f"/{scope_name}"), scope_name)
     scope_result = _route_endpoint(router, "/api/news/scopes/{scope}")(scope_name, 8)
+    system_page = _route_endpoint(router, "/{scope}")(_request("/SYSTEM"), "SYSTEM")
+    system_summary = _route_endpoint(router, "/api/news/summary")()
     states = scope_result["state"]["source_state_counts"]
 
     assert page.status_code == 200
+    assert system_page.status_code == 200
     assert scope_result["state"]["state"] == "failing"
+    assert system_summary["scope_states"][scope_name]["state"] == "failing"
     assert states["stale"] == 1
     assert states["parser_failed"] == 1
     assert states["policy_blocked"] == 1
@@ -801,6 +805,10 @@ news:
     assert states["rate_limited"] == 1
     assert states["unsupported"] == 1
     assert states["auth_required"] == 1
+    assert all(
+        system_summary["source_state_counts"][state] >= count
+        for state, count in states.items()
+    )
     assert f"{scope_name} parser failed" in page.body.decode()
     for state in ("robots blocked", "rate limited", "unsupported", "auth required"):
         assert state in page.body.decode().lower()
@@ -909,6 +917,14 @@ news:
           kind: api_json
           enabled: true
           url: "file:///tmp/console-1701-missing-regional-fixture.json"
+    NATIONAL:
+      enabled: true
+      sources:
+        - id: missing_national_fixture
+          name: Missing NATIONAL fixture
+          kind: api_json
+          enabled: true
+          url: "file:///tmp/console-1701-missing-national-fixture.json"
 """.strip()
         + "\n",
         encoding="utf-8",
@@ -918,24 +934,33 @@ news:
     def fail_if_scan_runs(_config_path=None):
         raise AssertionError("GET route triggered news ingest")
 
+    def fail_if_fetch_runs(*_args, **_kwargs):
+        raise AssertionError("GET route attempted official HTTP fetch")
+
     monkeypatch.setattr(api_module, "run_news_scan", fail_if_scan_runs)
+    monkeypatch.setattr("console1701.news.scanner.fetch_official_text", fail_if_fetch_runs)
 
     root = _route_endpoint(router, "/")(_request("/"))
     local_page = _route_endpoint(router, "/{scope}")(_request("/LOCAL"), "LOCAL")
     regional_page = _route_endpoint(router, "/{scope}")(_request("/REGIONAL"), "REGIONAL")
+    national_page = _route_endpoint(router, "/{scope}")(_request("/NATIONAL"), "NATIONAL")
     system_page = _route_endpoint(router, "/{scope}")(_request("/SYSTEM"), "SYSTEM")
     summary = _route_endpoint(router, "/api/news/summary")()
     scope = _route_endpoint(router, "/api/news/scopes/{scope}")("LOCAL", 8)
     regional_scope = _route_endpoint(router, "/api/news/scopes/{scope}")("REGIONAL", 8)
+    national_scope = _route_endpoint(router, "/api/news/scopes/{scope}")("NATIONAL", 8)
     sources = _route_endpoint(router, "/api/news/sources")()
 
     assert root.status_code == 200
     assert local_page.status_code == 200
     assert regional_page.status_code == 200
+    assert national_page.status_code == 200
     assert system_page.status_code == 200
-    assert summary["source_state_counts"]["configured_never_run"] == 2
+    assert summary["source_state_counts"]["configured_never_run"] == 3
     assert scope["state"]["state"] == "configured_never_run"
     assert regional_scope["state"]["state"] == "configured_never_run"
+    assert national_scope["state"]["state"] == "configured_never_run"
+    assert summary["scope_states"]["NATIONAL"]["state"] == "configured_never_run"
     assert sources[0]["source_key"] == "missing_fixture"
     assert sources[0]["latest_fetch_run"] is None
 
