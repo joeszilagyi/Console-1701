@@ -125,6 +125,14 @@ def parse_fixture_items(
         from console1701.news.orbital_parsers import parse_swpc_noaa_scales_json
 
         return parse_swpc_noaa_scales_json(source, payload_text)
+    if parser_name == "swpc_kp_json":
+        from console1701.news.orbital_parsers import parse_swpc_kp_json
+
+        return parse_swpc_kp_json(source, payload_text)
+    if parser_name == "swpc_aurora_json":
+        from console1701.news.orbital_parsers import parse_swpc_aurora_json
+
+        return parse_swpc_aurora_json(source, payload_text)
 
     if parser_name == "nws_alerts_json":
         return _parse_nws_alerts_json(source, payload_text)

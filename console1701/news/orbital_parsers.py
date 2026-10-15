@@ -12,6 +12,12 @@ from console1701.news.normalize import bounded_text, normalize_timestamp
 
 SWPC_ALERTS_URL = "https://services.swpc.noaa.gov/products/alerts.json"
 SWPC_SCALES_URL = "https://services.swpc.noaa.gov/products/noaa-scales.json"
+SWPC_KP_URLS = {
+    "swpc_kp_summary_json": "https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json",
+    "swpc_kp_1m_json": "https://services.swpc.noaa.gov/json/planetary_k_index_1m.json",
+    "swpc_boulder_k_json": "https://services.swpc.noaa.gov/json/boulder_k_index_1m.json",
+}
+SWPC_AURORA_URL = "https://services.swpc.noaa.gov/json/ovation_aurora_latest.json"
 _PRODUCT_ID_RE = re.compile(r"^[A-Z0-9]{3,8}$")
 _MESSAGE_CODE_RE = re.compile(r"^Space Weather Message Code:\s*(\S+)", re.I | re.M)
 _SERIAL_RE = re.compile(r"^Serial Number:\s*(\d+)", re.I | re.M)
@@ -192,4 +198,154 @@ def parse_swpc_noaa_scales_json(
                 "official_forecast_scale": period_kind == "forecast",
             }
             items.append(item)
+    return items
+
+
+def parse_swpc_kp_json(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:
+    """Keep the latest qualifying Kp/K measurement, not the minute-level history."""
+    from console1701.news.parsers import NewsParserError, _normalize_item
+
+    source_key = str(source.get("id") or "")
+    source_url = SWPC_KP_URLS.get(source_key)
+    if str(source.get("scope") or "").upper() != "ORBITAL" or not source_url:
+        raise NewsParserError("SWPC K-index parser requires a known ORBITAL product")
+    try:
+        payload = json.loads(payload_text)
+    except json.JSONDecodeError as exc:
+        raise NewsParserError(f"Malformed SWPC K-index JSON: {exc}") from exc
+    if not isinstance(payload, list):
+        raise NewsParserError("SWPC K-index JSON must be an array")
+    if len(payload) > 10000:
+        raise NewsParserError("SWPC K-index JSON exceeds the bounded sample limit")
+    value_key = "Kp" if source_key == "swpc_kp_summary_json" else (
+        "k_index" if source_key == "swpc_boulder_k_json" else "estimated_kp"
+    )
+    candidates = []
+    for row in payload:
+        if not isinstance(row, dict):
+            continue
+        observed_at = normalize_timestamp(row.get("time_tag"))
+        try:
+            value = float(row.get(value_key))
+        except (TypeError, ValueError):
+            continue
+        if observed_at and 0 <= value <= 9:
+            candidates.append((observed_at, value, row))
+    if not candidates:
+        return []
+    observed_at, value, row = max(candidates, key=lambda candidate: candidate[0])
+    threshold = float(source.get("min_k_index", 5.0))
+    if value < threshold:
+        return []
+    measurement = "Boulder K-index" if source_key == "swpc_boulder_k_json" else "planetary Kp"
+    hour_key = observed_at[:13]
+    query = urlencode({"time": hour_key, "product": source_key})
+    item = _normalize_item(source, {
+        "title": f"SWPC {measurement} {value:g}",
+        "url": f"{source_url}?{query}",
+        "description": f"Official {measurement} measurement: {value:g}.",
+        "published_at": observed_at,
+    }, index=0)
+    item["evidence"]["swpc_k_index"] = {
+        "measurement": measurement,
+        "value": value,
+        "observed_at": observed_at,
+        "threshold": threshold,
+        "a_running": row.get("a_running") if source_key == "swpc_kp_summary_json" else None,
+        "station_count": row.get("station_count")
+        if source_key == "swpc_kp_summary_json" else None,
+        "kp_label": row.get("kp") if source_key == "swpc_kp_1m_json" else None,
+        "source_url": source_url,
+        "source_kind": "regional" if source_key == "swpc_boulder_k_json" else "planetary",
+        "link_note": "Measurement-specific deep links are unavailable in this JSON product.",
+    }
+    item["evidence"]["orbital_identity"] = {
+        "event_type": "geomagnetic_k_index",
+        "object_id": f"{source_key}:{hour_key}",
+    }
+    return [item]
+
+
+def parse_swpc_aurora_json(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:
+    """Summarize the OVATION grid only near explicitly configured locations."""
+    from console1701.news.parsers import NewsParserError, _normalize_item
+
+    if str(source.get("scope") or "").upper() != "ORBITAL":
+        raise NewsParserError("SWPC aurora parser requires ORBITAL scope")
+    try:
+        payload = json.loads(payload_text)
+    except json.JSONDecodeError as exc:
+        raise NewsParserError(f"Malformed SWPC aurora JSON: {exc}") from exc
+    if not isinstance(payload, dict) or not isinstance(payload.get("coordinates"), list):
+        raise NewsParserError("SWPC aurora JSON requires a coordinates array")
+    if len(payload["coordinates"]) > 70000:
+        raise NewsParserError("SWPC aurora grid exceeds the bounded point limit")
+    observed_at = normalize_timestamp(payload.get("Observation Time"))
+    forecast_at = normalize_timestamp(payload.get("Forecast Time"))
+    if not observed_at or not forecast_at:
+        raise NewsParserError("SWPC aurora JSON requires observation and forecast times")
+    locations = source.get("aurora_locations") or []
+    if not isinstance(locations, list):
+        raise NewsParserError("SWPC aurora locations must be configured as a list")
+    items: list[dict[str, Any]] = []
+    for location in locations[:8]:
+        if not isinstance(location, dict):
+            continue
+        target_lon = float(location["longitude"]) % 360
+        target_lat = float(location["latitude"])
+        radius = float(location["radius_degrees"])
+        minimum = float(location["min_intensity"])
+        samples: list[tuple[float, float, float]] = []
+        for point in payload["coordinates"]:
+            if not isinstance(point, list) or len(point) != 3:
+                continue
+            try:
+                longitude, latitude, value = (float(part) for part in point)
+            except (TypeError, ValueError):
+                continue
+            distance_lon = abs((longitude % 360) - target_lon)
+            distance_lon = min(distance_lon, 360 - distance_lon)
+            if (
+                abs(latitude - target_lat) <= radius and distance_lon <= radius
+                and 0 <= value <= 100
+            ):
+                samples.append((value, longitude, latitude))
+        if not samples:
+            continue
+        value, peak_lon, peak_lat = max(samples)
+        if value < minimum:
+            continue
+        name = str(location["name"])
+        scope = str(location["scope"])
+        hour_key = forecast_at[:13]
+        query = urlencode({"location": name, "forecast": hour_key})
+        item = _normalize_item(source, {
+            "title": f"SWPC aurora model near {name}: {value:g}",
+            "url": f"{SWPC_AURORA_URL}?{query}",
+            "description": (
+                "OVATION model value near a configured location; "
+                "not a visibility report."
+            ),
+            "published_at": observed_at,
+            "tags": ["local-impact" if scope == "LOCAL" else "regional-impact"],
+        }, index=len(items))
+        item["evidence"]["swpc_aurora"] = {
+            "observation_time": observed_at,
+            "forecast_time": forecast_at,
+            "location_name": name,
+            "location_scope": scope,
+            "grid_match_basis": "configured_coordinate_box",
+            "radius_degrees": radius,
+            "model_value": value,
+            "minimum_value": minimum,
+            "sample_count": len(samples),
+            "peak_grid_point": {"longitude": peak_lon, "latitude": peak_lat},
+            "source_url": SWPC_AURORA_URL,
+            "model_only": True,
+        }
+        item["evidence"]["orbital_identity"] = {
+            "event_type": "aurora_forecast",
+            "object_id": f"{name.casefold()}:{hour_key}",
+        }
+        items.append(item)
     return items

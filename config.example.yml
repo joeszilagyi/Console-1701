@@ -148,6 +148,8 @@ orbital:
   default_place_label: Orbital
   include_space_weather: true
   include_aurora: true
+  kp_min_index: 5.0
+  aurora_locations: [] # Optional named LOCAL/REGIONAL coordinates; no local tags by default.
   include_neo_close_approaches: true
   include_fireballs: true
   include_launches: true

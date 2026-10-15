@@ -133,6 +133,10 @@ def _load_registry() -> tuple[dict[str, Any], ...]:
         entry["parser"] = {
             "swpc_alerts_json": "swpc_alerts_json",
             "swpc_noaa_scales_json": "swpc_noaa_scales_json",
+            "swpc_kp_summary_json": "swpc_kp_json",
+            "swpc_kp_1m_json": "swpc_kp_json",
+            "swpc_boulder_k_json": "swpc_kp_json",
+            "swpc_aurora_json": "swpc_aurora_json",
         }.get(key)
         entry["source_health_behavior"] = (
             "unsupported" if row["verification_status"] == "reject_for_now" else

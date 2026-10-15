@@ -125,7 +125,7 @@
     "source_family": "swpc",
     "source_class": "official_space_weather_json",
     "scope": "ORBITAL",
-    "raw_url": "https://services.swpc.noaa.gov/products/summary/planetary-k-index.json",
+    "raw_url": "https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json",
     "expected_access_kind": "public official JSON product",
     "adapter": "swpc_json",
     "refresh_interval": "5 min",
