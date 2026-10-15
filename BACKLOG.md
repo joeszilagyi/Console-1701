@@ -2757,13 +2757,20 @@ does not cause fetches or display items. The final UI label remains a separate u
 
 ### Solar System And Beyond Source Registry Design Implementation
 
-Status: not implemented.
+Status: completed 2026-10-15 for the disabled first-pass registry.
 
 Implement the source registry from the design document with explicit `source_key`, `source_name`,
 `source_family`, `source_class`, `scope`, `raw_url`, access kind, adapter type, refresh interval,
 priority, official status, privacy risk, policy risk, parser risk, retention sensitivity,
 verification status, source-health behavior, and future phase fields. Validate enum values and keep
 every source disabled until explicitly configured.
+
+Current state: `console1701/news/science_registry.json` preserves all 170 source candidates from
+the design table under the internal `SYSTEM_SOLAR` working name. `science_registry.py` validates
+unique keys, required fields, URL shape, enums, intervals, and priorities, and derives a disabled
+source-health behavior for each candidate. The registry has no parser, route, news scope, or
+runtime fetch wiring; the final UI label remains a user decision. Focused tests check inventory
+isolation and invalid entries.
 
 ### Solar System And Beyond SQLite Schema Or Extension
 
