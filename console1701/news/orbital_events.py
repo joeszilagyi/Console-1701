@@ -68,8 +68,11 @@ def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         )
     }
     swpc = evidence.get("swpc_alert") or {}
+    swpc_scale = evidence.get("swpc_noaa_scale") or {}
     if swpc.get("noaa_scale"):
         context["noaa_scale"] = _normalized(swpc["noaa_scale"])
+    if swpc_scale.get("scale"):
+        context["noaa_scale"] = _normalized(swpc_scale["scale"])
     return {
         "id": int(item["id"]),
         "event_type": event_type,
@@ -81,16 +84,45 @@ def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
             (evidence.get("source") or {}).get("source_family")
         ),
         "source_key": str((evidence.get("source") or {}).get("source_key") or ""),
+        "swpc_alert": {
+            "kind": swpc.get("message_type"),
+            "cancelled": swpc.get("cancelled") is True,
+            "valid_from": _time(swpc.get("valid_from")),
+            "valid_until": _time(swpc.get("valid_until")),
+        } if swpc else {},
+        "swpc_scale": {
+            "period_kind": swpc_scale.get("period_kind"),
+            "observed_at": _time(swpc_scale.get("timestamp")),
+        } if swpc_scale else {},
     }
 
 
 def orbital_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str]:
-    if not left["event_type"] or left["event_type"] != right["event_type"]:
-        return []
     if not left["published_at"] or not right["published_at"]:
         return []
     hours = abs((left["published_at"] - right["published_at"]).total_seconds()) / 3600
     if hours > MATCH_WINDOW_HOURS:
+        return []
+    if {left["event_type"], right["event_type"]} == {
+        "space_weather_alert", "space_weather_scale",
+    }:
+        alert, scale = (left, right) if left["event_type"] == "space_weather_alert" else (
+            right, left
+        )
+        valid = alert["swpc_alert"]
+        observed = scale["swpc_scale"]
+        if (alert["family"] == scale["family"] == "swpc"
+                and valid.get("kind") in {"ALERT", "WARNING", "EXTENDED WARNING"}
+                and not valid.get("cancelled")
+                and observed.get("period_kind") == "current"
+                and alert["context"].get("noaa_scale")
+                == scale["context"].get("noaa_scale")
+                and valid.get("valid_from") and valid.get("valid_until")
+                and observed.get("observed_at")
+                and valid["valid_from"] <= observed["observed_at"] <= valid["valid_until"]):
+            return ["same_noaa_scale", "alert_valid_window", "current_scale_observation"]
+        return []
+    if not left["event_type"] or left["event_type"] != right["event_type"]:
         return []
     if left["identifiers"] & right["identifiers"]:
         return ["event_type", "shared_event_id", "time_window"]
