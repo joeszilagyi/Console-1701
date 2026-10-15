@@ -93,7 +93,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-059** [GLOBAL Source Registry Design Implementation](../../BACKLOG.md#L1275) — 172 disabled design entries, enum validation, config defaults, SQLite sync, and summary.
 - [x] **RS-060** [Disabled-By-Default GLOBAL Config](../../BACKLOG.md#L1285) — validated inclusion/attention flags and explicit social, auth, heavy-data, homepage, conflict gates.
 - [x] **RS-061** [GLOBAL SQLite Schema Or Extension](../../BACKLOG.md#L1296) — scoped registry/cluster/item storage plus indexed geography, event, family, impact and sensitivity facets; migration, refresh, expiry and purge verified.
-- [ ] **RS-062** [GLOBAL Fixture Pack](../../BACKLOG.md#L1306) — partial: GDACS RSS/API, ReliefWeb disaster/report, and WHO DON fixtures with offline scan tests; other families/states pending.
+- [ ] **RS-062** [GLOBAL Fixture Pack](../../BACKLOG.md#L1306) — partial: GDACS, ReliefWeb, WHO, ECDC, USGS, NHC, UN News and UN Press fixtures; other families/states pending.
 - [x] **RS-063** [GDACS Feed Parser](../../BACKLOG.md#L1316) — official RSS shape verified; dedicated GLOBAL parser, evidence, fixture, and scan persistence test.
 - [x] **RS-064** [GDACS API Fixture Parser](../../BACKLOG.md#L1324) — official Search GeoJSON shape verified; dedicated GLOBAL parser, evidence, fixture, and scan persistence test.
 - [x] **RS-065** [ReliefWeb Disasters API Parser](../../BACKLOG.md#L1332) — documented v2 fixture contract, metadata-only parser, offline persistence and appname gate tests; live response unverified.
@@ -105,7 +105,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-071** [NHC RSS Parser](../../BACKLOG.md#L1382) — verified basin RSS shapes; fixture parser keeps explicit storm/advisory evidence, skips inactive/outlook items, and remains offline.
 - [ ] **RS-072** [Smithsonian GVP Weekly Report Parser](../../BACKLOG.md#L1390) — official RSS URL found; direct feed access returned HTTP 403, so XML shape and parser remain open.
 - [x] **RS-073** [UN News RSS Parser](../../BACKLOG.md#L1407) — exact official RSS shape and story GUID verified; bounded fixture parser, narrow low-value exclusions, and offline scan.
-- [ ] **RS-074** [UN Press RSS Parser](../../BACKLOG.md#L1415) — not implemented.
+- [x] **RS-074** [UN Press RSS Parser](../../BACKLOG.md#L1415) — official RSS shape, crisis/action filters, low-value suppression, cautious organ evidence and offline scan verified; live disabled.
 - [ ] **RS-075** [IAEA RSS Parser](../../BACKLOG.md#L1423) — not implemented.
 - [x] **RS-076** [Humanitarian Source Evidence Contract](../../BACKLOG.md#L1432) — persisted ReliefWeb disaster/report provenance, geography, timing, bounded metadata, retention, policy and explicit missing people-at-risk evidence verified.
 - [x] **RS-077** [Conflict-Humanitarian Sensitivity Rules](../../BACKLOG.md#L1441) — explicit source/item sensitivity flags, official/independent confirmation gate, cautious ranking, hard suppression and pre-storage redaction verified offline.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-074 and advanced RS-062. Verified official UN Press RSS metadata, added filtered GLOBAL fixture parser and low-value suppression, and tested offline scan. Full pytest passed (347 tests); Ruff passed. Progress: 59/150.
 - **2026-10-15:** Completed RS-077. Added validated GLOBAL conflict sensitivity controls, official/independent confirmation gate, cautious ranking label, hard suppression, and pre-storage redaction. Offline scan verifies sensitive text stays out of storage and no cluster is displayed. Full pytest passed (345 tests); Ruff passed. Progress: 58/150.
 - **2026-10-15:** Completed RS-076. Added persisted GLOBAL humanitarian evidence for ReliefWeb disasters/reports with provenance, source geography, crisis IDs, timing, retention, policy and explicit omitted people-at-risk data. Offline scan tests cover both items. Full pytest passed (342 tests); Ruff passed. Progress: 57/150.
 - **2026-10-15:** Advanced RS-034 with an FDA Recalls RSS metadata fixture parser and offline scan. Preserved FDA-hosted provenance and structured-hazard limits without inventing severity or treating Spanish notices as independent confirmation. Recorded RS-045's unverified CISA advisory endpoint blocker. Full pytest passed (342 tests); Ruff passed. Progress: 56/150.

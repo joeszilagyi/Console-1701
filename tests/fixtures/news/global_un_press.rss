@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>UN Meetings Coverage and Press Releases</title>
+    <item>
+      <title>Security Council, 10243rd Meeting (AM &amp; PM) Middle East, Palestine</title>
+      <link>https://press.un.org/en/blog/sc16478</link>
+      <description>The Security Council considers the situation in the Middle East.</description>
+      <pubDate>Thu, 15 Oct 2026 06:49:02 -0400</pubDate>
+      <dc:creator>United Nations</dc:creator>
+      <guid>https://press.un.org/en/blog/sc16478</guid>
+    </item>
+    <item>
+      <title>General Assembly Adopts Emergency Resolution on Humanitarian Access</title>
+      <link>https://press.un.org/en/2026/ga12701.doc.htm</link>
+      <description>The Assembly discusses humanitarian access in an emergency session.</description>
+      <pubDate>Thu, 15 Oct 2026 12:55:32 -0400</pubDate>
+      <dc:creator>United Nations</dc:creator>
+      <guid>https://press.un.org/en/2026/ga12701.doc.htm</guid>
+    </item>
+    <item>
+      <title>Secretary-General Urges Ethics in Message for University Event</title>
+      <link>https://press.un.org/en/2026/sgsm23332.doc.htm</link>
+      <description>Following is the text of a video message.</description>
+      <pubDate>Thu, 15 Oct 2026 12:55:32 -0400</pubDate>
+      <guid>https://press.un.org/en/2026/sgsm23332.doc.htm</guid>
+    </item>
+    <item>
+      <title>Security Council to Hold Routine Briefing Schedule on Middle East</title>
+      <link>https://press.un.org/en/2026/sc16500.doc.htm</link>
+      <description>Schedule of an upcoming meeting.</description>
+      <pubDate>Thu, 15 Oct 2026 13:00:00 -0400</pubDate>
+      <guid>https://press.un.org/en/2026/sc16500.doc.htm</guid>
+    </item>
+  </channel>
+</rss>
