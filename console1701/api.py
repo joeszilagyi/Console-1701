@@ -42,7 +42,7 @@ PACKAGE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(PACKAGE_DIR / "templates"))
 _SCAN_LOCK = threading.Lock()
 _NEWS_SCAN_LOCK = threading.Lock()
-SCOPE_NAMES = ("INTERNAL", "LOCAL", "REGIONAL", "NATIONAL", "GLOBAL", "ORBITAL", "SYSTEM")
+SCOPE_NAMES = ("INTERNAL", "LOCAL", "REGIONAL", "NATIONAL", "GLOBAL", "ORBITAL", "COSMIC", "SYSTEM")
 NAV_SCOPE_NAMES = ("OVERVIEW", *SCOPE_NAMES)
 
 
@@ -106,8 +106,11 @@ def build_router(config_path: str | None = None) -> APIRouter:
             config = _config(config_path)
             news_overview = get_news_overview(conn, config)
             news_scope_view = (
-                get_news_scope_view(conn, config, active_scope)
-                if active_scope in {"LOCAL", "REGIONAL", "NATIONAL", "GLOBAL", "ORBITAL"}
+                get_news_scope_view(
+                    conn, config,
+                    "SYSTEM_SOLAR" if active_scope == "COSMIC" else active_scope,
+                )
+                if active_scope in {"LOCAL", "REGIONAL", "NATIONAL", "GLOBAL", "ORBITAL", "COSMIC"}
                 else None
             )
             news_summary = get_news_storage_summary(conn, config)
@@ -177,14 +180,14 @@ def build_router(config_path: str | None = None) -> APIRouter:
     @router.get("/api/news/scopes/{scope}")
     def news_scope(scope: str, limit: int = 8):
         normalized = str(scope).upper()
-        if normalized not in {"LOCAL", "REGIONAL", "NATIONAL", "GLOBAL", "ORBITAL"}:
+        if normalized not in {"LOCAL", "REGIONAL", "NATIONAL", "GLOBAL", "ORBITAL", "COSMIC"}:
             raise HTTPException(status_code=404, detail="News scope not found")
         config = _config(config_path)
         with _conn(config_path) as conn:
             return get_news_scope_view(
                 conn,
                 config,
-                normalized,
+                "SYSTEM_SOLAR" if normalized == "COSMIC" else normalized,
                 item_limit=max(1, min(int(limit), 50)),
             )
 

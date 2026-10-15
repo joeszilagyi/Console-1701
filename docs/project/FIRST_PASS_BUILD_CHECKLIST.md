@@ -154,8 +154,8 @@ Each selected row needs working implementation, relevant verification, and a mat
 
 ### Solar System and Beyond Recent Signal Layer
 
-- [ ] **RS-117** [Resolve SYSTEM Naming Collision](../../BACKLOG.md#L1989) — not implemented.
-- [ ] **RS-118** [Decide Final UI Label For Solar System And Beyond](../../BACKLOG.md#L1998) — not implemented.
+- [x] **RS-117** [Resolve SYSTEM Naming Collision](../../BACKLOG.md#L1989) — completed 2026-10-15; SYSTEM stays app health, COSMIC route maps to internal science scope.
+- [x] **RS-118** [Decide Final UI Label For Solar System And Beyond](../../BACKLOG.md#L1998) — completed 2026-10-15; COSMIC is the first-pass tab label and route, subject to a later user rename.
 - [x] **RS-119** [Disabled-By-Default Solar System And Beyond Config](../../BACKLOG.md#L2006) — disabled config tree, strict flag/attention validation, explicit sensitive-category gates, and example config; runtime scope remains pending.
 - [x] **RS-120** [Solar System And Beyond Source Registry Design Implementation](../../BACKLOG.md#L2016) — all 170 design candidates validated and disabled under the internal working name, with per-source health behavior and no runtime fetch wiring.
 - [x] **RS-121** [Solar System And Beyond SQLite Schema Or Extension](../../BACKLOG.md#L2026) — disabled registry sync plus scoped science event/evidence/query-bound schema, indexes, and expiry purge.
@@ -176,7 +176,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-136** [Deterministic Ranking For Official Science And Rarity](../../BACKLOG.md#L2182) — stored-metadata scorer and tests added; scan/evidence persistence integration pending.
 - [ ] **RS-137** [Hype And Speculation Suppression Rules](../../BACKLOG.md#L2192) — not implemented.
 - [ ] **RS-138** [Archive Firehose Blocking Rules](../../BACKLOG.md#L2202) — not implemented.
-- [ ] **RS-139** [UI Disabled States After Naming Decision](../../BACKLOG.md#L2211) — not implemented.
+- [ ] **RS-139** [UI Disabled States After Naming Decision](../../BACKLOG.md#L2211) — COSMIC route and truthful disabled/not-configured states exist; source-specific states pending.
 - [ ] **RS-140** [Source Health States](../../BACKLOG.md#L2220) — not implemented.
 - [ ] **RS-141** [Evidence Drawer Contract](../../BACKLOG.md#L2231) — not implemented.
 - [ ] **RS-142** [Official RSS Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L2242) — not implemented.

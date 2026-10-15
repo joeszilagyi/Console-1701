@@ -282,10 +282,11 @@
 
 {% macro render_scope_state_card(state) -%}
   {% set tone = tone_for_state(state.state) %}
+  {% set display_scope = "COSMIC" if state.scope == "SYSTEM_SOLAR" else state.scope %}
   <article class="module news-panel news-state-card source-tone-{{ tone }}">
     <div class="module-head">
       <div>
-        <p class="module-kicker">{{ state.scope }}</p>
+        <p class="module-kicker">{{ display_scope }}</p>
         <h2>{{ state.label }}</h2>
       </div>
       <span class="module-code">{{ state.state }}</span>
@@ -329,13 +330,14 @@
 {%- endmacro %}
 
 {% macro render_scope_page(view, regional_context=none) -%}
-  <section class="scope-dashboard" aria-label="{{ view['scope'] }} recent signal panels"{% if view['scope'] in ['LOCAL', 'REGIONAL'] %} data-news-auto-refresh{% endif %}>
+  {% set display_scope = "COSMIC" if view['scope'] == "SYSTEM_SOLAR" else view['scope'] %}
+  <section class="scope-dashboard" aria-label="{{ display_scope }} recent signal panels"{% if view['scope'] in ['LOCAL', 'REGIONAL'] %} data-news-auto-refresh{% endif %}>
     {{ render_scope_state_card(view['state']) }}
 
     <article class="module news-panel news-panel-wide">
       <div class="module-head">
         <div>
-          <p class="module-kicker">{{ view['scope'] }}</p>
+          <p class="module-kicker">{{ display_scope }}</p>
           <h2>Latest items</h2>
         </div>
         <span class="module-code">{{ view['items'] | length }} shown</span>
@@ -346,7 +348,7 @@
     <article class="module news-panel">
       <div class="module-head">
         <div>
-          <p class="module-kicker">{{ view['scope'] }}</p>
+          <p class="module-kicker">{{ display_scope }}</p>
           <h2>Cluster traces</h2>
         </div>
         <span class="module-code">{{ view['clusters'] | length }} active</span>
@@ -455,7 +457,7 @@
     <article class="module news-panel">
       <div class="module-head">
         <div>
-          <p class="module-kicker">{{ view['scope'] }}</p>
+          <p class="module-kicker">{{ display_scope }}</p>
           <h2>Source health</h2>
         </div>
         <span class="module-code">{{ view['sources'] | length }} of {{ view['source_total_count'] }} sources shown</span>
@@ -506,6 +508,7 @@
   {% set national = data['scope_views']['NATIONAL'] %}
   {% set global = data['scope_views']['GLOBAL'] %}
   {% set orbital = data['scope_views']['ORBITAL'] %}
+  {% set cosmic = data['scope_views']['SYSTEM_SOLAR'] %}
   <section class="scope-dashboard" aria-label="Overview recent signal panels">
     <article class="module news-panel news-panel-wide">
       <div class="module-head">
@@ -559,6 +562,16 @@
         <span class="module-code">{{ orbital['state']['state'] }}</span>
       </div>
       {{ render_source_list(data['failing_sources'][:3] + orbital['sources'][:2], orbital['state']['message']) }}
+    </article>
+    <article class="module news-panel">
+      <div class="module-head">
+        <div>
+          <p class="module-kicker">Overview</p>
+          <h2>Cosmic science</h2>
+        </div>
+        <span class="module-code">{{ cosmic['state']['state'] }}</span>
+      </div>
+      {{ render_item_list(cosmic['items'][:2], cosmic['state']['message']) }}
     </article>
   </section>
 {%- endmacro %}

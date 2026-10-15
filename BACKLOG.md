@@ -2746,20 +2746,30 @@ Architecture reference:
 
 ### Resolve SYSTEM Naming Collision
 
-Status: not implemented.
+Status: completed 2026-10-15 for route and storage naming.
 
 Decide whether app-health SYSTEM remains the source-health/app-health scope and Solar System and
 Beyond becomes COSMIC, SOLAR, DEEP, DEEP SPACE, SKY, BEYOND, or another label. Do not implement tab
 or route changes until this decision is explicit. If SYSTEM is repurposed, design app-health
 migration to CONSOLE or HEALTH first.
 
+Decision: preserve `SYSTEM` for app/source health and expose the science layer as `COSMIC`.
+`SYSTEM_SOLAR` remains the internal SQLite/config scope key; `/COSMIC` and
+`/api/news/scopes/COSMIC` map to it. The two routes render separate panels, with no page-load
+fetches. Offline route and disabled-parent tests pass.
+
 ### Decide Final UI Label For Solar System And Beyond
 
-Status: not implemented.
+Status: completed 2026-10-15 with COSMIC as the first-pass UI label.
 
 Choose the final user-facing label and route plan for the Solar System and Beyond layer. Preserve
 the existing `SYSTEM` app-health meaning unless the user explicitly requests a migration. Update
 docs, tests, routes, templates, and source-health references only in the future implementation pass.
+
+The assistant proposed COSMIC in a preference request and proceeded with that working choice
+after no reply. Navigation displays `COSMIC`; the internal scope stays `SYSTEM_SOLAR` to preserve
+the current registry and event contracts. A later user preference can rename the tab and route
+without reusing app-health `SYSTEM` or migrating stored science rows.
 
 ### Disabled-By-Default Solar System And Beyond Config
 
@@ -2774,8 +2784,8 @@ literature, and homepage extraction sources unless explicit local flags are set.
 Current state: `solar_system_beyond` now has a disabled default tree and example config with
 science topic and attention flags. Normalization validates booleans and attention enums; TNS,
 catalog/large archive, literature, and social categories require their explicit corresponding
-local allow flags. No science news scope or route is wired yet, so enabling this tree alone
-does not cause fetches or display items. The final UI label remains a separate user decision.
+local allow flags. `news.scopes.SYSTEM_SOLAR` and `/COSMIC` now exist but remain disabled by
+default; enabling this tree alone does not cause a fetch or display invented items.
 
 ### Solar System And Beyond Source Registry Design Implementation
 
@@ -2792,8 +2802,8 @@ the design table plus four later RSS candidates and narrow Exoplanet Archive, MA
 candidates,
 under the internal `SYSTEM_SOLAR` working name. `science_registry.py` validates
 unique keys, required fields, URL shape, enums, intervals, and priorities, and derives a disabled
-source-health behavior for each candidate. The registry has no parser, route, news scope, or
-runtime fetch wiring; the final UI label remains a user decision. Focused tests check inventory
+source-health behavior for each candidate. A COSMIC route and internal news scope now exist, but
+the registry is still disabled and no live science adapter is enabled. Focused tests check inventory
 isolation and invalid entries.
 
 ### Solar System And Beyond SQLite Schema Or Extension
@@ -3099,12 +3109,18 @@ timeouts, retention, and query bounds are configured. Source health should repor
 
 ### UI Disabled States After Naming Decision
 
-Status: not implemented.
+Status: partially implemented 2026-10-15; source-specific states pending.
 
 After the user chooses a scope label, add UI states for disabled, not configured, configured but
 disabled, never scanned, stale, policy blocked, parser failed, auth required, rate limited, social
 disabled, heavy archive disabled, manual review only, hype blocked, archive firehose blocked, and
 SYSTEM naming collision unresolved. Do not show fake headlines.
+
+Current state: `/COSMIC` and the overview render truthful `disabled` and `not_configured`
+states using the internal `SYSTEM_SOLAR` scope. The API alias and existing `SYSTEM` app-health
+page remain distinct, and page loads do not fetch. A configured science source is skipped when
+`solar_system_beyond.enabled` is false. The remaining policy/auth/health-specific states and
+source summary need the science ingest and source-gating pass.
 
 ### Source Health States
 
