@@ -33,11 +33,13 @@ def _member_signals(member: dict[str, Any], now: datetime | None) -> dict[str, A
     federal_register = evidence.get("federal_register") or {}
     govinfo = evidence.get("govinfo_publication") or {}
     source = evidence.get("source") or {}
+    usgs_rank = usgs.get("ranking") or {}
     severity = max(
         {"Extreme": 45, "Severe": 32, "Moderate": 15, "Minor": 4}.get(
             str(nws.get("severity") or "").title(), 0
         ),
         35 if usgs.get("tsunami") is True else 0,
+        _bounded_int(usgs_rank.get("national_severity_score"), 45),
         _bounded_int((nhtsa.get("ranking") or {}).get("vehicle_safety_score"), 35),
         _bounded_int((cisa.get("ranking") or {}).get("cyber_score"), 22),
         _bounded_int((faa.get("ranking") or {}).get("aviation_impact_score"), 45),
@@ -49,6 +51,7 @@ def _member_signals(member: dict[str, Any], now: datetime | None) -> dict[str, A
         25 if faa.get("events") else 0,
         20 if nws.get("instruction") else 0,
         15 if usgs.get("tsunami") is True else 0,
+        _bounded_int(usgs_rank.get("national_felt_impact_score"), 25),
         _bounded_int((federal_register.get("ranking") or {}).get("public_impact_score"), 25),
         _bounded_int(identity.get("public_impact_score"), 35),
     )

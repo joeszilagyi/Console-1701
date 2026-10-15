@@ -1182,7 +1182,8 @@ and offline scan. `national_federal_register_documents.json` covers document fil
 windows, low-value suppression, and offline scan. `national_govinfo_enrolled_bills.rss` covers
 allowlisted collection, title filtering, identity and offline scan. `national_fda_recalls.rss`
 covers bounded FDA-hosted notice metadata, translated-notice uncertainty and offline scan. The
-other NATIONAL source-family fixtures listed above remain pending.
+`tests/fixtures/national/cpsc_recalls_2026_10_01.json` sample covers the CPSC recall API parser
+and offline scan. The other NATIONAL source-family fixtures listed above remain pending.
 
 ### NWS Active Alert Parser
 
@@ -1228,8 +1229,11 @@ contract, with a configurable magnitude threshold defaulting to `national.earthq
 and coarse coordinate regions for the contiguous U.S., Alaska, Hawaii, Puerto Rico/U.S. Virgin
 Islands, Guam/Northern Mariana Islands, and American Samoa. It stores the region/bounding basis,
 event ID, magnitude, depth, place, time, felt/intensity, official URL, and seismic ranking terms.
-The coarse regions are a first-pass relevance filter, not a U.S. boundary determination; nuanced
-cross-border and multi-state felt-impact routing remains pending.
+The NATIONAL event rank now uses bounded USGS magnitude/alert severity and felt-report impact,
+with an explicit scope note that the summary count has no verified state distribution. It never
+sets multi-state impact from felt totals or the coarse epicenter region. The coarse regions remain
+a first-pass relevance filter, not a U.S. boundary determination; nuanced cross-border and
+multi-state felt-impact routing remains pending.
 
 ### FEMA/OpenFEMA Disaster Declarations Research
 
@@ -1303,7 +1307,9 @@ response shape. `cpsc_recalls_json` now validates an exact fixture source, seven
 date. It stores bounded product, firm, hazard, injury-report and remedy text; labels death/injury
 **risk** without claiming a reported death, and marks distribution geography unavailable when the
 API does not structure it. Source-stated risk contributes capped NATIONAL attention and ranking;
-the official response subset fixture and parser tests pass. No live
+the official response subset fixture, parser tests, and a bounded offline `news-scan` pass. The
+scanner now accepts the local fixture path only when the source retains the exact official
+attribution URL and `fixture_only` gate. No live
 adapter or allowlisted network fetch is enabled. See
 `docs/project/NATIONAL_NHTSA_RECALL_API_VERIFICATION.md`.
 
@@ -1699,8 +1705,8 @@ sources, auth-required sources, and parser failures. Fixture ingest must not per
 and must be safe for pytest.
 
 Current state: checked-in GDACS RSS/API GeoJSON, ReliefWeb disaster/report, WHO DON, ECDC RSS,
-USGS earthquake, NHC RSS, UN News RSS and UN Press RSS fixtures exercise offline parser and
-`news-scan` persistence paths. Smithsonian GVP, IAEA, broader news and remaining health/failure
+USGS earthquake, NHC RSS, UN News RSS, UN Press RSS and IAEA RSS fixtures exercise offline parser
+and `news-scan` persistence paths. Smithsonian GVP, broader news and remaining health/failure
 variants are pending.
 
 ### GDACS Feed Parser

@@ -1386,6 +1386,9 @@ def test_run_news_scan_uses_national_usgs_threshold_for_fixture(tmp_path):
         rows = conn.execute(
             "SELECT title, evidence_json FROM news_items WHERE scope = 'NATIONAL'"
         ).fetchall()
+        cluster = conn.execute(
+            "SELECT evidence_json FROM news_clusters WHERE scope = 'NATIONAL'"
+        ).fetchone()
 
     assert result["status"] == "complete"
     assert result["item_count"] == 1
@@ -1393,6 +1396,10 @@ def test_run_news_scan_uses_national_usgs_threshold_for_fixture(tmp_path):
     evidence = json_loads(rows[0]["evidence_json"], {})
     assert evidence["usgs_earthquake"]["filter"]["min_magnitude"] == 5.5
     assert evidence["usgs_earthquake"]["filter"]["region"] == "contiguous_us"
+    event = json_loads(cluster["evidence_json"], {})["national_event"]
+    assert event["ranking"]["factors"]["official_severity_score"] >= 35
+    assert event["ranking"]["factors"]["public_impact_score"] == 20
+    assert event["multi_state_impact"] is False
     with connect_db(config["_db_path"]) as conn:
         assert len(list_national_items_by_facet(conn, "agency", "USGS")) == 1
         assert len(list_national_items_by_facet(conn, "sector", "seismic")) == 1

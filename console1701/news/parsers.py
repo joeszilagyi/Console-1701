@@ -1549,8 +1549,26 @@ def _parse_usgs_earthquake_geojson(
                 "felt_weight": felt_weight,
                 "alert_weight": alert_weight,
                 "regional_seismic_weight": seismic_weight,
+                **({
+                    "national_severity_score": min(45, magnitude_weight + alert_weight),
+                    "national_felt_impact_score": min(25, felt_weight * 2),
+                } if national else {}),
             },
         }
+        if national:
+            item["evidence"]["national_identity"] = {
+                "event_type": "earthquake",
+                "agency": "USGS",
+                "official_event_ids": [f"usgs:{event_id}"] if event_id else [],
+                "local_regional_impact_score": min(20, max(
+                    magnitude_weight // 2, felt_weight * 2,
+                )),
+                "multi_state_impact": False,
+                "impact_scope_basis": (
+                    "USGS summary felt count has no verified state distribution; "
+                    "coarse epicenter region does not prove multi-state impact"
+                ),
+            }
         if global_scope:
             item["evidence"]["global_identity"] = {
                 "earthquake_id": item["evidence"]["usgs_earthquake"]["id"],

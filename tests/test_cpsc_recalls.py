@@ -5,9 +5,12 @@ from pathlib import Path
 
 import pytest
 
+from console1701.config import load_config
+from console1701.db import connect_db, json_loads
 from console1701.news.national_policy import classify_national_item
 from console1701.news.parsers import NewsParserError, PayloadTooLargeError, parse_fixture_items
 from console1701.news.ranking import build_rank_result
+from console1701.news.scanner import run_news_scan
 
 FIXTURE = Path(__file__).parent / "fixtures/national/cpsc_recalls_2026_10_01.json"
 
@@ -81,6 +84,11 @@ def test_cpsc_rejects_unbounded_queries_and_wrong_source():
         parse_fixture_items(source, FIXTURE.read_text())
     with pytest.raises(PayloadTooLargeError):
         parse_fixture_items(_source(), " " * 1_048_577)
+    source = _source()
+    source["url"] = FIXTURE.resolve().as_uri()
+    source["official_url"] = "https://example.test/Recall"
+    with pytest.raises(NewsParserError):
+        parse_fixture_items(source, FIXTURE.read_text())
 
 
 def test_cpsc_rejects_malformed_or_too_many_rows():
@@ -89,3 +97,47 @@ def test_cpsc_rejects_malformed_or_too_many_rows():
     rows = json.loads(FIXTURE.read_text())
     with pytest.raises(NewsParserError):
         parse_fixture_items(_source(), json.dumps(rows * 34))
+
+
+def test_cpsc_fixture_scans_offline_with_bounded_contract(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        "console1701.news.scanner.fetch_official_text",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("unexpected HTTP")),
+    )
+    config_path = tmp_path / "cpsc.yml"
+    config_path.write_text(f"""
+paths: {{repo_roots: [], explicit_repos: []}}
+news:
+  enabled: true
+  scopes:
+    NATIONAL:
+      enabled: true
+      sources:
+        - id: cpsc_recalls_api
+          name: CPSC recalls fixture
+          kind: api_json
+          parser: cpsc_recalls_json
+          source_family: cpsc
+          source_class: official_recall
+          official_status: official
+          fixture_only: true
+          enabled: true
+          url: "{FIXTURE.resolve().as_uri()}"
+          official_url: https://www.saferproducts.gov/RestWebServices/Recall
+          query_contract:
+            recall_date_start: '2026-10-01'
+            recall_date_end: '2026-10-02'
+            format: json
+            timeout_seconds: 10
+""".strip() + "\n", encoding="utf-8")
+    result = run_news_scan(config_path)
+    assert result["status"] == "complete", result
+    assert result["item_count"] == 3
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        rows = conn.execute(
+            "SELECT evidence_json FROM news_items WHERE scope='NATIONAL'"
+        ).fetchall()
+    assert len(rows) == 3
+    assert all(json_loads(row["evidence_json"], {})["ingest"]["fixture_only"]
+               for row in rows)
