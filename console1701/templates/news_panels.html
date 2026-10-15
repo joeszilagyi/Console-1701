@@ -134,6 +134,31 @@
                     <li><b>Sensitivity</b><span>{{ orbital_event.ranking.sensitivity.label if orbital_event.ranking else "not assessed" }}</span></li>
                   </ul>
                 {% endif %}
+                {% if item.scope == "SYSTEM_SOLAR" %}
+                  {% set science = evidence.science_event or {} %}
+                  {% set science_rss = evidence.science_rss or {} %}
+                  {% set gcn = evidence.gcn_notice or {} %}
+                  {% set archive = evidence.exoplanet_archive or evidence.mast_caom or evidence.pds_collection or {} %}
+                  <div class="news-evidence-grid">
+                    <div><span>Source ID</span><strong>{{ source.source_key or "unknown" }}</strong></div>
+                    <div><span>Family / class</span><strong>{{ source.source_family or "unknown" }} / {{ source.source_class or "unknown" }}</strong></div>
+                    <div><span>Official status</span><strong>{{ source.official_status or "unverified" }}</strong></div>
+                    <div><span>Parser</span><strong>{{ source.parser or "unknown" }}</strong></div>
+                    <div><span>Published / observed</span><strong>{{ item.source_published_at or "unknown" }}</strong></div>
+                    <div><span>Event confidence</span><strong>{{ science.confidence or "not correlated" }}</strong></div>
+                    <div><span>Event type / status</span><strong>{{ science.event_type or "unclassified" }} / {{ science.status or "unknown" }}</strong></div>
+                    <div><span>Mission / telescope</span><strong>{{ science_rss.mission_label or science_rss.telescope or gcn.mission or archive.mission or "not provided" }}</strong></div>
+                    <div><span>Source date meaning</span><strong>{{ archive.date_semantics or "source publication or alert time" }}</strong></div>
+                  </div>
+                  <ul class="news-evidence-list">
+                    <li><b>Item URL</b><span>{{ item.url }}</span></li>
+                    <li><b>Matching</b><span>{{ science.matches | tojson if science.matches else "isolated" }}</span></li>
+                    <li><b>Rank factors</b><span>{{ science.ranking.factors | tojson if science.ranking else "not scored" }}</span></li>
+                    <li><b>Query bounds</b><span>{{ science.query_bounds | tojson if science.query_bounds else "not applicable" }}</span></li>
+                    <li><b>Policy flags</b><span>{{ science.policy_flags | join(", ") if science.policy_flags else "none recorded" }}</span></li>
+                    <li><b>Data products</b><span>Metadata only; no product downloaded by this fixture.</span></li>
+                  </ul>
+                {% endif %}
                 {% if item.scope == "NATIONAL" and national_evidence %}
                   <div class="news-evidence-grid">
                     <div><span>Source ID</span><strong>{{ national_evidence.source_key }}</strong></div>
@@ -223,7 +248,7 @@
           <details class="news-evidence-drawer">
             <summary>Audit trail</summary>
             <div class="news-evidence-grid">
-              <div><span>Scope</span><strong>{{ source.scope }}</strong></div>
+              <div><span>Scope</span><strong>{{ "COSMIC" if source.scope == "SYSTEM_SOLAR" else source.scope }}</strong></div>
               <div><span>Family</span><strong>{{ source.source_family or "unknown" }}</strong></div>
               <div><span>Class</span><strong>{{ source.source_class or "unknown" }}</strong></div>
               <div><span>Verification</span><strong>{{ source.verification_status or "unknown" }}</strong></div>
@@ -360,6 +385,7 @@
             {% set global_event = cluster_evidence.global_event or {} %}
             {% set national_event = cluster_evidence.national_event or {} %}
             {% set orbital_event = cluster_evidence.orbital_event or {} %}
+            {% set science_event = cluster_evidence.science_event or {} %}
             <li>
               <b>{{ cluster.title }}</b>
               <span>{{ cluster.item_count }} item{{ "" if cluster.item_count == 1 else "s" }} · score {{ cluster.score }}</span>
@@ -404,6 +430,25 @@
                     {% for reason in orbital_event.ranking.reasons %}
                       <li><b>Rank</b><span>{{ reason }}</span></li>
                     {% endfor %}
+                  </ul>
+                {% endif %}
+                {% if view['scope'] == "SYSTEM_SOLAR" and science_event %}
+                  <div class="news-evidence-grid">
+                    <div><span>Event confidence</span><strong>{{ science_event.confidence }}</strong></div>
+                    <div><span>Source families</span><strong>{{ science_event.families | join(", ") or "unknown" }}</strong></div>
+                    <div><span>Event type / status</span><strong>{{ science_event.event_type }} / {{ science_event.status }}</strong></div>
+                    <div><span>Event score</span><strong>{{ science_event.ranking.score }}</strong></div>
+                    <div><span>Impact tags</span><strong>{{ science_event.ranking.impact_tags | join(", ") or "none verified" }}</strong></div>
+                  </div>
+                  <ul class="news-evidence-list">
+                    {% for match in science_event.matches %}
+                      <li><b>Match {{ match.item_ids | join(" + ") }}</b><span>{{ match.basis | join(", ") }}</span></li>
+                    {% endfor %}
+                    {% for reason in science_event.ranking.reasons %}
+                      <li><b>Rank</b><span>{{ reason }}</span></li>
+                    {% endfor %}
+                    <li><b>Query bounds</b><span>{{ science_event.query_bounds | tojson }}</span></li>
+                    <li><b>Policy flags</b><span>{{ science_event.policy_flags | join(", ") or "none recorded" }}</span></li>
                   </ul>
                 {% endif %}
                 {% if view['scope'] == "NATIONAL" and national_event %}

@@ -37,6 +37,7 @@ def test_nasa_jpl_science_parser_keeps_only_bounded_official_science_metadata():
     assert items[0]["evidence"]["science_rss"]["science_categories"] == [
         "Astrophysics", "Brown Dwarfs"
     ]
+    assert items[0]["evidence"]["science_rss"]["mission_label"] == "spherex"
     assert items[1]["description"] == "New finding."
     assert items[1]["evidence"]["science_rss"]["data_product_downloaded"] is False
 

@@ -2846,6 +2846,11 @@ with complete paging. The PDS fixture covers one collection metadata record. The
 covers an official-schema notice, coordinates, test gates, update, and retraction. The other fixture
 families and source-health/policy states are pending.
 
+The first offline `news-scan` integration now ingests configured NASA JPL and ESA RSS fixtures,
+persists COSMIC items and events, and rejects nonexact source identities. A scan and page-render
+test assert no network call, while a repeat scan confirms event rebuild idempotence. The remaining
+fixture families and blocked-state matrix still need end-to-end coverage.
+
 ### NASA/JPL RSS Parser
 
 Status: completed 2026-10-15 for fixture-first NASA-hosted JPL science RSS.
@@ -2859,8 +2864,8 @@ Current state: `science_rss.py` parses only the exact NASA-hosted JPL channel an
 internal science scope. It requires a source-provided science category and nonoperational title,
 rejects unrelated hosts and malformed/oversized XML, and keeps bounded headline metadata,
 publication time, categories, official provenance, and no-download evidence. Synthetic fixtures
-cover scope filtering and safety. The registry candidate stays disabled; no science live fetch or
-UI route exists yet.
+cover scope filtering and safety. The registry candidate stays disabled for live fetch; a COSMIC
+route and explicit local fixture ingest exist.
 
 ### ESA RSS Parser
 
@@ -3053,7 +3058,7 @@ only if explicitly enabled, and never download papers or bypass paywalls.
 
 ### Deterministic Event Correlation For Transients, Exoplanets, Missions, And Telescope Releases
 
-Status: partially implemented 2026-10-15; runtime integration pending.
+Status: completed 2026-10-15 for the first-pass fixture runtime.
 
 Implement deterministic matching by source family, time window, normalized title tokens, mission,
 telescope, instrument, object name, solar-system body, exoplanet system, transient name, GCN event
@@ -3065,13 +3070,12 @@ grouping for stored `SYSTEM_SOLAR` metadata. It recognizes GCN, exoplanet, MAST,
 explicit identity fields; it treats recurring mission/object names as context, requires shared
 title tokens and independent source families for non-ID matches, and records the match basis.
 Focused tests cover retraction continuity, unrelated releases, independent corroboration,
-time-window separation, event-kind separation and scope exclusion. The science scan path does not
-yet call this module or persist clusters to `science_events`; finish that when live or fixture
-science ingest is wired.
+time-window separation, event-kind separation and scope exclusion. The COSMIC fixture scan calls
+this module and persists groups in `science_events`, `news_clusters`, and item evidence.
 
 ### Deterministic Ranking For Official Science And Rarity
 
-Status: partially implemented 2026-10-15; runtime integration pending.
+Status: completed 2026-10-15 for the first-pass fixture runtime.
 
 Implement explainable ranking with recency, official science provenance, scientific significance,
 source diversity, mission relevance, rarity, transient status, public interest, source priority,
@@ -3085,8 +3089,8 @@ relevance, explicit rarity, preliminary transient status, public interest, sourc
 cluster size and impact tags. It records duplicate-family, stale, confidence, low-value, hype,
 out-of-scope, archive and retraction penalties as factors and reasons. Archive parameter updates,
 observation times, and harvest dates receive no release-recency bonus; dramatic titles alone do
-not create scientific significance. Focused tests cover those semantics. The science scan path
-does not yet call this ranker or persist its evidence to `science_events`; finish that with ingest.
+not create scientific significance. Focused tests cover those semantics. The COSMIC fixture scan
+calls this ranker and persists the score and explanations on events, clusters, and items.
 
 ### Hype And Speculation Suppression Rules
 
@@ -3119,8 +3123,9 @@ SYSTEM naming collision unresolved. Do not show fake headlines.
 Current state: `/COSMIC` and the overview render truthful `disabled` and `not_configured`
 states using the internal `SYSTEM_SOLAR` scope. The API alias and existing `SYSTEM` app-health
 page remain distinct, and page loads do not fetch. A configured science source is skipped when
-`solar_system_beyond.enabled` is false. The remaining policy/auth/health-specific states and
-source summary need the science ingest and source-gating pass.
+`solar_system_beyond.enabled` is false. Configured NASA JPL and ESA fixture sources show stored
+items, events, and evidence. The remaining policy/auth/health-specific states and source summary
+need a source-gating pass.
 
 ### Source Health States
 
@@ -3135,7 +3140,7 @@ in app-health SYSTEM later and summarize them in the candidate scope.
 
 ### Evidence Drawer Contract
 
-Status: not implemented.
+Status: partially implemented 2026-10-15; fixture item/event evidence renders.
 
 Define and test evidence payloads for Solar System and Beyond items/events. Include source ids,
 names, families, classes, URLs, canonical URLs, official flags, source published times, first/last
@@ -3143,6 +3148,10 @@ seen, fetch run ids, parser names, source health, ranking features, object/missi
 transient match basis, preliminary/confirmed/retracted status, archive query bounds, auth-required
 status, retention expiration, policy notes, hype penalty, low-public-value penalty,
 archive-firehose penalty, out-of-scope penalty, and no-data-product-download evidence.
+
+Current state: fixture items and clusters render source provenance, event confidence and match
+basis, rank reasons, query bounds, and explicit metadata-only/no-product-download evidence.
+Auth-required and broader policy/health states still need fixture and UI coverage.
 
 ### Official RSS Live Ingest Phase, Disabled By Default
 

@@ -53,6 +53,8 @@ from console1701.news.ranking import (
 from console1701.news.regional_contract import build_regional_event_contract
 from console1701.news.regional_policy import apply_regional_privacy_policy
 from console1701.news.regional_registry import list_regional_source_registry
+from console1701.news.science_events import correlate_science_items
+from console1701.news.science_ranking import rank_science_event
 from console1701.news.science_registry import list_science_source_registry
 from console1701.news.source_policy import evaluate_source_policy
 
@@ -2475,6 +2477,9 @@ def _latest_health_state_for_rank(conn: sqlite3.Connection, source_id: int) -> s
 
 
 def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
+    if scope == "SYSTEM_SOLAR":
+        _rebuild_science_clusters(conn)
+        return
     if scope == "ORBITAL":
         _rebuild_orbital_clusters(conn)
         return
@@ -2607,6 +2612,113 @@ def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
                 group["score"],
                 json_dumps(group["tags"]),
                 json_dumps(cluster_evidence),
+            ),
+        )
+
+
+def _rebuild_science_clusters(conn: sqlite3.Connection) -> None:
+    now = datetime.now(UTC).isoformat(timespec="seconds")
+    rows = conn.execute(
+        """
+        SELECT id, scope, title, source_published_at, first_seen_at, last_seen_at,
+               expires_at, rank_score, tags_json, evidence_json
+        FROM news_items
+        WHERE scope = 'SYSTEM_SOLAR' AND status = 'active' AND expires_at >= ?
+        ORDER BY id
+        """,
+        (now,),
+    ).fetchall()
+    items = [{**dict(row), "tags": json_loads(str(row["tags_json"]), []),
+              "evidence": json_loads(str(row["evidence_json"]), {})} for row in rows]
+    by_id = {int(item["id"]): item for item in items}
+    conn.execute("DELETE FROM science_events WHERE scope = 'SYSTEM_SOLAR'")
+    conn.execute("DELETE FROM news_clusters WHERE scope = 'SYSTEM_SOLAR'")
+    for group in correlate_science_items(items):
+        members = [by_id[item_id] for item_id in group["item_ids"]]
+        ranking = rank_science_event(group, members, now=now)
+        representative = max(
+            members, key=lambda member: (
+                int(member["rank_score"]), member["last_seen_at"], member["id"]
+            ),
+        )
+        confidence = "corroborated" if group["corroborated"] else (
+            "source_reported" if group["identifiers"] else "uncorroborated"
+        )
+        fixture_only = all(bool((member["evidence"].get("ingest") or {}).get(
+            "fixture_only")) for member in members)
+        tags = list(dict.fromkeys(tag for member in members for tag in member["tags"]))
+        query_bounds = [
+            bounds for member in members for payload in member["evidence"].values()
+            if isinstance(payload, dict)
+            if isinstance((bounds := payload.get("query_bounds")), dict)
+        ]
+        flags = sorted({
+            key for member in members
+            for key, value in (member["evidence"].get("science_safety") or {}).items()
+            if value is True
+        })
+        event_type = group["event_kinds"][0] if group["event_kinds"] else "science_release"
+        status = "retracted" if all(
+            (member["evidence"].get("gcn_notice") or {}).get("status") == "retracted"
+            for member in members
+        ) else "active"
+        event = {
+            **group, "confidence": confidence, "fixture_only": fixture_only,
+            "event_type": event_type, "status": status, "ranking": ranking,
+            "query_bounds": query_bounds, "policy_flags": flags,
+        }
+        for member in members:
+            evidence = dict(member["evidence"])
+            evidence["science_event"] = event
+            conn.execute(
+                "UPDATE news_items SET rank_score = ?, evidence_json = ? WHERE id = ?",
+                (ranking["score"], json_dumps(evidence), member["id"]),
+            )
+        first_seen = min(str(member["first_seen_at"]) for member in members)
+        last_seen = max(str(member["last_seen_at"]) for member in members)
+        expires = max(str(member["expires_at"]) for member in members)
+        conn.execute(
+            """
+            INSERT INTO news_clusters (
+              scope, cluster_key, title, representative_item_id, first_seen_at,
+              last_seen_at, item_count, score, tags_json, evidence_json
+            ) VALUES ('SYSTEM_SOLAR', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (group["event_key"], representative["title"], representative["id"],
+             first_seen, last_seen, len(members), ranking["score"], json_dumps(tags),
+             json_dumps({"science_event": event, "fixture_only": fixture_only})),
+        )
+        identities = [member["evidence"] for member in members]
+        def first(values: Any) -> str | None:
+            return next((str(value) for value in values if value), None)
+
+        conn.execute(
+            """
+            INSERT INTO science_events (
+              scope, event_key, event_type, title, representative_item_id,
+              object_id, mission_id, telescope_id, transient_id, status,
+              scope_label_status, score, first_seen_at, last_seen_at, expires_at,
+              source_ids_json, families_json, item_ids_json, ranking_explanation_json,
+              evidence_json, query_bounds_json, policy_flags_json
+            ) VALUES (
+              'SYSTEM_SOLAR', ?, ?, ?, ?, ?, ?, ?, ?, ?, 'cosmic',
+              ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            )
+            """,
+            (
+                group["event_key"], event_type, representative["title"], representative["id"],
+                first((e.get("science_identity") or {}).get("object_name")
+                        or (e.get("exoplanet_archive") or {}).get("planet_name")
+                        or (e.get("pds_collection") or {}).get("target_body") for e in identities),
+                first((e.get("science_identity") or {}).get("mission")
+                        or (e.get("science_rss") or {}).get("mission_label")
+                        or (e.get("pds_collection") or {}).get("mission") for e in identities),
+                first((e.get("science_rss") or {}).get("telescope") for e in identities),
+                first((e.get("gcn_notice") or {}).get("event_id") for e in identities),
+                status, ranking["score"], first_seen, last_seen, expires,
+                json_dumps(group["source_keys"]), json_dumps(group["families"]),
+                json_dumps(group["item_ids"]), json_dumps(ranking), json_dumps(event),
+                json_dumps(query_bounds), json_dumps(flags),
             ),
         )
 
