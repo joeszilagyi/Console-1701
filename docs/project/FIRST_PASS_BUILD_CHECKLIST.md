@@ -146,7 +146,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-109** [ORBITAL Source Health States](../../BACKLOG.md#L1866) — completed 2026-10-15; restricted, sensitivity, terms, scope-filter, and health-only states are explicit.
 - [x] **RS-110** [ORBITAL Evidence Drawer Contract](../../BACKLOG.md#L1876) — completed 2026-10-15; persisted bounded contract and HTML/direct-detail tests pass.
 - [ ] **RS-111** [ORBITAL Official-Source Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L1887) — partially implemented; SWPC, six NASA RSS, and two ESA RSS opt-ins pass; JPL candidates pending.
-- [ ] **RS-112** [Documentation For ORBITAL Source Verification](../../BACKLOG.md#L1933) — partially implemented.
+- [x] **RS-112** [Documentation For ORBITAL Source Verification](../../BACKLOG.md#L1933) — endpoint signoff template, promotion gates, source-health handling, and four evidence-linked walkthroughs complete.
 - [x] **RS-113** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L1948) — completed 2026-10-15; ORBITAL/SYSTEM GET state matrix stays offline.
 - [x] **RS-114** [Tests For No Restricted Source Running Without Explicit Config](../../BACKLOG.md#L1957) — completed 2026-10-15; regression gate covers restricted and policy-sensitive candidates.
 - [x] **RS-115** [Tests For No API-Key Source Running Without Config](../../BACKLOG.md#L1966) — completed 2026-10-15; missing keys stop NASA, Space-Track, and future keyed sources.
