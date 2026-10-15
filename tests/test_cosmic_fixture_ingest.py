@@ -71,6 +71,10 @@ def test_cosmic_fixture_scan_ingests_science_only_without_network(tmp_path, monk
     assert view["state"]["state"] == "healthy"
     assert all(row["scope"] == "SYSTEM_SOLAR" for row in rows)
     assert all(json_loads(row["evidence_json"], {})["ingest"]["fixture_only"] for row in rows)
+    assert all(json_loads(row["evidence_json"], {})["source"]["official_url"]
+               for row in rows)
+    assert all(json_loads(row["evidence_json"], {})["policy"]["auth_required"] is False
+               for row in rows)
     assert len(events) == len(view["clusters"])
     assert len(events) >= 2
     assert all(event["scope_label_status"] == "cosmic" for event in events)
@@ -123,6 +127,10 @@ def test_cosmic_page_shows_stored_evidence_without_fetch(tmp_path, monkeypatch):
     assert "Event confidence" in html
     assert "Query bounds" in html
     assert "Data products" in html
+    assert "Official endpoint" in html
+    assert "Fetch mode" in html and "local fixture" in html
+    assert "Canonical URL" in html
+    assert "this ingest did not request a product download" in html
     assert "SYSTEM_SOLAR" not in html
 
 
@@ -321,3 +329,49 @@ def test_cosmic_broad_archive_query_reports_firehose_block_before_storage(
             "SELECT state FROM news_source_health ORDER BY id DESC LIMIT 1"
         ).fetchone()
     assert health["state"] == "archive_firehose_blocked"
+
+
+def test_cosmic_auth_candidates_stay_unconfigurable_and_missing_auth_stops_ingest(
+    tmp_path, monkeypatch
+):
+    auth_candidates = [row for row in list_science_source_registry()
+                       if row["verification_status"] == "auth_required"]
+    assert len(auth_candidates) >= 3
+    for row in auth_candidates:
+        assert row["source_health_behavior"] == "auth_required"
+        path = _config(tmp_path, monkeypatch)
+        payload = yaml.safe_load(path.read_text())
+        payload["solar_system_beyond"].update({
+            "allow_auth_required_sources": True, "include_tns": True,
+            "include_literature_metadata": True, "allow_literature_metadata": True,
+        })
+        payload["news"]["scopes"]["SYSTEM_SOLAR"]["sources"] = [{
+            "id": row["source_key"], "name": row["source_name"],
+            "kind": "api_json", "parser": "gcn_notice_fixture", "enabled": True,
+            "fixture_only": True, "official_url": row["raw_url"],
+            "url": f"file://{FIXTURES / 'gcn_notice.json'}",
+        }]
+        path.write_text(yaml.safe_dump(payload))
+        with pytest.raises(ConfigError):
+            load_config(path)
+
+    path = _config(tmp_path, monkeypatch, source_override={"auth": {"token": ""}})
+    payload = yaml.safe_load(path.read_text())
+    payload["news"]["scopes"]["SYSTEM_SOLAR"]["sources"] = [
+        payload["news"]["scopes"]["SYSTEM_SOLAR"]["sources"][0]
+    ]
+    path.write_text(yaml.safe_dump(payload))
+    monkeypatch.setattr("console1701.news.scanner.load_fixture_text", lambda *a, **kw: (
+        (_ for _ in ()).throw(AssertionError("auth source read fixture"))
+    ))
+    monkeypatch.setattr("console1701.news.scanner.fetch_official_text", lambda *a, **kw: (
+        (_ for _ in ()).throw(AssertionError("auth source attempted HTTP"))
+    ))
+    result = run_news_scan(path)
+    assert result["status"] == "partial" and result["item_count"] == 0
+    config = load_config(path)
+    with connect_db(config["_db_path"]) as conn:
+        health = conn.execute(
+            "SELECT state FROM news_source_health ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+    assert health["state"] == "auth_required"

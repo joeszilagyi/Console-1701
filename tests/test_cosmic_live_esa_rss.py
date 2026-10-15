@@ -96,7 +96,11 @@ def test_esa_science_live_allowlist_is_exact_and_scan_filters_to_recent_science(
     })
     endpoint = next(route.endpoint for route in build_router(str(path)).routes
                     if route.path == "/{scope}")
-    assert "Solar Orbiter maps magnetic switchbacks" in endpoint(request, "COSMIC").body.decode()
+    html = endpoint(request, "COSMIC").body.decode()
+    assert "Solar Orbiter maps magnetic switchbacks" in html
+    assert "official live feed" in html
+    assert "this ingest did not request a product download" in html
+    assert "no product downloaded by this fixture" not in html
 
 
 @pytest.mark.parametrize("override", [
