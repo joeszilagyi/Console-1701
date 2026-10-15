@@ -2428,12 +2428,18 @@ Do not scrape dashboards or complex pages until a safe machine-readable path is 
 
 ### NASA Orbital Debris Source Verification
 
-Status: not implemented.
+Status: completed 2026-10-15 for first-pass source classification.
 
 Verify NASA Orbital Debris Program, Quarterly News, reentry, and related debris/sustainability
 sources before implementation. Define whether each source is source-health-only, RSS/metadata,
 manual-review-only, or a parser candidate. Store metadata only and avoid debris fear-dashboard
 behavior.
+
+Current state: NASA's Orbital Debris Program Office, Quarterly News PDF index, and reentry
+methods page are verified as official reference/source-health entries in
+`docs/project/ORBITAL_NASA_DEBRIS_SOURCE_VERIFICATION.md`. No current event feed or reentry
+prediction API was established. The registry now labels the quarterly page as a manual PDF index
+instead of an RSS parser candidate; all three stay disabled and out of the live HTTP allowlist.
 
 ### ORBITAL Deterministic Event Correlation
 
