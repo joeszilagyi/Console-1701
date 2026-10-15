@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import json
+import re
 from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 from console1701.config import (
     LOCAL_ADAPTER_TYPES,
@@ -211,7 +215,7 @@ LOCAL_SOURCE_REGISTRY: tuple[LocalSourceRegistryEntry, ...] = (
         source_family="city_light",
         source_class="official_utility",
         adapter="source_health_probe_only",
-        kind="rss",
+        kind="reference_only",
         raw_url="https://www.seattle.gov/city-light/outages",
         priority=85,
         interval_minutes=10,
@@ -233,8 +237,8 @@ LOCAL_SOURCE_REGISTRY: tuple[LocalSourceRegistryEntry, ...] = (
         source_name="FAA airport status SEA page",
         source_family="faa",
         source_class="official_airport_port",
-        adapter="airport_status_json_or_xml",
-        kind="api_json",
+        adapter="source_health_probe_only",
+        kind="reference_only",
         raw_url="https://www.faa.gov/airport-status/SEA",
         priority=90,
         interval_minutes=10,
@@ -296,6 +300,90 @@ LOCAL_SOURCE_REGISTRY: tuple[LocalSourceRegistryEntry, ...] = (
 )
 
 
+_LOCAL_DESIGN_INTERVAL = re.compile(r"^(\d+) (min|h)$")
+_LOCAL_OFFICIAL_STATUSES = {
+    "independent_local", "local_media", "official", "official_candidate",
+    "official_reference_candidate", "platform", "platform_official_account",
+    "reference", "unofficial",
+}
+_LOCAL_FUTURE_PHASES = {"L1", "L2", "L6", "L7", "L8", "L9", "L10"}
+_LOCAL_RSS_ADAPTERS = {"rss_atom", "wordpress_feed_candidate"}
+_LOCAL_API_ADAPTERS = {
+    "airport_status_json_or_xml", "arcgis_feature_service_candidate",
+    "gtfs_realtime_alerts", "official_api_json",
+}
+
+
+def _design_interval_minutes(raw: str) -> int:
+    if raw in {"manual", "none", "disabled"}:
+        return 0
+    match = _LOCAL_DESIGN_INTERVAL.fullmatch(raw)
+    if match is None:
+        raise ValueError(f"Invalid LOCAL design refresh interval: {raw}")
+    count = int(match.group(1))
+    return count * (60 if match.group(2) == "h" else 1)
+
+
+def _design_kind(adapter: str) -> str:
+    if adapter == "socrata_json":
+        return "open_data_json"
+    if adapter in _LOCAL_RSS_ADAPTERS:
+        return "rss"
+    if adapter in _LOCAL_API_ADAPTERS:
+        return "api_json"
+    if adapter == "static_html_headline_candidate":
+        return "homepage_headlines"
+    return "reference_only"
+
+
+def _complete_local_registry(
+    core: tuple[LocalSourceRegistryEntry, ...],
+) -> tuple[LocalSourceRegistryEntry, ...]:
+    raw = json.loads(Path(__file__).with_name("local_registry.json").read_text(encoding="utf-8"))
+    if not isinstance(raw, list):
+        raise ValueError("LOCAL design source inventory must be a list.")
+    overrides = {entry.source_key: entry for entry in core}
+    entries: list[LocalSourceRegistryEntry] = []
+    seen: set[str] = set()
+    for row in raw:
+        if not isinstance(row, dict):
+            raise ValueError("LOCAL design source entry must be an object.")
+        key = str(row.get("source_key") or "")
+        if not key or key in seen or row.get("scope") != "LOCAL":
+            raise ValueError(f"Invalid or duplicate LOCAL design source key: {key}")
+        seen.add(key)
+        if key in overrides:
+            entries.append(overrides[key])
+            continue
+        adapter = str(row["adapter"])
+        entries.append(LocalSourceRegistryEntry(
+            source_key=key,
+            source_name=str(row["source_name"]),
+            source_family=str(row["source_family"]),
+            source_class=str(row["source_class"]),
+            adapter=adapter,
+            kind=_design_kind(adapter),
+            raw_url=str(row["raw_url"]),
+            priority=int(row["priority"]),
+            interval_minutes=_design_interval_minutes(str(row["refresh_interval"])),
+            official_status=str(row["official_status"]),
+            privacy_risk=str(row["privacy_risk"]),
+            policy_risk=str(row["policy_risk"]),
+            parser_risk=str(row["parser_risk"]),
+            retention_sensitivity=str(row["retention_sensitivity"]),
+            verification_status=str(row["verification_status"]),
+            future_phase=str(row["future_phase"]),
+            why_it_matters=str(row["why_it_matters"]),
+            expected_access_kind=str(row["expected_access_kind"]),
+        ))
+    if not set(overrides).issubset(seen):
+        raise ValueError("A verified LOCAL core source is missing from the design inventory.")
+    return tuple(entries)
+
+
+LOCAL_SOURCE_REGISTRY = _complete_local_registry(LOCAL_SOURCE_REGISTRY)
+
+
 def list_local_source_registry() -> list[dict[str, Any]]:
     return [asdict(entry) for entry in LOCAL_SOURCE_REGISTRY]
 
@@ -349,6 +437,15 @@ def _validate_registry() -> None:
             raise RuntimeError(f"{entry.source_key} must have LOCAL scope.")
         if entry.enabled:
             raise RuntimeError(f"{entry.source_key} must be disabled by default.")
+        parts = urlsplit(entry.raw_url)
+        if parts.scheme != "https" or not parts.hostname:
+            raise RuntimeError(f"{entry.source_key} must have an HTTPS source URL.")
+        if not 0 <= entry.priority <= 100 or entry.interval_minutes < 0:
+            raise RuntimeError(f"{entry.source_key} has invalid priority or interval.")
+        if entry.official_status not in _LOCAL_OFFICIAL_STATUSES:
+            raise RuntimeError(f"{entry.source_key} has invalid official_status.")
+        if entry.future_phase not in _LOCAL_FUTURE_PHASES:
+            raise RuntimeError(f"{entry.source_key} has invalid future_phase.")
         if entry.source_class not in LOCAL_SOURCE_CLASSES:
             raise RuntimeError(f"{entry.source_key} has invalid source_class.")
         if entry.adapter not in LOCAL_ADAPTER_TYPES:

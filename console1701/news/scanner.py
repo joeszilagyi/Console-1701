@@ -557,7 +557,7 @@ def _ingest_source(
         if policy.get("gate_state"):
             raise SourceGateError(
                 str(policy["gate_state"]),
-                f"GLOBAL source blocked by {policy['gate_state']} policy gate.",
+                f"{source['scope']} source blocked by {policy['gate_state']} policy gate.",
             )
         is_live = _is_allowed_live_source(config, source)
         fetch_evidence: dict[str, Any]

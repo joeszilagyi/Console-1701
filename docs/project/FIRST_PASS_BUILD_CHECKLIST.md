@@ -26,7 +26,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 
 ### LOCAL Seattle Recent Signal Layer
 
-- [ ] **RS-004** [LOCAL Source Registry Design Implementation](../../BACKLOG.md#L282) — partially implemented.
+- [x] **RS-004** [LOCAL Source Registry Design Implementation](../../BACKLOG.md#L282) — all 119 design entries disabled, validated, inherited by config, and synced to SQLite; reference entries cannot ingest.
 - [ ] **RS-005** [LOCAL SQLite Schema Or Extension](../../BACKLOG.md#L310) — partially implemented.
 - [ ] **RS-006** [FAA/SEA Airport Status Research](../../BACKLOG.md#L393) — partially implemented.
 - [ ] **RS-007** [LOCAL Deterministic Ranking](../../BACKLOG.md#L461) — partially implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-004. Added all 119 LOCAL design-table sources to the disabled registry while preserving reviewed core metadata. Validation covers unique keys, classes/adapters/kinds, risks/statuses, HTTPS URLs, priority, interval, and phase. Config and SQLite expose the complete inventory; a source-kind gate prevents reference-only pages from loading fixtures or fetching HTTP when configured. Full pytest passed (317 tests); Ruff passed. Progress: 30/150.
 - **2026-10-15:** Completed RS-073. Verified the official UN News all-news RSS endpoint and observed title/link/GUID/time/source fields with optional category. Added a GLOBAL fixture parser that keeps canonical story URL and feed-link evidence, bounded plain-text description, institution identity, and narrow routine/feature exclusions. The homepage is now reference-only and the exact RSS entry remains disabled for HTTP. Full pytest passed (315 tests); Ruff passed. Progress: 29/150.
 - **2026-10-15:** RS-072 source review found the official Smithsonian/USGS weekly report RSS URL and its stated category/cadence limits, but the exact feed returned HTTP 403 to bounded direct inspection. No parser or completion claim; continue after legitimate sample access. Next: UN News RSS.
 - **2026-10-15:** Completed RS-071. Inspected NHC/CPHC Atlantic, Eastern Pacific, and Central Pacific basin XML, including live Eastern Pacific storm summaries and Public Advisories. The GLOBAL entry now names the exact Eastern Pacific feed and remains disabled. Added a source-specific fixture parser with explicit storm ID, basin, advisory, watch-term, time, and official-URL evidence; it skips inactive/outlook entries and avoids country-impact inference. Full pytest passed (312 tests); Ruff passed. Progress: 28/150.
