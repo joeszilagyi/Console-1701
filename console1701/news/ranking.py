@@ -372,6 +372,7 @@ def _regional_signal_factors(
         evidence.get("usgs_earthquake"), dict
     ) else {}
     usgs_filter = usgs.get("filter") if isinstance(usgs.get("filter"), dict) else {}
+    water = evidence.get("usgs_water") if isinstance(evidence.get("usgs_water"), dict) else {}
     active_until = _parse_time(nws.get("ends") or nws.get("expires"))
     active_alert = bool(
         nws_rank.get("active_alert") and seen and active_until and active_until > seen
@@ -387,6 +388,7 @@ def _regional_signal_factors(
         "regional_public_impact_bonus": public_impact,
         "regional_active_alert_bonus": 10 if active_alert else 0,
         "regional_stale_source_penalty": -6 if health_state == "stale" else 0,
+        "regional_hydrology_stale_penalty": -25 if water.get("stale_at_snapshot") else 0,
         "regional_out_of_region_penalty": (
             -30 if usgs and usgs_filter.get("matched") is False else 0
         ),
@@ -404,6 +406,10 @@ def _regional_signal_factors(
         reasons.append("REGIONAL official seismic filter rejects this location; subtract 30.")
     if factors["regional_stale_source_penalty"]:
         reasons.append("REGIONAL stale source state subtracts 6.")
+    if factors["regional_hydrology_stale_penalty"]:
+        reasons.append(
+            "REGIONAL USGS gauge observation was already stale at snapshot; subtract 25."
+        )
     if factors["regional_low_confidence_penalty"]:
         reasons.append("REGIONAL isolated headline confidence subtracts 8.")
     if factors["regional_privacy_penalty"]:

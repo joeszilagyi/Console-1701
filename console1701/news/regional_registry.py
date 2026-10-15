@@ -166,6 +166,31 @@ REGIONAL_SOURCE_REGISTRY: tuple[RegionalSourceRegistryEntry, ...] = (
         why_it_matters="Washington seismic and Cascadia hazard coverage needs earthquake context.",
     ),
     RegionalSourceRegistryEntry(
+        source_key="usgs_water_api",
+        source_name="USGS Water Data APIs",
+        source_family="usgs_water",
+        source_class="official_water_flood",
+        adapter="hydrology_api_json",
+        kind="api_json",
+        raw_url=(
+            "https://api.waterdata.usgs.gov/ogcapi/v1/collections/latest-continuous/items"
+            "?f=json&monitoring_location_id=USGS-12119000&parameter_code=00060,00065&limit=5"
+        ),
+        homepage_url="https://api.waterdata.usgs.gov/docs/ogcapi/",
+        parser="usgs_water_latest_fixture",
+        priority=85,
+        interval_minutes=15,
+        official_status="official",
+        privacy_risk="low",
+        policy_risk="low",
+        parser_risk="medium",
+        retention_sensitivity="medium",
+        verification_status="verified",
+        future_phase="R7",
+        expected_access_kind="observed OGC JSON; fixture assembly only, no live join",
+        why_it_matters="Source-backed Cedar River gauge observations without inferred flood stage.",
+    ),
+    RegionalSourceRegistryEntry(
         source_key="king_county_emergency_news",
         source_name="King County emergency news",
         source_family="county_emergency",

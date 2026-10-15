@@ -747,7 +747,10 @@ codes and configured filter behavior. A synthetic WSDOT JSON fixture now follows
 documented `Alert`/`RoadwayLocation` REST schema, including corridor, pass, border, WCF timestamp,
 and closed-alert cases; it is not an observed authenticated response. A synthetic King County
 Emergency News RSS fixture now covers warning, recovery, and test posts with source-specific
-classification and an offline scan. Dedicated WSF, wildfire, hydrology, other county emergency, AQI,
+classification and an offline scan. Dedicated USGS water fixture coverage now joins an observed
+latest-continuous response to Cedar River at Renton station metadata, preserves stage/flow and
+staleness evidence, and leaves flood stage unknown without a source threshold. Dedicated WSF,
+wildfire, other county emergency, AQI,
 outage, and other regional fixture shapes remain pending endpoint verification; do not invent
 live API shapes to close this pack.
 
@@ -841,11 +844,19 @@ check, so live item observation remains an operational evidence gap, not a parse
 
 ### USGS Water/Hydrology Fixture Parser
 
-Status: not implemented.
+Status: implemented (first pass fixture).
 
 Build a fixture parser for USGS water/hydrology data using gauge allowlists and river-basin filters.
 Preserve gauge id, river name, location, timestamp, stage/flow values, stage category if available,
 staleness evidence, source URL, and flood/hydrology ranking evidence.
+
+Current state: a verified modern USGS OGC latest-continuous response for `USGS-12119000` and
+matching monitoring-location feature are joined from a bounded local fixture. Exact official
+URLs, King County, HUC8 `17110012`, stage (`00065`), flow (`00060`), timestamps, units,
+provisional status, and staleness are retained. Flood category remains explicitly unknown;
+ranking records zero flood severity and penalizes stale observations. The one-gauge/HUC8
+allowlist rejects other identities. Offline scan and negative tests pass. HTTP ingest remains
+disabled because the scanner cannot yet perform the required bounded two-endpoint join.
 
 ### NWRFC Endpoint Research
 
