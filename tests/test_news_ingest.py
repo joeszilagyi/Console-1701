@@ -2056,6 +2056,7 @@ def test_run_news_scan_respects_payload_cap_and_retention_purge(tmp_path):
         "fetch_runs": 1,
         "source_health": 1,
         "local_events": 0,
+        "science_events": 0,
     }
     assert int(remaining) == 0
 
@@ -2229,6 +2230,7 @@ def test_run_news_scan_records_last_purge_and_last_result(tmp_path):
         "fetch_runs": 0,
         "source_health": 0,
         "local_events": 0,
+        "science_events": 0,
     }
     assert settings["news.last_purge"]["before_counts"]["news_items"] == 2
     assert settings["news.last_purge"]["after_counts"]["news_items"] == 2
