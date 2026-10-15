@@ -3375,11 +3375,13 @@ Add opt-in transient alert ingest for GCN notices/circulars, ATel, TNS, and Grac
 fixture parsers, policy/auth review, source health, preliminary/update/retraction handling, and
 retention tests exist. Do not download sky maps by default.
 
-Status: partial. ATel exact public RSS passes a bounded, opt-in live scan with preliminary
-labels and metadata-only storage. GraceDB public superevent plus VOEvent metadata passes a
-fixture-only parser and offline scan with revision/retraction handling, bounded payload,
-source health, and no sky-map fetch. GraceDB/GCN live polling, retention sequence tests,
-and TNS auth/policy work remain open.
+Status: partial. ATel exact public RSS and GraceDB public Production superevent plus VOEvent
+metadata pass bounded opt-in live scans. GraceDB uses a 48-hour query, 10-row overflow fail,
+64 KiB aggregate cap, 60-minute interval, exact REST links, and revision/retraction parsing;
+the live smoke was healthy with an empty recent window. Mocked preliminary-to-retraction
+and later empty-window scans preserve one item until its seven-day purge and withdraw
+elevation. GCN live transport, cross-source retention
+and purge sequences, and TNS auth/policy work remain open.
 
 ### Heavy Archive Phase, Disabled By Default
 

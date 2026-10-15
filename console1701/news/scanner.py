@@ -667,6 +667,8 @@ def _ingest_source(
             max_bytes = min(max_bytes, 65_536)
         if source.get("id") == "astronomers_telegram_rss":
             max_bytes = min(max_bytes, 65_536)
+        if source.get("id") == "gracedb_public_alerts":
+            max_bytes = min(max_bytes, 65_536)
     default_retention_days = int(
         ((config.get("news") or {}).get("retention") or {}).get("items_days", 7)
     )
@@ -802,7 +804,12 @@ def _ingest_source(
             )
             seen_item_ids.add(item_id)
             stored_count += 1
-        if is_live:
+        # GraceDB is a rolling created-time query, not a complete source snapshot.
+        # Keep older notices (especially retractions) visible until their TTL.
+        if is_live and not (
+            source.get("scope") == "SYSTEM_SOLAR"
+            and source.get("id") == "gracedb_public_alerts"
+        ):
             _retire_missing_live_items(
                 conn, source_id, seen_item_ids, fetch_run_id=run_id, retired_at=utc_now()
             )

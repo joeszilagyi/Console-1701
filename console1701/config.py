@@ -1204,6 +1204,7 @@ def _normalize_news_source(
                 "esa_space_science_feed", "nasa_jpl_science_feed",
                 "astronomers_telegram_rss",
                 "nasa_exoplanet_ps_tap",
+                "gracedb_public_alerts",
             }
             and fixture is not None
             and url == fixture[1]
@@ -1235,7 +1236,9 @@ def _normalize_news_source(
                 raise ConfigError(f"{path}.{field} must match the science registry.")
             source_cfg[field] = registry[field]
         if is_verified_live:
-            if source_key == "astronomers_telegram_rss":
+            if source_key == "gracedb_public_alerts":
+                minimum_interval = 60
+            elif source_key == "astronomers_telegram_rss":
                 minimum_interval = 30
             elif source_key in {"esa_space_science_feed", "nasa_jpl_science_feed"}:
                 minimum_interval = 60

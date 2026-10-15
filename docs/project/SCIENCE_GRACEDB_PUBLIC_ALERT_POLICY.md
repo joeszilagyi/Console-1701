@@ -12,16 +12,16 @@ querying by superevent ID or bounded time is preferable to sweeping event tables
 superevent ID is the durable identity. Internal or test/MDC events must not appear as Recent
 Signal. GraceDB documents HTTP 429 behavior and retry guidance for creation/annotation requests;
 this review did not establish a separate public read quota, so a future reader needs conservative
-intervals, pagination/row caps, and backoff.
+intervals, row caps, and backoff.
 
 NASA GCN describes LVK `EARLYWARNING`, `PRELIMINARY`, `INITIAL`, `UPDATE`, and `RETRACTION`
 notices. A retraction means the trigger is no longer a candidate of interest. As of the GCN
 announcement checked here, LVK notices are distributed as JSON over authenticated Kafka, with
 client credentials; no email fallback is available for that stream. The application will not add
 a Kafka dependency or credential flow as part of first-pass fixture work. A narrow, public,
-polling GraceDB reader is a separate future option after exact query and response testing.
+polling GraceDB reader is available behind explicit local opt-in.
 
-**Decision:** disabled and policy-reviewed, with no live adapter yet. A fixture parser uses
+**Decision:** disabled by default and policy-reviewed. A fixture and live parser use
 public superevent metadata only: ID, public status, source/alert time, event time, alert type,
 classification/significance only when source-provided, latest revision, source URL, and
 preliminary/update/retraction state. Correlate all revisions by superevent ID. Retractions must
@@ -35,12 +35,30 @@ followed by `RE`, and its public page marks it retracted. `S251013x` has prelimi
 and update revisions without a retraction. The local fixture assembly stores only those record
 and VOEvent metadata fields, rejects mismatched REST links, and treats any `RE` revision as a
 withdrawal. The fixture scan stores the withdrawn event with a retraction penalty and preserves
-the other candidate as an update. No live poll is enabled by this parser.
+the other candidate as an update.
+
+The live adapter only runs from an explicitly enabled `news-scan` source with the exact
+`https://gracedb.ligo.org/api/v2/superevents/` URL and verified parser. It builds its own
+UTC `created` query for the last 48 hours with `category: Production is_public: True`,
+`count=10`, and a minimum 60-minute interval. The list's `numRows` must fit the cap and equal
+the returned row count; an overflow fails the whole fetch, so no partial result is stored.
+Each row must contain the matching public superevent and VOEvent REST links before any
+follow-up GET. The adapter fetches only those VOEvent metadata URLs, never files or logs,
+with no redirects or proxy use. The aggregate response and assembled parser input each have
+a 64 KiB cap; HTTP 429 enters the scanner's rate-limited state. No conditional request is
+available for this time-varying query, so the interval gate controls repeat reads.
+
+An isolated live opt-in `news-scan` on 2026-10-15 returned HTTP 200, healthy source state,
+623 response bytes, and zero items because the recent query contained no public Production
+events. Mocked transport and scan tests cover a preliminary candidate followed by a
+retraction, stable superevent identity, zero retraction score, overflow, nonproduction rows,
+and foreign links. A later empty rolling query keeps the retracted item visible until its
+seven-day expiry; the retention purge removes both the item and science event. The full
+suite passed (695 tests) and Ruff passed. Empty-window live
+reads do not prove live revision behavior; that remains covered by the mocked sequence.
 
 Sky-map URLs can be retained as official provenance links, but no FITS, HEALPix, image, or other
 sky-map file is downloaded, parsed, cached, or shown as a precise location. The REST API's
-`files/` subtree and broad logs/annotations are outside the default fetch contract. Any future
-live reader must use an exact public endpoint/query with `is_public` and production filters,
-bounded recent time, explicit page/row/byte caps, conditional request or interval control,
-429 backoff, source-health states, retention and purge tests, and mocked preliminary/update/
-retraction sequences. Do not use credentials for nonpublic GraceDB data.
+`files/` subtree and broad logs/annotations are outside the fetch contract. Cross-source
+retention and purge sequences remain an RS-144 follow-up; do not use credentials for
+nonpublic GraceDB data.
