@@ -620,18 +620,21 @@ Architecture reference:
 
 ### REGIONAL Source Registry Design Implementation
 
-Status: partially implemented.
+Status: completed 2026-10-15 for the first-pass disabled inventory.
 
 Implement the REGIONAL source registry from the design document with explicit `source_key`,
 `source_family`, `source_class`, adapter, scope, priority, official status, policy risk, parser
 risk, privacy risk, retention sensitivity, verification status, and future phase fields. Validate
 enum values and keep all REGIONAL sources disabled until explicitly configured.
 
-Current state: `console1701/news/regional_registry.py` now seeds disabled REGIONAL source metadata
-for NWS, WSDOT, USGS, county emergency, and regional-news candidates. The config layer now applies
-regional defaults and validates REGIONAL source metadata before a source can be enabled. Dedicated
-regional event, ranking, and live-ingest work still remains. SQLite registry sync now removes stale
-REGIONAL source keys without deleting current entries; a repeat-scan regression covers this path.
+The REGIONAL registry now contains all 224 design-table entries plus six pre-existing reviewed
+operational candidates. All 230 rows are disabled by default. At load time it validates unique
+keys, classes/adapters/kinds, official and verification status, risks, HTTPS URLs, priority,
+interval, and future phase. The config layer inherits metadata, and SQLite sync persists the full
+inventory. Reference-only pages and documentation cannot trigger fixture or HTTP ingest when
+configured; focused tests compare every design row, confirm the persisted count, and exercise that
+gate. Inventory presence is not endpoint verification or live-ingest approval; those remain
+separate backlog work.
 
 ### Disabled-By-Default REGIONAL Config
 

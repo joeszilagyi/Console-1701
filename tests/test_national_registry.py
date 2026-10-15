@@ -107,7 +107,7 @@ def test_national_registry_persists_with_overlapping_scope_keys(tmp_path):
         source_statuses = get_news_sources_status(conn, config)
         summary = get_news_storage_summary(conn, config)
 
-    assert [str(row["scope"]) for row in rows] == ["LOCAL", "NATIONAL"]
+    assert [str(row["scope"]) for row in rows] == ["LOCAL", "NATIONAL", "REGIONAL"]
     assert [str(row["scope"]) for row in configured_rows] == ["LOCAL", "NATIONAL"]
     assert configured_rows[0]["id"] != configured_rows[1]["id"]
     assert {(row["scope"], row["source_key"]) for row in source_statuses} == {
