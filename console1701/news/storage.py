@@ -12,6 +12,7 @@ from console1701.news.local_registry import local_source_registry_summary
 from console1701.news.national_registry import national_source_registry_summary
 from console1701.news.orbital_registry import orbital_source_registry_summary
 from console1701.news.regional_registry import regional_source_registry_summary
+from console1701.news.science_registry import science_candidate_health_summary
 from console1701.news.source_policy import evaluate_source_policy
 
 SOURCE_HEALTH_STATE_ALIASES = {
@@ -26,6 +27,9 @@ FAILING_SOURCE_HEALTH_STATES = {
     "homepage_disabled",
     "homepage_extract_disabled",
     "heavy_open_data_disabled",
+    "heavy_archive_disabled",
+    "archive_firehose_blocked",
+    "hype_blocked",
     "manual_review_only",
     "parser_failed",
     "policy_blocked",
@@ -56,6 +60,9 @@ SOURCE_HEALTH_STATE_MESSAGES = {
     "homepage_disabled": "Homepage extraction is disabled by config.",
     "homepage_extract_disabled": "GLOBAL homepage extraction is disabled by config.",
     "heavy_open_data_disabled": "GLOBAL heavy open-data source is disabled by config.",
+    "heavy_archive_disabled": "COSMIC heavy archive source is disabled by policy.",
+    "archive_firehose_blocked": "COSMIC archive query exceeds bounded metadata policy.",
+    "hype_blocked": "COSMIC source items were suppressed by the hype policy.",
     "manual_review_only": "Source is gated for manual review in this phase.",
     "unsupported": "Source is configured in an unsupported way for this phase.",
     "restricted_source_disabled": "Restricted source allowance is disabled by local config.",
@@ -611,6 +618,9 @@ def get_news_scope_states(
             "active_item_count": active_items,
             "latest_health_states": health_states,
             "source_state_counts": _state_counts(status_rows),
+            "science_candidates": (
+                science_candidate_health_summary() if scope == "SYSTEM_SOLAR" else None
+            ),
         }
 
     return states

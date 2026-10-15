@@ -3139,9 +3139,15 @@ page remain distinct, and page loads do not fetch. A configured science source i
 items, events, and evidence. The remaining policy/auth/health-specific states and source summary
 need a source-gating pass.
 
+The COSMIC state card now separates configured-source health from the disabled science registry
+candidate inventory. It shows counts for heavy archives, auth-required, social, and manual-review
+candidates, plus current hype/archive-query blocked sources. A SQLite state matrix confirms stale,
+parser-failed, rate-limited, auth-required, policy-blocked, hype-blocked, and archive-firehose
+states render without GET fetches. Unconfigured future adapters still need source-specific gates.
+
 ### Source Health States
 
-Status: not implemented.
+Status: partially implemented 2026-10-15; fixture and disabled-candidate states render.
 
 Implement source health states for the chosen Solar System and Beyond scope: `disabled`,
 `not_configured`, `configured_never_run`, `healthy`, `stale`, `failing`, `parser_failed`,
@@ -3149,6 +3155,13 @@ Implement source health states for the chosen Solar System and Beyond scope: `di
 `manual_review_only`, `heavy_archive_disabled`, `needs_terms_review`, `needs_scope_filter`,
 `naming_collision_unresolved`, `hype_blocked`, and `archive_firehose_blocked`. Surface these states
 in app-health SYSTEM later and summarize them in the candidate scope.
+
+Current state: configured fixture sources use the shared source-health table and COSMIC/API cards.
+An all-rejected fixture records `hype_blocked` without storing its claims. Disabled registry
+candidates are summarized separately, including heavy archive, auth, social, manual-review,
+unsupported, and health-only behaviors. Parser/rate/auth/policy/stale and archive-firehose states
+render from SQLite and appear in app-health SYSTEM. Later live adapters need real runtime gates
+for source-specific states beyond the current exact fixture allowlist.
 
 ### Evidence Drawer Contract
 
@@ -3233,12 +3246,18 @@ and separates ORBITAL parser approval from future science routing.
 
 ### Tests For No Page-Load External Fetches
 
-Status: not implemented.
+Status: completed 2026-10-15 for the first-pass COSMIC page/API path.
 
 Add tests proving GET routes and page renders read SQLite/config only and never call Solar System
 and Beyond network fetchers. Include disabled, not configured, stale, failing, auth-required,
 policy-blocked, parser-failed, heavy-archive-disabled, social-disabled, hype-blocked,
 archive-firehose-blocked, and naming-collision-unresolved state tests.
+
+Current tests replace both network and fixture fetchers with failures during COSMIC GET rendering,
+then exercise disabled/not-configured, stored healthy/stale/failing/parser/rate/auth/policy,
+social/heavy-archive/hype/archive-firehose states, and the separate app-health SYSTEM route.
+The naming collision is resolved by the COSMIC alias; a page/API assertion prevents the internal
+`SYSTEM_SOLAR` key from leaking into the rendered COSMIC page.
 
 ### Tests For No Heavy Archive Source Running Without Explicit Config
 

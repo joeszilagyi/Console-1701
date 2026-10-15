@@ -257,3 +257,34 @@ def test_cosmic_heavy_archive_registry_cannot_be_configured_for_fixture_scan(
         path.write_text(yaml.safe_dump(payload))
         with pytest.raises(ConfigError):
             load_config(path)
+
+
+def test_cosmic_hype_only_fixture_reports_blocked_health_without_storing_claim(
+    tmp_path, monkeypatch
+):
+    path = _config(tmp_path, monkeypatch)
+    fixture = tmp_path / "hype-only.rss"
+    fixture.write_text("""<rss version="2.0"><channel>
+      <title>Jet Propulsion Laboratory – NASA</title>
+      <item><title>NASA confirms aliens on Mars</title>
+      <link>https://www.nasa.gov/missions/mars/alien-claim/</link>
+      <pubDate>Thu, 15 Oct 2026 18:22:48 +0000</pubDate>
+      <category>Astrophysics</category></item>
+      </channel></rss>""")
+    payload = yaml.safe_load(path.read_text())
+    payload["news"]["scopes"]["SYSTEM_SOLAR"]["sources"] = [{
+        "id": "nasa_jpl_science_feed", "name": "NASA JPL science fixture", "kind": "rss",
+        "parser": "nasa_jpl_science_rss", "enabled": True, "fixture_only": True,
+        "official_url": SCIENCE_FIXTURE_SOURCES["nasa_jpl_science_feed"][1],
+        "url": f"file://{fixture}",
+    }]
+    path.write_text(yaml.safe_dump(payload))
+    assert run_news_scan(path)["item_count"] == 0
+    config = load_config(path)
+    with connect_db(config["_db_path"]) as conn:
+        assert conn.execute("SELECT COUNT(*) FROM news_items").fetchone()[0] == 0
+        health = conn.execute(
+            "SELECT state, evidence_json FROM news_source_health ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+    assert health["state"] == "hype_blocked"
+    assert json_loads(health["evidence_json"], {})["science_policy_dropped_count"] == 1

@@ -10,7 +10,7 @@ from console1701.api import build_router
 from console1701.config import load_config
 from console1701.db import connect_db, init_db
 from console1701.news.scanner import run_news_scan
-from console1701.news.storage import get_news_scope_states
+from console1701.news.storage import get_news_scope_states, get_news_sources_status
 
 
 def _route(router, path):
@@ -47,6 +47,9 @@ def test_cosmic_route_is_separate_from_app_health_and_offline(tmp_path, monkeypa
     monkeypatch.setattr("console1701.news.scanner.fetch_official_text", lambda *a, **kw: (
         (_ for _ in ()).throw(AssertionError("page load fetched HTTP"))
     ))
+    monkeypatch.setattr("console1701.news.scanner.load_fixture_text", lambda *a, **kw: (
+        (_ for _ in ()).throw(AssertionError("page load read fixture"))
+    ))
     with connect_db(config["_db_path"]) as conn:
         state = get_news_scope_states(conn, config)["SYSTEM_SOLAR"]
     assert state["state"] == "disabled"
@@ -64,6 +67,9 @@ def test_cosmic_route_is_separate_from_app_health_and_offline(tmp_path, monkeypa
 
 def test_cosmic_enabled_without_sources_is_honestly_not_configured(tmp_path, monkeypatch):
     path, config = _config(tmp_path, monkeypatch, science_enabled=True)
+    monkeypatch.setattr("console1701.news.scanner.fetch_official_text", lambda *a, **kw: (
+        (_ for _ in ()).throw(AssertionError("not-configured page fetched HTTP"))
+    ))
     with connect_db(config["_db_path"]) as conn:
         state = get_news_scope_states(conn, config)["SYSTEM_SOLAR"]
     assert state["state"] == "not_configured"
@@ -97,3 +103,59 @@ def test_cosmic_configured_fixture_cannot_run_with_parent_disabled(tmp_path, mon
     with connect_db(config["_db_path"]) as conn:
         state = get_news_scope_states(conn, config)["SYSTEM_SOLAR"]
     assert state["state"] == "disabled"
+
+
+def test_cosmic_candidate_summary_and_sqlite_health_render_without_get_fetch(
+    tmp_path, monkeypatch
+):
+    path, _ = _config(tmp_path, monkeypatch, science_enabled=True)
+    fixture = Path(__file__).parent / "fixtures/science/nasa_jpl_science.rss"
+    raw = yaml.safe_load(path.read_text())
+    raw["news"]["scopes"] = {"SYSTEM_SOLAR": {
+        "enabled": True, "sources": [{
+            "id": "nasa_jpl_science_feed", "name": "Science fixture", "enabled": True,
+            "kind": "rss", "parser": "nasa_jpl_science_rss", "fixture_only": True,
+            "official_url": "https://www.nasa.gov/centers-and-facilities/jpl/feed/",
+            "url": f"file://{fixture}",
+        }],
+    }}
+    path.write_text(yaml.safe_dump(raw))
+    assert run_news_scan(path)["item_count"] >= 1
+    config = load_config(path)
+    with connect_db(config["_db_path"]) as conn:
+        state = get_news_scope_states(conn, config)["SYSTEM_SOLAR"]
+    assert state["science_candidates"]["candidate_count"] >= 170
+    assert state["science_candidates"]["state_counts"]["heavy_archive_disabled"] >= 10
+    monkeypatch.setattr("console1701.news.scanner.fetch_official_text", lambda *a, **kw: (
+        (_ for _ in ()).throw(AssertionError("COSMIC GET fetched HTTP"))
+    ))
+    monkeypatch.setattr("console1701.news.scanner.load_fixture_text", lambda *a, **kw: (
+        (_ for _ in ()).throw(AssertionError("COSMIC GET read fixture"))
+    ))
+    endpoint = _route(build_router(str(path)), "/{scope}")
+    for raw_state, stale_after, expected in (
+        ("healthy", "2000-01-01T00:00:00+00:00", "stale"),
+        ("parser_failed", "2099-01-01T00:00:00+00:00", "parser_failed"),
+        ("rate_limited", "2099-01-01T00:00:00+00:00", "rate_limited"),
+        ("auth_required", "2099-01-01T00:00:00+00:00", "auth_required"),
+        ("policy_blocked", "2099-01-01T00:00:00+00:00", "policy_blocked"),
+        ("failed", "2099-01-01T00:00:00+00:00", "failing"),
+        ("social_disabled", "2099-01-01T00:00:00+00:00", "social_disabled"),
+        ("heavy_archive_disabled", "2099-01-01T00:00:00+00:00",
+         "heavy_archive_disabled"),
+        ("hype_blocked", "2099-01-01T00:00:00+00:00", "hype_blocked"),
+        ("archive_firehose_blocked", "2099-01-01T00:00:00+00:00",
+         "archive_firehose_blocked"),
+    ):
+        with connect_db(config["_db_path"]) as conn:
+            conn.execute(
+                "UPDATE news_source_health SET state=?, stale_after=?, message=? "
+                "WHERE id=(SELECT MAX(id) FROM news_source_health)",
+                (raw_state, stale_after, expected),
+            )
+            source = get_news_sources_status(conn, config)[0]
+        assert source["health_state"] == expected
+        html = endpoint(_request("/COSMIC"), "COSMIC").body.decode()
+        assert expected in html
+        assert "Heavy archive candidates gated" in html
+        assert "SYSTEM_SOLAR" not in html

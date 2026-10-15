@@ -1,7 +1,7 @@
 {% macro tone_for_state(state) -%}
 {%- if state in ["healthy"] -%}ok
   {%- elif state in ["failing"] -%}critical
-  {%- elif state in ["social_disabled", "homepage_disabled", "homepage_extract_disabled", "heavy_open_data_disabled", "restricted_source_disabled", "needs_terms_review", "needs_scope_filter", "sensitivity_blocked"] -%}warning
+  {%- elif state in ["social_disabled", "homepage_disabled", "homepage_extract_disabled", "heavy_open_data_disabled", "heavy_archive_disabled", "archive_firehose_blocked", "hype_blocked", "restricted_source_disabled", "needs_terms_review", "needs_scope_filter", "sensitivity_blocked"] -%}warning
   {%- elif state in ["stale", "configured_never_run", "configured_disabled"] -%}warning
   {%- else -%}muted
   {%- endif -%}
@@ -340,6 +340,15 @@
         <div><span>Terms review</span><strong>{{ (state.source_state_counts or {}).get("needs_terms_review", 0) }}</strong></div>
         <div><span>Scope filter needed</span><strong>{{ (state.source_state_counts or {}).get("needs_scope_filter", 0) }}</strong></div>
         <div><span>Health only</span><strong>{{ (state.source_state_counts or {}).get("source_health_only", 0) }}</strong></div>
+      {% endif %}
+      {% if state.scope == "SYSTEM_SOLAR" and state.science_candidates %}
+        <div><span>Disabled registry candidates</span><strong>{{ state.science_candidates.candidate_count }}</strong></div>
+        <div><span>Heavy archive candidates gated</span><strong>{{ state.science_candidates.state_counts.get("heavy_archive_disabled", 0) }}</strong></div>
+        <div><span>Auth candidates gated</span><strong>{{ state.science_candidates.state_counts.get("auth_required", 0) }}</strong></div>
+        <div><span>Social candidates gated</span><strong>{{ state.science_candidates.state_counts.get("social_disabled", 0) }}</strong></div>
+        <div><span>Manual review candidates</span><strong>{{ state.science_candidates.state_counts.get("manual_review_only", 0) }}</strong></div>
+        <div><span>Hype blocked sources</span><strong>{{ (state.source_state_counts or {}).get("hype_blocked", 0) }}</strong></div>
+        <div><span>Archive query blocked</span><strong>{{ (state.source_state_counts or {}).get("archive_firehose_blocked", 0) }}</strong></div>
       {% endif %}
       <div><span>Manual review</span><strong>{{ (state.source_state_counts or {}).get("manual_review_only", 0) }}</strong></div>
       <div><span>Rate limited</span><strong>{{ (state.source_state_counts or {}).get("rate_limited", 0) }}</strong></div>
