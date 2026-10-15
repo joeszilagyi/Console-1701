@@ -2176,13 +2176,20 @@ values and keep every ORBITAL source disabled until explicitly configured.
 
 ### Disabled-By-Default ORBITAL Config
 
-Status: not implemented.
+Status: completed 2026-10-15 for the first-pass policy tree and candidate gates.
 
 Add an `orbital:` or equivalent ORBITAL config tree that defaults to disabled. Include flags for
 space weather, aurora, NEO close approaches, fireballs, launches, crewed spaceflight, ISS,
 reentries, debris, satellite catalog, conjunction awareness, space agency news, spaceflight news,
 astronomy transients, social sources, and restricted/auth sources. Reject social, auth-required,
 restricted, tactical, and homepage-extraction sources unless explicit local flags are set.
+
+Current state: `orbital:` defaults to disabled and validates the inclusion and sensitive-source
+flags. The ORBITAL scope remains disabled in source health until the parent flag is enabled.
+Source policy blocks social, auth-required, restricted, tactical, homepage, and disabled topic
+classes before file or HTTP access. Registry candidates without a verified parser remain
+manual-review-only, including sensitive tracking classes even if their flags are enabled.
+The example config documents the flags. No ORBITAL source is live allowlisted.
 
 ### ORBITAL SQLite Schema Or Extension
 

@@ -414,6 +414,8 @@ def _is_allowed_live_source(config: dict[str, Any], source: dict[str, Any]) -> b
         if scope == "NATIONAL"
         else bool((config.get("global") or {}).get("enabled"))
         if scope == "GLOBAL"
+        else bool((config.get("orbital") or {}).get("enabled"))
+        if scope == "ORBITAL"
         else False
     )
     return (

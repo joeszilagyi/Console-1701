@@ -124,7 +124,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 ### ORBITAL Space Recent Signal Layer
 
 - [x] **RS-089** [ORBITAL Source Registry Design Implementation](../../BACKLOG.md#L1627) — all 136 design entries disabled, validated and inherited by config, persisted in SQLite and summary; reference rows cannot ingest.
-- [ ] **RS-090** [Disabled-By-Default ORBITAL Config](../../BACKLOG.md#L1637) — not implemented.
+- [x] **RS-090** [Disabled-By-Default ORBITAL Config](../../BACKLOG.md#L1637) — disabled and validated policy tree; sensitive and unparsed candidates blocked before access; no live ORBITAL allowlist.
 - [ ] **RS-091** [ORBITAL SQLite Schema Or Extension](../../BACKLOG.md#L1647) — not implemented.
 - [ ] **RS-092** [ORBITAL Fixture Pack](../../BACKLOG.md#L1658) — not implemented.
 - [ ] **RS-093** [SWPC Alerts JSON Parser](../../BACKLOG.md#L1670) — not implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-090. Added the disabled ORBITAL policy tree, candidate gates for topic, social, auth, restricted, tactical, homepage and parser readiness, plus disabled scope health. Existing fixture tests now opt in to ORBITAL explicitly. Full pytest passed (374 tests); Ruff passed. Progress: 67/150. Next: ORBITAL storage indexes and facets.
 - **2026-10-15:** Completed RS-089. Added all 136 disabled ORBITAL design inventory rows, validated metadata and URL exceptions, config defaults, SQLite sync and summary, and no-fetch reference behavior. Full pytest passed (369 tests); Ruff passed. Progress: 66/150. Next: RS-090 policy tree and candidate gates.
 - **2026-10-15:** Completed RS-056. Expanded the NATIONAL source verification workflow with explicit agency, geography, public-action, filter, key, sensitivity, health and admission decisions. It links the USGS live signoff, researched/fixture sources and exact blocked candidates without promoting them. Progress: 65/150. Next: remaining fixture/parser and geography gaps.
 - **2026-10-15:** Completed RS-055 at the first-source boundary. Reused the verified exact USGS day feed for a NATIONAL-only allowlist; the default magnitude and coarse U.S./territory filters apply, with all flags off by default. An isolated explicit smoke scan returned HTTP 200, healthy health, and one retained NATIONAL item. Mocked gate, interval and conditional tests pass. Full pytest passed (365 tests); Ruff passed. Progress: 64/150. Next: remaining NATIONAL source verification, fixture pack, and documentation.

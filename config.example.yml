@@ -143,6 +143,29 @@ global:
   conflict_attention_minimum: official_or_multi_source
   wildfire_attention_minimum: major_or_smoke_impact
 
+orbital:
+  enabled: false
+  default_place_label: Orbital
+  include_space_weather: true
+  include_aurora: true
+  include_neo_close_approaches: true
+  include_fireballs: true
+  include_launches: true
+  include_crewed_spaceflight: true
+  include_iss: true
+  include_reentries: true
+  include_debris: false
+  include_satellite_catalog: false
+  include_conjunction_awareness: false
+  include_space_agency_news: true
+  include_spaceflight_news: true
+  include_astronomy_transients: true
+  include_social_sources: false
+  allow_auth_required_sources: false
+  allow_restricted_sources: false
+  allow_tactical_sources: false
+  allow_homepage_extractors: false
+
 news:
   enabled: false
   retention:

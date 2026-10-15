@@ -523,6 +523,9 @@ def get_news_scope_states(
         if not news_cfg.get("enabled"):
             state = "disabled"
             message = "External news ingest is disabled by config."
+        elif scope == "ORBITAL" and not (config.get("orbital") or {}).get("enabled"):
+            state = "disabled"
+            message = "ORBITAL recent signal is disabled by config."
         elif not sources:
             state = "not_configured"
             message = f"No {scope} sources are configured."
