@@ -2906,11 +2906,16 @@ response, terms, caching and parser gates remain before any live opt-in; no MPC 
 
 ### HEASARC Metadata Source Verification
 
-Status: not implemented.
+Status: completed 2026-10-15 for first-pass HEASARC access classification.
 
 Verify HEASARC machine-readable metadata endpoints, usage policy, query shape, row caps, relevant
 high-energy mission filters, source-health behavior, and retention before implementation. Keep
 HEASARC disabled until narrow fixture tests exist.
+
+Current state: `docs/project/SCIENCE_HEASARC_SOURCE_VERIFICATION.md` records official Xamin,
+TAP, and cone interfaces, a two-row live Xamin/VOTable probe, required positive caps and
+overflow handling, mission-specific usage conditions, bounded source-health and retention
+rules, and a disabled-by-default promotion contract. No HEASARC adapter is enabled.
 
 ### SIMBAD/VizieR/Gaia Heavy-Archive Policy Design
 

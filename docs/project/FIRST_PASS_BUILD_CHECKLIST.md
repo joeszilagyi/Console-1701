@@ -171,7 +171,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-131** [ATel RSS Parser](../../BACKLOG.md#L2115) — not implemented.
 - [x] **RS-132** [GraceDB/LIGO Public Alert Policy Design](../../BACKLOG.md#L2132) — public REST versus authenticated Kafka, bounded query, status/retraction, rate, and no-sky-map-download policy recorded.
 - [x] **RS-133** [Minor Planet Center Science-Context Source Verification](../../BACKLOG.md#L2141) — official MPEC/orbit/observation/list APIs classified, rate and volume limits recorded, and ORBITAL CNEOS remains canonical for hazards.
-- [ ] **RS-134** [HEASARC Metadata Source Verification](../../BACKLOG.md#L2149) — not implemented.
+- [x] **RS-134** [HEASARC Metadata Source Verification](../../BACKLOG.md#L2149) — official Xamin/TAP/cone interfaces, bounded VOTable probe, row-cap/overflow policy, mission conditions, and disabled promotion gates recorded.
 - [ ] **RS-135** [Deterministic Event Correlation For Transients, Exoplanets, Missions, And Telescope Releases](../../BACKLOG.md#L2173) — not implemented.
 - [ ] **RS-136** [Deterministic Ranking For Official Science And Rarity](../../BACKLOG.md#L2182) — not implemented.
 - [ ] **RS-137** [Hype And Speculation Suppression Rules](../../BACKLOG.md#L2192) — not implemented.
