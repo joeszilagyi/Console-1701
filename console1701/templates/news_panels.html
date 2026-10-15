@@ -70,7 +70,7 @@
                     <div><span>Affected regions</span><strong>{{ global_evidence.affected_regions | join(", ") or "not provided" }}</strong></div>
                     <div><span>Geography basis</span><strong>{{ global_evidence.geography_basis }}</strong></div>
                     <div><span>Source diversity</span><strong>{{ global_evidence.source_diversity_basis }}</strong></div>
-                    <div><span>Public impact</span><strong>{{ global_evidence.public_impact_basis or "not assessed" }}</strong></div>
+                    <div><span>Public impact</span><strong>{{ global_evidence.public_impact_basis | join("; ") if global_evidence.public_impact_basis else "not assessed" }}</strong></div>
                     <div><span>Low-value / scope penalties</span><strong>{{ global_evidence.low_public_value_penalty if global_evidence.low_public_value_penalty is not none else "not assessed" }} / {{ global_evidence.out_of_scope_penalty if global_evidence.out_of_scope_penalty is not none else "not assessed" }}</strong></div>
                   </div>
                   <ul class="news-evidence-list">
@@ -289,10 +289,14 @@
                     <div><span>Affected countries</span><strong>{{ global_event.countries | join(", ") or "not provided" }}</strong></div>
                     <div><span>Event types</span><strong>{{ global_event.event_types | join(", ") or "unclassified" }}</strong></div>
                     <div><span>Cluster scoring</span><strong>{{ global_event.ranking.method }}</strong></div>
+                    <div><span>Event score</span><strong>{{ global_event.ranking.score }}</strong></div>
                   </div>
                   <ul class="news-evidence-list">
                     {% for match in global_event.matches %}
                       <li><b>Match {{ match.item_ids | join(" + ") }}</b><span>{{ match.basis | join(", ") }}{% if match.shared_tokens %} · tokens {{ match.shared_tokens | join(", ") }}{% endif %}</span></li>
+                    {% endfor %}
+                    {% for reason in global_event.ranking.reasons %}
+                      <li><b>Rank</b><span>{{ reason }}</span></li>
                     {% endfor %}
                   </ul>
                 {% endif %}

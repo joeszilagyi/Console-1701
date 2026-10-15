@@ -1631,9 +1631,11 @@ ReliefWeb-disaster/report, and WHO DON identifiers or cross-family event-type, v
 title-token, and 96-hour convergence. Same-family title similarity alone cannot corroborate an
 event. Cluster evidence records matched item pairs and basis, known source families, identifiers,
 countries, event types, and source-reported versus independently corroborated confidence.
-Cluster scores count only the strongest item from each family, so duplicated same-family items do
-not inflate the total. A complete-link guard rejects a broad item that would bridge otherwise
-incompatible events. The matcher also accepts parser-supplied verified regions, basins, storm and
+Cluster evidence keeps only the strongest base item score from each family for audit; the event
+ranking uses independent family count and a duplicate-family penalty, so repeated same-family
+items cannot create extra convergence credit. A complete-link guard rejects a broad item that
+would bridge otherwise incompatible events. The matcher also accepts parser-supplied verified
+regions, basins, storm and
 earthquake IDs, volcano names, disease, institution, transport, cyber, and impact-tag context;
 USGS event IDs are recognized from parsed evidence. Remaining work: populate and validate those
 fields in the relevant future source parsers and fixtures, test convergence with their actual
@@ -1641,7 +1643,7 @@ records, and broaden GLOBAL versus domestic scope-routing coverage.
 
 ### GLOBAL Deterministic Ranking
 
-Status: not implemented.
+Status: completed 2026-10-15 for first-pass algorithm.
 
 Implement explainable GLOBAL ranking with recency, official severity, independent source
 diversity, temporal proximity, public impact, affected geography, humanitarian sensitivity,
@@ -1649,9 +1651,20 @@ source priority, cluster size, local/regional/national impact tags, duplicate-fa
 stale-source penalty, low-confidence penalty, low-public-value penalty, and out-of-scope penalty.
 Store score features and ranking reasons in JSON evidence.
 
+Current state: GLOBAL clusters now use a bounded stored-metadata score with recency, official
+severity, independent family diversity, temporal proximity, verified geography, active alert,
+public and humanitarian impact, source priority, cluster size, and explicit U.S./national,
+regional, and local impact tags. The result subtracts duplicate-family, stale-at-ingest,
+low-confidence, low-public-value, out-of-scope, and rumor penalties. Each factor and reason is
+stored in cluster and linked item evidence and shown in the cluster drawer. Tests cover official
+alert, convergence, duplicates, recency/geography, humanitarian impact, source priority, cluster
+size, confidence, policy penalties, and refusal to infer impact from a dramatic headline. The
+remaining source-specific fixture evidence belongs to the corresponding adapter and policy rows;
+the ranking contract treats missing evidence as zero rather than inventing it.
+
 ### GLOBAL Low-Public-Value, Rumor, And Public-Impact Rules
 
-Status: not implemented.
+Status: partially implemented.
 
 Add deterministic GLOBAL rules that suppress routine diplomatic statements, generic political
 punditry, single-source social chatter, rumor, graphic violence amplification, private distress,
@@ -1659,6 +1672,13 @@ routine institutional content, routine economic releases, duplicate syndicated s
 unconfigured domestic politics. Elevate official alerts, high-severity disasters, major outbreaks,
 tsunami/tropical-cyclone hazards, global transport disruption, nuclear safety alerts, and verified
 multi-source public-impact events.
+
+Current state: the GLOBAL event scorer recognizes explicit parser-provided routine/background,
+rumor, out-of-scope, and domestic-impact tags and records bounded penalties or boosts. It uses
+official GDACS alert, USGS earthquake/tsunami, and active ReliefWeb disaster evidence for
+first-pass public-impact scores. It does not infer impact from headline wording. Remaining work:
+source-specific classification rules for the listed low-value and sensitive categories, social
+and syndicated duplicate suppression, and fixture tests for policy-safe elevation and hiding.
 
 ### GLOBAL UI Disabled States
 
@@ -1707,8 +1727,9 @@ source identity/class/official status, URL and seen/published times, fetch/parse
 parser-provided geography and event type, policy and sensitivity notes, and explicit unassessed
 values for impact and penalty fields. The GLOBAL item drawer displays the contract alongside
 existing retention and ranking evidence. A deterministic first pass now fills event ID,
-source-family, matching, and confidence evidence in GLOBAL cluster traces. Assessed public impact,
-full event identity coverage, and penalties remain for RS-078 through RS-080.
+source-family, matching, confidence, score factors, source-provided public-impact basis, and
+explicit penalty evidence in GLOBAL cluster traces. Full event identity, impact, and penalty
+coverage still depends on the source-specific adapters and policy rules in RS-078 through RS-080.
 
 ### GLOBAL Official-Source Live Ingest Phase, Disabled By Default
 

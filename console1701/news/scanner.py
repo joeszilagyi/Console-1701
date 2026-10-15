@@ -11,6 +11,7 @@ from console1701.config import ensure_state_dirs, iter_news_sources, load_config
 from console1701.db import connect_db, init_db, json_dumps, json_loads, utc_now
 from console1701.news.facets import replace_global_item_facets
 from console1701.news.global_events import correlate_global_items
+from console1701.news.global_ranking import rank_global_event
 from console1701.news.global_registry import list_global_source_registry
 from console1701.news.local_registry import list_local_source_registry
 from console1701.news.national_registry import list_national_source_registry
@@ -2334,6 +2335,9 @@ def _rebuild_global_clusters(conn: sqlite3.Connection) -> None:
     conn.execute("DELETE FROM news_clusters WHERE scope = 'GLOBAL'")
     for group in correlate_global_items(items):
         members = [by_id[item_id] for item_id in group["item_ids"]]
+        event_ranking = rank_global_event(
+            group, members, now=datetime.now(UTC).isoformat(timespec="seconds")
+        )
         representative = max(
             members, key=lambda item: (int(item["rank_score"]), item["last_seen_at"], item["id"])
         )
@@ -2362,6 +2366,12 @@ def _rebuild_global_clusters(conn: sqlite3.Connection) -> None:
                 f"{len(group['families'])} independent source families"
                 if group["corroborated"] else "not_correlated"
             )
+            contract["public_impact_basis"] = event_ranking["public_impact_basis"] or None
+            contract["low_public_value_penalty"] = event_ranking["factors"][
+                "low_public_value_penalty"
+            ]
+            contract["out_of_scope_penalty"] = event_ranking["factors"]["out_of_scope_penalty"]
+            contract["impact_tags"] = event_ranking["impact_tags"]
             evidence["global"] = contract
             evidence["global_event"] = {
                 "event_key": group["event_key"],
@@ -2370,6 +2380,7 @@ def _rebuild_global_clusters(conn: sqlite3.Connection) -> None:
                 "families": group["families"],
                 "matches": group["matches"],
                 "confidence": confidence,
+                "ranking": event_ranking,
             }
             conn.execute(
                 "UPDATE news_items SET evidence_json = ? WHERE id = ?",
@@ -2380,10 +2391,8 @@ def _rebuild_global_clusters(conn: sqlite3.Connection) -> None:
             "global_event": {
                 **group,
                 "confidence": confidence,
-                "ranking": {
-                    "method": "maximum_item_score_per_source_family",
-                    "family_scores": family_scores,
-                },
+                "ranking": event_ranking,
+                "family_scores": family_scores,
             },
         }
         conn.execute(
@@ -2400,7 +2409,7 @@ def _rebuild_global_clusters(conn: sqlite3.Connection) -> None:
                 min(str(member["first_seen_at"]) for member in members),
                 max(str(member["last_seen_at"]) for member in members),
                 len(members),
-                sum(family_scores.values()),
+                event_ranking["score"],
                 json_dumps(list(dict.fromkeys(tags))),
                 json_dumps(cluster_evidence),
             ),
