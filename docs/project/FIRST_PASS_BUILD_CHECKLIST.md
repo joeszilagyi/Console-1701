@@ -34,7 +34,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-009** [LOCAL Source Health States](../../BACKLOG.md#L511) — all first-pass source/scope states are derived and visible in LOCAL and SYSTEM; offline matrix coverage added.
 - [x] **RS-010** [LOCAL Evidence Drawer Contract](../../BACKLOG.md#L527) — item drawer and event API expose provenance, ranking, redaction, matching, geography, confidence, policy, and retention evidence.
 - [x] **RS-011** [LOCAL Official-Source Live Ingest Phase](../../BACKLOG.md#L546) — one verified NWS Washington feed works through explicit, opt-in, bounded `news-scan`; other candidates require separate signoff.
-- [ ] **RS-012** [Documentation For Source Verification](../../BACKLOG.md#L588) — partially implemented.
+- [x] **RS-012** [Documentation For Source Verification](../../BACKLOG.md#L588) — shared signoff record, release gate, worked NWS example, and blocked FAA/NAS example linked.
 
 ### REGIONAL Pacific Northwest Recent Signal Layer
 
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-012. Expanded the shared verification workflow with a per-source signoff record and release gate, linking the existing NWS signoff and FAA/NAS reference-only decision. The record distinguishes documentation, bounded observations, fixture tests, and actual live smoke checks. Progress: 40/150.
 - **2026-10-15:** Completed RS-011 at its first-source boundary. Audited the existing exact NWS Washington allowlist and opt-in command; prior controlled scan evidence recorded successful fetch plus immediate interval skip. Focused offline tests passed (7 tests) for gate, conditional request, interval, retirement, rate limit, and GET isolation. Other candidate endpoints remain disabled. Progress: 39/150.
 - **2026-10-15:** Completed RS-010. Expanded LOCAL item drawer fields and event-member API provenance, added explicit deterministic event confidence, and verified linked item/event evidence. Full pytest passed (325 tests); Ruff passed. Progress: 38/150.
 - **2026-10-15:** Completed RS-009. Audited the existing source-health derivation and scope/SYSTEM presentation; extended the shared offline state-matrix test to LOCAL. `not_configured` correctly applies at scope level, while rate-limit and robots states await real evidence from a future verified live source. App tests passed (28 tests); Ruff passed. Progress: 37/150.

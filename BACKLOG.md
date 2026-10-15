@@ -639,15 +639,18 @@ work is a compliant live social adapter and a short-retention policy for any ena
 
 ### Documentation For Source Verification
 
-Status: partially implemented.
+Status: implemented (first-pass workflow and signoff template).
 
 Document the later source verification workflow: confirm endpoint ownership, access method, source
 terms, robots/policy notes, parser shape, rate limits, retention sensitivity, privacy risk,
 verification status, and source-health behavior before enabling any source.
 
 Current state: `docs/project/NEWS_SOURCE_VERIFICATION_WORKFLOW.md` now captures the shared
-verification checklist, required registry fields, and source-health states. Per-source signoff
-templates and endpoint-specific walkthroughs still need a dedicated follow-up.
+verification checklist, required registry fields, source-health states, a reusable per-source
+signoff record, and an explicit release gate. It links the completed Washington NWS signoff, the
+FAA/NAS XML hold decision, and scope-specific verification workflows. The template separates
+officially documented access, bounded manual observations, offline fixture tests, and actual live
+smoke checks; missing evidence leaves a source disabled or reference-only.
 
 ### Tests For No Page-Load External Fetches
 
