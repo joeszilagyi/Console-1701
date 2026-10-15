@@ -105,12 +105,56 @@ def _migrate_source_registry_scope_key(conn: sqlite3.Connection, schema: str) ->
         raise
 
 
+def _migrate_news_sources_scope_key(conn: sqlite3.Connection, schema: str) -> None:
+    if not _table_exists(conn, "news_sources"):
+        return
+    old_unique_key = any(
+        bool(index["unique"])
+        and [str(row["name"]) for row in conn.execute(f"PRAGMA index_info({index['name']})")]
+        == ["source_key"]
+        for index in conn.execute("PRAGMA index_list(news_sources)")
+    )
+    if not old_unique_key:
+        return
+
+    marker = "CREATE TABLE IF NOT EXISTS news_sources ("
+    start = schema.index(marker)
+    end = schema.index(");", start) + 2
+    create_v2 = schema[start:end].replace(marker, "CREATE TABLE news_sources_v2 (", 1)
+    columns = [str(row["name"]) for row in conn.execute("PRAGMA table_info(news_sources)")]
+    column_names = ", ".join(columns)
+    foreign_keys_enabled = bool(conn.execute("PRAGMA foreign_keys").fetchone()[0])
+    # init_db commits before return; toggling enforcement outside a transaction lets us
+    # rebuild the referenced table while retaining its IDs and child rows atomically.
+    conn.commit()
+    conn.execute("PRAGMA foreign_keys=OFF")
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        conn.execute(create_v2)
+        conn.execute(
+            f"INSERT INTO news_sources_v2 ({column_names}) "
+            f"SELECT {column_names} FROM news_sources"
+        )
+        conn.execute("DROP TABLE news_sources")
+        conn.execute("ALTER TABLE news_sources_v2 RENAME TO news_sources")
+        violations = conn.execute("PRAGMA foreign_key_check").fetchall()
+        if violations:
+            raise sqlite3.IntegrityError("news_sources scope-key migration violates foreign keys")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.execute(f"PRAGMA foreign_keys={'ON' if foreign_keys_enabled else 'OFF'}")
+
+
 def init_db(conn: sqlite3.Connection) -> None:
     if _table_exists(conn, "news_items") and not _has_table_column(
         conn, "news_items", "local_event_id"
     ):
         _ensure_news_migrations(conn)
     schema = files("console1701").joinpath("schema.sql").read_text(encoding="utf-8")
+    _migrate_news_sources_scope_key(conn, schema)
     _migrate_source_registry_scope_key(conn, schema)
     conn.executescript(schema)
     conn.commit()

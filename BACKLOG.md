@@ -319,7 +319,8 @@ columns and indexes for latest-by-scope, source health, event ranking, source fa
 Current state: `news_source_registry` persists canonical LOCAL registry entries on each scan. Fetch
 runs/items/health/purge evidence and ranking data already persist via existing news tables. `local_events`
 (or equivalent local-event correlation table) and source-specific ranking explanation partitions remain
-pending.
+pending. Configured `news_sources` now uses `(scope, source_key)` uniqueness, with existing IDs and
+dependent fetch/item rows preserved by the migration.
 
 ### LOCAL Fixture Pack
 
@@ -664,7 +665,8 @@ Current state: the shared `news_source_registry` table persists REGIONAL registr
 `get_news_storage_summary()` exposes a regional registry summary. REGIONAL official-ID events now
 use scoped `news_clusters` with member, family, geography, confidence, and ranking evidence, so a
 separate `regional_events` table is not required for this slice. Dedicated geography indexes and
-broader event-query/purge evidence remain pending.
+broader event-query/purge evidence remain pending. Configured `news_sources` now supports the same
+scoped key identity as the registry.
 
 ### REGIONAL Fixture Pack
 
@@ -1023,7 +1025,10 @@ Current state: the shared `news_source_registry` now supports `(scope, source_ke
 LOCAL and NATIONAL can retain their documented overlapping IDs. Existing SQLite databases migrate
 in place while preserving registry rows. NATIONAL registry rows and summaries are stored by
 `news-scan`. Scoped items, fetch runs, source health, and cluster tables already support NATIONAL.
-Dedicated agency/sector/state query indexes and retention/purge evidence remain to be verified.
+Configured `news_sources` now has the same scoped uniqueness; its migration preserves source IDs
+and dependent fetch/item rows. A fixture scan verifies independent LOCAL and NATIONAL ingest with
+the same documented source key. Dedicated agency/sector/state query indexes and retention/purge
+evidence remain to be verified.
 
 ### NATIONAL Fixture Pack
 

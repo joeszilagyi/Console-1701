@@ -420,8 +420,6 @@ def test_news_rejects_duplicate_source_ids(tmp_path):
                         - id: repeated
                           name: First
                           kind: local_file_json
-                    REGIONAL:
-                      sources:
                         - id: repeated
                           name: Second
                           kind: local_file_json

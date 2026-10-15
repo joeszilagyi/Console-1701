@@ -559,7 +559,10 @@ def get_news_sources_status(
     conn: sqlite3.Connection,
     config: dict[str, Any],
 ) -> list[dict[str, Any]]:
-    stored_by_key = {source["source_key"]: source for source in list_news_sources(conn)}
+    stored_by_key = {
+        (source["scope"], source["source_key"]): source
+        for source in list_news_sources(conn)
+    }
     latest_fetch = _latest_fetch_runs_by_source(conn)
     recent_fetch = _recent_fetch_runs_by_source(conn)
     latest_health = _latest_health_by_source(conn)
@@ -568,7 +571,7 @@ def get_news_sources_status(
 
     for source in iter_news_sources(config):
         policy = evaluate_source_policy(config, source)
-        stored = stored_by_key.get(source["id"])
+        stored = stored_by_key.get((source["scope"], source["id"]))
         stored_id = int(stored["id"]) if stored else None
         fetch = latest_fetch.get(stored_id) if stored_id is not None else None
         health = latest_health.get(stored_id) if stored_id is not None else None

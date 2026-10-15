@@ -701,15 +701,16 @@ def _normalize_news_source(
     local_cfg: dict[str, Any],
     regional_cfg: dict[str, Any],
     national_cfg: dict[str, Any],
-    seen_source_keys: set[str],
+    seen_source_keys: set[tuple[str, str]],
 ) -> dict[str, Any]:
     path = f"news.scopes.{scope}.sources[{index}]"
     source_cfg = _require_mapping(source, path)
 
     source_key = _require_string(source_cfg.get("id"), f"{path}.id")
-    if source_key in seen_source_keys:
-        raise ConfigError(f"Duplicate news source id: {source_key}")
-    seen_source_keys.add(source_key)
+    scoped_key = (scope, source_key)
+    if scoped_key in seen_source_keys:
+        raise ConfigError(f"Duplicate news source id within {scope}: {source_key}")
+    seen_source_keys.add(scoped_key)
 
     source_cfg = _apply_scope_registry_defaults(source_cfg, scope)
     source_cfg["id"] = source_key
@@ -909,7 +910,7 @@ def normalize_news_config(config: dict[str, Any]) -> None:
     if unknown_scopes:
         raise ConfigError(f"Unknown news scope(s): {', '.join(unknown_scopes)}.")
 
-    seen_source_keys: set[str] = set()
+    seen_source_keys: set[tuple[str, str]] = set()
     for scope in NEWS_SCOPES:
         scope_cfg = _require_mapping(
             scopes.setdefault(

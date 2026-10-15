@@ -142,7 +142,7 @@ def run_news_scan(config_path: str | Path | None = None) -> dict[str, Any]:
             for source in configured_sources
             if _source_is_enabled(config, source)
             and _is_allowed_live_source(config, source)
-            and not _source_has_live_success(conn, str(source["id"]))
+            and not _source_has_live_success(conn, str(source["scope"]), str(source["id"]))
         }
         for source in configured_sources:
             if not _source_is_enabled(config, source):
@@ -387,15 +387,15 @@ def _is_allowed_live_source(config: dict[str, Any], source: dict[str, Any]) -> b
     )
 
 
-def _source_has_live_success(conn: sqlite3.Connection, source_key: str) -> bool:
+def _source_has_live_success(conn: sqlite3.Connection, scope: str, source_key: str) -> bool:
     row = conn.execute(
         """
         SELECT r.evidence_json
         FROM news_fetch_runs r JOIN news_sources s ON s.id = r.source_id
-        WHERE s.source_key = ? AND r.status = 'success'
+        WHERE s.scope = ? AND s.source_key = ? AND r.status = 'success'
         ORDER BY r.id DESC LIMIT 1
         """,
-        (source_key,),
+        (scope, source_key),
     ).fetchone()
     return bool(row and json_loads(str(row["evidence_json"]), {}).get("fixture_only") is False)
 
@@ -455,7 +455,7 @@ def _upsert_source(
           priority, tags_json, policy_json, created_at, updated_at
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(source_key) DO UPDATE SET
+        ON CONFLICT(scope, source_key) DO UPDATE SET
           scope = excluded.scope,
           name = excluded.name,
           kind = excluded.kind,
@@ -485,8 +485,8 @@ def _upsert_source(
         ),
     )
     row = conn.execute(
-        "SELECT id FROM news_sources WHERE source_key = ?",
-        (source["id"],),
+        "SELECT id FROM news_sources WHERE scope = ? AND source_key = ?",
+        (source["scope"], source["id"]),
     ).fetchone()
     if row is None:
         raise RuntimeError(f"Failed to upsert source {source['id']}")
