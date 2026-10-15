@@ -2941,12 +2941,19 @@ enabled, and the future fixture/parser must retain preliminary/follow-up/retract
 
 ### ATel RSS Parser
 
-Status: not implemented.
+Status: blocked on feed access; not implemented.
 
 Build a fixture-first Astronomers Telegram RSS parser. Preserve ATel number, title, URL, published
 time, object/transient tokens, bounded description if allowed, source family, and preliminary
 astronomy communication labels. Do not store full telegram bodies unless source policy and config
 explicitly allow bounded storage.
+
+Access check 2026-10-15: the official homepage advertises
+`https://www.astronomerstelegram.org/?rss` and a `?listxml` Feeds page, but both `www` and
+non-`www` HTTPS RSS requests returned HTTP 200 with an HTML "We're Sorry!" page rather than
+XML. The Feeds page returned the same error. This is a source-side access failure, not a valid
+empty feed. Keep the adapter disabled and avoid inventing a fixture schema until the official
+RSS response, fields, and policy can be verified.
 
 ### TNS Auth/Policy Design
 
@@ -3014,12 +3021,21 @@ only if explicitly enabled, and never download papers or bypass paywalls.
 
 ### Deterministic Event Correlation For Transients, Exoplanets, Missions, And Telescope Releases
 
-Status: not implemented.
+Status: partially implemented 2026-10-15; runtime integration pending.
 
 Implement deterministic matching by source family, time window, normalized title tokens, mission,
 telescope, instrument, object name, solar-system body, exoplanet system, transient name, GCN event
 id, ATel number, TNS name, GraceDB superevent id, coordinates, DOI/bibcode if enabled, archive
 collection id, and dataset id. Do not use LLMs, embeddings, or hidden cloud calls.
+
+Current state: `console1701/news/science_events.py` provides complete-link, 96-hour deterministic
+grouping for stored `SYSTEM_SOLAR` metadata. It recognizes GCN, exoplanet, MAST, PDS and future
+explicit identity fields; it treats recurring mission/object names as context, requires shared
+title tokens and independent source families for non-ID matches, and records the match basis.
+Focused tests cover retraction continuity, unrelated releases, independent corroboration,
+time-window separation, event-kind separation and scope exclusion. The science scan path does not
+yet call this module or persist clusters to `science_events`; finish that when live or fixture
+science ingest is wired.
 
 ### Deterministic Ranking For Official Science And Rarity
 
