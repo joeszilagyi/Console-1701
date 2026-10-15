@@ -281,21 +281,21 @@ Architecture reference:
 
 ### LOCAL Source Registry Design Implementation
 
-Status: partially implemented.
+Status: completed 2026-10-15 for the first-pass disabled inventory.
 
 Implement the LOCAL source registry from the design document with explicit `source_key`,
 `source_family`, `source_class`, adapter, scope, priority, policy risk, parser risk, privacy risk,
 retention sensitivity, verification status, and future phase fields. Validate enum values and keep
 all sources disabled until explicitly configured.
 
-Current state: LOCAL source config entries can now carry and validate `source_family`,
-`source_class`, `adapter`, `privacy_risk`, `policy_risk`, `parser_risk`,
-`retention_sensitivity`, and `verification_status`, and source status/policy payloads now also surface
-`official_status`, `expected_access_kind`, and `future_phase`. A static built-in registry seeds core
-disabled candidates including SFD, AlertSeattle, Metro, WSDOT, NWS, USGS, City Light, FAA/SEA, a
-neighborhood blog, and a social policy-sensitive candidate. Config entries that reference those registry
-IDs inherit disabled metadata unless the user overrides fields. Source-registry SQLite persistence is
-now synced during `console-1701 news-scan`; exhaustive design-inventory coverage remains pending.
+The registry now contains all 119 LOCAL design-table entries, with existing reviewed core entries
+retained as explicit overrides. Enum, HTTPS URL, priority, interval, future-phase, unique-key, and
+disabled-default validation runs at import. Config entries inherit metadata unless the user
+overrides it; SQLite sync persists the full inventory during `news-scan`. Reference-only entries
+such as the City Light outage page and FAA SEA status page are blocked before fixture or HTTP
+access even if enabled in config. Tests compare design keys, check representative metadata and
+the persisted count, and exercise the no-ingest gate. Inventory presence is not endpoint signoff
+or live-ingest authorization; those remain separate backlog rows.
 
 ### Disabled-By-Default LOCAL Config
 

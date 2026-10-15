@@ -121,6 +121,7 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
     global_reference_only = scope == "GLOBAL" and str(
         source.get("adapter") or ""
     ).strip().lower() == "source_health_probe_only"
+    reference_only = kind == "reference_only"
     gate_state = None
     if global_social_blocked:
         gate_state = "social_disabled"
@@ -130,7 +131,7 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
         gate_state = "homepage_extract_disabled"
     elif global_manual_review:
         gate_state = "manual_review_only"
-    elif global_reference_only:
+    elif reference_only or global_reference_only:
         gate_state = "unsupported"
 
     if is_local_fixture:
@@ -152,7 +153,7 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
             robots_state = "not_applicable_fixture_phase"
     if gate_state:
         policy_state = gate_state
-        basis = "global_source_gate"
+        basis = "source_gate"
 
     notes: list[str] = []
     if not scope_cfg.get("enabled"):
@@ -191,8 +192,8 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
         notes.append("GLOBAL homepage extraction allowance is disabled.")
     if global_manual_review:
         notes.append("GLOBAL source requires manual review and has no ingest adapter.")
-    if global_reference_only:
-        notes.append("GLOBAL registry reference is for source health only.")
+    if reference_only or global_reference_only:
+        notes.append(f"{scope} registry reference is for source health only.")
     for note in source.get("evidence_notes") or []:
         if note not in notes:
             notes.append(str(note))
