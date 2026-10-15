@@ -41,3 +41,14 @@ establish that its item shape, update cadence, or policy is suitable for the sca
 The first useful follow-up is a dedicated Whatcom or Clallam category-feed signoff, since their
 official RSS directories identify emergency categories. The cross-county review itself does not
 select a feed for production.
+
+## Bounded category-feed check, 2026-10-15
+
+An identifying, bounded direct GET of the official [Whatcom sheriff emergency category](https://www.whatcomcounty.us/RSSFeed.aspx?CID=Sheriffs-Office-Emergency-Alert-4&ModID=63)
+returned HTTP 403. The [Clallam county alerts](https://clallamcountywa.gov/RSSFeed.aspx?CID=Clallam-County-Alerts-7&ModID=63),
+[Clallam weather/roads](https://clallamcountywa.gov/RSSFeed.aspx?CID=Inclement-Weather-and-Road-Closures-4&ModID=63),
+and [Snohomish emergency management](https://snohomishcountywa.gov/RSSFeed.aspx?CID=Emergency-Management-3&ModID=63)
+category feeds returned HTTP 200, valid RSS, and zero items (372, 386, and 377 bytes respectively).
+These reads verify empty-channel behavior only. They provide no item identity, time, revision,
+classification or test-message shape to justify a parser fixture. No feed was enabled; retry a
+category when a real public item is available, using the existing exact-source release gate.

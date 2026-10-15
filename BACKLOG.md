@@ -919,11 +919,20 @@ Air plus other AQI/smoke providers remain to be reviewed. See the source verific
 
 ### PSE/SnoPUD/Tacoma Outage Endpoint Research
 
-Status: not implemented.
+Status: completed 2026-10-15 as a negative endpoint suitability review.
 
 Research official outage data options for PSE, SnoPUD, Tacoma Power, Seattle City Light, and related
 regional utility sources. Do not scrape public outage map HTML or ArcGIS Experience pages. If stable
 official endpoints cannot be found, keep those sources manual-review-only or source-health-only.
+
+Current state: the official PSE, SnoPUD, Tacoma Power and Seattle City Light outage pages/maps
+were reviewed; no published public event RSS/API contract was established in this pass. Three
+center/page registry entries formerly marked as static-HTML candidates are now reference-only,
+and an offline gate test confirms they cannot access fixture paths or HTTP when enabled. All
+utility outage sources remain human/source-health references; no customer-level map data or
+unverified outage fixture is admitted. See
+`docs/project/REGIONAL_UTILITY_OUTAGE_ENDPOINT_REVIEW.md`. A future published endpoint requires
+fresh signoff rather than assumed browser-map extraction.
 
 ### King County Emergency Feed Parser
 
