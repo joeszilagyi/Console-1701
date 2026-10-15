@@ -82,6 +82,7 @@ def test_cosmic_fixture_scan_ingests_science_only_without_network(tmp_path, monk
 
 
 @pytest.mark.parametrize("override", [
+    {"id": "science_journalism"},
     {"official_url": "https://example.test/fake"},
     {"parser": "generic_json_items"},
     {"fixture_only": False},
@@ -119,3 +120,43 @@ def test_cosmic_page_shows_stored_evidence_without_fetch(tmp_path, monkeypatch):
     assert "Query bounds" in html
     assert "Data products" in html
     assert "SYSTEM_SOLAR" not in html
+
+
+def test_cosmic_scan_drops_hype_claims_before_sqlite_storage(tmp_path, monkeypatch):
+    path = _config(tmp_path, monkeypatch)
+    fixture = tmp_path / "science-policy.rss"
+    extra = """
+      <item><title>NASA confirms aliens on Mars</title>
+      <link>https://www.nasa.gov/missions/mars/alien-claim/</link>
+      <pubDate>Thu, 15 Oct 2026 18:22:48 +0000</pubDate>
+      <category>Astrophysics</category></item>
+      <item><title>UFO sighting proves new astronomy discovery</title>
+      <link>https://www.nasa.gov/missions/spherex/ufo-claim/</link>
+      <pubDate>Thu, 15 Oct 2026 18:22:48 +0000</pubDate>
+      <category>Astrophysics</category></item>
+      <item><title>Shocking image: what is a brown dwarf?</title>
+      <link>https://www.nasa.gov/missions/spherex/brown-dwarf-explainer/</link>
+      <pubDate>Thu, 15 Oct 2026 18:22:48 +0000</pubDate>
+      <category>Astrophysics</category></item>
+    """
+    fixture.write_text(
+        (FIXTURES / "nasa_jpl_science.rss").read_text().replace("</channel>",
+                                                                f"{extra}</channel>")
+    )
+    payload = yaml.safe_load(path.read_text())
+    payload["news"]["scopes"]["SYSTEM_SOLAR"]["sources"][0]["url"] = f"file://{fixture}"
+    path.write_text(yaml.safe_dump(payload))
+    result = run_news_scan(path)
+    assert result["status"] == "complete"
+    config = load_config(path)
+    with connect_db(config["_db_path"]) as conn:
+        rows = conn.execute(
+            "SELECT title, description, evidence_json FROM news_items "
+            "WHERE scope = 'SYSTEM_SOLAR'"
+        ).fetchall()
+    assert not any("alien" in row["title"].lower() or "ufo" in row["title"].lower()
+                   for row in rows)
+    explainer = next(row for row in rows if "Shocking image" in row["title"])
+    safety = json_loads(explainer["evidence_json"], {})["science_safety"]
+    assert safety["attention_state"] == "background"
+    assert result["item_count"] == len(rows)

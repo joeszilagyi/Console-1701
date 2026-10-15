@@ -3094,13 +3094,20 @@ calls this ranker and persists the score and explanations on events, clusters, a
 
 ### Hype And Speculation Suppression Rules
 
-Status: not implemented.
+Status: partially implemented 2026-10-15; first-pass fixture policy exists.
 
 Add deterministic rules that suppress or carefully label alien-life claims, UFO material,
 sensationalized astronomy headlines, social rumors, image-only clickbait, generic astronomy
 explainers, old papers resurfaced as new, unsupported "life found" language, and unreviewed
 preprint hype if literature sources are ever enabled. Do not infer scientific meaning beyond source
 metadata.
+
+Current state: `science_policy.py` runs before COSMIC item persistence. Explicit UFO/UAP,
+unsupported alien-life discovery, and unverified social-rumor claims are dropped; sensational,
+image-led, generic explainer, and explicitly old-study headlines retain bounded metadata with
+background attention evidence and a low-public-value rank penalty. No scientific discovery is
+inferred from headline wording. Additional source-specific and literature/preprint variants need
+fixture review before enabling those sources.
 
 ### Archive Firehose Blocking Rules
 
@@ -3256,11 +3263,17 @@ downloads.
 
 ### Tests For No Alien-Life Or UFO Hype Leakage
 
-Status: not implemented.
+Status: completed 2026-10-15 for the first-pass COSMIC fixture path.
 
 Add tests proving UFO content is out of scope, social-only alien-life claims are suppressed,
 "life found" wording is blocked unless source metadata directly says it, generic hype is penalized,
 and science journalism cannot become primary evidence without official or scientific convergence.
+
+Direct policy tests and an offline `news-scan` SQLite test verify that explicit alien-life/life-found,
+UFO/UAP, and unverified-rumor claims are discarded before persistence, while generic/sensational
+headlines carry background attention and a low-public-value rank penalty. Exact science source
+identity validation rejects a journalism source in the configured COSMIC scan path. This gate
+will need extension if later source families are admitted.
 
 ## High Priority
 

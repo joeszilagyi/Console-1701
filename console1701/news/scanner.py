@@ -54,6 +54,7 @@ from console1701.news.regional_contract import build_regional_event_contract
 from console1701.news.regional_policy import apply_regional_privacy_policy
 from console1701.news.regional_registry import list_regional_source_registry
 from console1701.news.science_events import correlate_science_items
+from console1701.news.science_policy import classify_science_item
 from console1701.news.science_ranking import rank_science_event
 from console1701.news.science_registry import list_science_source_registry
 from console1701.news.source_policy import evaluate_source_policy
@@ -744,6 +745,10 @@ def _ingest_source(
         stored_count = 0
         seen_item_ids: set[int] = set()
         for item in items:
+            if source.get("scope") == "SYSTEM_SOLAR":
+                item = classify_science_item(source, item)
+                if item is None:
+                    continue
             evidence = dict(item.get("evidence") or {})
             if not is_live:
                 evidence["fixture_path"] = str(path)
@@ -2656,6 +2661,10 @@ def _rebuild_science_clusters(conn: sqlite3.Connection) -> None:
             key for member in members
             for key, value in (member["evidence"].get("science_safety") or {}).items()
             if value is True
+        } | {
+            "background_attention" for member in members
+            if (member["evidence"].get("science_safety") or {}).get("attention_state")
+            == "background"
         })
         event_type = group["event_kinds"][0] if group["event_kinds"] else "science_release"
         status = "retracted" if all(
