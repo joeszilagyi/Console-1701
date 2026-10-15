@@ -753,9 +753,11 @@ staleness evidence, and leaves flood stage unknown without a source threshold. A
 alerts fixture now follows the official access-code API model and preserves bulletin IDs, route
 IDs, cancellation/delay classification and impact evidence while leaving absent terminal, vessel,
 and end-time fields unknown. The NWCC blog's linked public Atom feed now has a curated observed
-metadata fixture for fire updates, with body and Washington impact excluded. Dedicated WA DNR
-incident, other county emergency, AQI, outage, and other regional fixture shapes remain pending
-endpoint verification; do not invent live API shapes to close this pack.
+metadata fixture for fire updates, with body and Washington impact excluded. WA Ecology's official
+hourly AQI ArcGIS layer now has an observed three-station Seattle fixture; exact street addresses
+from the source response are dropped before storage. Dedicated WA DNR incident, other county
+emergency, outage, and other regional fixture shapes remain pending endpoint verification; do not
+invent live API shapes to close this pack.
 
 ### NWS Alert Parser For Washington
 
@@ -898,11 +900,20 @@ should stay `source_health_probe_only` if no suitable endpoint exists.
 
 ### Ecology/AirNow AQI Endpoint Research
 
-Status: not implemented.
+Status: partially implemented (WA Ecology verified; other providers pending).
 
 Research Washington Ecology, Puget Sound Clean Air, AirNow, and related AQI/smoke endpoint options.
 Prefer official APIs or feeds, document access requirements and terms, and avoid dashboard scraping.
 Design station filters, AQI thresholds, retention, and source-health behavior before implementation.
+
+Current state: WA Ecology's official hourly AQI ArcGIS layer documents 24-hour station telemetry
+and hourly updates. A bounded exact query for Seattle SiteIds 42, 46 and 76 returned three rows
+with source AQI values/categories and PM2.5 data. The JSON also includes exact `SiteLocation`
+street addresses; the fixture parser drops them before SQLite storage and only preserves station
+ID/name, sample time, AQI category/value and PM2.5 evidence. Ecology's published AQI bands gate
+category/value consistency and ranking. The source remains fixture-only; a live interval, HTTP
+policy and staleness signoff are still needed. AirNow's API is key-required, and Puget Sound Clean
+Air plus other AQI/smoke providers remain to be reviewed. See the source verification note.
 
 ### PSE/SnoPUD/Tacoma Outage Endpoint Research
 

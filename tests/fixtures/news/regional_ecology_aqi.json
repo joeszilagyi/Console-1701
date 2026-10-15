@@ -1,0 +1,47 @@
+{
+  "displayFieldName": "SiteName",
+  "features": [
+    {
+      "attributes": {
+        "SiteId": 42,
+        "SiteName": "Seattle-Beacon Hill",
+        "SiteLocation": "4103 Beacon Ave S",
+        "DateTime_PST": 1792101600000,
+        "HourPriorToLatest": 1,
+        "AQIValue": 31,
+        "AQICategory": "Good",
+        "AQI_PM25": 31,
+        "AQI_PM25_Cat": "Good",
+        "PM25_Value": 4.0
+      }
+    },
+    {
+      "attributes": {
+        "SiteId": 46,
+        "SiteName": "Seattle-South Park",
+        "SiteLocation": "8201 10th Ave S",
+        "DateTime_PST": 1792101600000,
+        "HourPriorToLatest": 1,
+        "AQIValue": 53,
+        "AQICategory": "Moderate",
+        "AQI_PM25": 53,
+        "AQI_PM25_Cat": "Moderate",
+        "PM25_Value": 9.8
+      }
+    },
+    {
+      "attributes": {
+        "SiteId": 76,
+        "SiteName": "Seattle-Duwamish",
+        "SiteLocation": "4700 East Marginal Way",
+        "DateTime_PST": 1792101600000,
+        "HourPriorToLatest": 1,
+        "AQIValue": 40,
+        "AQICategory": "Good",
+        "AQI_PM25": 40,
+        "AQI_PM25_Cat": "Good",
+        "PM25_Value": 9.2
+      }
+    }
+  ]
+}

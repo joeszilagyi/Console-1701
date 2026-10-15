@@ -31,6 +31,7 @@ def build_regional_event_contract(
     wsdot = evidence.get("wsdot_alert")
     water = evidence.get("usgs_water")
     wsf = evidence.get("wsf_alert")
+    aqi = evidence.get("ecology_aqi")
     identity = f"isolated:{source.get('id')}:{hashed_url}"
     event_type = "regional_headline"
     matching_basis = "isolated_url"
@@ -86,6 +87,19 @@ def build_regional_event_contract(
         }
         match_tokens = [str(water["gauge_id"])[:120], str(water.get("huc8") or "")]
         public_impact_basis = "Observation only; no USGS flood-stage threshold in fixture"
+    elif isinstance(aqi, dict) and aqi.get("site_id"):
+        identity = f"ecology-aqi:{aqi['site_id']}:{aqi.get('sample_at')}"
+        event_type = "air_quality_observation"
+        matching_basis = "official_station_id_and_sample_time"
+        confidence = "high"
+        geography = {
+            "basis": "official_site_name_allowlist",
+            "matched": True,
+            "city": "Seattle",
+            "aqi_station": f"ecology:{aqi['site_id']}",
+        }
+        match_tokens = [str(aqi["site_id"]), str(aqi.get("aqi_category") or "")]
+        public_impact_basis = "Ecology source-provided AQI category and value"
     elif isinstance(wsf, dict) and wsf.get("bulletin_id"):
         identity = f"wsf-bulletin:{wsf['bulletin_id']}"
         event_type = "ferry_alert"
