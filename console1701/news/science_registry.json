@@ -955,8 +955,8 @@
     "policy_risk": "medium",
     "parser_risk": "medium",
     "retention_sensitivity": "low",
-    "verification_status": "candidate_policy_sensitive",
-    "why_it_matters": "Tiny recent PS metadata updates only; broad catalog downloads blocked.",
+    "verification_status": "verified",
+    "why_it_matters": "Exact tiny recent PS metadata query may be enabled; broad catalog downloads blocked.",
     "future_phase": "S8"
   },
   {

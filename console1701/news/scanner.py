@@ -662,6 +662,8 @@ def _ingest_source(
     )
     if source.get("scope") == "SYSTEM_SOLAR":
         max_bytes = min(max_bytes, 1_048_576)
+        if source.get("id") == "nasa_exoplanet_ps_tap":
+            max_bytes = min(max_bytes, 65_536)
     default_retention_days = int(
         ((config.get("news") or {}).get("retention") or {}).get("items_days", 7)
     )
