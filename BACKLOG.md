@@ -2222,9 +2222,10 @@ after verification, source-health states, disabled sources, stale sources, auth-
 policy-blocked sources, and parser failures. Fixture ingest must not perform network calls and
 must be safe for pytest.
 
-Current state: small official-shape SWPC alerts and NOAA scales JSON fixtures cover warning,
-cancelled watch, incomplete row, current and forecast scale, and zero state. Their parsers and
-offline scans are tested. Remaining ORBITAL products and
+Current state: small official-shape SWPC alerts, NOAA scales, planetary and Boulder K-index, and
+OVATION aurora JSON fixtures cover warning, cancelled watch, incomplete row, current and forecast
+scale, zero state, K-index thresholds, and a tiny aurora grid. Their parsers and offline scans are
+tested. Remaining ORBITAL products and
 source-health variants are pending in this pack.
 
 ### SWPC Alerts JSON Parser
@@ -2260,12 +2261,21 @@ no live HTTP allowlist entry was added. See
 
 ### SWPC Kp And Aurora Fixture Parsers
 
-Status: not implemented.
+Status: completed 2026-10-15 for fixture-first products and configured location summaries.
 
 Build fixture-first parsers for SWPC planetary K-index, Boulder K-index, and OVATION aurora JSON
 candidates. Preserve timestamp, Kp or aurora metadata, product source URL, local/regional aurora
 interest evidence, and stale-source behavior. Keep local aurora tags configurable and disabled
 until ORBITAL is explicitly enabled.
+
+Current state: dedicated parsers keep the latest qualifying planetary Kp, minute-level estimated
+Kp, or Boulder K-index measurement with exact official provenance and a configurable threshold.
+The designed summary URL returned 404 and was replaced in the registry with NOAA's verified
+planetary product. The OVATION parser reads a bounded grid, retains only modeled peak and sample
+count near explicitly configured LOCAL/REGIONAL coordinates, and never stores the grid or claims
+visibility. Config validates coordinates, radius, and minimum value; no locations are set by
+default. Source health reports staleness, and offline fixture scans make no HTTP request. See
+`docs/project/ORBITAL_SWPC_KP_AURORA_SOURCE_VERIFICATION.md`.
 
 ### JPL CNEOS Close Approach Parser
 

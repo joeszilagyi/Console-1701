@@ -1,0 +1,13 @@
+{
+  "Observation Time": "2026-10-15T19:48:00Z",
+  "Forecast Time": "2026-10-15T20:48:00Z",
+  "Data Format": "[Longitude, Latitude, Aurora]",
+  "coordinates": [
+    [0, -90, 5],
+    [237, 47, 58],
+    [238, 48, 72],
+    [239, 49, 33],
+    [250, 47, 80]
+  ],
+  "type": "MultiPoint"
+}

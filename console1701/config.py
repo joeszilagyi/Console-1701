@@ -242,6 +242,8 @@ DEFAULT_ORBITAL_CONFIG: dict[str, Any] = {
     "default_place_label": "Orbital",
     "include_space_weather": True,
     "include_aurora": True,
+    "kp_min_index": 5.0,
+    "aurora_locations": [],
     "include_neo_close_approaches": True,
     "include_fireballs": True,
     "include_launches": True,
@@ -742,6 +744,46 @@ def normalize_orbital_config(config: dict[str, Any]) -> None:
     for key, default in DEFAULT_ORBITAL_CONFIG.items():
         if key.startswith(("include_", "allow_")) or key == "enabled":
             orbital[key] = _coerce_bool(orbital.get(key, default), f"orbital.{key}")
+    try:
+        kp_minimum = float(orbital.get("kp_min_index", 5.0))
+    except (TypeError, ValueError) as exc:
+        raise ConfigError("orbital.kp_min_index must be numeric") from exc
+    if not isfinite(kp_minimum) or not 0 <= kp_minimum <= 9:
+        raise ConfigError("orbital.kp_min_index must be between 0 and 9")
+    orbital["kp_min_index"] = kp_minimum
+    locations = orbital.get("aurora_locations", [])
+    if not isinstance(locations, list) or len(locations) > 8:
+        raise ConfigError("orbital.aurora_locations must be a list of at most 8 locations")
+    normalized_locations = []
+    for index, location in enumerate(locations):
+        path = f"orbital.aurora_locations[{index}]"
+        if not isinstance(location, dict):
+            raise ConfigError(f"{path} must be a mapping")
+        name = _require_string(location.get("name"), f"{path}.name")
+        if len(name) > 80:
+            raise ConfigError(f"{path}.name must be at most 80 characters")
+        scope = _require_string(location.get("scope"), f"{path}.scope").upper()
+        if scope not in {"LOCAL", "REGIONAL"}:
+            raise ConfigError(f"{path}.scope must be LOCAL or REGIONAL")
+        try:
+            latitude = float(location["latitude"])
+            longitude = float(location["longitude"])
+            radius = float(location.get("radius_degrees", 2.0))
+            minimum = float(location.get("min_intensity", 50.0))
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ConfigError(f"{path} requires numeric latitude and longitude") from exc
+        if not all(isfinite(value) for value in (latitude, longitude, radius, minimum)):
+            raise ConfigError(f"{path} contains a non-finite number")
+        if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
+            raise ConfigError(f"{path} has invalid latitude or longitude")
+        if not (0.5 <= radius <= 10 and 0 <= minimum <= 100):
+            raise ConfigError(f"{path} radius or minimum intensity is out of range")
+        normalized_locations.append({
+            "name": name, "scope": scope, "latitude": latitude,
+            "longitude": longitude, "radius_degrees": radius,
+            "min_intensity": minimum,
+        })
+    orbital["aurora_locations"] = normalized_locations
 
 
 def _normalize_local_source_metadata(
@@ -911,6 +953,7 @@ def _normalize_news_source(
     regional_cfg: dict[str, Any],
     national_cfg: dict[str, Any],
     global_cfg: dict[str, Any],
+    orbital_cfg: dict[str, Any],
     seen_source_keys: set[tuple[str, str]],
 ) -> dict[str, Any]:
     path = f"news.scopes.{scope}.sources[{index}]"
@@ -1022,6 +1065,10 @@ def _normalize_news_source(
         )
         for key in ("privacy_risk", "policy_risk", "parser_risk", "retention_sensitivity"):
             _normalize_optional_keyword(source_cfg, key, path, allowed=ORBITAL_RISK_LEVELS)
+        if str(source_cfg.get("parser") or "").strip().lower() == "swpc_aurora_json":
+            source_cfg["aurora_locations"] = orbital_cfg["aurora_locations"]
+        if str(source_cfg.get("parser") or "").strip().lower() == "swpc_kp_json":
+            source_cfg["min_k_index"] = orbital_cfg["kp_min_index"]
 
     source_cfg["enabled"] = _coerce_bool(source_cfg.get("enabled", False), f"{path}.enabled")
     source_cfg["priority"] = _coerce_int(source_cfg.get("priority", 50), f"{path}.priority")
@@ -1074,6 +1121,10 @@ def normalize_news_config(config: dict[str, Any]) -> None:
     global_cfg = _require_mapping(
         config.setdefault("global", deepcopy(DEFAULT_GLOBAL_CONFIG)),
         "global",
+    )
+    orbital_cfg = _require_mapping(
+        config.setdefault("orbital", deepcopy(DEFAULT_ORBITAL_CONFIG)),
+        "orbital",
     )
     news["enabled"] = _coerce_bool(news.get("enabled", False), "news.enabled")
 
@@ -1191,6 +1242,7 @@ def normalize_news_config(config: dict[str, Any]) -> None:
                 regional_cfg=regional_cfg,
                 national_cfg=national_cfg,
                 global_cfg=global_cfg,
+                orbital_cfg=orbital_cfg,
                 seen_source_keys=seen_source_keys,
             )
             for index, source in enumerate(sources)

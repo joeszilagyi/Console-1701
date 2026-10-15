@@ -79,7 +79,7 @@ def orbital_item_facets(evidence: dict[str, Any], tags: list[Any]) -> set[tuple[
                     add(kind, key)
     for tag in tags[:16]:
         if isinstance(tag, str) and tag in {
-            "local-impact", "us-impact", "global-impact"
+            "local-impact", "regional-impact", "us-impact", "global-impact"
         }:
             add("impact_tag", tag)
     return facets
