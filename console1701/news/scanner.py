@@ -2206,6 +2206,7 @@ def _upsert_item(
         "source_class": source.get("source_class"),
         "official_status": source.get("official_status"),
         "verification_status": source.get("verification_status"),
+        "official_url": source.get("official_url"),
         "parser": source.get("parser"),
         "priority": int(source.get("priority", 50)),
         "tags": source.get("tags") or [],
@@ -2220,6 +2221,8 @@ def _upsert_item(
         "policy_state": policy.get("policy_state"),
         "basis": policy.get("basis"),
         "robots_state": policy.get("robots_state"),
+        "auth_required": bool(policy.get("auth_required")),
+        "auth_configured": bool(policy.get("auth_configured")),
         "notes": policy.get("notes") or [],
     }
     evidence["retention"] = {

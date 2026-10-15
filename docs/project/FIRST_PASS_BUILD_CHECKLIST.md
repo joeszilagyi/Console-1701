@@ -178,14 +178,14 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-138** [Archive Firehose Blocking Rules](../../BACKLOG.md#L2202) — heavy/catalog candidates rejected; tiny archive contract violations record `archive_firehose_blocked` before item storage.
 - [ ] **RS-139** [UI Disabled States After Naming Decision](../../BACKLOG.md#L2211) — COSMIC state card distinguishes configured health and disabled candidate inventory; future source-specific gates pending.
 - [ ] **RS-140** [Source Health States](../../BACKLOG.md#L2220) — fixture health, hype-blocked runtime, disabled candidate counts, and SQLite state rendering exist; future adapter gates pending.
-- [ ] **RS-141** [Evidence Drawer Contract](../../BACKLOG.md#L2231) — fixture item/event evidence renders; auth and broader policy/health states pending.
+- [x] **RS-141** [Evidence Drawer Contract](../../BACKLOG.md#L2231) — fixture and ESA live drawers show provenance, source/date/health, identity/status, match/rank/query/policy/retention, and accurate no-product evidence.
 - [x] **RS-142** [Official RSS Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L2242) — exact ESA Space Science RSS opt-in, 14-day source freshness and bounded bytes/cadence/retention, and mocked transport gates pass; other candidates stay blocked.
 - [ ] **RS-143** [Official Small API Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L2250) — not implemented.
 - [ ] **RS-144** [Transient Alert Ingest Phase, Disabled By Default](../../BACKLOG.md#L2259) — not implemented.
 - [x] **RS-145** [Documentation For Source Verification](../../BACKLOG.md#L2292) — science endpoint signoff template, exact promotion gates, and NASA/JPL/ESA walkthroughs with observed blockers complete.
 - [x] **RS-146** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L2307) — disabled/not-configured and stored COSMIC state matrix renders with fetchers forced to fail; SYSTEM remains separate.
 - [x] **RS-147** [Tests For No Heavy Archive Source Running Without Explicit Config](../../BACKLOG.md#L2316) — every heavy/catalog registry candidate is rejected by the COSMIC exact-source gate, even with heavy flags enabled.
-- [ ] **RS-148** [Tests For No Auth Source Running Without Config](../../BACKLOG.md#L2325) — not implemented.
+- [x] **RS-148** [Tests For No Auth Source Running Without Config](../../BACKLOG.md#L2325) — auth-marked registry candidates remain unconfigurable; declared missing auth records `auth_required` before any file or HTTP read.
 - [x] **RS-149** [Tests For No Data Product Downloads](../../BACKLOG.md#L2333) — all eight permitted COSMIC adapters pass offline scans with bounded metadata and explicit no-product-request evidence.
 - [x] **RS-150** [Tests For No Alien-Life Or UFO Hype Leakage](../../BACKLOG.md#L2342) — direct and offline SQLite scan tests block explicit claims before storage and reject journalism source impersonation.
 

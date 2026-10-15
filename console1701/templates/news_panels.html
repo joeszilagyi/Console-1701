@@ -144,22 +144,31 @@
                     <div><span>Source ID</span><strong>{{ source.source_key or "unknown" }}</strong></div>
                     <div><span>Family / class</span><strong>{{ source.source_family or "unknown" }} / {{ source.source_class or "unknown" }}</strong></div>
                     <div><span>Official status</span><strong>{{ source.official_status or "unverified" }}</strong></div>
+                    <div><span>Verification</span><strong>{{ source.verification_status or "unverified" }}</strong></div>
                     <div><span>Parser</span><strong>{{ source.parser or "unknown" }}</strong></div>
                     <div><span>Published / observed</span><strong>{{ item.source_published_at or "unknown" }}</strong></div>
+                    <div><span>First / last seen</span><strong>{{ item.first_seen_at }} / {{ item.last_seen_at }}</strong></div>
+                    <div><span>Fetch mode</span><strong>{{ "local fixture" if ingest.fixture_only else "official live feed" }}</strong></div>
+                    <div><span>Auth required</span><strong>{{ "yes" if policy.auth_required else "no" }}</strong></div>
                     <div><span>Event confidence</span><strong>{{ science.confidence or "not correlated" }}</strong></div>
                     <div><span>Event type / status</span><strong>{{ science.event_type or "unclassified" }} / {{ science.status or "unknown" }}</strong></div>
                     <div><span>Mission / telescope</span><strong>{{ science_rss.mission_label or science_rss.telescope or gcn.mission or archive.mission or "not provided" }}</strong></div>
+                    <div><span>Object / target</span><strong>{{ archive.planet_name or archive.target_name or archive.target_body or "not provided" }}</strong></div>
+                    <div><span>Alert status</span><strong>{{ gcn.status or "not applicable" }}</strong></div>
                     <div><span>Source date meaning</span><strong>{{ archive.date_semantics or "source publication or alert time" }}</strong></div>
                     <div><span>Attention</span><strong>{{ science_safety.attention_state or "unclassified" }}</strong></div>
                   </div>
                   <ul class="news-evidence-list">
                     <li><b>Item URL</b><span>{{ item.url }}</span></li>
+                    <li><b>Canonical URL</b><span>{{ item.canonical_url or "not provided" }}</span></li>
+                    <li><b>Official endpoint</b><span>{{ source.official_url or science_rss.feed_url or "not provided" }}</span></li>
                     <li><b>Matching</b><span>{{ science.matches | tojson if science.matches else "isolated" }}</span></li>
+                    <li><b>Identifiers</b><span>{{ science.identifiers | join(", ") if science.identifiers else "not provided" }}</span></li>
                     <li><b>Rank factors</b><span>{{ science.ranking.factors | tojson if science.ranking else "not scored" }}</span></li>
                     <li><b>Query bounds</b><span>{{ science.query_bounds | tojson if science.query_bounds else "not applicable" }}</span></li>
                     <li><b>Policy flags</b><span>{{ science.policy_flags | join(", ") if science.policy_flags else "none recorded" }}</span></li>
                     <li><b>Attention reasons</b><span>{{ science_safety.reasons | join("; ") if science_safety.reasons else "none recorded" }}</span></li>
-                    <li><b>Data products</b><span>Metadata only; no product downloaded by this fixture.</span></li>
+                    <li><b>Data products</b><span>Metadata only; this ingest did not request a product download.</span></li>
                   </ul>
                 {% endif %}
                 {% if item.scope == "NATIONAL" and national_evidence %}

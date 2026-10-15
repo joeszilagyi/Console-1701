@@ -3175,7 +3175,7 @@ for source-specific states beyond the current exact fixture allowlist.
 
 ### Evidence Drawer Contract
 
-Status: partially implemented 2026-10-15; fixture item/event evidence renders.
+Status: completed 2026-10-15 for current COSMIC fixture and ESA live adapters.
 
 Define and test evidence payloads for Solar System and Beyond items/events. Include source ids,
 names, families, classes, URLs, canonical URLs, official flags, source published times, first/last
@@ -3184,9 +3184,13 @@ transient match basis, preliminary/confirmed/retracted status, archive query bou
 status, retention expiration, policy notes, hype penalty, low-public-value penalty,
 archive-firehose penalty, out-of-scope penalty, and no-data-product-download evidence.
 
-Current state: fixture items and clusters render source provenance, event confidence and match
-basis, rank reasons, query bounds, and explicit metadata-only/no-product-download evidence.
-Auth-required and broader policy/health states still need fixture and UI coverage.
+Current state: item and event drawers render source identity, family/class, official endpoint and
+verification, item/canonical URLs, source publication and first/last seen, fetch mode/run, prior
+health, parser, auth requirement, policy and retention, event confidence/match basis/identifiers,
+mission/telescope/object/target, transient status, query bounds, ranking factors/penalties,
+attention notes, and explicit metadata-only/no-product-request evidence. The no-download wording
+is accurate for both fixtures and the ESA live feed. Future source adapters must extend this
+contract with their own metadata, especially any auth or archive query semantics.
 
 ### Official RSS Live Ingest Phase, Disabled By Default
 
@@ -3295,11 +3299,17 @@ blocked health states remain part of RS-138/140.
 
 ### Tests For No Auth Source Running Without Config
 
-Status: not implemented.
+Status: completed 2026-10-15 for the first-pass COSMIC allowlist.
 
 Add tests proving TNS, ADS, GraceDB if auth-required, Reddit, X, Bluesky, NASA API if key-required,
 and any other token/account source cannot run without explicit local configuration. Tests should
 assert clear `auth_required` or policy-disabled source-health state and no network calls.
+
+Every science registry candidate marked auth-required is checked for its disabled
+`auth_required` behavior and rejected by the exact COSMIC source config gate, even with broad
+category flags enabled. A configured fixture with declared but missing auth produces an
+`auth_required` source-health row before file or HTTP access. New auth-backed adapters must add
+their own credential and policy tests before admission.
 
 ### Tests For No Data Product Downloads
 
