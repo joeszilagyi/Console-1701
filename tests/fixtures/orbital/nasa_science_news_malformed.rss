@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+  xmlns:apod="https://science.nasa.gov/apod/"xmlns:media="http://search.yahoo.com/mrss/" >
+<channel>
+  <title>The Latest in NASA Science News - NASA Science</title>
+  <link>https://science.nasa.gov</link>
+  <item>
+    <title>NASA Confirms Parker Solar Probe Mission Milestone</title>
+    <link>https://science.nasa.gov/blogs/science-news/2026/10/15/parker-mission-milestone/</link>
+    <guid>https://science.nasa.gov/blogs/science-news/2026/10/15/parker-mission-milestone/</guid>
+    <pubDate>Thu, 15 Oct 2026 18:30:00 +0000</pubDate>
+    <category>Solar System</category>
+    <description><![CDATA[<p>A mission update from NASA Science.</p>]]></description>
+  </item>
+  <item>
+    <title>NASA-Supported Study Tracks Carbon Cost of Coastal Erosion</title>
+    <link>https://science.nasa.gov/blogs/science-news/2026/08/24/nasa-supported-study-tracks-carbon-cost-of-coastal-erosion/</link>
+    <pubDate>Mon, 24 Aug 2026 20:38:18 +0000</pubDate>
+    <description>Earth science research feature.</description>
+  </item>
+  <item>
+    <title>NASA Confirms Mission Milestone</title>
+    <link>https://example.invalid/blogs/science-news/2026/10/15/fake/</link>
+    <pubDate>Thu, 15 Oct 2026 18:30:00 +0000</pubDate>
+  </item>
+</channel></rss>

@@ -47,5 +47,15 @@ The exact JPL URL/parser pair is in the opt-in HTTP allowlist, disabled by defau
 explicit `news-scan` with an empty temporary SQLite state returned HTTP 200, healthy source
 state, and two ORBITAL items: a JPL lunar-lander test and NASA Roman telescope launch. The
 scanner used its identifying default user agent; no browser-agent substitution was needed.
-The `science.nasa.gov/feed/` candidate still does not provide a verified, accessible RSS path,
-so RS-098 remains partial.
+NASA Science's [Science News blog](https://science.nasa.gov/blogs/science-news/) exposes an
+[RSS self-link](https://science.nasa.gov/blogs/science-news/feed/). A bounded 2026-10-15 read of
+the exact feed returned HTTP 200, `application/rss+xml`, 79,465 bytes, and a ten-item channel
+after a single known header correction. The response is otherwise malformed XML: its `apod` and
+`media` namespace declarations lack one separating space. The parser applies only that exact
+repair for the `nasa_science_news` fixture source, records the repair in item evidence, and still
+rejects other malformed XML. The observed items were last published in August 2026, so this feed
+does not establish current operational coverage. A small synthetic fixture of the observed shape
+proves that mission-action stories can pass while Earth-science features and non-NASA links do not.
+This source remains disabled for HTTP and is absent from the live allowlist. A future live gate
+requires fresh content, stable XML behavior, and separate signoff. RS-098's first-pass fixture
+parser coverage is complete across NASA agency, mission, JPL and science feed families.
