@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+  <title>Jet Propulsion Laboratory – NASA</title>
+  <item>
+    <title>NASA’s SPHEREx Telescope Sees Brown Dwarfs</title>
+    <link>https://www.nasa.gov/missions/spherex/spherex-sees-brown-dwarfs/</link>
+    <guid>https://www.nasa.gov/missions/spherex/spherex-sees-brown-dwarfs/</guid>
+    <pubDate>Thu, 08 Oct 2026 18:22:48 +0000</pubDate>
+    <category>Astrophysics</category><category>Brown Dwarfs</category>
+    <category>Jet Propulsion Laboratory</category>
+    <description><![CDATA[<p>A bounded <b>science</b> release.</p>]]></description>
+  </item>
+  <item>
+    <title>NASA Satellites Observe Historic El Niño</title>
+    <link>https://science.nasa.gov/earth/nasa-satellites-observe-el-nino/</link>
+    <pubDate>Thu, 15 Oct 2026 17:59:22 +0000</pubDate>
+    <category>Earth</category><category>Oceans</category>
+  </item>
+  <item>
+    <title>NASA’s Dark Universe Telescope Launches</title>
+    <link>https://www.nasa.gov/missions/roman/roman-launches/</link>
+    <pubDate>Thu, 15 Oct 2026 16:00:00 +0000</pubDate>
+    <category>Astrophysics</category>
+  </item>
+  <item>
+    <title>NASA Telescope Finds a New Exoplanet</title>
+    <link>https://science.nasa.gov/universe/new-exoplanet/</link>
+    <pubDate>Wed, 14 Oct 2026 16:00:00 +0000</pubDate>
+    <category>Exoplanets</category>
+    <description><![CDATA[<img src="https://example.test/never-fetch.jpg"/>New finding.]]></description>
+  </item>
+  <item>
+    <title>Fake science headline</title>
+    <link>https://example.test/not-official</link>
+    <pubDate>Wed, 14 Oct 2026 16:00:00 +0000</pubDate>
+    <category>Astrophysics</category>
+  </item>
+</channel></rss>

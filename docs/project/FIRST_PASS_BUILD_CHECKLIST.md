@@ -160,7 +160,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-120** [Solar System And Beyond Source Registry Design Implementation](../../BACKLOG.md#L2016) — all 170 design candidates validated and disabled under the internal working name, with per-source health behavior and no runtime fetch wiring.
 - [x] **RS-121** [Solar System And Beyond SQLite Schema Or Extension](../../BACKLOG.md#L2026) — disabled registry sync plus scoped science event/evidence/query-bound schema, indexes, and expiry purge.
 - [ ] **RS-122** [Solar System And Beyond Fixture Pack](../../BACKLOG.md#L2038) — not implemented.
-- [ ] **RS-123** [NASA/JPL RSS Parser](../../BACKLOG.md#L2049) — not implemented.
+- [x] **RS-123** [NASA/JPL RSS Parser](../../BACKLOG.md#L2049) — exact NASA-hosted JPL science RSS fixture parser with topic/operations filtering, bounded metadata, and no-download evidence; live access remains gated.
 - [ ] **RS-124** [ESA RSS Parser](../../BACKLOG.md#L2058) — not implemented.
 - [ ] **RS-125** [Hubble/JWST RSS Parser](../../BACKLOG.md#L2066) — not implemented.
 - [ ] **RS-126** [NASA Exoplanet Archive Tiny Metadata Parser](../../BACKLOG.md#L2074) — not implemented.
