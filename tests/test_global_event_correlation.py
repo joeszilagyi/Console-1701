@@ -7,6 +7,7 @@ from textwrap import dedent
 from console1701.config import load_config
 from console1701.db import connect_db, json_loads
 from console1701.news.global_events import correlate_global_items
+from console1701.news.global_ranking import rank_global_event
 from console1701.news.scanner import run_news_scan
 
 
@@ -27,7 +28,8 @@ def _item(
         "source_published_at": published_at,
         "first_seen_at": published_at,
         "evidence": {
-            "source": {"source_family": family, "source_key": f"{family}_{item_id}"},
+            "source": {"source_family": family, "source_key": f"{family}_{item_id}",
+                       "official_status": "official"},
             "global": {
                 "event_type": event_type,
                 "affected_countries": [country],
@@ -83,6 +85,45 @@ def test_global_correlation_rejects_multi_country_bridge():
     groups = correlate_global_items([island_a, broad_report, island_c])
     assert [group["item_ids"] for group in groups] == [[1, 2], [3]]
     assert groups[0]["matches"][0]["basis"][1] == "country"
+
+
+def test_global_syndicated_article_does_not_create_independent_credit():
+    original = _item(1, family="gdacs")
+    syndicated = _item(2, family="reliefweb")
+    independent = _item(3, family="who")
+    original["canonical_url"] = "https://example.org/report/ana"
+    syndicated["canonical_url"] = original["canonical_url"]
+    independent["canonical_url"] = "https://example.org/independent/ana"
+    duplicate_group = correlate_global_items([original, syndicated])[0]
+    assert duplicate_group["item_ids"] == [1, 2]
+    assert duplicate_group["corroborated"] is False
+    assert duplicate_group["credited_families"] == ["gdacs"]
+    assert duplicate_group["syndicated_duplicate_count"] == 1
+    assert duplicate_group["matches"][0]["basis"] == ["same_article_url"]
+    score = rank_global_event(
+        duplicate_group, [original, syndicated], now="2026-10-15T20:00:00+00:00"
+    )
+    assert score["factors"]["duplicate_syndication_penalty"] == 5
+    assert score["factors"]["temporal_proximity_score"] == 0
+    assert score["factors"]["source_diversity_score"] == 11
+
+    full_group = correlate_global_items([original, syndicated, independent])[0]
+    assert full_group["item_ids"] == [1, 2, 3]
+    assert full_group["corroborated"] is True
+    assert full_group["credited_families"] == ["gdacs", "who"]
+
+    by_syndication = deepcopy(syndicated)
+    by_syndication["canonical_url"] = "https://example.org/reprint/ana"
+    for item in (original, by_syndication):
+        item["evidence"]["global_identity"] = {"syndication_id": "wire-ana-1"}
+    syndication_group = correlate_global_items([original, by_syndication])[0]
+    assert syndication_group["matches"][0]["basis"] == ["same_syndication_id"]
+    assert syndication_group["corroborated"] is False
+    unrelated = _item(4, family="un", title="Unrelated institutional meeting notice")
+    unrelated["canonical_url"] = original["canonical_url"]
+    assert [group["item_ids"] for group in correlate_global_items([
+        original, unrelated
+    ])] == [[1], [4]]
 
 
 def test_global_correlation_uses_structured_ids_and_verified_region_context():

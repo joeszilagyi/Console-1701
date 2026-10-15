@@ -3153,7 +3153,8 @@ def _rebuild_orbital_clusters(conn: sqlite3.Connection) -> None:
 def _rebuild_global_clusters(conn: sqlite3.Connection) -> None:
     rows = conn.execute(
         """
-        SELECT id, scope, title, source_published_at, first_seen_at, last_seen_at,
+        SELECT id, scope, title, canonical_url, url, source_published_at,
+               first_seen_at, last_seen_at,
                expires_at, rank_score, tags_json, evidence_json
         FROM news_items
         WHERE scope = 'GLOBAL' AND status = 'active' AND expires_at >= ?
@@ -3197,7 +3198,7 @@ def _rebuild_global_clusters(conn: sqlite3.Connection) -> None:
             contract["event_confidence"] = confidence
             contract["matching_tokens"] = matching_tokens
             contract["source_diversity_basis"] = (
-                f"{len(group['families'])} independent source families"
+                f"{len(group['credited_families'])} independent source families"
                 if group["corroborated"] else "not_correlated"
             )
             contract["public_impact_basis"] = event_ranking["public_impact_basis"] or None

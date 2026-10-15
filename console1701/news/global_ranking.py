@@ -97,15 +97,18 @@ def rank_global_event(
     )
     span_hours = int((latest - earliest).total_seconds() // 3600) if latest and earliest else None
     signals = [_source_signals(member) for member in members]
-    families = list(group.get("families") or [])
+    families = list(group.get("credited_families") or group.get("families") or [])
     family_counts = Counter(
         str(signal["source"].get("source_family") or "unknown") for signal in signals
     )
-    official_families = {
-        str(signal["source"].get("source_family"))
-        for signal in signals if signal["source"].get("official_status") == "official"
-        and signal["source"].get("source_family")
-    }
+    official_families = (
+        set(group["credited_official_families"])
+        if "credited_official_families" in group else {
+            str(signal["source"].get("source_family"))
+            for signal in signals if signal["source"].get("official_status") == "official"
+            and signal["source"].get("source_family")
+        }
+    )
     identities = [signal["identity"] for signal in signals]
     impact_tags = {
         str(tag).lower() for identity in identities
@@ -114,8 +117,11 @@ def rank_global_event(
     recency = max(0, 20 - min(20, age_hours // 4))
     severity = max((signal["official_severity"] for signal in signals), default=0)
     diversity = min(40, len(families) * 6 + len(official_families) * 5)
-    temporal = 10 if len(members) > 1 and span_hours is not None and span_hours <= 24 else (
-        5 if len(members) > 1 and span_hours is not None and span_hours <= 72 else 0
+    temporal = (
+        10 if group.get("corroborated") and span_hours is not None
+        and span_hours <= 24 else
+        5 if group.get("corroborated") and span_hours is not None
+        and span_hours <= 72 else 0
     )
     public_impact = max((signal["public_impact"] for signal in signals), default=0)
     geography = min(
@@ -140,6 +146,7 @@ def rank_global_event(
     ) // 10)
     cluster_size = min(10, len({member["id"] for member in members}))
     duplicate_family = min(30, sum(max(0, count - 1) for count in family_counts.values()) * 2)
+    duplicate_syndication = min(30, int(group.get("syndicated_duplicate_count") or 0) * 5)
     stale_source = min(25, sum(
         8 for signal in signals
         if signal["ingest"].get("source_health_state_at_ingest") in {
@@ -191,6 +198,7 @@ def rank_global_event(
         "source_priority_score": priority,
         "cluster_size_score": cluster_size,
         "duplicate_family_penalty": duplicate_family,
+        "duplicate_syndication_penalty": duplicate_syndication,
         "stale_source_penalty": stale_source,
         "low_confidence_penalty": low_confidence,
         "low_public_value_penalty": low_public_value,

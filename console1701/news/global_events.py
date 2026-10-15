@@ -107,12 +107,24 @@ def global_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         "published_at": _time(item.get("source_published_at") or item.get("first_seen_at")),
         "family": _normalized((evidence.get("source") or {}).get("source_family")) or "unknown",
         "source_key": str((evidence.get("source") or {}).get("source_key") or ""),
+        "official": (evidence.get("source") or {}).get("official_status") == "official",
+        "article_url": str(item.get("canonical_url") or item.get("url") or "").strip(),
+        "syndication_id": _normalized(identity.get("syndication_id")),
     }
 
 
 def global_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str]:
     if left["identifiers"] & right["identifiers"]:
         return ["shared_event_id"]
+    if (left["article_url"] and left["article_url"] == right["article_url"]
+            and len(left["tokens"] & right["tokens"]) >= 2
+            and (not left["event_type"] or not right["event_type"]
+                 or left["event_type"] == right["event_type"])):
+        return ["same_article_url"]
+    if (left["syndication_id"] and left["syndication_id"] == right["syndication_id"]
+            and (not left["event_type"] or not right["event_type"]
+                 or left["event_type"] == right["event_type"])):
+        return ["same_syndication_id"]
     if left["family"] == "unknown" or left["family"] == right["family"]:
         return []
     if not left["event_type"] or left["event_type"] != right["event_type"]:
@@ -188,6 +200,25 @@ def correlate_global_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     for members in groups.values():
         ids = sorted(member["id"] for member in members)
         families = sorted({member["family"] for member in members if member["family"] != "unknown"})
+        credited: list[dict[str, Any]] = []
+        seen_urls: set[str] = set()
+        seen_syndication: set[str] = set()
+        for member in sorted(members, key=lambda entry: entry["id"]):
+            url = member["article_url"]
+            syndication = member["syndication_id"]
+            duplicate = bool(
+                (url and url in seen_urls)
+                or (syndication and syndication in seen_syndication)
+            )
+            if url:
+                seen_urls.add(url)
+            if syndication:
+                seen_syndication.add(syndication)
+            if not duplicate:
+                credited.append(member)
+        credited_families = sorted({
+            entry["family"] for entry in credited if entry["family"] != "unknown"
+        })
         group_matches = [entry for entry in matches if set(entry["item_ids"]) <= set(ids)]
         result.append({
             "event_key": f"global:item:{ids[0]}",
@@ -196,12 +227,21 @@ def correlate_global_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 member["source_key"] for member in members if member["source_key"]
             }),
             "families": families,
+            "credited_families": credited_families,
+            "credited_official_families": sorted({
+                entry["family"] for entry in credited
+                if entry["official"] and entry["family"] != "unknown"
+            }),
+            "syndicated_duplicate_count": len(members) - len(credited),
             "event_types": sorted({
                 member["event_type"] for member in members if member["event_type"]
             }),
             "countries": sorted(set().union(*(member["countries"] for member in members))),
             "identifiers": sorted(set().union(*(member["identifiers"] for member in members))),
             "matches": group_matches,
-            "corroborated": len(families) >= 2 and bool(group_matches),
+            "corroborated": len(credited_families) >= 2 and any(
+                "independent_family" in match["basis"]
+                or "shared_event_id" in match["basis"] for match in group_matches
+            ),
         })
     return sorted(result, key=lambda group: group["item_ids"][0])
