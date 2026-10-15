@@ -24,6 +24,7 @@
         {% set orbital_identity = evidence.orbital_identity or {} %}
         {% set orbital_impact = evidence.orbital_impact or {} %}
         {% set orbital_event = evidence.orbital_event or {} %}
+        {% set orbital_contract = evidence.orbital or {} %}
         <li class="news-item">
           <div class="news-item-head">
             <a href="{{ item.url }}" target="_blank" rel="noreferrer">{{ item.title }}</a>
@@ -117,12 +118,19 @@
                     <div><span>Mission / object</span><strong>{{ orbital_identity.mission_name or orbital_identity.mission_id or orbital_identity.object_id or "not provided" }}</strong></div>
                     <div><span>Event confidence</span><strong>{{ orbital_event.confidence or "not correlated" }}</strong></div>
                     <div><span>Source diversity</span><strong>{{ orbital_event.families | join(", ") if orbital_event.families else "not correlated" }}</strong></div>
+                    <div><span>Diversity basis</span><strong>{{ orbital_contract.source_diversity_basis or "not correlated" }}</strong></div>
                     <div><span>Impact tags</span><strong>{{ orbital_impact.tags | join(", ") or "none verified" }}</strong></div>
                   </div>
                   <ul class="news-evidence-list">
                     <li><b>Item URL</b><span>{{ item.url }}</span></li>
                     <li><b>Impact basis</b><span>{{ orbital_impact.basis | tojson }}</span></li>
+                    <li><b>Operational impact</b><span>{{ orbital_contract.operational_impact_basis | join("; ") or "not assessed" }}</span></li>
+                    <li><b>Public impact</b><span>{{ orbital_contract.public_impact_basis | join("; ") or "not assessed" }}</span></li>
+                    <li><b>Geographic impact</b><span>{{ orbital_contract.geographic_impact_basis | tojson }}</span></li>
+                    <li><b>Matching tokens</b><span>{{ orbital_contract.matching_tokens | join(", ") or "not correlated" }}</span></li>
+                    <li><b>Policy notes</b><span>{{ orbital_contract.policy_notes | join("; ") or "none recorded" }}</span></li>
                     <li><b>Ranking factors</b><span>{{ orbital_event.ranking.factors | tojson if orbital_event.ranking else "not yet correlated" }}</span></li>
+                    <li><b>Penalties</b><span>{{ orbital_contract.penalties | tojson }}</span></li>
                     <li><b>Sensitivity</b><span>{{ orbital_event.ranking.sensitivity.label if orbital_event.ranking else "not assessed" }}</span></li>
                   </ul>
                 {% endif %}

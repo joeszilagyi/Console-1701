@@ -2539,7 +2539,7 @@ tests cover policy precedence, persisted stale/parser/rate/failure states, and b
 
 ### ORBITAL Evidence Drawer Contract
 
-Status: partially implemented.
+Status: completed 2026-10-15 for first-pass evidence contract.
 
 Define and test evidence payloads for ORBITAL items and events. Include source ids, source names,
 families, classes, URLs, official flags, published times, first/last seen, fetch run ids, parser
@@ -2548,12 +2548,13 @@ diversity basis, local/global impact basis, sensitivity decision, retention expi
 tokens, event type, event confidence, policy notes, low-public-value penalty, sensitivity penalty,
 rumor penalty, out-of-scope penalty, mission/object labels, and safe satellite/reentry metadata.
 
-Current state: ORBITAL item and cluster drawers display stored source identity, parser, official
-status, timestamps, fetch run, source health at ingest, policy, retention, event type and
-confidence, mission/object label, match reasons, factor score/reasons, impact tags with field
-basis, and sensitivity label. Remaining work: formalize operational/public impact basis and
-source-diversity basis in the event contract, validate token and restricted metadata display,
-and test direct item-detail payload fields.
+Current state: `orbital_evidence.py` builds a bounded persisted item contract with source
+identity/name/family/class/URL/official status, timestamps, fetch run, parser and source health,
+ranking features/reasons, source-backed operational/public impact basis, family-diversity basis,
+canonical impact tags and field/geography basis, sensitivity decision, retention, match tokens and
+basis, event type/confidence, policy notes, penalties, mission/object labels, and optional safe
+satellite/reentry identifiers. The ORBITAL item and cluster drawers render the core fields. A
+fixture scan tests the direct item-detail payload and HTML without GET-time fetching.
 
 ### ORBITAL Official-Source Live Ingest Phase, Disabled By Default
 
