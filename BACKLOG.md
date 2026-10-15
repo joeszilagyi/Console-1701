@@ -2505,13 +2505,19 @@ facts, NEO identity, unsupported geography, and persisted scan output.
 
 ### ORBITAL UI Disabled States
 
-Status: not implemented.
+Status: partially implemented.
 
 Replace ORBITAL placeholders only after storage/config support exists. Show honest states for
 disabled, not configured, configured but disabled, never scanned, stale, policy blocked, parser
 failed, auth required, rate limited, restricted source disabled, social disabled, homepage
 extraction disabled, manual-review-only, token/account source not configured, and source-health
 only. Do not show fake headlines.
+
+Current state: the shared scope page reads SQLite/config, shows honest empty cards and source
+health, and now renders ORBITAL item and cluster evidence including event confidence, source
+families, ranking reasons, impact tags/basis, and mission/object labels. A page test forbids fetch
+and fixture access during GET. Remaining work: expand the distinct ORBITAL source-health states
+and exercise each disabled/error presentation, including SYSTEM summary.
 
 ### ORBITAL Source Health States
 
@@ -2525,7 +2531,7 @@ Implement source health states for ORBITAL: `disabled`, `not_configured`,
 
 ### ORBITAL Evidence Drawer Contract
 
-Status: not implemented.
+Status: partially implemented.
 
 Define and test evidence payloads for ORBITAL items and events. Include source ids, source names,
 families, classes, URLs, official flags, published times, first/last seen, fetch run ids, parser
@@ -2533,6 +2539,13 @@ names, source health, ranking features, operational impact basis, public impact 
 diversity basis, local/global impact basis, sensitivity decision, retention expiration, matching
 tokens, event type, event confidence, policy notes, low-public-value penalty, sensitivity penalty,
 rumor penalty, out-of-scope penalty, mission/object labels, and safe satellite/reentry metadata.
+
+Current state: ORBITAL item and cluster drawers display stored source identity, parser, official
+status, timestamps, fetch run, source health at ingest, policy, retention, event type and
+confidence, mission/object label, match reasons, factor score/reasons, impact tags with field
+basis, and sensitivity label. Remaining work: formalize operational/public impact basis and
+source-diversity basis in the event contract, validate token and restricted metadata display,
+and test direct item-detail payload fields.
 
 ### ORBITAL Official-Source Live Ingest Phase, Disabled By Default
 
