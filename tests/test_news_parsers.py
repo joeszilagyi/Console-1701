@@ -338,6 +338,13 @@ def test_national_usgs_fixture_filters_geography_and_magnitude() -> None:
     assert all(item["evidence"]["usgs_earthquake"]["filter"]["geography_basis"]
                == "coarse_us_region_coordinates" for item in items)
     assert items[0]["evidence"]["usgs_earthquake"]["felt"] == 247
+    assert items[0]["evidence"]["usgs_earthquake"]["ranking"][
+        "national_felt_impact_score"
+    ] == 20
+    assert items[0]["evidence"]["national_identity"]["multi_state_impact"] is False
+    assert "no verified state distribution" in items[0]["evidence"]["national_identity"][
+        "impact_scope_basis"
+    ]
     assert items[0]["evidence"]["usgs_earthquake"]["depth_km"] == 12.7
     assert all("national" in item["tags"] for item in items)
 

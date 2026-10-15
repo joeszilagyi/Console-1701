@@ -24,7 +24,14 @@ def _names(row: dict[str, Any], key: str, *, limit: int = 3) -> list[str]:
 def parse_cpsc_recalls_json(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:
     if source.get("scope") != "NATIONAL" or source.get("id") != "cpsc_recalls_api":
         raise NewsParserError("CPSC parser requires its exact NATIONAL source")
-    if source.get("url") != CPSC_RECALL_SERVICE or not source.get("fixture_only"):
+    fixture_url = str(source.get("url") or "")
+    official_fixture = (
+        urlsplit(fixture_url).scheme == "file"
+        and source.get("official_url") == CPSC_RECALL_SERVICE
+    )
+    if not source.get("fixture_only") or not (
+        fixture_url == CPSC_RECALL_SERVICE or official_fixture
+    ):
         raise NewsParserError("CPSC parser requires the official fixture-only service")
     query = source.get("query_contract")
     if not isinstance(query, dict) or set(query) != {"recall_date_start", "recall_date_end",
