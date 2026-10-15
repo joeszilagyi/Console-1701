@@ -127,6 +127,7 @@
                     <li><b>Impact tags</b><span>{{ global_evidence.impact_tags | join(", ") or "not assessed" }}</span></li>
                     <li><b>Sensitivity notes</b><span>{{ global_evidence.sensitivity_notes | join("; ") or "none recorded" }}</span></li>
                     <li><b>Ranking factors</b><span>{{ ranking.factors | tojson }}</span></li>
+                    <li><b>Event ranking features</b><span>{{ global_evidence.ranking_features | tojson }}</span></li>
                   </ul>
                 {% endif %}
                 {% if item.scope == "ORBITAL" %}
@@ -475,6 +476,12 @@
                     {% for reason in global_event.ranking.reasons %}
                       <li><b>Rank</b><span>{{ reason }}</span></li>
                     {% endfor %}
+                    {% for member in global_event.member_evidence %}
+                      <li><b>Item {{ member.item_id }}</b><span>{{ member.source_name }} · {{ member.source_family or "unknown family" }} · {{ member.event_confidence or "unassessed" }} · {{ member.geography_basis or "no geography" }} · {{ member.public_impact_basis | join("; ") if member.public_impact_basis else "impact not assessed" }} · {{ member.retention_expires_at or "no expiry" }}</span></li>
+                    {% endfor %}
+                    {% if global_event.member_evidence_truncated %}
+                      <li><b>Members</b><span>Evidence shown for the first 30 items.</span></li>
+                    {% endif %}
                   </ul>
                 {% endif %}
                 {% if view['scope'] == "ORBITAL" and orbital_event %}

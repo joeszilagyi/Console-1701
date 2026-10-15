@@ -2080,7 +2080,7 @@ social-disabled, and homepage-extraction-disabled outcomes with fetch-run eviden
 
 ### GLOBAL Evidence Drawer Contract
 
-Status: partially implemented.
+Status: implemented for first pass.
 
 Define and test evidence payloads for GLOBAL items and events. Include source ids, names, families,
 classes, item URLs, canonical URLs, official flags, published times, first/last seen, fetch run ids,
@@ -2090,12 +2090,13 @@ notes, sensitivity notes, low-public-value penalty, out-of-scope penalty, and im
 
 Current state: fixture-ingested GLOBAL items persist a versioned `evidence.global` payload with
 source identity/class/official status, URL and seen/published times, fetch/parser/health context,
-parser-provided geography and event type, policy and sensitivity notes, and explicit unassessed
-values for impact and penalty fields. The GLOBAL item drawer displays the contract alongside
-existing retention and ranking evidence. A deterministic first pass now fills event ID,
-source-family, matching, confidence, score factors, source-provided public-impact basis, and
-explicit penalty evidence in GLOBAL cluster traces. Full event identity, impact, and penalty
-coverage still depends on the source-specific adapters and policy rules in RS-078 through RS-080.
+parser-provided geography and event type, attention-policy and sensitivity notes, retention expiry,
+matching, score factors, source-provided public-impact basis, and explicit penalty evidence. The
+item drawer displays these fields. GLOBAL clusters include pairwise match reasons, event ranking,
+and a bounded snapshot of each member's item contract, including policy and redaction evidence;
+the cluster drawer shows source, confidence, geography, impact, expiry, match, and ranking details.
+Offline scan/page and sensitive-content regressions verify persistence and presentation. Future
+adapters still need their own source-specific event and impact evidence before admission.
 
 ### GLOBAL Official-Source Live Ingest Phase, Disabled By Default
 

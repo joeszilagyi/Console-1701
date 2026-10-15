@@ -44,7 +44,11 @@ def test_global_evidence_contract_persists_facts_and_unassessed_fields(tmp_path,
             "SELECT scope, url, first_seen_at, last_seen_at, expires_at, evidence_json "
             "FROM news_items WHERE scope = 'GLOBAL'"
         ).fetchone()
+        cluster = conn.execute(
+            "SELECT evidence_json FROM news_clusters WHERE scope = 'GLOBAL'"
+        ).fetchone()
     contract = json_loads(row["evidence_json"], {})["global"]
+    event = json_loads(cluster["evidence_json"], {})["global_event"]
     assert contract["contract_version"] == 1
     assert contract["source_key"] == "gdacs_contract_fixture"
     assert contract["source_name"] == "GDACS contract fixture"
@@ -64,6 +68,11 @@ def test_global_evidence_contract_persists_facts_and_unassessed_fields(tmp_path,
     assert contract["low_public_value_penalty"] == 0
     assert contract["out_of_scope_penalty"] == 0
     assert contract["matching_tokens"] == []
+    assert contract["retention_expires_at"] == row["expires_at"]
+    assert contract["ranking_features"] == event["ranking"]["factors"]
+    assert event["member_evidence"][0]["source_key"] == "gdacs_contract_fixture"
+    assert event["member_evidence"][0]["retention_expires_at"] == row["expires_at"]
+    assert event["member_evidence_truncated"] is False
 
     router = build_router(str(config_path))
     route = next(
@@ -81,3 +90,5 @@ def test_global_evidence_contract_persists_facts_and_unassessed_fields(tmp_path,
     assert "not_correlated" in body
     assert "Costa Rica" in body
     assert "not assessed" in body
+    assert "Event ranking features" in body
+    assert f"Item {event['item_ids'][0]}" in body

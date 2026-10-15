@@ -95,3 +95,7 @@ def test_scan_suppresses_graphic_title_before_sqlite_storage(tmp_path, monkeypat
     assert clusters == 0
     evidence = json_loads(row["evidence_json"], {})
     assert evidence["global_attention_policy"]["attention_state"] == "suppressed"
+    assert evidence["global"]["attention_state"] == "suppressed"
+    assert "graphic_violence" in evidence["global"]["sensitivity_notes"]
+    assert "redacted_before_storage" in evidence["global"]["sensitivity_notes"]
+    assert "explicit graphic-content headline" in evidence["global"]["policy_notes"]
