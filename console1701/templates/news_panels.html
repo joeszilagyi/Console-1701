@@ -19,6 +19,7 @@
         {% set ranking = evidence.ranking or {} %}
         {% set source_health = evidence.source_health or {} %}
         {% set local_event = evidence.local_event or {} %}
+        {% set global_evidence = evidence.global or {} %}
         <li class="news-item">
           <div class="news-item-head">
             <a href="{{ item.url }}" target="_blank" rel="noreferrer">{{ item.title }}</a>
@@ -53,6 +54,32 @@
                     {% for note in policy.notes %}
                       <li><b>Policy</b><span>{{ note }}</span></li>
                     {% endfor %}
+                  </ul>
+                {% endif %}
+                {% if item.scope == "GLOBAL" and global_evidence %}
+                  <div class="news-evidence-grid">
+                    <div><span>Source ID</span><strong>{{ global_evidence.source_key }}</strong></div>
+                    <div><span>Family / class</span><strong>{{ global_evidence.source_family or "unknown" }} / {{ global_evidence.source_class or "unknown" }}</strong></div>
+                    <div><span>Official status</span><strong>{{ global_evidence.official_status or "unverified" }}</strong></div>
+                    <div><span>Parser</span><strong>{{ global_evidence.parser or "unknown" }}</strong></div>
+                    <div><span>Published</span><strong>{{ global_evidence.published_at or "unknown" }}</strong></div>
+                    <div><span>First / last seen</span><strong>{{ global_evidence.first_seen_at }} / {{ global_evidence.last_seen_at }}</strong></div>
+                    <div><span>Event type</span><strong>{{ global_evidence.event_type or "unclassified" }}</strong></div>
+                    <div><span>Event confidence</span><strong>{{ global_evidence.event_confidence if global_evidence.event_confidence is not none else "not assessed" }}</strong></div>
+                    <div><span>Affected countries</span><strong>{{ global_evidence.affected_countries | join(", ") or "not provided" }}</strong></div>
+                    <div><span>Affected regions</span><strong>{{ global_evidence.affected_regions | join(", ") or "not provided" }}</strong></div>
+                    <div><span>Geography basis</span><strong>{{ global_evidence.geography_basis }}</strong></div>
+                    <div><span>Source diversity</span><strong>{{ global_evidence.source_diversity_basis }}</strong></div>
+                    <div><span>Public impact</span><strong>{{ global_evidence.public_impact_basis or "not assessed" }}</strong></div>
+                    <div><span>Low-value / scope penalties</span><strong>{{ global_evidence.low_public_value_penalty if global_evidence.low_public_value_penalty is not none else "not assessed" }} / {{ global_evidence.out_of_scope_penalty if global_evidence.out_of_scope_penalty is not none else "not assessed" }}</strong></div>
+                  </div>
+                  <ul class="news-evidence-list">
+                    <li><b>Item URL</b><span>{{ global_evidence.item_url }}</span></li>
+                    <li><b>Canonical URL</b><span>{{ global_evidence.canonical_url or "not provided" }}</span></li>
+                    <li><b>Matching tokens</b><span>{{ global_evidence.matching_tokens | join(", ") or "not correlated" }}</span></li>
+                    <li><b>Impact tags</b><span>{{ global_evidence.impact_tags | join(", ") or "not assessed" }}</span></li>
+                    <li><b>Sensitivity notes</b><span>{{ global_evidence.sensitivity_notes | join("; ") or "none recorded" }}</span></li>
+                    <li><b>Ranking factors</b><span>{{ ranking.factors | tojson }}</span></li>
                   </ul>
                 {% endif %}
                 {% if local_event %}

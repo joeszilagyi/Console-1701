@@ -1763,6 +1763,69 @@ def _upsert_local_event(
     }
 
 
+def _global_evidence_contract(
+    source: dict[str, Any],
+    item: dict[str, Any],
+    evidence: dict[str, Any],
+    *,
+    first_seen_at: str,
+    last_seen_at: str,
+) -> dict[str, Any]:
+    """Record known GLOBAL facts and explicit gaps before event correlation exists."""
+    gdacs = evidence.get("gdacs") or {}
+    disaster = evidence.get("reliefweb_disaster") or {}
+    report = evidence.get("reliefweb_report") or {}
+    who = evidence.get("who_don") or {}
+    countries = list(dict.fromkeys([
+        *([gdacs["country"]] if gdacs.get("country") else []),
+        *(gdacs.get("affected_countries") or []),
+        *(disaster.get("countries") or []),
+        *(report.get("countries") or []),
+    ]))
+    event_type = (
+        gdacs.get("event_type") or disaster.get("primary_type")
+        or who.get("hazard_label")
+    )
+    regions = [who["geography_label"]] if who.get("geography_label") else []
+    return {
+        "contract_version": 1,
+        "item_url": item["url"],
+        "canonical_url": item.get("canonical_url"),
+        "published_at": item.get("source_published_at"),
+        "first_seen_at": first_seen_at,
+        "last_seen_at": last_seen_at,
+        "source_key": source["id"],
+        "source_name": source["name"],
+        "source_family": source.get("source_family"),
+        "source_class": source.get("source_class"),
+        "official_status": source.get("official_status"),
+        "fetch_run_id": (evidence.get("ingest") or {}).get("fetch_run_id"),
+        "parser": source.get("parser"),
+        "source_health_at_ingest": (evidence.get("ingest") or {}).get(
+            "source_health_state_at_ingest"
+        ),
+        "affected_countries": countries,
+        "affected_regions": regions,
+        "geography_basis": (
+            "official_source_fields" if countries else
+            who.get("geography_basis") if regions else "not_provided"
+        ),
+        "event_type": event_type,
+        "event_confidence": None,
+        "matching_tokens": [],
+        "source_diversity_basis": "not_correlated",
+        "public_impact_basis": None,
+        "low_public_value_penalty": None,
+        "out_of_scope_penalty": None,
+        "impact_tags": [],
+        "policy_notes": (evidence.get("policy") or {}).get("notes") or [],
+        "sensitivity_notes": [
+            str(source[key]) for key in ("policy_risk", "retention_sensitivity")
+            if source.get(key)
+        ],
+    }
+
+
 def _upsert_item(
     conn: sqlite3.Connection,
     source_id: int,
@@ -1848,6 +1911,14 @@ def _upsert_item(
         "url": item["url"],
         "status": "active",
     }
+    if str(source.get("scope") or "").upper() == "GLOBAL":
+        evidence["global"] = _global_evidence_contract(
+            source,
+            item,
+            evidence,
+            first_seen_at=str(existing["first_seen_at"]) if existing else seen_at,
+            last_seen_at=seen_at,
+        )
     item_rank = int(ranking["score"])
     local_event: dict[str, Any] | None = None
     local_event_id = None
