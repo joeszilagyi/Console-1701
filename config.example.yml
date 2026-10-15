@@ -108,6 +108,41 @@ national:
   recall_attention_classes: [Class I, high_public_impact]
   cyber_attention_minimum: [known_exploited, emergency_directive, high_impact_advisory]
 
+global:
+  enabled: false
+  default_place_label: World
+  include_disasters: true
+  include_humanitarian: true
+  include_public_health: true
+  include_weather_hazards: true
+  include_tropical_cyclones: true
+  include_earthquakes: true
+  include_tsunami: true
+  include_volcanoes: true
+  include_wildfire_smoke: true
+  include_air_quality: true
+  include_conflict_humanitarian: true
+  include_diplomacy_institutions: true
+  include_transport_supply_chain: true
+  include_cybersecurity: true
+  include_global_economy: false
+  include_global_news: true
+  include_social_sources: false
+  include_us_impact_tags: true
+  include_local_impact_tags: true
+  allow_auth_required_sources: false
+  allow_heavy_open_data_sources: false
+  allow_homepage_extractors: false
+  conflict_sources_require_policy_review: true
+  earthquake_min_magnitude: 6.0
+  tsunami_attention_minimum: watch
+  tropical_cyclone_attention_minimum: watch
+  gdacs_attention_minimum: orange
+  humanitarian_attention_minimum: disaster
+  outbreak_attention_minimum: who_don
+  conflict_attention_minimum: official_or_multi_source
+  wildfire_attention_minimum: major_or_smoke_impact
+
 news:
   enabled: false
   retention:

@@ -181,6 +181,42 @@ DEFAULT_NATIONAL_CONFIG: dict[str, Any] = {
     ],
 }
 
+DEFAULT_GLOBAL_CONFIG: dict[str, Any] = {
+    "enabled": False,
+    "default_place_label": "World",
+    "include_disasters": True,
+    "include_humanitarian": True,
+    "include_public_health": True,
+    "include_weather_hazards": True,
+    "include_tropical_cyclones": True,
+    "include_earthquakes": True,
+    "include_tsunami": True,
+    "include_volcanoes": True,
+    "include_wildfire_smoke": True,
+    "include_air_quality": True,
+    "include_conflict_humanitarian": True,
+    "include_diplomacy_institutions": True,
+    "include_transport_supply_chain": True,
+    "include_cybersecurity": True,
+    "include_global_economy": False,
+    "include_global_news": True,
+    "include_social_sources": False,
+    "include_us_impact_tags": True,
+    "include_local_impact_tags": True,
+    "allow_auth_required_sources": False,
+    "allow_heavy_open_data_sources": False,
+    "allow_homepage_extractors": False,
+    "conflict_sources_require_policy_review": True,
+    "earthquake_min_magnitude": 6.0,
+    "tsunami_attention_minimum": "watch",
+    "tropical_cyclone_attention_minimum": "watch",
+    "gdacs_attention_minimum": "orange",
+    "humanitarian_attention_minimum": "disaster",
+    "outbreak_attention_minimum": "who_don",
+    "conflict_attention_minimum": "official_or_multi_source",
+    "wildfire_attention_minimum": "major_or_smoke_impact",
+}
+
 DEFAULT_NEWS_CONFIG: dict[str, Any] = {
     "enabled": False,
     "retention": {
@@ -276,6 +312,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "regional": DEFAULT_REGIONAL_CONFIG,
     "local": DEFAULT_LOCAL_CONFIG,
     "national": DEFAULT_NATIONAL_CONFIG,
+    "global": DEFAULT_GLOBAL_CONFIG,
     "news": DEFAULT_NEWS_CONFIG,
     "projects": [
         {
@@ -405,6 +442,7 @@ def normalize_config(config: dict[str, Any]) -> None:
     normalize_local_config(config)
     normalize_regional_config(config)
     normalize_national_config(config)
+    normalize_global_config(config)
     normalize_news_config(config)
 
 
@@ -480,7 +518,7 @@ def _normalize_optional_keyword(
 
 
 def _apply_scope_registry_defaults(source_cfg: dict[str, Any], scope: str) -> dict[str, Any]:
-    if scope not in {"LOCAL", "REGIONAL", "NATIONAL"}:
+    if scope not in {"LOCAL", "REGIONAL", "NATIONAL", "GLOBAL"}:
         return source_cfg
     source_key = str(source_cfg.get("id") or "").strip()
     if not source_key:
@@ -493,10 +531,14 @@ def _apply_scope_registry_defaults(source_cfg: dict[str, Any], scope: str) -> di
         from console1701.news.regional_registry import regional_registry_config_defaults
 
         defaults = regional_registry_config_defaults(source_key)
-    else:
+    elif scope == "NATIONAL":
         from console1701.news.national_registry import national_registry_config_defaults
 
         defaults = national_registry_config_defaults(source_key)
+    else:
+        from console1701.news.global_registry import global_registry_config_defaults
+
+        defaults = global_registry_config_defaults(source_key)
     if not defaults:
         return source_cfg
     return deep_merge(defaults, source_cfg)
@@ -606,6 +648,41 @@ def normalize_national_config(config: dict[str, Any]) -> None:
         national[key] = _normalize_string_list(national.get(key), f"national.{key}")
 
 
+def normalize_global_config(config: dict[str, Any]) -> None:
+    global_cfg = _require_mapping(
+        config.setdefault("global", deepcopy(DEFAULT_GLOBAL_CONFIG)), "global"
+    )
+    global_cfg["enabled"] = _coerce_bool(global_cfg.get("enabled", False), "global.enabled")
+    global_cfg["default_place_label"] = _require_string(
+        global_cfg.get("default_place_label", "World"), "global.default_place_label"
+    )
+    for key, default in DEFAULT_GLOBAL_CONFIG.items():
+        if key.startswith(("include_", "allow_")) or key == (
+            "conflict_sources_require_policy_review"
+        ):
+            global_cfg[key] = _coerce_bool(global_cfg.get(key, default), f"global.{key}")
+    global_cfg["earthquake_min_magnitude"] = _coerce_float(
+        global_cfg.get("earthquake_min_magnitude", 6.0),
+        "global.earthquake_min_magnitude",
+        minimum=0.0,
+    )
+    if not isfinite(global_cfg["earthquake_min_magnitude"]):
+        raise ConfigError("global.earthquake_min_magnitude must be finite.")
+    for key, allowed in (
+        ("tsunami_attention_minimum", {"watch", "warning"}),
+        ("tropical_cyclone_attention_minimum", {"watch", "warning"}),
+        ("gdacs_attention_minimum", {"green", "orange", "red"}),
+        ("humanitarian_attention_minimum", {"disaster", "crisis"}),
+        ("outbreak_attention_minimum", {"who_don", "official_public_health"}),
+        ("conflict_attention_minimum", {"official_or_multi_source", "official_only"}),
+        ("wildfire_attention_minimum", {"major_or_smoke_impact", "major_only"}),
+    ):
+        value = _require_string(global_cfg.get(key), f"global.{key}").lower()
+        if value not in allowed:
+            raise ConfigError(f"global.{key} must be one of: {', '.join(sorted(allowed))}.")
+        global_cfg[key] = value
+
+
 def _normalize_local_source_metadata(
     source_cfg: dict[str, Any],
     *,
@@ -692,6 +769,83 @@ def _normalize_regional_source_metadata(
         )
 
 
+def _normalize_global_source_metadata(
+    source_cfg: dict[str, Any], *, path: str, global_cfg: dict[str, Any]
+) -> None:
+    from console1701.news.global_registry import (
+        GLOBAL_ADAPTER_TYPES,
+        GLOBAL_AUTH_REQUIRED_SOURCE_KEYS,
+        GLOBAL_FUTURE_PHASES,
+        GLOBAL_OFFICIAL_STATUSES,
+        GLOBAL_RISK_LEVELS,
+        GLOBAL_SOURCE_CLASSES,
+        GLOBAL_SOURCE_FAMILIES,
+        GLOBAL_VERIFICATION_STATUSES,
+    )
+
+    source_family = _normalize_optional_keyword(
+        source_cfg, "source_family", path, allowed=GLOBAL_SOURCE_FAMILIES
+    )
+    source_class = _normalize_optional_keyword(
+        source_cfg, "source_class", path, allowed=GLOBAL_SOURCE_CLASSES
+    )
+    _normalize_optional_keyword(source_cfg, "adapter", path, allowed=GLOBAL_ADAPTER_TYPES)
+    _normalize_optional_keyword(
+        source_cfg, "official_status", path, allowed=GLOBAL_OFFICIAL_STATUSES
+    )
+    _normalize_optional_keyword(
+        source_cfg, "verification_status", path, allowed=GLOBAL_VERIFICATION_STATUSES
+    )
+    future_phase = _normalize_optional_keyword(
+        source_cfg, "future_phase", path, allowed={phase.lower() for phase in GLOBAL_FUTURE_PHASES}
+    )
+    if future_phase:
+        source_cfg["future_phase"] = future_phase.upper()
+    for key in ("privacy_risk", "policy_risk", "parser_risk", "retention_sensitivity"):
+        _normalize_optional_keyword(source_cfg, key, path, allowed=GLOBAL_RISK_LEVELS)
+
+    is_social = source_class == "social_candidate" or source_family in LOCAL_SOCIAL_SOURCE_FAMILIES
+    if is_social and not global_cfg["include_social_sources"]:
+        raise ConfigError(
+            f"{path} is a GLOBAL social source; set global.include_social_sources true first."
+        )
+    if source_class == "heavy_open_data_candidate" and not global_cfg[
+        "allow_heavy_open_data_sources"
+    ]:
+        raise ConfigError(
+            f"{path} is a heavy GLOBAL open-data source; set "
+            "global.allow_heavy_open_data_sources true first."
+        )
+    if source_cfg.get("kind") in NEWS_HOMEPAGE_SOURCE_KINDS and not global_cfg[
+        "allow_homepage_extractors"
+    ]:
+        raise ConfigError(
+            f"{path} kind uses homepage extraction; set "
+            "global.allow_homepage_extractors true first."
+        )
+    source_enabled = _coerce_bool(source_cfg.get("enabled", False), f"{path}.enabled")
+    auth_required = (
+        source_cfg.get("id") in GLOBAL_AUTH_REQUIRED_SOURCE_KEYS
+        or source_cfg.get("auth") is not None
+    )
+    if source_enabled and auth_required and not global_cfg["allow_auth_required_sources"]:
+        raise ConfigError(
+            f"{path} requires auth; set global.allow_auth_required_sources true first."
+        )
+    if "policy_reviewed" in source_cfg:
+        source_cfg["policy_reviewed"] = _coerce_bool(
+            source_cfg["policy_reviewed"], f"{path}.policy_reviewed"
+        )
+    if (
+        source_enabled
+        and source_class == "official_conflict_humanitarian"
+        and source_cfg.get("policy_risk") == "high"
+        and global_cfg["conflict_sources_require_policy_review"]
+        and not source_cfg.get("policy_reviewed")
+    ):
+        raise ConfigError(f"{path} requires recorded GLOBAL conflict-source policy review.")
+
+
 def _normalize_news_source(
     source: Any,
     *,
@@ -701,6 +855,7 @@ def _normalize_news_source(
     local_cfg: dict[str, Any],
     regional_cfg: dict[str, Any],
     national_cfg: dict[str, Any],
+    global_cfg: dict[str, Any],
     seen_source_keys: set[tuple[str, str]],
 ) -> dict[str, Any]:
     path = f"news.scopes.{scope}.sources[{index}]"
@@ -775,6 +930,8 @@ def _normalize_news_source(
                 f"{path} is a NATIONAL social source; set "
                 "national.include_social_sources true first."
             )
+    if source_scope == "GLOBAL":
+        _normalize_global_source_metadata(source_cfg, path=path, global_cfg=global_cfg)
 
     source_cfg["enabled"] = _coerce_bool(source_cfg.get("enabled", False), f"{path}.enabled")
     source_cfg["priority"] = _coerce_int(source_cfg.get("priority", 50), f"{path}.priority")
@@ -823,6 +980,10 @@ def normalize_news_config(config: dict[str, Any]) -> None:
     national_cfg = _require_mapping(
         config.setdefault("national", deepcopy(DEFAULT_NATIONAL_CONFIG)),
         "national",
+    )
+    global_cfg = _require_mapping(
+        config.setdefault("global", deepcopy(DEFAULT_GLOBAL_CONFIG)),
+        "global",
     )
     news["enabled"] = _coerce_bool(news.get("enabled", False), "news.enabled")
 
@@ -939,6 +1100,7 @@ def normalize_news_config(config: dict[str, Any]) -> None:
                 local_cfg=local_cfg,
                 regional_cfg=regional_cfg,
                 national_cfg=national_cfg,
+                global_cfg=global_cfg,
                 seen_source_keys=seen_source_keys,
             )
             for index, source in enumerate(sources)

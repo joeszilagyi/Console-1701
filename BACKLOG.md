@@ -1354,7 +1354,7 @@ Architecture reference:
 
 ### GLOBAL Source Registry Design Implementation
 
-Status: not implemented.
+Status: implemented.
 
 Implement the GLOBAL source registry from the design document with explicit `source_key`,
 `source_name`, `source_family`, `source_class`, `scope`, `raw_url`, access kind, adapter type,
@@ -1362,9 +1362,16 @@ refresh interval, priority, official status, privacy risk, policy risk, parser r
 sensitivity, verification status, source-health behavior, and future phase fields. Validate enum
 values and keep every GLOBAL source disabled until explicitly configured.
 
+Current state: `console1701/news/global_registry.json` contains all 172 GLOBAL source targets from
+the checked-in design inventory, preserving provenance, access, risk, verification, priority, and
+future-phase fields. The loader validates scope, URL shape, enum values, and duplicate keys, and
+adds source-health planning behavior. Config defaults remain disabled, known metadata fields reject
+unknown values, and explicit `news-scan` persists the inventory in `news_source_registry`. This is
+planning metadata; it does not enable or allowlist any GLOBAL live request.
+
 ### Disabled-By-Default GLOBAL Config
 
-Status: not implemented.
+Status: implemented.
 
 Add a `global:` or equivalent GLOBAL config tree that defaults to disabled. Include flags for
 disasters, humanitarian, public health, weather hazards, tropical cyclones, earthquakes, tsunamis,
@@ -1373,15 +1380,26 @@ transport/supply chain, cybersecurity, global economy, global news, social sourc
 tags, and local impact tags. Reject social, auth-required, heavy open-data, and homepage extraction
 sources unless explicit local flags are set.
 
+Current state: `global:` defaults to disabled and validates the specified inclusion flags,
+impact tags, thresholds, and attention settings. Source normalization validates registry metadata
+and rejects social, heavy open-data, homepage, enabled auth-required, and high-policy-risk conflict
+sources unless their explicit local gates are satisfied. The example config documents the disabled
+settings. No GLOBAL source is live allowlisted.
+
 ### GLOBAL SQLite Schema Or Extension
 
-Status: not implemented.
+Status: partially implemented.
 
 Add or extend SQLite storage for GLOBAL source registry state, fetch runs, normalized items,
 `global_events` or scoped clusters, source health, ranking explanations, crisis sensitivity flags,
 impact tags, retention purge evidence, and source verification metadata. Use JSON-heavy columns and
 indexes for latest-by-scope, event ranking, source health, source family, event type, affected
 country/region, and `expires_at` purge. Do not store full article bodies by default.
+
+Current state: the shared scoped source registry stores all 172 GLOBAL inventory rows and exposes a
+GLOBAL registry summary. Shared source, fetch, item, health, cluster, and retention tables can
+persist GLOBAL records. Dedicated affected-country/region and event-type query indexes, crisis
+sensitivity evidence, and retention/purge verification remain pending.
 
 ### GLOBAL Fixture Pack
 

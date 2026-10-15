@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from console1701.config import LOCAL_SOCIAL_SOURCE_FAMILIES, NEWS_HOMEPAGE_SOURCE_KINDS
+from console1701.news.global_registry import GLOBAL_AUTH_REQUIRED_SOURCE_KEYS
 from console1701.news.national_registry import NATIONAL_AUTH_REQUIRED_SOURCE_KEYS
 from console1701.news.official_http import is_supported_official_source
 
@@ -57,6 +58,8 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
     scope = str(source.get("scope") or "").upper()
     auth_required = bool(auth_cfg) or (
         scope == "NATIONAL" and str(source.get("id") or "") in NATIONAL_AUTH_REQUIRED_SOURCE_KEYS
+    ) or (
+        scope == "GLOBAL" and str(source.get("id") or "") in GLOBAL_AUTH_REQUIRED_SOURCE_KEYS
     )
     auth_configured = bool(auth_cfg and any(str(value).strip() for value in auth_cfg.values()))
     is_local_fixture = url.startswith("file://")
@@ -67,6 +70,8 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
         if source.get("scope") == "REGIONAL"
         else bool((config.get("national") or {}).get("enabled"))
         if source.get("scope") == "NATIONAL"
+        else bool((config.get("global") or {}).get("enabled"))
+        if source.get("scope") == "GLOBAL"
         else False
     )
     is_allowed_official_http = (
@@ -90,6 +95,11 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
         scope == "REGIONAL"
         and is_social
         and not bool((config.get("regional") or {}).get("allow_social_sources"))
+    )
+    global_social_blocked = (
+        scope == "GLOBAL"
+        and is_social
+        and not bool((config.get("global") or {}).get("include_social_sources"))
     )
 
     if is_local_fixture:
@@ -139,6 +149,8 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
         notes.append("NATIONAL social source allowance is disabled.")
     if regional_social_blocked:
         notes.append("REGIONAL social source allowance is disabled.")
+    if global_social_blocked:
+        notes.append("GLOBAL social source allowance is disabled.")
     for note in source.get("evidence_notes") or []:
         if note not in notes:
             notes.append(str(note))
@@ -170,6 +182,7 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
             (local_policy and local_policy.get("social_source_blocked"))
             or national_social_blocked
             or regional_social_blocked
+            or global_social_blocked
         ),
         "local": local_policy,
         "notes": notes,
