@@ -1297,8 +1297,11 @@ event ID, magnitude, depth, place, time, felt/intensity, official URL, and seism
 The NATIONAL event rank now uses bounded USGS magnitude/alert severity and felt-report impact,
 with an explicit scope note that the summary count has no verified state distribution. It never
 sets multi-state impact from felt totals or the coarse epicenter region. The coarse regions remain
-a first-pass relevance filter, not a U.S. boundary determination; nuanced cross-border and
-multi-state felt-impact routing remains pending.
+a first-pass relevance filter, not a U.S. boundary determination. A source-place country suffix
+now excludes clearly labeled Canada, Mexico, Caribbean, and Central American events that fall
+inside those broad boxes; the fixture includes high-felt foreign events and a U.S. place-name
+regression. This guard cannot decide border-near epicenters from a nearest-place label. Nuanced
+cross-border routing and verified multi-state felt-impact evidence remain pending.
 
 ### FEMA/OpenFEMA Disaster Declarations Research
 

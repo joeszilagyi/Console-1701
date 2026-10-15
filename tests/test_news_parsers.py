@@ -337,6 +337,8 @@ def test_national_usgs_fixture_filters_geography_and_magnitude() -> None:
                for item in items)
     assert all(item["evidence"]["usgs_earthquake"]["filter"]["geography_basis"]
                == "coarse_us_region_coordinates" for item in items)
+    assert all(item["evidence"]["usgs_earthquake"]["filter"]["foreign_place_label_guard"]
+               is True for item in items)
     assert items[0]["evidence"]["usgs_earthquake"]["felt"] == 247
     assert items[0]["evidence"]["usgs_earthquake"]["ranking"][
         "national_felt_impact_score"
@@ -352,6 +354,20 @@ def test_national_usgs_fixture_filters_geography_and_magnitude() -> None:
     assert len(stricter) == 1
     with pytest.raises(NewsParserError, match="finite nonnegative"):
         parse_fixture_items({**source, "min_magnitude": float("nan")}, fixture)
+
+
+def test_national_usgs_country_suffix_guard_keeps_us_place_names() -> None:
+    source = {"id": "usgs_national_fixture", "scope": "NATIONAL",
+              "kind": "api_json", "parser": "usgs_earthquake_geojson"}
+    fixture = json.loads((Path(__file__).parent /
+                          "fixtures/news/national_usgs_earthquakes.json").read_text())
+    event = fixture["features"][0]
+    event["properties"]["place"] = "Northern New Mexico"
+    event["geometry"]["coordinates"] = [-106.1, 35.0, 12.7]
+    fixture["features"] = [event]
+    items = parse_fixture_items(source, json.dumps(fixture))
+    assert len(items) == 1
+    assert items[0]["evidence"]["national_identity"]["multi_state_impact"] is False
 
 
 def test_wsdot_official_rss_preserves_ids_and_strips_embedded_markup() -> None:

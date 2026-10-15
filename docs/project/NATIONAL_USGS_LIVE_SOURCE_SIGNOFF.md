@@ -20,6 +20,9 @@ The parser filters earthquake-type features by configured magnitude and coarse U
 coordinate regions. It keeps official event ID, URL, time, magnitude, felt/intensity, alert,
 depth, source-place label, and filter/ranking evidence. Coordinate relevance is not a verified
 state, cross-border, population, or multi-state impact determination. No raw feed body is stored.
+The later first-pass country-suffix guard excludes feed events explicitly labeled in nearby
+foreign countries even when their epicenters land within a coarse U.S. box. It does not infer
+jurisdiction from a U.S. place label or the unlocated felt-report total.
 
 An isolated temporary-config/state explicit smoke scan on 2026-10-15 returned HTTP 200 and
 31,049 bytes. SQLite recorded one successful fetch, `healthy` source health, one NATIONAL item

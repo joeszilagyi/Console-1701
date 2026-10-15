@@ -48,6 +48,27 @@
     },
     {
       "type": "Feature",
+      "id": "inside-box-bc-006",
+      "properties": {
+        "type": "earthquake", "mag": 6.4, "place": "Near Vancouver, Canada",
+        "time": 1792072800000,
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/inside-box-bc-006",
+        "felt": 2000
+      },
+      "geometry": {"type": "Point", "coordinates": [-123.1, 49.5, 10.0]}
+    },
+    {
+      "type": "Feature",
+      "id": "inside-box-mx-007",
+      "properties": {
+        "type": "earthquake", "mag": 6.4, "place": "Baja California, Mexico",
+        "time": 1792072800000,
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/inside-box-mx-007"
+      },
+      "geometry": {"type": "Point", "coordinates": [-115.0, 31.5, 10.0]}
+    },
+    {
+      "type": "Feature",
       "id": "below-ca-005",
       "properties": {
         "type": "earthquake", "mag": 3.8, "place": "Northern California",
