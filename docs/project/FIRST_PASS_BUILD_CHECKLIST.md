@@ -29,7 +29,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-004** [LOCAL Source Registry Design Implementation](../../BACKLOG.md#L282) — all 119 design entries disabled, validated, inherited by config, and synced to SQLite; reference entries cannot ingest.
 - [x] **RS-005** [LOCAL SQLite Schema Or Extension](../../BACKLOG.md#L310) — local events, ranking JSON, scoped family/impact indexes, item/source health, and expiry purge verified.
 - [x] **RS-006** [FAA/SEA Airport Status Research](../../BACKLOG.md#L393) — official NAS XML endpoint, active-event shape, public access, and Port page-only limits documented; live parser remains in RS-011/RS-044.
-- [ ] **RS-007** [LOCAL Deterministic Ranking](../../BACKLOG.md#L461) — partially implemented.
+- [x] **RS-007** [LOCAL Deterministic Ranking](../../BACKLOG.md#L461) — all first-pass factors and reasons are stored; NWS active-window and older-alert ranking is verified.
 - [ ] **RS-008** [LOCAL Privacy Redaction Rules](../../BACKLOG.md#L482) — partially implemented.
 - [ ] **RS-009** [LOCAL Source Health States](../../BACKLOG.md#L511) — partially implemented.
 - [ ] **RS-010** [LOCAL Evidence Drawer Contract](../../BACKLOG.md#L527) — partially implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-007. Audited existing LOCAL parser and event ranking factors, then added a bounded NWS active-window bonus and explicit recency state so older active hazards remain visible while expired alerts receive no active boost. Event adjustment preserves the state. Full pytest passed (323 tests); Ruff passed. Progress: 35/150.
 - **2026-10-15:** Completed RS-006. Verified the official NAS Status XML endpoint and active-event fields with a bounded read, documented public access and unresolved rate-limit/DTD details, and corrected the LOCAL registry's false JSON API candidate to a disabled reference-only XML entry. Port flight/checkpoint pages remain human references; the synthetic JSON fixture is not a live parser. Registry tests and Ruff passed. Progress: 34/150.
 - **2026-10-15:** Completed RS-015. Audited the shared REGIONAL item/health/cluster storage, then added indexed geography facets for official NWS zones and WSDOT routes, facilities, counties, and regions. USGS free-text place labels remain outside county facets. An offline scan regression verifies facet and cluster query plans, scoped lookups, and facet deletion on item expiry. Full pytest passed (322 tests); Ruff passed. Progress: 33/150.
 - **2026-10-15:** Completed RS-005. Audited the existing `local_events` and shared news schema, which already stored LOCAL event ranking explanations and linked items. Added scoped source-family and LOCAL impact-ranking indexes, with query-plan and expiry-purge checks; existing body-free item, health, fetch, and retention contracts remain covered. Full pytest passed (321 tests); Ruff passed. Progress: 32/150.

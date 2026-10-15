@@ -479,7 +479,7 @@ summaries for observability.
 
 ### LOCAL Deterministic Ranking
 
-Status: partially implemented.
+Status: implemented (first pass).
 
 Implement explainable LOCAL ranking with recency, official severity, source diversity, public
 impact, source priority, active alert state, cluster size, privacy penalty, duplicate-family
@@ -497,6 +497,13 @@ local-blog fixtures with stored factor values and human-readable reasons.
 `local_stale_source_penalty` (when applicable), and
 `local_low_confidence_penalty` into ranking evidence. Duplicate-family penalty behavior is now
 observable, and local-event merging updates item rank evidence after merge.
+LOCAL NWS alert ranking now records `local_recency_state` and
+`local_active_alert_bonus`. An actual alert only receives the active bonus while its official
+effective/expiry window is current; an older active alert receives a larger bounded bonus so its
+importance does not disappear merely because publication time ages. Expired alerts receive no
+active bonus. The state survives local-event ranking adjustments, alongside factor totals and
+human-readable reasons. Tests cover active versus expired scoring and the existing source
+diversity, cluster, privacy, stale health, and low-confidence terms.
 
 ### LOCAL Privacy Redaction Rules
 
