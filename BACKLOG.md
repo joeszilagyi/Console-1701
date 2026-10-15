@@ -2225,7 +2225,7 @@ must be safe for pytest.
 Current state: small official-shape SWPC alerts, NOAA scales, planetary and Boulder K-index, and
 OVATION aurora and JPL CAD JSON fixtures cover warning, cancelled watch, incomplete row, current
 and forecast scale, zero state, K-index thresholds, a tiny aurora grid, close-approach thresholds,
-and fireball energy/location variants, plus NASA RSS relevance cases. Their parsers and offline scans are
+and fireball energy/location variants, plus NASA and ESA RSS relevance cases. Their parsers and offline scans are
 tested. Remaining ORBITAL products and
 source-health variants are pending in this pack.
 
@@ -2366,12 +2366,21 @@ RSS; those paths remain open. See `docs/project/ORBITAL_NASA_RSS_SOURCE_VERIFICA
 
 ### ESA RSS Parser
 
-Status: not implemented.
+Status: completed 2026-10-15 for fixture-first ORBITAL ingest.
 
 Build a fixture-first RSS/Atom parser for verified ESA feeds. Preserve headline metadata, source
 URL, publication time, bounded description, source family, mission/safety/debris labels where
 available, and source-health evidence. Keep ESA reentry and debris pages separate until endpoint
 and policy review are complete.
+
+Current state: ESA's RSS directory and exact Top News and Human Spaceflight feeds were verified.
+The disabled registry candidates now point to those feeds. The dedicated parser validates each
+channel and official article URL, preserves headline, opaque GUID, timezone-aware publication
+time, bounded description, source URL and explicit mission label, and filters routine media and
+unrelated stories. Reentry/debris headlines remain outside this parser pending their separate
+review; no safety impact is inferred from generic feed metadata. Offline scans and indexed
+mission/source tests pass. No live HTTP allowlist entry was added. See
+`docs/project/ORBITAL_ESA_RSS_SOURCE_VERIFICATION.md`.
 
 ### Official Launch Provider Source Verification
 

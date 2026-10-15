@@ -145,6 +145,10 @@ def parse_fixture_items(
         from console1701.news.orbital_rss import parse_nasa_orbital_rss
 
         return parse_nasa_orbital_rss(source, payload_text)
+    if parser_name == "esa_orbital_rss":
+        from console1701.news.orbital_rss import parse_esa_orbital_rss
+
+        return parse_esa_orbital_rss(source, payload_text)
 
     if parser_name == "nws_alerts_json":
         return _parse_nws_alerts_json(source, payload_text)
