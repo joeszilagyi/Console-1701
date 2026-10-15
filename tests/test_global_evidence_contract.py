@@ -58,7 +58,7 @@ def test_global_evidence_contract_persists_facts_and_unassessed_fields(tmp_path,
     assert contract["affected_countries"] == ["Costa Rica"]
     assert contract["geography_basis"] == "official_source_fields"
     assert contract["event_type"] == "EQ"
-    assert contract["event_confidence"] is None
+    assert contract["event_confidence"] == "source_reported"
     assert contract["source_diversity_basis"] == "not_correlated"
     assert contract["public_impact_basis"] is None
     assert contract["low_public_value_penalty"] is None

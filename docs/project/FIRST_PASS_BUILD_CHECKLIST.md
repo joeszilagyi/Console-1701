@@ -109,12 +109,12 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-075** [IAEA RSS Parser](../../BACKLOG.md#L1423) — not implemented.
 - [ ] **RS-076** [Humanitarian Source Evidence Contract](../../BACKLOG.md#L1432) — not implemented.
 - [ ] **RS-077** [Conflict-Humanitarian Sensitivity Rules](../../BACKLOG.md#L1441) — not implemented.
-- [ ] **RS-078** [GLOBAL Deterministic Event Correlation](../../BACKLOG.md#L1485) — not implemented.
+- [ ] **RS-078** [GLOBAL Deterministic Event Correlation](../../BACKLOG.md#L1485) — partial: strong IDs and verified country/type/title/time convergence, family dedupe, and auditable cluster evidence; broader identities and bridge safeguards remain.
 - [ ] **RS-079** [GLOBAL Deterministic Ranking](../../BACKLOG.md#L1494) — not implemented.
 - [ ] **RS-080** [GLOBAL Low-Public-Value, Rumor, And Public-Impact Rules](../../BACKLOG.md#L1504) — not implemented.
 - [x] **RS-081** [GLOBAL UI Disabled States](../../BACKLOG.md#L1515) — honest GLOBAL state matrix, complete source-health overflow list, and expired-content hiding.
 - [x] **RS-082** [GLOBAL Source Health States](../../BACKLOG.md#L1525) — configured health states surfaced on GLOBAL and SYSTEM and verified across transition and gate cases.
-- [ ] **RS-083** [GLOBAL Evidence Drawer Contract](../../BACKLOG.md#L1535) — partial: versioned item payload and drawer; event correlation, confidence, impact, and penalty evidence remain.
+- [ ] **RS-083** [GLOBAL Evidence Drawer Contract](../../BACKLOG.md#L1535) — partial: versioned item payload, matched-pair cluster evidence, and drawers; public impact, broader event identity, and penalty evidence remain.
 - [ ] **RS-084** [GLOBAL Official-Source Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L1545) — not implemented.
 - [ ] **RS-085** [Documentation For Source Verification](../../BACKLOG.md#L1581) — partially implemented.
 - [x] **RS-086** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L1596) — GLOBAL/SYSTEM/API GETs trapped across unstarted, stored-health, and gated-source states.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Advanced RS-078 and RS-083. GLOBAL cluster rebuilding now correlates shared official event IDs and conservative cross-family verified-country/type/title/time matches. Stored cluster evidence includes match basis, source families, identifiers, countries, confidence, and family-deduplicated aggregate score; item evidence and the cluster drawer expose the result. Tests cover same-family duplicate scoring, cross-scope exclusion, unverified geography, wrong type/country/time, and offline fixture ingest. Full pytest passed (294 tests); Ruff passed. Next: broaden identity matching and guard transitive event bridges before ranking and public-impact rules.
 - **2026-10-15:** Advanced RS-083. GLOBAL fixture items now persist a versioned evidence contract with source identity, timing, URLs, parser and health context, source-provided geography/event type, policy/sensitivity notes, and explicit unassessed correlation/impact/penalty fields. The item drawer renders these values with existing ranking and retention data. Event-level evidence waits on RS-078 through RS-080; this row stays open. Full pytest passed (291 tests); Ruff passed. Next: implement GLOBAL deterministic correlation and ranking before completing the event-level contract.
 - **2026-10-15:** Completed RS-081, RS-082, and RS-086. GLOBAL now exposes every configured source health state through a six-card preview and expandable remainder; SYSTEM shows per-scope health counts. GET-only tests cover unstarted, stale/failing, parser/policy, and gated-source states with fixture and HTTP fetch hooks trapped. Expired items and representative cluster traces no longer render as active before another scan. Full pytest passed (290 tests); Ruff passed. Next: implement GLOBAL evidence and deterministic event/ranking work.
 - **2026-10-15:** Completed RS-059 and RS-060; advanced RS-061. Added 172 disabled GLOBAL design inventory entries, registry metadata validation/persistence, and a disabled policy config with geography/attention settings. Explicit gates cover social, auth-required, heavy open-data, homepage, and high-risk conflict sources. Every inventory entry was checked for config seeding under its explicit policy gates. No GLOBAL HTTP allowlist entry was added. Full pytest passed (257 tests); Ruff passed. Next: continue GLOBAL fixture/parser and storage paths.

@@ -1619,12 +1619,22 @@ from inflating independent convergence.
 
 ### GLOBAL Deterministic Event Correlation
 
-Status: not implemented.
+Status: partially implemented.
 
 Implement deterministic GLOBAL event matching by source family, event type, time window,
 normalized title tokens, affected countries or regions, disaster id, outbreak terms, storm id,
 earthquake id, volcano name, institution, transport sector, cyber identifiers, and impact tags. Do
 not use LLMs, embeddings, or hidden cloud calls.
+
+Current state: GLOBAL cluster rebuilding uses a deterministic matcher for shared GDACS,
+ReliefWeb-disaster/report, and WHO DON identifiers or cross-family event-type, verified-country,
+title-token, and 96-hour convergence. Same-family title similarity alone cannot corroborate an
+event. Cluster evidence records matched item pairs and basis, known source families, identifiers,
+countries, event types, and source-reported versus independently corroborated confidence.
+Cluster scores count only the strongest item from each family, so duplicated same-family items do
+not inflate the total. Remaining work: region/basin, storm, earthquake, volcano, disease,
+institution, transport and cyber identity matching; richer cross-scope routing checks; and
+stronger safeguards against transitive bridge matches across distinct events.
 
 ### GLOBAL Deterministic Ranking
 
@@ -1692,9 +1702,10 @@ notes, sensitivity notes, low-public-value penalty, out-of-scope penalty, and im
 Current state: fixture-ingested GLOBAL items persist a versioned `evidence.global` payload with
 source identity/class/official status, URL and seen/published times, fetch/parser/health context,
 parser-provided geography and event type, policy and sensitivity notes, and explicit unassessed
-values for correlation, impact, and penalty fields. The GLOBAL item drawer displays the contract
-alongside existing retention and ranking evidence. Event-level evidence and assessed correlation,
-confidence, impact, diversity, matching, and penalties remain for RS-078 through RS-080.
+values for impact and penalty fields. The GLOBAL item drawer displays the contract alongside
+existing retention and ranking evidence. A deterministic first pass now fills event ID,
+source-family, matching, and confidence evidence in GLOBAL cluster traces. Assessed public impact,
+full event identity coverage, and penalties remain for RS-078 through RS-080.
 
 ### GLOBAL Official-Source Live Ingest Phase, Disabled By Default
 

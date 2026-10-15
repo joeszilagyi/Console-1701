@@ -270,6 +270,7 @@
         <ul class="news-cluster-list">
           {% for cluster in view['clusters'] %}
             {% set cluster_evidence = cluster.evidence or {} %}
+            {% set global_event = cluster_evidence.global_event or {} %}
             <li>
               <b>{{ cluster.title }}</b>
               <span>{{ cluster.item_count }} item{{ "" if cluster.item_count == 1 else "s" }} · score {{ cluster.score }}</span>
@@ -281,6 +282,20 @@
                   <div><span>Last seen</span><strong>{{ cluster.last_seen_at }}</strong></div>
                   <div><span>Cluster key</span><strong>{{ cluster.cluster_key }}</strong></div>
                 </div>
+                {% if view['scope'] == "GLOBAL" and global_event %}
+                  <div class="news-evidence-grid">
+                    <div><span>Event confidence</span><strong>{{ global_event.confidence }}</strong></div>
+                    <div><span>Source families</span><strong>{{ global_event.families | join(", ") or "unknown" }}</strong></div>
+                    <div><span>Affected countries</span><strong>{{ global_event.countries | join(", ") or "not provided" }}</strong></div>
+                    <div><span>Event types</span><strong>{{ global_event.event_types | join(", ") or "unclassified" }}</strong></div>
+                    <div><span>Cluster scoring</span><strong>{{ global_event.ranking.method }}</strong></div>
+                  </div>
+                  <ul class="news-evidence-list">
+                    {% for match in global_event.matches %}
+                      <li><b>Match {{ match.item_ids | join(" + ") }}</b><span>{{ match.basis | join(", ") }}{% if match.shared_tokens %} · tokens {{ match.shared_tokens | join(", ") }}{% endif %}</span></li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
                 {% if cluster.tags %}
                   <div class="news-tag-row">
                     {% for tag in cluster.tags[:6] %}
