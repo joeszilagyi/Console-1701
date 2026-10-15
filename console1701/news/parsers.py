@@ -143,6 +143,8 @@ def parse_fixture_items(
         return _parse_king_county_emergency_rss(source, payload_text)
     if parser_name == "nhtsa_recalls_json":
         return _parse_nhtsa_recalls_json(source, payload_text)
+    if parser_name == "cisa_kev_json":
+        return _parse_cisa_kev_json(source, payload_text)
     if parser_name == "alertseattle_rss":
         return _parse_alertseattle_rss_feed(source, payload_text)
     if parser_name == "metro_rss":
@@ -1708,6 +1710,91 @@ def _king_county_emergency_classification(
 
 
 _NHTSA_CAMPAIGN_RE = re.compile(r"\d{2}[A-Z]\d{6}\Z")
+_CVE_RE = re.compile(r"CVE-\d{4}-\d{4,19}\Z")
+
+
+def _parse_cisa_kev_json(
+    source: dict[str, Any], payload_text: str
+) -> list[dict[str, Any]]:
+    if str(source.get("scope") or "").upper() != "NATIONAL":
+        raise NewsParserError("CISA KEV parser requires NATIONAL scope.")
+    try:
+        payload = json.loads(payload_text)
+    except json.JSONDecodeError as exc:
+        raise NewsParserError(f"Malformed CISA KEV JSON: {exc}") from exc
+    rows = payload.get("vulnerabilities") if isinstance(payload, dict) else None
+    count = payload.get("count") if isinstance(payload, dict) else None
+    if (
+        not isinstance(rows, list) or not rows
+        or not isinstance(count, int) or isinstance(count, bool) or count != len(rows)
+        or not bounded_text(payload.get("catalogVersion"), max_chars=64)
+        or not normalize_timestamp(payload.get("dateReleased"))
+    ):
+        raise NewsParserError("CISA KEV catalog needs a nonempty, matching snapshot envelope.")
+    seen_cves: set[str] = set()
+    normalized: list[dict[str, Any]] = []
+    for index, row in enumerate(rows):
+        if not isinstance(row, dict):
+            raise NewsParserError(f"CISA KEV row {index} is not an object.")
+        cve = str(row.get("cveID") or "").strip().upper()
+        if not _CVE_RE.fullmatch(cve) or cve in seen_cves:
+            raise NewsParserError(f"CISA KEV row {index} has invalid or duplicate CVE.")
+        seen_cves.add(cve)
+        try:
+            added = datetime.strptime(str(row.get("dateAdded") or ""), "%Y-%m-%d").date()
+            due = datetime.strptime(str(row.get("dueDate") or ""), "%Y-%m-%d").date()
+        except ValueError as exc:
+            raise NewsParserError(f"CISA KEV row {index} has invalid calendar dates.") from exc
+        vendor = bounded_text(row.get("vendorProject"), max_chars=100)
+        product = bounded_text(row.get("product"), max_chars=100)
+        name = bounded_text(row.get("vulnerabilityName"), max_chars=180)
+        description = bounded_text(row.get("shortDescription"), max_chars=500)
+        action = bounded_text(row.get("requiredAction"), max_chars=500)
+        if not all((vendor, product, name, description, action)):
+            raise NewsParserError(f"CISA KEV row {index} lacks required fields.")
+        ransomware = str(row.get("knownRansomwareCampaignUse") or "Unknown").strip()
+        if ransomware not in {"Known", "Unknown"}:
+            raise NewsParserError(f"CISA KEV row {index} has invalid ransomware evidence.")
+        triage = str(row.get("forensicTriage") or "No").strip()
+        if triage not in {"Yes", "No"}:
+            raise NewsParserError(f"CISA KEV row {index} has invalid triage evidence.")
+        cwes = row.get("cwes") or []
+        if not isinstance(cwes, list):
+            raise NewsParserError(f"CISA KEV row {index} has invalid CWE values.")
+        cwes = [str(value) for value in cwes[:20] if re.fullmatch(r"CWE-\d+", str(value))]
+        catalog_url = "https://www.cisa.gov/known-exploited-vulnerabilities-catalog"
+        search_url = catalog_url + "?search_api_fulltext=" + quote(cve)
+        score = 10 + (8 if ransomware == "Known" else 0) + (4 if triage == "Yes" else 0)
+        item = _normalize_item(source, {
+            "title": f"CISA KEV {cve}: {name}",
+            "url": search_url,
+            "description": description,
+            "published_at": added.isoformat(),
+            "tags": ["official", "cybersecurity", "known-exploited", "cisa"],
+        }, index=index)
+        item["evidence"]["cisa_kev"] = {
+            "cve_id": cve,
+            "vendor_project": vendor,
+            "product": product,
+            "vulnerability_name": name,
+            "date_added": added.isoformat(),
+            "due_date": due.isoformat(),
+            "date_precision": "day",
+            "due_date_applies_to": "federal_civilian_executive_branch",
+            "required_action": action,
+            "known_ransomware_campaign_use": ransomware,
+            "forensic_triage": triage,
+            "cwes": cwes,
+            "source_url": catalog_url,
+            "item_url_kind": "catalog_search",
+            "catalog_version": bounded_text(payload["catalogVersion"], max_chars=64),
+            "catalog_released_at": normalize_timestamp(payload["dateReleased"]),
+            "local_applicability": "unknown",
+            "ranking": {"cyber_score": score},
+            "body_stored": False,
+        }
+        normalized.append(item)
+    return normalized
 
 
 def _parse_nhtsa_recalls_json(
