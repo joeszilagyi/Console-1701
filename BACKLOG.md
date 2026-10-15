@@ -2356,9 +2356,11 @@ must be safe for pytest.
 Current state: small official-shape SWPC alerts, NOAA scales, planetary and Boulder K-index, and
 OVATION aurora and JPL CAD JSON fixtures cover warning, cancelled watch, incomplete row, current
 and forecast scale, zero state, K-index thresholds, a tiny aurora grid, close-approach thresholds,
-and fireball energy/location variants, plus NASA and ESA RSS relevance cases. Their parsers and offline scans are
-tested. Remaining ORBITAL products and
-source-health variants are pending in this pack.
+and fireball energy/location variants, plus NASA and ESA RSS relevance cases. The former SWPC
+X-ray summary URL returned 404; an observed seven-day GOES flare event list now supplies an
+offline M/X-class fixture parser with bounded identity, timing, class, flux and cautious ranking.
+Their parsers and offline scans are tested. Remaining ORBITAL products and source-health variants
+are pending in this pack; see `docs/project/ORBITAL_SWPC_XRAY_FLARE_FIXTURE.md`.
 
 ### SWPC Alerts JSON Parser
 

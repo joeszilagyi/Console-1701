@@ -138,6 +138,7 @@ def _load_registry() -> tuple[dict[str, Any], ...]:
             "swpc_kp_1m_json": "swpc_kp_json",
             "swpc_boulder_k_json": "swpc_kp_json",
             "swpc_aurora_json": "swpc_aurora_json",
+            "swpc_xray_flux_summary": "swpc_xray_flares_json",
             "jpl_cad_api": "jpl_cad_json",
             "jpl_fireball_api": "jpl_fireball_json",
             "nasa_rss_feeds": "nasa_orbital_rss",
