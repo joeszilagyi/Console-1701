@@ -21,7 +21,7 @@ from console1701.news.global_registry import (
 )
 from console1701.news.scanner import run_news_scan
 from console1701.news.source_policy import evaluate_source_policy
-from console1701.news.storage import get_news_storage_summary
+from console1701.news.storage import get_news_sources_status, get_news_storage_summary
 
 
 def _write_config(path: Path, text: str) -> Path:
@@ -42,6 +42,43 @@ def test_global_inventory_is_complete_and_disabled():
     gdacs = get_global_source_registry_entry("gdacs_feed_reference")
     assert gdacs is not None and gdacs["kind"] == "rss"
     assert gdacs["verification_status"] == "official_page_seen"
+
+
+def test_wmo_dashboard_and_directory_remain_reference_only(tmp_path, monkeypatch):
+    for key in ("wmo_sww", "wmo_sources"):
+        entry = get_global_source_registry_entry(key)
+        assert entry is not None
+        assert entry["adapter"] == "source_health_probe_only"
+        assert entry["kind"] == "reference_only"
+        assert entry["refresh_interval"] == "24 h"
+
+    def unexpected_access(*args, **kwargs):
+        raise AssertionError("WMO reference attempted file or HTTP ingest")
+
+    monkeypatch.setattr("console1701.news.scanner.load_fixture_text", unexpected_access)
+    monkeypatch.setattr("console1701.news.scanner.fetch_official_text", unexpected_access)
+    config_path = _write_config(tmp_path / "wmo.yml", """
+        paths: {repo_roots: [], explicit_repos: []}
+        global: {enabled: true}
+        news:
+          enabled: true
+          scopes:
+            GLOBAL:
+              enabled: true
+              sources:
+                - {id: wmo_sww, enabled: true, url: 'file:///missing-sww.xml'}
+                - {id: wmo_sources, enabled: true, url: 'file:///missing-sources.xml'}
+    """)
+    result = run_news_scan(config_path)
+    assert result["item_count"] == 0
+    assert result["scanned_sources"] == 2
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        states = {
+            row["source_key"]: row["health_state"]
+            for row in get_news_sources_status(conn, config)
+        }
+    assert states == {"wmo_sww": "unsupported", "wmo_sources": "unsupported"}
 
 
 def test_global_registry_seeds_config_and_sqlite_without_fetch(tmp_path):

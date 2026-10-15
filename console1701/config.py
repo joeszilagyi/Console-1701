@@ -25,6 +25,7 @@ NEWS_SOURCE_KINDS = {
     "api_json",
     "open_data_json",
     "homepage_headlines",
+    "reference_only",
     "local_file_json",
     "local_file_rss",
 }
