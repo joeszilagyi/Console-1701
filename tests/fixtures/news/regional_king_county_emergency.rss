@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>King County Emergency News</title>
+    <link>https://kcemergency.com/</link>
+    <description>Official King County Emergency Management updates.</description>
+    <item>
+      <title>Evacuation warning for a King County flood zone</title>
+      <link>https://kcemergency.com/2026/10/15/evacuation-warning/</link>
+      <guid>https://kcemergency.com/2026/10/15/evacuation-warning/</guid>
+      <pubDate>Thu, 15 Oct 2026 10:00:00 +0000</pubDate>
+      <category>Alerts</category>
+      <category>Flood</category>
+      <description><![CDATA[<p>Residents in the posted zone should follow official evacuation directions.</p>]]></description>
+    </item>
+    <item>
+      <title>Flood recovery resources for residents</title>
+      <link>https://kcemergency.com/2026/10/14/flood-recovery-resources/</link>
+      <guid>https://kcemergency.com/2026/10/14/flood-recovery-resources/</guid>
+      <pubDate>Wed, 14 Oct 2026 18:00:00 +0000</pubDate>
+      <category>Flood</category>
+      <category>Recovery</category>
+      <description>Links to public assistance resources.</description>
+    </item>
+    <item>
+      <title>ALERT King County Message – Semi-Annual Test</title>
+      <link>https://kcemergency.com/2026/09/30/alert-king-county-semi-annual-test-2/</link>
+      <guid>https://kcemergency.com/2026/09/30/alert-king-county-semi-annual-test-2/</guid>
+      <pubDate>Wed, 30 Sep 2026 16:06:22 +0000</pubDate>
+      <category>Other</category>
+      <description>This is a routine system test.</description>
+    </item>
+  </channel>
+</rss>

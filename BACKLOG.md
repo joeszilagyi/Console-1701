@@ -746,8 +746,9 @@ filtering, event evidence, and a capped seismic ranking factor. A dedicated REGI
 now covers King/Spokane WA alerts and an out-of-region Oregon alert, including official county/zone
 codes and configured filter behavior. A synthetic WSDOT JSON fixture now follows the official
 documented `Alert`/`RoadwayLocation` REST schema, including corridor, pass, border, WCF timestamp,
-and closed-alert cases; it is not an observed authenticated response. Dedicated WSF, wildfire,
-hydrology, county emergency, AQI,
+and closed-alert cases; it is not an observed authenticated response. A synthetic King County
+Emergency News RSS fixture now covers warning, recovery, and test posts with source-specific
+classification and an offline scan. Dedicated WSF, wildfire, hydrology, other county emergency, AQI,
 outage, and other regional fixture shapes remain pending endpoint verification; do not invent
 live API shapes to close this pack.
 
@@ -873,11 +874,21 @@ official endpoints cannot be found, keep those sources manual-review-only or sou
 
 ### King County Emergency Feed Parser
 
-Status: not implemented.
+Status: implemented (fixture-first; live ingest disabled).
 
 Build a fixture-first parser for King County Emergency News if a feed endpoint is verified.
 Preserve title, URL, published timestamp, bounded description, categories/tags, emergency/alert
 classification, county geography, source URL, and county-emergency ranking evidence.
+
+Current state: King County Emergency Management's official Emergency News blog exposes an RSS feed
+at `https://kcemergency.com/feed/`. The REGIONAL registry points to that feed, with its source still
+disabled. A source-specific parser validates the channel, official HTTPS item URL and publication
+time, retains a bounded plain-text description and categories, and records publisher jurisdiction
+without assuming countywide impact. Deterministic classification distinguishes emergency alerts,
+recovery posts, routine notices and tests; tests receive no emergency public-impact score. A
+synthetic three-item fixture, parser tests and a configured offline scan cover the shape and
+ranking. `docs/project/REGIONAL_KING_COUNTY_EMERGENCY_RSS_VERIFICATION.md` records ownership,
+bounded endpoint observation, retention and the separate live-ingest release gate.
 
 ### County Emergency Alert Source Verification
 

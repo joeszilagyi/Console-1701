@@ -1013,6 +1013,47 @@ def test_regional_nws_county_filter_survives_config_and_scan(tmp_path):
     assert evidence["nws_alert"]["county_area_labels"] == ["King County"]
 
 
+def test_regional_king_county_emergency_rss_fixture_scan(tmp_path):
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        news:
+          enabled: true
+          scopes:
+            REGIONAL:
+              enabled: true
+              sources:
+                - id: king_county_emergency_news
+                  enabled: true
+                  url: "{_file_url(FIXTURE_DIR / 'regional_king_county_emergency.rss')}"
+        """,
+    )
+
+    result = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        init_db(conn)
+        rows = conn.execute(
+            "SELECT title, evidence_json FROM news_items WHERE scope = 'REGIONAL'"
+        ).fetchall()
+
+    assert result["status"] == "complete"
+    assert result["item_count"] == 3
+    evidence_rows = [json_loads(str(row["evidence_json"]), {}) for row in rows]
+    assert {row["source"]["source_key"] for row in evidence_rows} == {
+        "king_county_emergency_news"
+    }
+    by_class = {
+        row["king_county_emergency"]["classification"]: row for row in evidence_rows
+    }
+    assert by_class["emergency_alert"]["ranking"]["factors"][
+        "regional_public_impact_bonus"
+    ] == 25
+    assert by_class["test"]["ranking"]["factors"]["regional_public_impact_bonus"] == 0
+    assert all(row["ingest"]["fixture_only"] is True for row in evidence_rows)
+
+
 def test_run_news_scan_ingests_national_nws_alert_fixture(tmp_path):
     config_path = _write_config(
         tmp_path / "config.yml",
