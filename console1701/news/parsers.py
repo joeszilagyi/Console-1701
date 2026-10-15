@@ -155,6 +155,8 @@ def parse_fixture_items(
         return _parse_fda_recalls_rss(source, payload_text)
     if parser_name == "un_press_rss":
         return _parse_un_press_rss(source, payload_text)
+    if parser_name == "iaea_rss":
+        return _parse_iaea_rss(source, payload_text)
     if parser_name == "alertseattle_rss":
         return _parse_alertseattle_rss_feed(source, payload_text)
     if parser_name == "metro_rss":
@@ -723,6 +725,104 @@ def _parse_un_press_rss(source: dict[str, Any], payload_text: str) -> list[dict[
             "body_stored": False,
         }
         item["evidence"]["global_identity"] = {"institution": "United Nations"}
+        items.append(item)
+    return items
+
+
+_IAEA_URGENT_RE = re.compile(
+    r"\b(?:nuclear|radiological|radiation)\s+(?:emergency|incident|accident|leak)\b"
+    r"|\b(?:emergency|incident|accident|leak)\s+(?:at|involving)\s+[^.]{0,80}\bnuclear\b",
+    re.I,
+)
+_IAEA_ROUTINE_RE = re.compile(
+    r"\b(?:training|course|workshop|conference|forum|careers|scholarship|"
+    r"invited|press arrangements|meeting schedule|how nuclear science|"
+    r"technologies in space)\b", re.I
+)
+_IAEA_FEED_DATE_RE = re.compile(r"^(\d{2})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})$")
+
+
+def _parse_iaea_rss(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:
+    if str(source.get("scope") or "").upper() != "GLOBAL":
+        raise NewsParserError("IAEA RSS parser requires GLOBAL scope.")
+    crisis_terms = [
+        value.casefold()
+        for value in _configured_texts(source.get("active_crisis_terms"), default=[])
+    ]
+    if re.search(r"<!\s*(?:DOCTYPE|ENTITY)\b", payload_text, re.I):
+        raise NewsParserError("IAEA RSS must not contain DTD or entity declarations.")
+    try:
+        root = ET.fromstring(payload_text)
+    except ET.ParseError as exc:
+        raise NewsParserError(f"Malformed IAEA RSS: {exc}") from exc
+    channel = root.find("channel") if root.tag == "rss" else None
+    if channel is None or _element_text(channel.find("title")) != "IAEA Top News":
+        raise NewsParserError("IAEA RSS has an unexpected channel.")
+    items: list[dict[str, Any]] = []
+    seen_guids: set[str] = set()
+    for index, row in enumerate(channel.findall("item")[:100]):
+        title = bounded_text(_wsdot_plain_text(_element_text(row.find("title"))), max_chars=280)
+        feed_url = str(_element_text(row.find("link")) or "").strip()
+        guid = str(_element_text(row.find("guid")) or "").strip()
+        parts = urlsplit(feed_url)
+        if (
+            not title or not guid.isdecimal() or guid in seen_guids
+            or parts.scheme not in {"http", "https"} or parts.hostname != "www.iaea.org"
+            or not (parts.path.startswith("/news/") or parts.path.startswith("/newscenter/"))
+            or parts.username or parts.password or parts.port or parts.query or parts.fragment
+        ):
+            raise NewsParserError(f"IAEA RSS item {index} has invalid official identity.")
+        seen_guids.add(guid)
+        feed_date = bounded_text(_element_text(row.find("pubDate")), max_chars=40)
+        match = _IAEA_FEED_DATE_RE.fullmatch(feed_date or "")
+        if not match:
+            raise NewsParserError(f"IAEA RSS item {index} has invalid publication date.")
+        year, month, day, hour, minute = map(int, match.groups())
+        try:
+            # The feed has no timezone: store only the calendar day for recency.
+            published = datetime(2000 + year, month, day, hour, minute).date().isoformat()
+        except ValueError as exc:
+            raise NewsParserError(f"IAEA RSS item {index} has invalid publication date.") from exc
+        title_folded = title.casefold()
+        matched_crises = [term for term in crisis_terms if term in title_folded]
+        urgent = bool(_IAEA_URGENT_RE.search(title))
+        situation_update = bool(re.search(
+            r"\b(?:director general statement|update \d+)\b.*\bsituation in\b", title, re.I
+        ))
+        if _IAEA_ROUTINE_RE.search(title) or not (urgent or (situation_update and matched_crises)):
+            continue
+        url = normalize_url(feed_url.replace("http://", "https://", 1))
+        categories = _unique_texts(
+            [_element_text(node) for node in row.findall("category")], max_chars=64
+        )
+        item = _normalize_item(source, {
+            "title": title,
+            "url": url,
+            "description": _wsdot_plain_text(_element_text(row.find("description"))),
+            "published_at": published,
+            "tags": ["official", "iaea", "nuclear-safety", "global", *categories],
+        }, index=index)
+        item["evidence"]["iaea"] = {
+            "feed_url": feed_url,
+            "guid": guid,
+            "source_url": url,
+            "feed_pub_date": feed_date,
+            "publication_date": published,
+            "publication_precision": "day; feed time has no timezone",
+            "categories": categories,
+            "matched_crisis_terms": matched_crises[:10],
+            "urgent_title_phrase": urgent,
+            "situation_update_title": situation_update,
+            "severity_confirmed": False,
+            "ranking": {
+                "official_nuclear_safety_source": True,
+                "urgent_title_signal": urgent,
+                "active_crisis_context": bool(matched_crises),
+                "impact_requires_other_evidence": True,
+            },
+            "body_stored": False,
+        }
+        item["evidence"]["global_identity"] = {"institution": "IAEA"}
         items.append(item)
     return items
 

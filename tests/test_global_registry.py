@@ -34,10 +34,10 @@ def test_global_inventory_is_complete_and_disabled():
     keys = {str(entry["source_key"]) for entry in entries}
     summary = global_source_registry_summary()
 
-    assert len(entries) == len(keys) == 172
+    assert len(entries) == len(keys) == 173
     assert all(entry["scope"] == "GLOBAL" and entry["enabled"] is False for entry in entries)
     assert all(entry["source_health_behavior"] for entry in entries)
-    assert summary["source_count"] == 172
+    assert summary["source_count"] == 173
     assert summary["enabled_by_default"] is False
     gdacs = get_global_source_registry_entry("gdacs_feed_reference")
     assert gdacs is not None and gdacs["kind"] == "rss"
@@ -108,9 +108,9 @@ def test_global_registry_seeds_config_and_sqlite_without_fetch(tmp_path):
             "WHERE scope = 'GLOBAL'"
         ).fetchall()
         summary = get_news_storage_summary(conn, config)
-    assert len(rows) == 172
+    assert len(rows) == 173
     assert all(row["enabled_by_default"] == 0 for row in rows)
-    assert summary["global_registry"]["source_count"] == 172
+    assert summary["global_registry"]["source_count"] == 173
 
 
 def test_every_global_inventory_entry_can_seed_config_under_explicit_policy_gates():

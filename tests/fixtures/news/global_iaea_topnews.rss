@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel><title>IAEA Top News</title>
+  <item><title>Update 370 – IAEA Director General Statement on Situation in Ukraine</title>
+    <link>http://www.iaea.org/newscenter/pressreleases/update-370-iaea-director-general-statement-on-situation-in-ukraine</link>
+    <description>&lt;p&gt;The IAEA reports on the situation at a nuclear facility.&lt;/p&gt;</description>
+    <guid>290085</guid><pubDate>26-10-09  17:15</pubDate></item>
+  <item><title>IAEA Reports Radiological Emergency at Nuclear Facility</title>
+    <link>http://www.iaea.org/newscenter/news/radiological-emergency-at-nuclear-facility</link>
+    <description>Official emergency update.</description><category>Nuclear safety</category>
+    <guid>290086</guid><pubDate>26-10-10  08:30</pubDate></item>
+  <item><title>IAEA Training Centre Builds Practical Skills for Nuclear Security</title>
+    <link>http://www.iaea.org/news/photoessay/iaea-training-centre</link>
+    <description>Training programme.</description><guid>290116</guid>
+    <pubDate>26-10-13  23:00</pubDate></item>
+  <item><title>IAEA Completes Nuclear Safety Review at Power Plant</title>
+    <link>http://www.iaea.org/newscenter/news/safety-review-at-power-plant</link>
+    <guid>290117</guid><pubDate>26-10-13  11:00</pubDate></item>
+</channel></rss>
