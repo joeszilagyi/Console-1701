@@ -59,9 +59,9 @@ Each selected row needs working implementation, relevant verification, and a mat
 
 ### NATIONAL United States Recent Signal Layer
 
-- [ ] **RS-031** [NATIONAL Source Registry Design Implementation](../../BACKLOG.md#L973) — not implemented.
+- [x] **RS-031** [NATIONAL Source Registry Design Implementation](../../BACKLOG.md#L973) — 227 disabled design entries, validated metadata, config defaults, SQLite sync, and summary.
 - [x] **RS-032** [Disabled-By-Default NATIONAL Config](../../BACKLOG.md#L982) — validated national policy tree, separate scope gate, social-source rejection, and disabled defaults.
-- [ ] **RS-033** [NATIONAL SQLite Schema Or Extension](../../BACKLOG.md#L993) — not implemented.
+- [ ] **RS-033** [NATIONAL SQLite Schema Or Extension](../../BACKLOG.md#L993) — partial: scoped registry key migration and persisted NATIONAL source inventory; query indexes and purge evidence remain.
 - [ ] **RS-034** [NATIONAL Fixture Pack](../../BACKLOG.md#L1003) — not implemented.
 - [x] **RS-035** [NWS Active Alert Parser](../../BACKLOG.md#L1012) — fixture parser preserves national alert geography, timing, instruction, and ranking evidence; focused tests pass.
 - [ ] **RS-036** [NHC Advisory/Feed Verification](../../BACKLOG.md#L1020) — not implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-031 and advanced RS-033. Added all 227 disabled NATIONAL design inventory entries as checked-in data with enum validation and config defaults. Generalized registry sync/summary across LOCAL, REGIONAL, and NATIONAL; migrated SQLite uniqueness to `(scope, source_key)` so overlapping documented IDs coexist. The inventory is metadata only and does not add a live URL allowlist. Full pytest passed (233 tests); Ruff passed. A wheel build check could not run because setuptools is absent from the local virtual environment; `pyproject.toml` declares the JSON as package data. Next: continue NATIONAL schema/query work.
 - **2026-10-15:** Completed RS-052. Extended page tests to NATIONAL for configured-disabled, not-configured, never-run, stale/failure, and social/homepage-blocked states. Added NATIONAL social-source policy and a scope-specific health message for read-only status. No ingest or page-load fetch is used. Full pytest passed (228 tests); Ruff passed. Next: build NATIONAL registry and storage foundation.
 - **2026-10-15:** Completed RS-053. Reused the REGIONAL page/API source-health matrix for NATIONAL with isolated SQLite state and no scan/fetch, verifying ten source states including stale, parser failure, policy blocking, and auth/rate/policy outcomes. A NATIONAL baseline regression covers disabled, not-configured, never-run, and healthy scope outcomes. Full pytest passed (225 tests); Ruff passed. Next: continue NATIONAL storage/registry foundation and UI disabled-state acceptance.
 - **2026-10-15:** Advanced RS-013. Corrected LOCAL and REGIONAL SQLite registry cleanup to delete only stale keys; the old REGIONAL query could delete current rows when any stale key existed. A repeat-scan regression verifies the full current REGIONAL key set survives and the obsolete key is removed. Full pytest passed (223 tests); Ruff passed. Next: inspect the remaining REGIONAL registry acceptance details, then move to the next missing scope foundation.

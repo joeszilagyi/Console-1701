@@ -480,7 +480,7 @@ def _normalize_optional_keyword(
 
 
 def _apply_scope_registry_defaults(source_cfg: dict[str, Any], scope: str) -> dict[str, Any]:
-    if scope not in {"LOCAL", "REGIONAL"}:
+    if scope not in {"LOCAL", "REGIONAL", "NATIONAL"}:
         return source_cfg
     source_key = str(source_cfg.get("id") or "").strip()
     if not source_key:
@@ -489,10 +489,14 @@ def _apply_scope_registry_defaults(source_cfg: dict[str, Any], scope: str) -> di
         from console1701.news.local_registry import local_registry_config_defaults
 
         defaults = local_registry_config_defaults(source_key)
-    else:
+    elif scope == "REGIONAL":
         from console1701.news.regional_registry import regional_registry_config_defaults
 
         defaults = regional_registry_config_defaults(source_key)
+    else:
+        from console1701.news.national_registry import national_registry_config_defaults
+
+        defaults = national_registry_config_defaults(source_key)
     if not defaults:
         return source_cfg
     return deep_merge(defaults, source_cfg)
@@ -733,6 +737,30 @@ def _normalize_news_source(
     if source_scope == "REGIONAL":
         _normalize_regional_source_metadata(source_cfg, path=path, regional_cfg=regional_cfg)
     if source_scope == "NATIONAL":
+        from console1701.news.national_registry import (
+            NATIONAL_ADAPTER_TYPES,
+            NATIONAL_OFFICIAL_STATUSES,
+            NATIONAL_RISK_LEVELS,
+            NATIONAL_SOURCE_CLASSES,
+            NATIONAL_VERIFICATION_STATUSES,
+        )
+
+        _normalize_optional_keyword(source_cfg, "source_family", path)
+        _normalize_optional_keyword(
+            source_cfg, "source_class", path, allowed=NATIONAL_SOURCE_CLASSES
+        )
+        _normalize_optional_keyword(source_cfg, "adapter", path, allowed=NATIONAL_ADAPTER_TYPES)
+        _normalize_optional_keyword(
+            source_cfg, "official_status", path, allowed=NATIONAL_OFFICIAL_STATUSES
+        )
+        _normalize_optional_keyword(
+            source_cfg,
+            "verification_status",
+            path,
+            allowed=NATIONAL_VERIFICATION_STATUSES,
+        )
+        for key in ("privacy_risk", "policy_risk", "parser_risk", "retention_sensitivity"):
+            _normalize_optional_keyword(source_cfg, key, path, allowed=NATIONAL_RISK_LEVELS)
         if str(source_cfg.get("parser") or "").strip().lower() == "usgs_earthquake_geojson":
             source_cfg.setdefault(
                 "min_magnitude", national_cfg["earthquake_min_magnitude"]

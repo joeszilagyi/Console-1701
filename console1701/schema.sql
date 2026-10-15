@@ -172,7 +172,7 @@ CREATE TABLE IF NOT EXISTS news_fetch_runs (
 
 CREATE TABLE IF NOT EXISTS news_source_registry (
   id INTEGER PRIMARY KEY,
-  source_key TEXT NOT NULL UNIQUE,
+  source_key TEXT NOT NULL,
   scope TEXT NOT NULL,
   source_name TEXT NOT NULL,
   source_family TEXT NOT NULL,
@@ -198,7 +198,8 @@ CREATE TABLE IF NOT EXISTS news_source_registry (
   seen_at TEXT,
   last_synced_at TEXT NOT NULL,
   created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL
+  updated_at TEXT NOT NULL,
+  UNIQUE(scope, source_key)
 );
 
 CREATE TABLE IF NOT EXISTS news_items (

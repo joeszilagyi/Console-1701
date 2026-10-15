@@ -10,6 +10,7 @@ from typing import Any
 from console1701.config import ensure_state_dirs, iter_news_sources, load_config
 from console1701.db import connect_db, init_db, json_dumps, json_loads, utc_now
 from console1701.news.local_registry import list_local_source_registry
+from console1701.news.national_registry import list_national_source_registry
 from console1701.news.normalize import cluster_key, content_hash, expires_at, url_hash
 from console1701.news.official_http import (
     OfficialFetchResult,
@@ -80,6 +81,7 @@ def run_news_scan(config_path: str | Path | None = None) -> dict[str, Any]:
     sync_time = utc_now()
     _sync_local_source_registry(conn, synced_at=sync_time)
     _sync_regional_source_registry(conn, synced_at=sync_time)
+    _sync_national_source_registry(conn, synced_at=sync_time)
 
     scanned_sources = 0
     skipped_sources = 0
@@ -155,7 +157,10 @@ def run_news_scan(config_path: str | Path | None = None) -> dict[str, Any]:
             scanned_sources += 1
             try:
                 stored = _ingest_source(
-                    conn, config, source, config_dir=config_dir,
+                    conn,
+                    config,
+                    source,
+                    config_dir=config_dir,
                     live_fetch_cache=live_fetch_cache,
                     force_full_live_fetch=str(source.get("url")) in force_full_live_urls,
                 )
@@ -226,14 +231,15 @@ def _news_table_counts(conn: sqlite3.Connection) -> dict[str, int]:
     }
 
 
-def _sync_local_source_registry(conn: sqlite3.Connection, synced_at: str) -> int:
-    entries = list_local_source_registry()
+def _sync_source_registry(
+    conn: sqlite3.Connection, synced_at: str, scope: str, entries: list[dict[str, Any]]
+) -> int:
     if not entries:
         return 0
 
     rows = conn.execute(
         "SELECT source_key FROM news_source_registry WHERE scope = ?",
-        ("LOCAL",),
+        (scope,),
     ).fetchall()
     existing = {str(row["source_key"]) for row in rows}
     updated = 0
@@ -252,7 +258,7 @@ def _sync_local_source_registry(conn: sqlite3.Connection, synced_at: str) -> int
               seen_at, last_synced_at, created_at, updated_at
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(source_key) DO UPDATE SET
+            ON CONFLICT(scope, source_key) DO UPDATE SET
               scope = excluded.scope,
               source_name = excluded.source_name,
               source_family = excluded.source_family,
@@ -316,107 +322,22 @@ def _sync_local_source_registry(conn: sqlite3.Connection, synced_at: str) -> int
         placeholder = ",".join(["?"] * len(stale_keys))
         conn.execute(
             f"DELETE FROM news_source_registry WHERE scope = ? AND source_key IN ({placeholder})",
-            ("LOCAL", *stale_keys),
+            (scope, *stale_keys),
         )
 
     return updated
+
+
+def _sync_local_source_registry(conn: sqlite3.Connection, synced_at: str) -> int:
+    return _sync_source_registry(conn, synced_at, "LOCAL", list_local_source_registry())
 
 
 def _sync_regional_source_registry(conn: sqlite3.Connection, synced_at: str) -> int:
-    entries = list_regional_source_registry()
-    if not entries:
-        return 0
+    return _sync_source_registry(conn, synced_at, "REGIONAL", list_regional_source_registry())
 
-    rows = conn.execute(
-        "SELECT source_key FROM news_source_registry WHERE scope = ?",
-        ("REGIONAL",),
-    ).fetchall()
-    existing = {str(row["source_key"]) for row in rows}
-    updated = 0
 
-    for entry in entries:
-        source_key = str(entry["source_key"])
-        existing.discard(source_key)
-        conn.execute(
-            """
-            INSERT INTO news_source_registry (
-              source_key, scope, source_name, source_family, source_class, adapter,
-              kind, raw_url, priority, interval_minutes, official_status,
-              privacy_risk, policy_risk, parser_risk, retention_sensitivity,
-              verification_status, future_phase, expected_access_kind, homepage_url,
-              parser, enabled_by_default, why_it_matters, evidence_notes_json,
-              seen_at, last_synced_at, created_at, updated_at
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(source_key) DO UPDATE SET
-              scope = excluded.scope,
-              source_name = excluded.source_name,
-              source_family = excluded.source_family,
-              source_class = excluded.source_class,
-              adapter = excluded.adapter,
-              kind = excluded.kind,
-              raw_url = excluded.raw_url,
-              priority = excluded.priority,
-              interval_minutes = excluded.interval_minutes,
-              official_status = excluded.official_status,
-              privacy_risk = excluded.privacy_risk,
-              policy_risk = excluded.policy_risk,
-              parser_risk = excluded.parser_risk,
-              retention_sensitivity = excluded.retention_sensitivity,
-              verification_status = excluded.verification_status,
-              future_phase = excluded.future_phase,
-              expected_access_kind = excluded.expected_access_kind,
-              homepage_url = excluded.homepage_url,
-              parser = excluded.parser,
-              enabled_by_default = excluded.enabled_by_default,
-              why_it_matters = excluded.why_it_matters,
-              evidence_notes_json = excluded.evidence_notes_json,
-              seen_at = COALESCE(news_source_registry.seen_at, excluded.seen_at),
-              last_synced_at = excluded.last_synced_at,
-              updated_at = excluded.updated_at
-            """,
-            (
-                source_key,
-                str(entry["scope"]),
-                str(entry["source_name"]),
-                str(entry["source_family"]),
-                str(entry["source_class"]),
-                str(entry["adapter"]),
-                str(entry["kind"]),
-                str(entry["raw_url"]),
-                int(entry["priority"]),
-                int(entry["interval_minutes"]),
-                str(entry["official_status"]),
-                str(entry["privacy_risk"]),
-                str(entry["policy_risk"]),
-                str(entry["parser_risk"]),
-                str(entry["retention_sensitivity"]),
-                str(entry["verification_status"]),
-                str(entry["future_phase"]),
-                str(entry["expected_access_kind"]),
-                entry.get("homepage_url"),
-                entry.get("parser"),
-                1 if bool(entry.get("enabled")) else 0,
-                str(entry.get("why_it_matters") or ""),
-                json_dumps(entry.get("evidence_notes") or []),
-                synced_at,
-                synced_at,
-                synced_at,
-                synced_at,
-            ),
-        )
-        updated += 1
-
-    if existing:
-        stale_keys = sorted(existing)
-        placeholder = ",".join(["?"] * len(stale_keys))
-        conn.execute(
-            f"DELETE FROM news_source_registry WHERE scope = ? AND source_key IN ({placeholder})",
-            ("REGIONAL", *stale_keys),
-        )
-        updated += len(stale_keys)
-
-    return updated
+def _sync_national_source_registry(conn: sqlite3.Connection, synced_at: str) -> int:
+    return _sync_source_registry(conn, synced_at, "NATIONAL", list_national_source_registry())
 
 
 def _count_rows(conn: sqlite3.Connection, table: str) -> int:
@@ -448,12 +369,15 @@ def _source_is_enabled(config: dict[str, Any], source: dict[str, Any]) -> bool:
 
 
 def _is_allowed_live_source(config: dict[str, Any], source: dict[str, Any]) -> bool:
-    fetch_policy = ((config.get("news") or {}).get("fetch_policy") or {})
+    fetch_policy = (config.get("news") or {}).get("fetch_policy") or {}
     scope = str(source.get("scope") or "").upper()
     scope_policy_enabled = (
-        bool((config.get("local") or {}).get("enabled")) if scope == "LOCAL"
-        else bool((config.get("regional") or {}).get("enabled")) if scope == "REGIONAL"
-        else bool((config.get("national") or {}).get("enabled")) if scope == "NATIONAL"
+        bool((config.get("local") or {}).get("enabled"))
+        if scope == "LOCAL"
+        else bool((config.get("regional") or {}).get("enabled"))
+        if scope == "REGIONAL"
+        else bool((config.get("national") or {}).get("enabled"))
+        if scope == "NATIONAL"
         else False
     )
     return (
@@ -493,7 +417,7 @@ def _live_source_due(
         return True
     if json_loads(str(row["evidence_json"]), {}).get("fixture_only"):
         return True
-    policy = ((config.get("news") or {}).get("fetch_policy") or {})
+    policy = (config.get("news") or {}).get("fetch_policy") or {}
     status = str(row["status"])
     minutes = (
         int(policy.get("default_backoff_minutes", 120))
@@ -611,8 +535,10 @@ def _ingest_source(
         if is_live:
             url = str(source["url"])
             shared_response = url in live_fetch_cache
-            etag, last_modified = (None, None) if force_full_live_fetch else (
-                _latest_http_validators(conn, source_id, before_run_id=run_id)
+            etag, last_modified = (
+                (None, None)
+                if force_full_live_fetch
+                else (_latest_http_validators(conn, source_id, before_run_id=run_id))
             )
             if shared_response:
                 cached = live_fetch_cache[url]
@@ -622,7 +548,7 @@ def _ingest_source(
             else:
                 # A network request must never hold a SQLite write transaction open.
                 conn.commit()
-                fetch_policy = ((config.get("news") or {}).get("fetch_policy") or {})
+                fetch_policy = (config.get("news") or {}).get("fetch_policy") or {}
                 try:
                     response = fetch_official_text(
                         source,
@@ -660,13 +586,23 @@ def _ingest_source(
             if response.status_code == 304:
                 finished_at = utc_now()
                 _finish_fetch_run(
-                    conn, run_id, status="not_modified", finished_at=finished_at,
-                    item_count=0, evidence=fetch_evidence, **fetch_columns,
+                    conn,
+                    run_id,
+                    status="not_modified",
+                    finished_at=finished_at,
+                    item_count=0,
+                    evidence=fetch_evidence,
+                    **fetch_columns,
                 )
                 _insert_source_health(
-                    conn, source_id, observed_at=finished_at, state="healthy",
-                    last_success_at=finished_at, last_failure_at=None,
-                    message="Official feed unchanged (HTTP 304).", evidence=fetch_evidence,
+                    conn,
+                    source_id,
+                    observed_at=finished_at,
+                    state="healthy",
+                    last_success_at=finished_at,
+                    last_failure_at=None,
+                    message="Official feed unchanged (HTTP 304).",
+                    evidence=fetch_evidence,
                     source=source,
                 )
                 return 0
@@ -690,7 +626,8 @@ def _ingest_source(
                 evidence["fixture_size_bytes"] = len(text.encode("utf-8"))
             else:
                 evidence["official_fetch"] = {
-                    "url": str(source["url"]), "http_status": response.status_code
+                    "url": str(source["url"]),
+                    "http_status": response.status_code,
                 }
             item["evidence"] = evidence
             item_id = _upsert_item(
@@ -745,9 +682,15 @@ def _ingest_source(
         raise
     except RateLimitedError as exc:
         _record_source_failure(
-            conn, run_id, source_id, source,
-            status="rate_limited", error_class=type(exc).__name__,
-            error_message=str(exc), message=str(exc), http_status=429,
+            conn,
+            run_id,
+            source_id,
+            source,
+            status="rate_limited",
+            error_class=type(exc).__name__,
+            error_message=str(exc),
+            message=str(exc),
+            http_status=429,
         )
         raise
     except PayloadTooLargeError as exc:
@@ -880,10 +823,12 @@ def _start_fetch_run(
         (
             source_id,
             started_at,
-            json_dumps({
-                "fixture_only": str(source.get("url") or "").startswith("file://"),
-                "source_kind": source.get("kind"),
-            }),
+            json_dumps(
+                {
+                    "fixture_only": str(source.get("url") or "").startswith("file://"),
+                    "source_kind": source.get("kind"),
+                }
+            ),
         ),
     ).lastrowid
     return int(row_id)
@@ -2158,13 +2103,15 @@ def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
             group["source_keys"].append(source_key)
         if family and family not in group["families"]:
             group["families"].append(family)
-        group["members"].append({
-            "id": int(row["id"]),
-            "title": str(row["title"]),
-            "family": family,
-            "evidence": evidence,
-            "rank_score": int(row["rank_score"]),
-        })
+        group["members"].append(
+            {
+                "id": int(row["id"]),
+                "title": str(row["title"]),
+                "family": family,
+                "evidence": evidence,
+                "rank_score": int(row["rank_score"]),
+            }
+        )
         group["last_seen_at"] = max(group["last_seen_at"], str(row["last_seen_at"]))
         tags = json_loads(str(row["tags_json"]), [])
         group["tags"] = list(dict.fromkeys([*group["tags"], *tags]))
@@ -2178,7 +2125,7 @@ def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
                 family = member["family"] or "unknown"
                 family_counts[family] = family_counts.get(family, 0) + 1
             group["score"] = 0
-            highest_score = -10**9
+            highest_score = -(10**9)
             for member in group["members"]:
                 evidence = member["evidence"]
                 ranking = apply_regional_cluster_ranking_adjustments(
@@ -2198,20 +2145,22 @@ def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
                     "UPDATE news_items SET rank_score = ?, evidence_json = ? WHERE id = ?",
                     (score, json_dumps(evidence), member["id"]),
                 )
-            cluster_evidence.update({
-                "event": group["event"],
-                "item_ids": [member["id"] for member in group["members"]],
-                "source_keys": group["source_keys"],
-                "families": group["families"],
-                "family_count": len(group["families"]),
-                "corroborated": len(group["families"]) >= 2,
-                "duplicate_family_counts": family_counts,
-                "ranking": {
-                    "score": group["score"],
-                    "source_diversity_bonus": min(15, max(0, len(group["families"]) - 1) * 5),
-                    "item_count": group["item_count"],
-                },
-            })
+            cluster_evidence.update(
+                {
+                    "event": group["event"],
+                    "item_ids": [member["id"] for member in group["members"]],
+                    "source_keys": group["source_keys"],
+                    "families": group["families"],
+                    "family_count": len(group["families"]),
+                    "corroborated": len(group["families"]) >= 2,
+                    "duplicate_family_counts": family_counts,
+                    "ranking": {
+                        "score": group["score"],
+                        "source_diversity_bonus": min(15, max(0, len(group["families"]) - 1) * 5),
+                        "item_count": group["item_count"],
+                    },
+                }
+            )
         conn.execute(
             """
             INSERT INTO news_clusters (

@@ -974,12 +974,19 @@ Architecture reference:
 
 ### NATIONAL Source Registry Design Implementation
 
-Status: not implemented.
+Status: implemented.
 
 Implement the NATIONAL source registry from the design document with explicit `source_key`,
 `source_family`, `source_class`, adapter, scope, priority, official status, policy risk, parser
 risk, privacy risk, retention sensitivity, verification status, and future phase fields. Validate
 enum values and keep all NATIONAL sources disabled until explicitly configured.
+
+Current state: the checked-in NATIONAL registry contains all 227 source targets from the design
+inventory, with their original provenance, risk, verification, priority, phase, and access fields.
+The loader validates required enum values and scope/URL shape. Config defaults for known source IDs
+remain disabled and reject invalid metadata. The registry is persisted by explicit `news-scan`
+and summarized from SQLite. Candidate adapter/kind assignments are inert planning metadata;
+they do not authorize live requests.
 
 ### Disabled-By-Default NATIONAL Config
 
@@ -1000,13 +1007,19 @@ enabled by this config work; homepage extraction remains blocked by the shared f
 
 ### NATIONAL SQLite Schema Or Extension
 
-Status: not implemented.
+Status: partially implemented.
 
 Add or extend SQLite storage for NATIONAL source registry state, fetch runs, normalized items,
 `national_events` or scoped clusters, source health, ranking explanations, agency/sector/state
 labels, and retention purge evidence. Use JSON-heavy columns and indexes for latest-by-scope, event
 ranking, source health, source family, agency/sector/state filters, and `expires_at` purge. Do not
 store full article bodies by default.
+
+Current state: the shared `news_source_registry` now supports `(scope, source_key)` uniqueness so
+LOCAL and NATIONAL can retain their documented overlapping IDs. Existing SQLite databases migrate
+in place while preserving registry rows. NATIONAL registry rows and summaries are stored by
+`news-scan`. Scoped items, fetch runs, source health, and cluster tables already support NATIONAL.
+Dedicated agency/sector/state query indexes and retention/purge evidence remain to be verified.
 
 ### NATIONAL Fixture Pack
 
