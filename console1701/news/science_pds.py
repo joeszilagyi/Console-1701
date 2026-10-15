@@ -8,7 +8,12 @@ from typing import Any
 from urllib.parse import quote
 
 from console1701.news.normalize import bounded_text, normalize_timestamp
-from console1701.news.parsers import NewsParserError, PayloadTooLargeError, _normalize_item
+from console1701.news.parsers import (
+    ArchiveFirehoseBlockedError,
+    NewsParserError,
+    PayloadTooLargeError,
+    _normalize_item,
+)
 from console1701.news.science_sources import exact_science_endpoint
 
 PDS_PRODUCTS_URL = "https://pds.nasa.gov/api/search/1/products/"
@@ -24,7 +29,9 @@ def _first_text(value: Any, max_chars: int = 150) -> str | None:
 def _contract(source: dict[str, Any]) -> dict[str, Any]:
     query = source.get("query_contract")
     if not isinstance(query, dict):
-        raise NewsParserError("PDS collection metadata requires an exact identifier contract")
+        raise ArchiveFirehoseBlockedError(
+            "PDS collection metadata requires an exact identifier contract"
+        )
     lid = query.get("collection_lid")
     allowlist = query.get("allowed_collection_lids")
     if (
@@ -39,7 +46,9 @@ def _contract(source: dict[str, Any]) -> dict[str, Any]:
         or type(query.get("retention_days")) is not int
         or not 1 <= query["retention_days"] <= 7
     ):
-        raise NewsParserError("PDS collection metadata query is not narrowly allowlisted")
+        raise ArchiveFirehoseBlockedError(
+            "PDS collection metadata query is not narrowly allowlisted"
+        )
     return query
 
 
@@ -58,7 +67,7 @@ def parse_pds_collection_metadata(
     except json.JSONDecodeError as exc:
         raise NewsParserError(f"Malformed PDS collection JSON: {exc}") from exc
     if not isinstance(payload, dict) or payload.get("type") != "Product_Collection":
-        raise NewsParserError("PDS response is not one Product_Collection")
+        raise ArchiveFirehoseBlockedError("PDS response is not one Product_Collection")
     lid = query["collection_lid"]
     lidvid = payload.get("id")
     properties = payload.get("properties")

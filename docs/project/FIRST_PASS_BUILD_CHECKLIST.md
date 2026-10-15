@@ -175,7 +175,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-135** [Deterministic Event Correlation For Transients, Exoplanets, Missions, And Telescope Releases](../../BACKLOG.md#L2173) — complete-link matcher runs during offline COSMIC scans and persists event, cluster, and item evidence.
 - [x] **RS-136** [Deterministic Ranking For Official Science And Rarity](../../BACKLOG.md#L2182) — explainable science rank runs during offline COSMIC scans and persists score features and reasons.
 - [ ] **RS-137** [Hype And Speculation Suppression Rules](../../BACKLOG.md#L2192) — pre-storage COSMIC claim blocking and background labels exist; source-specific and literature variants pending.
-- [ ] **RS-138** [Archive Firehose Blocking Rules](../../BACKLOG.md#L2202) — not implemented.
+- [x] **RS-138** [Archive Firehose Blocking Rules](../../BACKLOG.md#L2202) — heavy/catalog candidates rejected; tiny archive contract violations record `archive_firehose_blocked` before item storage.
 - [ ] **RS-139** [UI Disabled States After Naming Decision](../../BACKLOG.md#L2211) — COSMIC state card distinguishes configured health and disabled candidate inventory; future source-specific gates pending.
 - [ ] **RS-140** [Source Health States](../../BACKLOG.md#L2220) — fixture health, hype-blocked runtime, disabled candidate counts, and SQLite state rendering exist; future adapter gates pending.
 - [ ] **RS-141** [Evidence Drawer Contract](../../BACKLOG.md#L2231) — fixture item/event evidence renders; auth and broader policy/health states pending.

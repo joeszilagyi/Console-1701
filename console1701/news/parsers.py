@@ -36,6 +36,10 @@ class NewsParserError(NewsIngestError):
     """Raised when a source fixture cannot be parsed."""
 
 
+class ArchiveFirehoseBlockedError(NewsParserError):
+    """Raised when a science archive request or response exceeds its narrow contract."""
+
+
 _METRO_ROUTES_RE = re.compile(
     r"\bRoutes\s+([A-Z0-9,\s/&-]+?)(?=\s+(?:are|will|rerouted|delayed|"
     r"canceled|cancelled|suspended|near|in|on|due|with)\b|[.;:]|$)",
