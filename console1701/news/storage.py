@@ -886,10 +886,14 @@ def get_news_scope_view(
         WHERE scope = ? AND status = 'active' AND expires_at >= ?
           AND (? != 'NATIONAL' OR
                json_extract(evidence_json, '$.national_policy.suppressed') IS NOT 1)
+          AND (? != 'ORBITAL' OR COALESCE(json_array_length(json_extract(
+               evidence_json,
+               '$.orbital_event.ranking.sensitivity.hard_suppression_flags'
+          )), 0) = 0)
         ORDER BY rank_score DESC, last_seen_at DESC, id DESC
         LIMIT ?
         """,
-        (normalized_scope, now, normalized_scope, item_limit),
+        (normalized_scope, now, normalized_scope, normalized_scope, item_limit),
     ).fetchall()
     clusters = conn.execute(
         """
@@ -1057,6 +1061,10 @@ def get_news_item_detail(
         i
         JOIN news_sources s ON s.id = i.source_id
         WHERE i.id = ?
+          AND (i.scope != 'ORBITAL' OR COALESCE(json_array_length(json_extract(
+               i.evidence_json,
+               '$.orbital_event.ranking.sensitivity.hard_suppression_flags'
+          )), 0) = 0)
         """,
         (item_id,),
     ).fetchone()
