@@ -103,6 +103,10 @@ def national_item_facets(evidence: dict[str, Any]) -> set[tuple[str, str]]:
         add("agency", "gpo")
         add("sector", "publication")
         add("source_family", "govinfo")
+    fda_notice = evidence.get("fda_recall_notice") or {}
+    if isinstance(fda_notice, dict):
+        add("agency", "fda")
+        add("sector", "consumer_safety")
     return facets
 
 

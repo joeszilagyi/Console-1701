@@ -1319,6 +1319,43 @@ def test_run_news_scan_filters_national_govinfo_rss_fixture(tmp_path):
     assert evidence["ingest"]["fixture_only"] is True
 
 
+def test_run_news_scan_ingests_national_fda_recall_rss_fixture(tmp_path):
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        news:
+          enabled: true
+          scopes:
+            NATIONAL:
+              enabled: true
+              sources:
+                - id: fda_recalls
+                  name: FDA recalls fixture
+                  kind: rss
+                  parser: fda_recalls_rss
+                  source_family: fda
+                  official_status: official
+                  tags: [official]
+                  enabled: true
+                  url: "{_file_url(FIXTURE_DIR / 'national_fda_recalls.rss')}"
+        """,
+    )
+    result = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        rows = conn.execute(
+            "SELECT evidence_json FROM news_items WHERE scope = 'NATIONAL'"
+        ).fetchall()
+        fda_items = list_national_items_by_facet(conn, "agency", "FDA")
+    assert result["status"] == "complete"
+    assert result["item_count"] == 2
+    assert len(rows) == len(fda_items) == 2
+    evidence_rows = [json_loads(row["evidence_json"], {}) for row in rows]
+    assert all(row["ingest"]["fixture_only"] is True for row in evidence_rows)
+    assert all(row["fda_recall_notice"]["severity"] == "not_in_feed" for row in evidence_rows)
+
+
 def test_run_news_scan_uses_national_usgs_threshold_for_fixture(tmp_path):
     config_path = _write_config(
         tmp_path / "config.yml",

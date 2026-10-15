@@ -62,7 +62,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-031** [NATIONAL Source Registry Design Implementation](../../BACKLOG.md#L973) — 227 disabled design entries, validated metadata, config defaults, SQLite sync, and summary.
 - [x] **RS-032** [Disabled-By-Default NATIONAL Config](../../BACKLOG.md#L982) — validated national policy tree, separate scope gate, social-source rejection, and disabled defaults.
 - [x] **RS-033** [NATIONAL SQLite Schema Or Extension](../../BACKLOG.md#L993) — scoped storage, agency/sector/state indexed facets, migration backfill and expiry purge verified.
-- [ ] **RS-034** [NATIONAL Fixture Pack](../../BACKLOG.md#L1003) — partial: NWS, USGS, NHTSA, CISA KEV, FAA NAS, Federal Register and GovInfo fixtures; other selected source families pending.
+- [ ] **RS-034** [NATIONAL Fixture Pack](../../BACKLOG.md#L1003) — partial: NWS, USGS, NHTSA, CISA KEV, FAA NAS, Federal Register, GovInfo and FDA RSS fixtures; other selected source families pending.
 - [x] **RS-035** [NWS Active Alert Parser](../../BACKLOG.md#L1012) — fixture parser preserves national alert geography, timing, instruction, and ranking evidence; focused tests pass.
 - [x] **RS-036** [NHC Advisory/Feed Verification](../../BACKLOG.md#L1020) — official basin XML, summary/advisory fields, identity limits and empty-basin sentinel observed; live disabled.
 - [ ] **RS-037** [USGS Earthquake GeoJSON Parser](../../BACKLOG.md#L1028) — partial: national coordinate regions, threshold, and fixture ingest work; nuanced cross-border and multi-state impact routing remains.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Advanced RS-034 with an FDA Recalls RSS metadata fixture parser and offline scan. Preserved FDA-hosted provenance and structured-hazard limits without inventing severity or treating Spanish notices as independent confirmation. Recorded RS-045's unverified CISA advisory endpoint blocker. Full pytest passed (342 tests); Ruff passed. Progress: 56/150.
 - **2026-10-15:** Completed RS-048 and advanced RS-034. Verified three GovInfo collection RSS feeds, added collection/title-filtered fixture parser with publication-stage caveats, and tested offline scan. Full pytest passed (340 tests); Ruff passed. Progress: 56/150.
 - **2026-10-15:** Completed RS-047 and advanced RS-034. Verified Federal Register JSON list shape, implemented explicit agency/type/impact filtering and administrative suppression, preserved optional action windows, and tested fixture scan. Full pytest passed (338 tests); Ruff passed. Progress: 55/150.
 - **2026-10-15:** Completed RS-044 and advanced RS-034. Verified official FAA NAS XML shape, implemented airport allowlist and grouped event fixture parser, added source-specific aviation ranking and facets, and tested offline scan. Full pytest passed (336 tests); Ruff passed. Live adapter remains disabled. Progress: 54/150.

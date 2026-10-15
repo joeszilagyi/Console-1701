@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Food and Drugs Administration--Recalls/Safety Alerts</title>
+    <item>
+      <title>Example Foods Issues Allergy Alert for Undeclared Sesame</title>
+      <link>http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/example-foods-issues-allergy-alert</link>
+      <description>Example Foods is recalling selected lots because sesame was not declared on the label.</description>
+      <pubDate>Tue, 13 Oct 2026 14:07:00 EDT</pubDate>
+      <dc:creator>FDA</dc:creator>
+      <guid>http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/example-foods-issues-allergy-alert</guid>
+    </item>
+    <item>
+      <title>Example Foods Emite Alerta por Alérgenos</title>
+      <link>http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/example-foods-emite-alerta</link>
+      <description>Example Foods retira ciertos lotes del producto.</description>
+      <pubDate>Tue, 13 Oct 2026 14:00:00 EDT</pubDate>
+      <dc:creator>FDA</dc:creator>
+      <guid>http://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/example-foods-emite-alerta</guid>
+    </item>
+  </channel>
+</rss>

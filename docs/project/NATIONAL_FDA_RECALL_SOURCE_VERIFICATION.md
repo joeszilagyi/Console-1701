@@ -61,3 +61,16 @@ notice or independently verified every claim. No article body or private custome
 belongs in storage. A current official RSS item can be displayed as an FDA-hosted notice with its
 original link and a freshness limit; if the feed fails, report source-health failure and retain
 last good rows only under configured retention.
+
+## Offline fixture adapter added
+
+`fda_recalls_rss` now validates the observed general Recalls/Safety Alerts channel, official
+FDA notice links and GUIDs, publication time and duplicate URL identity. It canonicalizes
+observed `http://www.fda.gov/` notice URLs to HTTPS for storage while retaining the original
+GUID in evidence. It stores bounded headline/description metadata, feed creator and explicit
+`not_in_feed` markers for severity, distribution and recall classification. The synthetic
+fixture includes English and Spanish notices without asserting they are translations or
+independent confirmations. NATIONAL FDA/consumer-safety facets and an offline `news-scan` test
+cover the path. The parser adds no hazard ranking bonus because the RSS fields do not supply
+structured severity or affected geography. Live fetch remains disabled pending the release gate
+above; the fixture adapter does not use openFDA enforcement data.
