@@ -105,6 +105,44 @@ def test_cosmic_configured_fixture_cannot_run_with_parent_disabled(tmp_path, mon
     assert state["state"] == "disabled"
 
 
+def test_cosmic_configured_disabled_and_never_run_sources_are_distinct(tmp_path, monkeypatch):
+    path, _ = _config(tmp_path, monkeypatch, science_enabled=True)
+    raw = yaml.safe_load(path.read_text())
+    raw["news"]["scopes"] = {"SYSTEM_SOLAR": {
+        "enabled": True,
+        "sources": [{
+            "id": "esa_space_science_feed", "name": "ESA Space Science",
+            "kind": "rss", "parser": "esa_science_rss", "enabled": False,
+            "fixture_only": False,
+            "official_url": "https://www.esa.int/rssfeed/Our_Activities/Space_Science",
+            "url": "https://www.esa.int/rssfeed/Our_Activities/Space_Science",
+        }],
+    }}
+    path.write_text(yaml.safe_dump(raw))
+    config = load_config(path)
+    with connect_db(config["_db_path"]) as conn:
+        assert get_news_sources_status(conn, config)[0]["health_state"] == "disabled"
+    raw["news"]["scopes"]["SYSTEM_SOLAR"]["sources"][0]["enabled"] = True
+    path.write_text(yaml.safe_dump(raw))
+    config = load_config(path)
+    with connect_db(config["_db_path"]) as conn:
+        assert get_news_sources_status(conn, config)[0]["health_state"] == "policy_blocked"
+    raw["news"]["fetch_policy"] = {"allow_official_http": True}
+    path.write_text(yaml.safe_dump(raw))
+    config = load_config(path)
+    with connect_db(config["_db_path"]) as conn:
+        assert get_news_sources_status(conn, config)[0]["health_state"] == (
+            "configured_never_run"
+        )
+    monkeypatch.setattr("console1701.news.scanner.fetch_official_text", lambda *a, **kw: (
+        (_ for _ in ()).throw(AssertionError("COSMIC state GET fetched HTTP"))
+    ))
+    html = _route(build_router(str(path)), "/{scope}")(
+        _request("/COSMIC"), "COSMIC"
+    ).body.decode()
+    assert "configured_never_run" in html
+
+
 def test_cosmic_candidate_summary_and_sqlite_health_render_without_get_fetch(
     tmp_path, monkeypatch
 ):
@@ -126,6 +164,7 @@ def test_cosmic_candidate_summary_and_sqlite_health_render_without_get_fetch(
         state = get_news_scope_states(conn, config)["SYSTEM_SOLAR"]
     assert state["science_candidates"]["candidate_count"] >= 170
     assert state["science_candidates"]["state_counts"]["heavy_archive_disabled"] >= 10
+    assert state["science_candidates"]["state_counts"]["disabled"] == 2
     monkeypatch.setattr("console1701.news.scanner.fetch_official_text", lambda *a, **kw: (
         (_ for _ in ()).throw(AssertionError("COSMIC GET fetched HTTP"))
     ))
@@ -139,6 +178,11 @@ def test_cosmic_candidate_summary_and_sqlite_health_render_without_get_fetch(
         ("rate_limited", "2099-01-01T00:00:00+00:00", "rate_limited"),
         ("auth_required", "2099-01-01T00:00:00+00:00", "auth_required"),
         ("policy_blocked", "2099-01-01T00:00:00+00:00", "policy_blocked"),
+        ("robots_blocked", "2099-01-01T00:00:00+00:00", "robots_blocked"),
+        ("manual_review_only", "2099-01-01T00:00:00+00:00", "manual_review_only"),
+        ("needs_scope_filter", "2099-01-01T00:00:00+00:00", "needs_scope_filter"),
+        ("needs_terms_review", "2099-01-01T00:00:00+00:00", "needs_terms_review"),
+        ("unsupported", "2099-01-01T00:00:00+00:00", "unsupported"),
         ("failed", "2099-01-01T00:00:00+00:00", "failing"),
         ("social_disabled", "2099-01-01T00:00:00+00:00", "social_disabled"),
         ("heavy_archive_disabled", "2099-01-01T00:00:00+00:00",
@@ -158,4 +202,6 @@ def test_cosmic_candidate_summary_and_sqlite_health_render_without_get_fetch(
         html = endpoint(_request("/COSMIC"), "COSMIC").body.decode()
         assert expected in html
         assert "Heavy archive candidates gated" in html
+        assert "Verified opt-in sources off by default" in html
         assert "SYSTEM_SOLAR" not in html
+        assert "naming_collision_unresolved" not in html

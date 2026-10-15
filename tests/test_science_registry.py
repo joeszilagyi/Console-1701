@@ -25,6 +25,12 @@ def test_science_inventory_is_disabled_and_keeps_system_as_app_health():
         "source_health_only", "heavy_archive_disabled"
     }
     assert any(row["source_health_behavior"] == "auth_required" for row in SCIENCE_SOURCE_REGISTRY)
+    assert get_science_source_registry_entry("esa_space_science_feed")[
+        "source_health_behavior"
+    ] == "disabled"
+    assert get_science_source_registry_entry("nasa_exoplanet_ps_tap")[
+        "source_health_behavior"
+    ] == "disabled"
     assert any(
         row["source_health_behavior"] == "heavy_archive_disabled"
         for row in SCIENCE_SOURCE_REGISTRY
