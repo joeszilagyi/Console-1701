@@ -2566,38 +2566,55 @@ follow-up.
 
 ### Tests For No Page-Load External Fetches
 
-Status: not implemented.
+Status: partially implemented.
 
 Add tests proving GET routes and page renders read SQLite/config only and never call ORBITAL
 network fetchers. Include disabled/not configured/stale/failing/auth-required/policy-blocked,
 restricted-source-disabled, social-disabled, homepage-extraction-disabled, source-health-only, and
 parser-failed state tests for ORBITAL and SYSTEM source health.
 
+Current state: `tests/test_orbital_safety_gates.py` exercises ORBITAL and SYSTEM GET/API routes
+with fetch and fixture access forbidden. It covers failing, auth-required, and policy-blocked
+source rows. The remaining state matrix needs explicit route assertions.
+
 ### Tests For No Restricted Source Running Without Explicit Config
 
-Status: not implemented.
+Status: completed 2026-10-15 for first-pass safety gate.
 
 Add tests proving Space-Track, CelesTrak restricted/sensitive candidates, conjunction-awareness
 sources, restricted satellite sources, account-required sources, and policy-sensitive reentry or
 debris candidates cannot run unless explicitly enabled in local config and policy-approved. Tests
 should assert no network calls and clear disabled or auth-required source-health states.
 
+Current state: `tests/test_orbital_safety_gates.py` verifies Space-Track, CelesTrak, NASA
+conjunction/debris, ESA reentry, and ArcGIS reentry candidates stop before fixture or network
+access and expose their auth-required, policy-blocked, or unsupported states.
+
 ### Tests For No API-Key Source Running Without Config
 
-Status: not implemented.
+Status: completed 2026-10-15 for first-pass safety gate.
 
 Add tests proving NASA APIs, platform APIs, Space-Track, any future API-key source, and any
 account/token source cannot run without explicit local configuration. Tests should assert clear
 `auth_required`, `not_configured`, or policy-disabled source-health state and no network calls.
 
+Current state: NASA Open APIs, Space-Track, and arbitrary future API-key/token sources have
+explicit missing-credential tests. The NASA registry candidate now declares an empty local key
+slot and reports `auth_required`; the tests assert no fixture or network access.
+
 ### Tests For No Tactical Satellite Tracking Output
 
-Status: not implemented.
+Status: partially implemented.
 
 Add tests proving ORBITAL does not render tactical satellite tracking output, broad catalog
 firehose rows, sensitive military satellite inference, private operator monitoring, or
 object-by-object surveillance. The UI should show aggregate, source-backed event metadata and
 honest disabled/sensitivity-blocked states instead.
+
+Current state: the CelesTrak elements, SATCAT, and SOCRATES candidates remain manual-review-only
+even when topic and restricted-source flags are set; a regression test confirms no rows or
+tactical output appear. Further stored-item and UI sensitivity tests belong with ORBITAL safety
+rules and rendering.
 
 ## Solar System and Beyond Recent Signal Layer
 

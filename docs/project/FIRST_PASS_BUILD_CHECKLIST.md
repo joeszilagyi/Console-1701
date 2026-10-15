@@ -147,10 +147,10 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-110** [ORBITAL Evidence Drawer Contract](../../BACKLOG.md#L1876) — not implemented.
 - [ ] **RS-111** [ORBITAL Official-Source Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L1887) — not implemented.
 - [ ] **RS-112** [Documentation For ORBITAL Source Verification](../../BACKLOG.md#L1933) — partially implemented.
-- [ ] **RS-113** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L1948) — not implemented.
-- [ ] **RS-114** [Tests For No Restricted Source Running Without Explicit Config](../../BACKLOG.md#L1957) — not implemented.
-- [ ] **RS-115** [Tests For No API-Key Source Running Without Config](../../BACKLOG.md#L1966) — not implemented.
-- [ ] **RS-116** [Tests For No Tactical Satellite Tracking Output](../../BACKLOG.md#L1974) — not implemented.
+- [ ] **RS-113** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L1948) — partially implemented; remaining source-health state matrix.
+- [x] **RS-114** [Tests For No Restricted Source Running Without Explicit Config](../../BACKLOG.md#L1957) — completed 2026-10-15; regression gate covers restricted and policy-sensitive candidates.
+- [x] **RS-115** [Tests For No API-Key Source Running Without Config](../../BACKLOG.md#L1966) — completed 2026-10-15; missing keys stop NASA, Space-Track, and future keyed sources.
+- [ ] **RS-116** [Tests For No Tactical Satellite Tracking Output](../../BACKLOG.md#L1974) — partially implemented; candidate gate covered, stored-item/UI sensitivity pending.
 
 ### Solar System and Beyond Recent Signal Layer
 
