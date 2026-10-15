@@ -2851,6 +2851,11 @@ persists COSMIC items and events, and rejects nonexact source identities. A scan
 test assert no network call, while a repeat scan confirms event rebuild idempotence. The remaining
 fixture families and blocked-state matrix still need end-to-end coverage.
 
+A parameterized scan regression also exercises the Hubble, Webb, Exoplanet Archive, MAST, PDS,
+and GCN fixture adapters through the real scanner, with local-only input, stored event evidence,
+and no product-download flags. `docs/project/COSMIC_FIXTURE_INGEST.md` gives the exact local
+configuration shape. ATel and the broader source-health/policy matrix remain pending.
+
 ### NASA/JPL RSS Parser
 
 Status: completed 2026-10-15 for fixture-first NASA-hosted JPL science RSS.
@@ -3237,12 +3242,17 @@ archive-firehose-blocked, and naming-collision-unresolved state tests.
 
 ### Tests For No Heavy Archive Source Running Without Explicit Config
 
-Status: not implemented.
+Status: completed 2026-10-15 for the first-pass COSMIC fixture gate.
 
 Add tests proving SIMBAD, VizieR, Gaia, ESASky, ESO Archive, MAST, PDS, HEASARC, Exoplanet Archive,
 ADS, TAP/ADQL, and catalog candidates cannot run unless explicitly enabled with local config,
 allowlists, row caps, and query bounds. Tests should assert no network calls and clear disabled or
 blocked source-health states.
+
+The COSMIC configuration test iterates every heavy-archive and astronomy-catalog registry
+candidate and confirms exact fixture-source validation rejects it, even with heavy-archive flags
+enabled. This release has no heavy-archive adapter or live science transport. Source-specific
+blocked health states remain part of RS-138/140.
 
 ### Tests For No Auth Source Running Without Config
 
@@ -3254,12 +3264,17 @@ assert clear `auth_required` or policy-disabled source-health state and no netwo
 
 ### Tests For No Data Product Downloads
 
-Status: not implemented.
+Status: completed 2026-10-15 for the current COSMIC fixture adapters.
 
 Add tests proving MAST, PDS, HEASARC, Gaia, ESO Archive, ESASky, TAP/ADQL, GraceDB sky maps, and
 other archive sources do not download science products, sky maps, papers, images, or article bodies
 by default. Parsers should store metadata only and evidence should explicitly record no data product
 downloads.
+
+End-to-end scans of all eight permitted science fixture adapters assert local-only ingest and
+persisted metadata. The relevant Exoplanet, MAST, PDS, GCN, and telescope evidence records
+explicit false download/product-request flags; parser unit tests reject broader payloads and
+product fields. Extend this gate before any new live or archive adapter is admitted.
 
 ### Tests For No Alien-Life Or UFO Hype Leakage
 
