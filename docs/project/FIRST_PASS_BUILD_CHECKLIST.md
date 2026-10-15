@@ -168,11 +168,11 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-128** [PDS Metadata-Only Parser](../../BACKLOG.md#L2091) — fixture-only exact collection lookup with mission/target/version, honest harvest-date semantics, optional source count, and no member/product traversal.
 - [x] **RS-129** [GCN Notice Fixture Parser](../../BACKLOG.md#L2099) — fixture-only unified-schema parser with IDs, times, coordinates, preliminary/retraction states, and no sky-map or live transport.
 - [x] **RS-130** [GCN Circular Source Verification](../../BACKLOG.md#L2107) — official schema and archive classified; no narrow API verified, bulk export blocked, and metadata/privacy/status contract recorded.
-- [ ] **RS-131** [ATel RSS Parser](../../BACKLOG.md#L2115) — not implemented.
+- [ ] **RS-131** [ATel RSS Parser](../../BACKLOG.md#L2115) — blocked: official RSS and Feeds URLs returned an HTML access error on 2026-10-15; source schema unverified.
 - [x] **RS-132** [GraceDB/LIGO Public Alert Policy Design](../../BACKLOG.md#L2132) — public REST versus authenticated Kafka, bounded query, status/retraction, rate, and no-sky-map-download policy recorded.
 - [x] **RS-133** [Minor Planet Center Science-Context Source Verification](../../BACKLOG.md#L2141) — official MPEC/orbit/observation/list APIs classified, rate and volume limits recorded, and ORBITAL CNEOS remains canonical for hazards.
 - [x] **RS-134** [HEASARC Metadata Source Verification](../../BACKLOG.md#L2149) — official Xamin/TAP/cone interfaces, bounded VOTable probe, row-cap/overflow policy, mission conditions, and disabled promotion gates recorded.
-- [ ] **RS-135** [Deterministic Event Correlation For Transients, Exoplanets, Missions, And Telescope Releases](../../BACKLOG.md#L2173) — not implemented.
+- [ ] **RS-135** [Deterministic Event Correlation For Transients, Exoplanets, Missions, And Telescope Releases](../../BACKLOG.md#L2173) — complete-link metadata matcher and tests added; scan/persistence integration pending.
 - [ ] **RS-136** [Deterministic Ranking For Official Science And Rarity](../../BACKLOG.md#L2182) — not implemented.
 - [ ] **RS-137** [Hype And Speculation Suppression Rules](../../BACKLOG.md#L2192) — not implemented.
 - [ ] **RS-138** [Archive Firehose Blocking Rules](../../BACKLOG.md#L2202) — not implemented.
