@@ -78,7 +78,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-047** [Federal Register API Parser With Filters](../../BACKLOG.md#L1114) — official list shape, required agency/type/impact filters, low-value suppression, action dates, ranking, facets and offline scan verified; live disabled.
 - [x] **RS-048** [GovInfo RSS Parser](../../BACKLOG.md#L1122) — verified collection RSS shapes, explicit title filter, bounded metadata, ranking/facets and offline scan; live disabled.
 - [ ] **RS-049** [NATIONAL Deterministic Event Correlation](../../BACKLOG.md#L1155) — partial: official IDs, explicit cross-family type/context/title/time matching, complete-link guard, and persisted evidence; source-specific dimension coverage remains.
-- [ ] **RS-050** [NATIONAL Deterministic Ranking](../../BACKLOG.md#L1165) — not implemented.
+- [x] **RS-050** [NATIONAL Deterministic Ranking](../../BACKLOG.md#L1165) — bounded event factors/reasons for all named first-pass dimensions, stored in cluster/item evidence, with duplicate-family control and offline verification.
 - [ ] **RS-051** [NATIONAL Low-Public-Value And Public-Impact Rules](../../BACKLOG.md#L1175) — not implemented.
 - [x] **RS-052** [NATIONAL UI Disabled States](../../BACKLOG.md#L1185) — shared NATIONAL page shows verified disabled/failure states without fake items or fetch.
 - [x] **RS-053** [NATIONAL Source Health States](../../BACKLOG.md#L1194) — shared health and NATIONAL page/API state matrix verified without fetch.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-050. NATIONAL events now use source-evidenced bounded ranking with all named first-pass factors and reasons, including official severity, impact, reach, diversity, temporal and health penalties. Cluster scores no longer sum repeat items; item and cluster evidence show the same score. Full pytest passed (357 tests); Ruff passed. Progress: 61/150. Next: RS-051 policy classification and suppression.
 - **2026-10-15:** Advanced RS-049. NATIONAL cluster rebuild now uses official event identifiers and conservative cross-family context matching across explicit geography/sector fields, title, and time. Match evidence and confidence persist in items/clusters; same-family duplicate campaigns remain uncorroborated. Source-specific mappings and first-pass NATIONAL ranking are open. Full pytest passed (352 tests); Ruff passed. Progress: 60/150. Next: implement RS-050 ranking without duplicate-score inflation.
 - **2026-10-15:** Completed RS-075 and advanced RS-062. Verified IAEA Top News RSS and its unusual timezone-free date, added filtered GLOBAL fixture parser with cautious nuclear-safety ranking evidence and offline scan, and registered the exact feed disabled by default. Full pytest passed (349 tests); Ruff passed. Progress: 60/150. Next: close other executable scope and fixture gaps.
 - **2026-10-15:** Completed RS-074 and advanced RS-062. Verified official UN Press RSS metadata, added filtered GLOBAL fixture parser and low-value suppression, and tested offline scan. Full pytest passed (347 tests); Ruff passed. Progress: 59/150.

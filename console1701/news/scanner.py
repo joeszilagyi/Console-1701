@@ -19,6 +19,7 @@ from console1701.news.global_ranking import rank_global_event
 from console1701.news.global_registry import list_global_source_registry
 from console1701.news.local_registry import list_local_source_registry
 from console1701.news.national_events import correlate_national_items
+from console1701.news.national_ranking import rank_national_event
 from console1701.news.national_registry import list_national_source_registry
 from console1701.news.normalize import bounded_text, cluster_key, content_hash, expires_at, url_hash
 from console1701.news.official_http import (
@@ -2426,6 +2427,9 @@ def _rebuild_national_clusters(conn: sqlite3.Connection) -> None:
     conn.execute("DELETE FROM news_clusters WHERE scope = 'NATIONAL'")
     for group in correlate_national_items(items):
         members = [by_id[item_id] for item_id in group["item_ids"]]
+        event_ranking = rank_national_event(
+            group, members, now=datetime.now(UTC).isoformat(timespec="seconds")
+        )
         representative = max(
             members, key=lambda item: (int(item["rank_score"]), item["last_seen_at"], item["id"])
         )
@@ -2445,6 +2449,7 @@ def _rebuild_national_clusters(conn: sqlite3.Connection) -> None:
             evidence["national_event"] = {
                 **group,
                 "confidence": confidence,
+                "ranking": event_ranking,
                 "matching_tokens": sorted({
                     token for match in group["matches"]
                     for token in match["shared_tokens"]
@@ -2468,11 +2473,11 @@ def _rebuild_national_clusters(conn: sqlite3.Connection) -> None:
                 min(str(member["first_seen_at"]) for member in members),
                 max(str(member["last_seen_at"]) for member in members),
                 len(members),
-                sum(int(member["rank_score"]) for member in members),
+                event_ranking["score"],
                 json_dumps(tags),
                 json_dumps({"fixture_only": fixture_only, "national_event": {
                     **group, "confidence": confidence,
-                    "ranking_state": "legacy_item_sum_until_RS-050",
+                    "ranking": event_ranking,
                 }}),
             ),
         )
