@@ -125,7 +125,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 
 - [x] **RS-089** [ORBITAL Source Registry Design Implementation](../../BACKLOG.md#L1627) — all 136 design entries disabled, validated and inherited by config, persisted in SQLite and summary; reference rows cannot ingest.
 - [x] **RS-090** [Disabled-By-Default ORBITAL Config](../../BACKLOG.md#L1637) — disabled and validated policy tree; sensitive and unparsed candidates blocked before access; no live ORBITAL allowlist.
-- [ ] **RS-091** [ORBITAL SQLite Schema Or Extension](../../BACKLOG.md#L1647) — not implemented.
+- [x] **RS-091** [ORBITAL SQLite Schema Or Extension](../../BACKLOG.md#L1647) — shared scoped storage plus indexed event/object/mission, safety, sensitivity and impact facets; backfill, refresh and purge verified.
 - [ ] **RS-092** [ORBITAL Fixture Pack](../../BACKLOG.md#L1658) — not implemented.
 - [ ] **RS-093** [SWPC Alerts JSON Parser](../../BACKLOG.md#L1670) — not implemented.
 - [ ] **RS-094** [SWPC NOAA Scales Parser](../../BACKLOG.md#L1679) — not implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-091. Reused the scoped SQLite source, fetch, item, health and cluster tables; added ORBITAL identity and safety facets, bounded indexed queries, backfill and purge coverage. No body or bulk catalog storage was added. Full pytest passed (376 tests); Ruff passed. Progress: 68/150. Next: ORBITAL fixture pack and source parsers.
 - **2026-10-15:** Completed RS-090. Added the disabled ORBITAL policy tree, candidate gates for topic, social, auth, restricted, tactical, homepage and parser readiness, plus disabled scope health. Existing fixture tests now opt in to ORBITAL explicitly. Full pytest passed (374 tests); Ruff passed. Progress: 67/150. Next: ORBITAL storage indexes and facets.
 - **2026-10-15:** Completed RS-089. Added all 136 disabled ORBITAL design inventory rows, validated metadata and URL exceptions, config defaults, SQLite sync and summary, and no-fetch reference behavior. Full pytest passed (369 tests); Ruff passed. Progress: 66/150. Next: RS-090 policy tree and candidate gates.
 - **2026-10-15:** Completed RS-056. Expanded the NATIONAL source verification workflow with explicit agency, geography, public-action, filter, key, sensitivity, health and admission decisions. It links the USGS live signoff, researched/fixture sources and exact blocked candidates without promoting them. Progress: 65/150. Next: remaining fixture/parser and geography gaps.

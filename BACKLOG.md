@@ -2193,7 +2193,7 @@ The example config documents the flags. No ORBITAL source is live allowlisted.
 
 ### ORBITAL SQLite Schema Or Extension
 
-Status: not implemented.
+Status: completed 2026-10-15 for first-pass shared storage and indexed ORBITAL facets.
 
 Add or extend SQLite storage for ORBITAL source registry state, fetch runs, normalized items,
 `orbital_events` or scoped clusters, source health, ranking explanations, safety and sensitivity
@@ -2201,6 +2201,14 @@ flags, local/global impact tags, retention purge evidence, and source verificati
 JSON-heavy columns and indexes for latest by scope, event ranking, source health, source family,
 event type, source object or mission id, and `expires_at` purge. Do not store full article bodies,
 bulk satellite catalogs, or long-term social archives by default.
+
+Current state: the shared scoped registry, fetch, item, health, cluster, and retention tables
+persist ORBITAL state with source verification, ranking and expiry evidence in bounded JSON fields.
+ORBITAL item facets index only explicit source family, event type, object and mission IDs, true
+safety/sensitivity flags, and named impact tags. Indexed queries exclude inactive and expired
+items. Reinitialization backfills missing facets, refresh replaces old facet values, and expiry
+purge cascades to facets. No full article body or bulk catalog storage was added. Dedicated
+ORBITAL parsers and event correlation follow in separate rows.
 
 ### ORBITAL Fixture Pack
 

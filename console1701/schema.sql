@@ -360,6 +360,9 @@ CREATE INDEX IF NOT EXISTS idx_news_source_registry_verification_status
 CREATE INDEX IF NOT EXISTS idx_news_items_rank_scope
   ON news_items(scope, rank_score DESC, last_seen_at DESC);
 
+CREATE INDEX IF NOT EXISTS idx_news_items_scope_status_expires
+  ON news_items(scope, status, expires_at);
+
 CREATE INDEX IF NOT EXISTS idx_news_clusters_scope_score
   ON news_clusters(scope, score DESC, last_seen_at DESC);
 

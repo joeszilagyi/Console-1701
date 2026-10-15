@@ -12,6 +12,7 @@ from console1701.db import connect_db, init_db, json_dumps, json_loads, utc_now
 from console1701.news.facets import (
     replace_global_item_facets,
     replace_national_item_facets,
+    replace_orbital_item_facets,
     replace_regional_item_facets,
 )
 from console1701.news.global_events import correlate_global_items
@@ -2189,6 +2190,8 @@ def _upsert_item(
             replace_national_item_facets(conn, item_id, evidence)
         elif str(source.get("scope") or "").upper() == "REGIONAL":
             replace_regional_item_facets(conn, item_id, evidence)
+        elif str(source.get("scope") or "").upper() == "ORBITAL":
+            replace_orbital_item_facets(conn, item_id, evidence, combined_tags)
         return item_id
 
     item_id = int(existing["id"])
@@ -2272,6 +2275,8 @@ def _upsert_item(
         replace_national_item_facets(conn, item_id, evidence)
     elif str(source.get("scope") or "").upper() == "REGIONAL":
         replace_regional_item_facets(conn, item_id, evidence)
+    elif str(source.get("scope") or "").upper() == "ORBITAL":
+        replace_orbital_item_facets(conn, item_id, evidence, combined_tags)
     return item_id
 
 

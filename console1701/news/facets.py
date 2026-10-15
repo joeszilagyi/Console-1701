@@ -52,6 +52,50 @@ def global_item_facets(evidence: dict[str, Any], tags: list[Any]) -> set[tuple[s
     return facets
 
 
+def orbital_item_facets(evidence: dict[str, Any], tags: list[Any]) -> set[tuple[str, str]]:
+    """Index only explicit ORBITAL identifiers and flags from parser evidence."""
+    facets: set[tuple[str, str]] = set()
+
+    def add(kind: str, value: Any) -> None:
+        if not isinstance(value, str):
+            return
+        text = value.strip().casefold()
+        if text and len(text) <= 120:
+            facets.add((kind, text))
+
+    source = evidence.get("source")
+    if isinstance(source, dict):
+        add("source_family", source.get("source_family"))
+    identity = evidence.get("orbital_identity")
+    if isinstance(identity, dict):
+        add("event_type", identity.get("event_type"))
+        add("object_id", identity.get("object_id"))
+        add("mission_id", identity.get("mission_id"))
+    for field, kind in (("orbital_safety", "safety"), ("sensitivity", "sensitivity")):
+        flags = evidence.get(field)
+        if isinstance(flags, dict):
+            for key, enabled in flags.items():
+                if enabled is True:
+                    add(kind, key)
+    for tag in tags[:16]:
+        if isinstance(tag, str) and tag in {
+            "local-impact", "us-impact", "global-impact"
+        }:
+            add("impact_tag", tag)
+    return facets
+
+
+def replace_orbital_item_facets(
+    conn: sqlite3.Connection, item_id: int, evidence: dict[str, Any], tags: list[Any]
+) -> None:
+    conn.execute("DELETE FROM news_item_facets WHERE item_id = ?", (item_id,))
+    conn.executemany(
+        "INSERT INTO news_item_facets (item_id, scope, facet_kind, facet_value) "
+        "VALUES (?, 'ORBITAL', ?, ?)",
+        [(item_id, kind, value) for kind, value in sorted(orbital_item_facets(evidence, tags))],
+    )
+
+
 def _list_values(value: Any) -> list[Any]:
     return value if isinstance(value, list) else []
 
