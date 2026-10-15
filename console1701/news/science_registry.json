@@ -920,6 +920,26 @@
     "future_phase": "S8"
   },
   {
+    "source_key": "nasa_exoplanet_ps_tap",
+    "source_name": "NASA Exoplanet Archive PS TAP",
+    "source_family": "nasa_exoplanet_archive",
+    "source_class": "official_exoplanet_archive",
+    "scope": "SYSTEM_SOLAR",
+    "raw_url": "https://exoplanetarchive.ipac.caltech.edu/TAP/sync",
+    "expected_access_kind": "bounded public TAP JSON metadata",
+    "adapter": "exoplanet_archive_api",
+    "refresh_interval": "24 h",
+    "priority": "65",
+    "official_status": "official",
+    "privacy_risk": "low",
+    "policy_risk": "medium",
+    "parser_risk": "medium",
+    "retention_sensitivity": "low",
+    "verification_status": "candidate_policy_sensitive",
+    "why_it_matters": "Tiny recent PS metadata updates only; broad catalog downloads blocked.",
+    "future_phase": "S8"
+  },
+  {
     "source_key": "exoplanet_archive_tap",
     "source_name": "NASA Exoplanet Archive TAP",
     "source_family": "nasa_exoplanet_archive",

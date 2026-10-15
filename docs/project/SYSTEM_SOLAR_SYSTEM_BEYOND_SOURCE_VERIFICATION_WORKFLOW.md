@@ -122,3 +122,12 @@ photo releases are interleaved. The ESA/Webb page also advertises a direct `webb
 URL that returned 404; its `esawebb.org/rss/feed.xml` variant redirected to Hubble's feed.
 The fixture parser uses the publisher-linked channels and official story hosts, but both
 FeedBurner endpoints remain live-policy blocked pending third-party hosting review.
+
+The [NASA Exoplanet Archive TAP guide](https://exoplanetarchive.ipac.caltech.edu/docs/TAP/usingTAP.html)
+documents the current `ps` table and JSON output; its
+[column definitions](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
+separate `rowupdate` from discovery year and status. A two-row, date-bounded TAP read on
+2026-10-15 returned HTTP 200 JSON with the seven fixture columns. The fixture parser blocks
+broader table/column/window/row shapes. A `rowupdate` is a parameter update, not proof that
+the planet was discovered on that date. Live TAP access remains disabled pending query,
+source-use, retention, and heavy-archive policy signoff.
