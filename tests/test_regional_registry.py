@@ -96,6 +96,7 @@ def test_regional_reference_sources_cannot_ingest_when_configured(tmp_path, monk
               sources:
                 - {id: wa_emd_division, enabled: true, url: 'file:///missing.html'}
                 - {id: nws_api_docs, enabled: true, url: 'file:///missing.xml'}
+                - {id: wa_dnr_current_wildfire, enabled: true, url: 'file:///missing.json'}
     """)
     assert run_news_scan(config_path)["item_count"] == 0
     config = load_config(config_path)
@@ -104,7 +105,11 @@ def test_regional_reference_sources_cannot_ingest_when_configured(tmp_path, monk
             row["source_key"]: row["health_state"]
             for row in get_news_sources_status(conn, config)
         }
-    assert states == {"wa_emd_division": "unsupported", "nws_api_docs": "unsupported"}
+    assert states == {
+        "wa_emd_division": "unsupported",
+        "nws_api_docs": "unsupported",
+        "wa_dnr_current_wildfire": "unsupported",
+    }
 
 
 def test_regional_registry_defaults_can_seed_minimal_config(tmp_path):
