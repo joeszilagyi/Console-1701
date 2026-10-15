@@ -30,7 +30,11 @@ Every newly ingested REGIONAL item records its event key/type, matching basis an
 geography basis, public-impact basis, privacy basis, source family/class, parser, verification state,
 fetch run, policy, retention, and ranking factors. Clusters record member item IDs, source keys,
 distinct families, duplicate-family counts, corroboration state, and score. Raw article bodies are
-not stored.
+not stored. The versioned `regional` item contract gathers source identity and official status,
+URLs, publication and observation times, health, geography, matching, public impact, privacy
+redaction, ranking, retention, and policy notes. Cluster evidence includes a snapshot of this
+contract for each member and pairwise match reasons; the REGIONAL page item and cluster drawers
+show those decisions.
 
 REGIONAL ranking keeps shared recency/priority/health factors, then adds explicit geography,
 public-impact, confidence, privacy, source-diversity, cluster-size, and same-family duplicate factors.

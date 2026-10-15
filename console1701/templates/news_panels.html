@@ -21,6 +21,7 @@
         {% set local_event = evidence.local_event or {} %}
         {% set global_evidence = evidence.global or {} %}
         {% set national_evidence = evidence.national or {} %}
+        {% set regional_evidence = evidence.regional or {} %}
         {% set orbital_identity = evidence.orbital_identity or {} %}
         {% set orbital_impact = evidence.orbital_impact or {} %}
         {% set orbital_event = evidence.orbital_event or {} %}
@@ -78,6 +79,28 @@
                     {% for note in policy.notes %}
                       <li><b>Policy</b><span>{{ note }}</span></li>
                     {% endfor %}
+                  </ul>
+                {% endif %}
+                {% if item.scope == "REGIONAL" and regional_evidence %}
+                  <div class="news-evidence-grid">
+                    <div><span>Source ID</span><strong>{{ regional_evidence.source_key }}</strong></div>
+                    <div><span>Family / class</span><strong>{{ regional_evidence.source_family or "unknown" }} / {{ regional_evidence.source_class or "unknown" }}</strong></div>
+                    <div><span>Official status</span><strong>{{ regional_evidence.official_status or "unverified" }}</strong></div>
+                    <div><span>Parser</span><strong>{{ regional_evidence.parser or "unknown" }}</strong></div>
+                    <div><span>Published</span><strong>{{ regional_evidence.published_at or "unknown" }}</strong></div>
+                    <div><span>First / last seen</span><strong>{{ regional_evidence.first_seen_at }} / {{ regional_evidence.last_seen_at }}</strong></div>
+                    <div><span>Event type / confidence</span><strong>{{ regional_evidence.event_type or "unclassified" }} / {{ regional_evidence.event_confidence or "unverified" }}</strong></div>
+                    <div><span>Geography</span><strong>{{ regional_evidence.geography_basis or "not provided" }} · {{ "matched" if regional_evidence.geography_matched else "unverified" }}</strong></div>
+                    <div><span>Source diversity</span><strong>{{ regional_evidence.source_diversity_basis or "not correlated" }}</strong></div>
+                    <div><span>Privacy redaction</span><strong>{{ "applied" if regional_evidence.privacy_redaction_decision.redaction_applied else "not applied" }} · {{ regional_evidence.privacy_redaction_decision.redaction_basis or "none" }}</strong></div>
+                  </div>
+                  <ul class="news-evidence-list">
+                    <li><b>Item URL</b><span>{{ regional_evidence.item_url }}</span></li>
+                    <li><b>Canonical URL</b><span>{{ regional_evidence.canonical_url or "not provided" }}</span></li>
+                    <li><b>Matching basis</b><span>{{ regional_evidence.matching_basis or "isolated" }} · {{ regional_evidence.matching_tokens | join(", ") or "no tokens" }}</span></li>
+                    <li><b>Public impact</b><span>{{ regional_evidence.public_impact_basis or "not assessed" }}</span></li>
+                    <li><b>Ranking features</b><span>{{ regional_evidence.ranking_features | tojson }}</span></li>
+                    <li><b>Policy notes</b><span>{{ regional_evidence.policy_notes | join("; ") or "none recorded" }}</span></li>
                   </ul>
                 {% endif %}
                 {% if item.scope == "GLOBAL" and global_evidence %}
@@ -405,6 +428,7 @@
           {% for cluster in view['clusters'] %}
             {% set cluster_evidence = cluster.evidence or {} %}
             {% set global_event = cluster_evidence.global_event or {} %}
+            {% set regional_event = cluster_evidence.correlation or {} %}
             {% set national_event = cluster_evidence.national_event or {} %}
             {% set orbital_event = cluster_evidence.orbital_event or {} %}
             {% set science_event = cluster_evidence.science_event or {} %}
@@ -419,6 +443,22 @@
                   <div><span>Last seen</span><strong>{{ cluster.last_seen_at }}</strong></div>
                   <div><span>Cluster key</span><strong>{{ cluster.cluster_key }}</strong></div>
                 </div>
+                {% if view['scope'] == "REGIONAL" and regional_event %}
+                  <div class="news-evidence-grid">
+                    <div><span>Event types</span><strong>{{ regional_event.event_types | join(", ") or "unclassified" }}</strong></div>
+                    <div><span>Source families</span><strong>{{ regional_event.families | join(", ") or "unknown" }}</strong></div>
+                    <div><span>Corroborated</span><strong>{{ "yes" if regional_event.corroborated else "no" }}</strong></div>
+                    <div><span>Event score</span><strong>{{ cluster_evidence.ranking.score }}</strong></div>
+                  </div>
+                  <ul class="news-evidence-list">
+                    {% for match in regional_event.matches %}
+                      <li><b>Match {{ match.item_ids | join(" + ") }}</b><span>{{ match.basis | join(", ") }}{% if match.shared_tokens %} · tokens {{ match.shared_tokens | join(", ") }}{% endif %}</span></li>
+                    {% endfor %}
+                    {% for member in cluster_evidence.member_evidence %}
+                      <li><b>Item {{ member.item_id }}</b><span>{{ member.source_name }} · {{ member.source_family }} · {{ member.event_confidence }} · {{ member.geography_basis }} · {{ member.public_impact_basis or "impact not assessed" }} · privacy {{ "redacted" if member.privacy_redaction_decision.redaction_applied else "clear" }}</span></li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
                 {% if view['scope'] == "GLOBAL" and global_event %}
                   <div class="news-evidence-grid">
                     <div><span>Event confidence</span><strong>{{ global_event.confidence }}</strong></div>
