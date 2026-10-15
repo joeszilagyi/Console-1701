@@ -2385,12 +2385,18 @@ entries with seven-day freshness, source and parent gates, and mocked scan cover
 
 ### Official Launch Provider Source Verification
 
-Status: not implemented.
+Status: completed 2026-10-15 for first-pass source classification.
 
 Verify SpaceX, Blue Origin, Rocket Lab, ULA, Arianespace, ISRO, JAXA, CSA, ESA, CNSA, and other
 official launch provider or agency pages before implementation. Confirm feed availability,
 per-source selectors if no feed exists, robots/policy notes, refresh limits, parser stability,
 and whether homepage extraction is allowed. Keep provider pages disabled by default.
+
+Current state: `docs/project/ORBITAL_LAUNCH_PROVIDER_SOURCE_VERIFICATION.md` classifies ten
+provider/agency groups, corrects stale Rocket Lab, ULA, Arianespace, and ISRO registry URLs, and
+keeps unparsed pages manual/source-health-only. No HTML selectors, robots/terms clearance, or
+polling cadence was verified, so no homepage extraction or live allowlist was added. ESA's
+separately verified RSS remains the only listed agency opt-in in this group.
 
 ### ISS And Crewed-Spaceflight Source Verification
 
