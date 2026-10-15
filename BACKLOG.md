@@ -1495,7 +1495,16 @@ also cover disabled, not-configured, and healthy outcomes.
 
 ### NATIONAL Evidence Drawer Contract
 
-Status: not implemented.
+Status: implemented for first-pass NATIONAL items and events.
+
+NATIONAL items persist a versioned `evidence.national` contract with source identity, class,
+family, official status, item/canonical URLs, publication and observation times, fetch run,
+parser, health at ingest, event type/confidence, state/territory/airport fields and geography
+basis, match tokens, public impact and source-diversity basis, ranking features, retention,
+policy notes, and low-value/out-of-scope penalties. Cluster evidence includes event identity,
+matching reasons/tokens, affected geography, score factors/reasons, and bounded member provenance.
+The NATIONAL item and cluster drawers render these fields. A fixture scan and read-only HTML/API
+contract test verifies persistence and display without HTTP access.
 
 Define and test evidence payloads for NATIONAL items and events. Include source ids, names,
 families, classes, item URLs, canonical URLs, official flags, published times, first/last seen,
