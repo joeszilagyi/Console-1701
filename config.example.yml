@@ -172,6 +172,33 @@ orbital:
   allow_tactical_sources: false
   allow_homepage_extractors: false
 
+solar_system_beyond:
+  enabled: false
+  include_planetary_science: true
+  include_interplanetary_missions: true
+  include_exoplanets: true
+  include_telescope_science: true
+  include_major_space_agency_science: true
+  include_transients: true
+  include_gcn: true
+  include_tns: false
+  include_gravitational_waves: false
+  include_neutrino_alerts: false
+  include_catalog_archives: false
+  include_literature_metadata: false
+  include_social_sources: false
+  include_large_archive_queries: false
+  allow_auth_required_sources: false
+  allow_heavy_archive_sources: false
+  allow_literature_metadata: false
+  allow_social_sources: false
+  allow_homepage_extractors: false
+  transient_attention_minimum: official_alert_or_multi_source
+  exoplanet_attention_minimum: agency_release_or_confirmed_catalog_delta
+  telescope_science_attention_minimum: official_release_or_multi_source
+  planetary_attention_minimum: mission_update_or_agency_release
+  literature_attention_minimum: disabled
+
 news:
   enabled: false
   retention:

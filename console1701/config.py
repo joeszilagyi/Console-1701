@@ -267,6 +267,34 @@ DEFAULT_ORBITAL_CONFIG: dict[str, Any] = {
     "allow_homepage_extractors": False,
 }
 
+DEFAULT_SOLAR_SYSTEM_BEYOND_CONFIG: dict[str, Any] = {
+    "enabled": False,
+    "include_planetary_science": True,
+    "include_interplanetary_missions": True,
+    "include_exoplanets": True,
+    "include_telescope_science": True,
+    "include_major_space_agency_science": True,
+    "include_transients": True,
+    "include_gcn": True,
+    "include_tns": False,
+    "include_gravitational_waves": False,
+    "include_neutrino_alerts": False,
+    "include_catalog_archives": False,
+    "include_literature_metadata": False,
+    "include_social_sources": False,
+    "include_large_archive_queries": False,
+    "allow_auth_required_sources": False,
+    "allow_heavy_archive_sources": False,
+    "allow_literature_metadata": False,
+    "allow_social_sources": False,
+    "allow_homepage_extractors": False,
+    "transient_attention_minimum": "official_alert_or_multi_source",
+    "exoplanet_attention_minimum": "agency_release_or_confirmed_catalog_delta",
+    "telescope_science_attention_minimum": "official_release_or_multi_source",
+    "planetary_attention_minimum": "mission_update_or_agency_release",
+    "literature_attention_minimum": "disabled",
+}
+
 DEFAULT_NEWS_CONFIG: dict[str, Any] = {
     "enabled": False,
     "retention": {
@@ -363,6 +391,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "local": DEFAULT_LOCAL_CONFIG,
     "national": DEFAULT_NATIONAL_CONFIG,
     "global": DEFAULT_GLOBAL_CONFIG,
+    "solar_system_beyond": DEFAULT_SOLAR_SYSTEM_BEYOND_CONFIG,
     "news": DEFAULT_NEWS_CONFIG,
     "projects": [
         {
@@ -494,6 +523,7 @@ def normalize_config(config: dict[str, Any]) -> None:
     normalize_national_config(config)
     normalize_global_config(config)
     normalize_orbital_config(config)
+    normalize_solar_system_beyond_config(config)
     normalize_news_config(config)
 
 
@@ -806,6 +836,52 @@ def normalize_orbital_config(config: dict[str, Any]) -> None:
             "min_intensity": minimum,
         })
     orbital["aurora_locations"] = normalized_locations
+
+
+def normalize_solar_system_beyond_config(config: dict[str, Any]) -> None:
+    science = _require_mapping(
+        config.setdefault("solar_system_beyond", deepcopy(DEFAULT_SOLAR_SYSTEM_BEYOND_CONFIG)),
+        "solar_system_beyond",
+    )
+    for key, default in DEFAULT_SOLAR_SYSTEM_BEYOND_CONFIG.items():
+        if key == "enabled" or key.startswith(("include_", "allow_")):
+            science[key] = _coerce_bool(
+                science.get(key, default), f"solar_system_beyond.{key}"
+            )
+    for key, allowed in (
+        ("transient_attention_minimum", {"official_alert_or_multi_source", "official_only"}),
+        ("exoplanet_attention_minimum", {
+            "agency_release_or_confirmed_catalog_delta", "agency_release_only",
+        }),
+        ("telescope_science_attention_minimum", {
+            "official_release_or_multi_source", "official_release_only",
+        }),
+        ("planetary_attention_minimum", {
+            "mission_update_or_agency_release", "agency_release_only",
+        }),
+        ("literature_attention_minimum", {"disabled", "verified_metadata_only"}),
+    ):
+        value = _require_string(science.get(key), f"solar_system_beyond.{key}").lower()
+        if value not in allowed:
+            choices = ", ".join(sorted(allowed))
+            raise ConfigError(f"solar_system_beyond.{key} must be one of: {choices}.")
+        science[key] = value
+    for include, allow in (
+        ("include_tns", "allow_auth_required_sources"),
+        ("include_catalog_archives", "allow_heavy_archive_sources"),
+        ("include_large_archive_queries", "allow_heavy_archive_sources"),
+        ("include_literature_metadata", "allow_literature_metadata"),
+        ("include_social_sources", "allow_social_sources"),
+    ):
+        if science[include] and not science[allow]:
+            raise ConfigError(f"solar_system_beyond.{include} requires {allow}.")
+    if science["literature_attention_minimum"] != "disabled" and not science[
+        "allow_literature_metadata"
+    ]:
+        raise ConfigError(
+            "solar_system_beyond.literature_attention_minimum requires "
+            "allow_literature_metadata."
+        )
 
 
 def _normalize_local_source_metadata(
