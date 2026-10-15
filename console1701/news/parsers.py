@@ -139,6 +139,8 @@ def parse_fixture_items(
         return _parse_who_don_json(source, payload_text)
     if parser_name == "wsdot_highway_alerts_rss":
         return _parse_wsdot_highway_alerts_rss(source, payload_text)
+    if parser_name == "king_county_emergency_rss":
+        return _parse_king_county_emergency_rss(source, payload_text)
     if parser_name == "alertseattle_rss":
         return _parse_alertseattle_rss_feed(source, payload_text)
     if parser_name == "metro_rss":
@@ -1634,6 +1636,73 @@ def _parse_wsdot_highway_alerts_rss(
         )
         normalized.append(item)
     return normalized
+
+
+def _parse_king_county_emergency_rss(
+    source: dict[str, Any], payload_text: str
+) -> list[dict[str, Any]]:
+    if str(source.get("scope") or "").upper() != "REGIONAL":
+        raise NewsParserError("King County Emergency News parser requires REGIONAL scope.")
+    try:
+        root = ET.fromstring(payload_text)
+    except ET.ParseError as exc:
+        raise NewsParserError(f"Malformed King County Emergency News RSS: {exc}") from exc
+    channel = root.find("./channel") if _local_name(root.tag) == "rss" else None
+    if channel is None or _element_text(channel.find("./title")) != "King County Emergency News":
+        raise NewsParserError("King County Emergency News RSS has an unexpected channel.")
+    items = _parse_rss_feed(source, root)
+    normalized: list[dict[str, Any]] = []
+    for index, item in enumerate(items):
+        parts = urlsplit(str(item["url"]))
+        if parts.scheme != "https" or parts.hostname != "kcemergency.com":
+            raise NewsParserError(f"King County Emergency News item {index} has no official URL.")
+        if not item.get("source_published_at"):
+            raise NewsParserError(
+                f"King County Emergency News item {index} has no publication time."
+            )
+        item["description"] = bounded_text(
+            _wsdot_plain_text(item.get("description") or ""), max_chars=500
+        )
+        categories = list(item.get("tags") or [])
+        classification, impact_score = _king_county_emergency_classification(
+            str(item["title"]), categories
+        )
+        item["tags"] = _unique_texts(
+            ["official", "county-emergency", *categories,
+             "public-impact" if classification == "emergency_alert" else None],
+            max_chars=64,
+        )
+        item["evidence"]["king_county_emergency"] = {
+            "publisher": "King County Emergency Management",
+            "county": "King County",
+            "geography_basis": "publisher_jurisdiction_only",
+            "source_url": item["url"],
+            "published_at": item["source_published_at"],
+            "categories": categories,
+            "classification": classification,
+            "ranking": {"public_impact_score": impact_score},
+            "body_stored": False,
+        }
+        normalized.append(item)
+    return normalized
+
+
+def _king_county_emergency_classification(
+    title: str, categories: list[str]
+) -> tuple[str, int]:
+    text = " ".join([title, *categories]).casefold()
+    if re.search(r"\b(test|exercise|drill|semi-annual)\b", text):
+        return "test", 0
+    if re.search(r"\b(recovery|assistance|fema funding)\b", text) and not re.search(
+        r"\b(evacuation|shelter in place|warning)\b", text
+    ):
+        return "recovery", 6
+    if re.search(
+        r"\b(evacuation|shelter in place|emergency|flood warning|boil water|alert)\b",
+        text,
+    ):
+        return "emergency_alert", 30
+    return "county_notice", 4
 
 
 def _normalize_wsdot_alert(

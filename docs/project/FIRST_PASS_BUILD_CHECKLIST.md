@@ -45,7 +45,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-017** [NWS Alert Parser For Washington](../../BACKLOG.md#L682) — dedicated WA/OR fixture, official county/zone evidence, configurable filters, and offline scan verified.
 - [x] **RS-018** [WSDOT Traveler API Fixture Parser](../../BACKLOG.md#L697) — documented WSDOT JSON shape, roadway and WCF time evidence, status/ranking, and offline scan verified; authenticated live JSON held.
 - [x] **RS-019** [USGS Earthquake GeoJSON Parser](../../BACKLOG.md#L738) — official GeoJSON identity, bounded geography/magnitude/radius, event evidence, and fixture scan verified.
-- [ ] **RS-020** [King County Emergency Feed Parser](../../BACKLOG.md#L787) — not implemented.
+- [x] **RS-020** [King County Emergency Feed Parser](../../BACKLOG.md#L787) — official RSS source, bounded item parser, classification/ranking and offline scan verified; live ingest disabled.
 - [ ] **RS-021** [County Emergency Alert Source Verification](../../BACKLOG.md#L795) — not implemented.
 - [ ] **RS-022** [REGIONAL Deterministic Event Correlation](../../BACKLOG.md#L816) — partially implemented.
 - [ ] **RS-023** [REGIONAL Deterministic Ranking](../../BACKLOG.md#L831) — partially implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-020 and advanced RS-016. Verified the official King County Emergency News RSS source, added a synthetic warning/recovery/test fixture, source-specific classification and public-impact ranking, and exercised a configured offline scan. Live ingest remains disabled pending a separate release gate. Full pytest passed (330 tests); Ruff passed. Progress: 44/150.
 - **2026-10-15:** Completed RS-018 and advanced RS-016. Replaced the REGIONAL WSDOT JSON test fixture with the official documented Alert/RoadwayLocation shape, added WCF date parsing and roadway/status evidence, documented the access-code hold, and verified a configured offline scan. Full pytest passed (328 tests); Ruff passed. Progress: 43/150.
 - **2026-10-15:** Completed RS-019. Added optional validated REGIONAL USGS center/radius filtering using great-circle distance, retained distance and geography basis in evidence, and verified parser plus configured scan behavior. Existing official GeoJSON identity, seismic ranking, and exact live-source gate remain intact. Full pytest passed (327 tests); Ruff passed. Progress: 42/150.
 - **2026-10-15:** Completed RS-017 and advanced RS-016. Added a dedicated REGIONAL NWS WA/OR fixture, official UGC/SAME geography evidence, configured county/zone filters, and a scan regression. The broader pack remains open for sources whose machine-readable shapes require verification. Full pytest passed (327 tests); Ruff passed. Progress: 41/150.

@@ -280,12 +280,18 @@ def _regional_signal_factors(item: dict[str, Any]) -> dict[str, Any]:
     geography = contract.get("geography") if isinstance(contract.get("geography"), dict) else {}
     nws = evidence.get("nws_alert") if isinstance(evidence.get("nws_alert"), dict) else {}
     wsdot = evidence.get("wsdot_alert") if isinstance(evidence.get("wsdot_alert"), dict) else {}
+    county = (
+        evidence.get("king_county_emergency")
+        if isinstance(evidence.get("king_county_emergency"), dict) else {}
+    )
     privacy = evidence.get("privacy") if isinstance(evidence.get("privacy"), dict) else {}
     nws_rank = nws.get("ranking") if isinstance(nws.get("ranking"), dict) else {}
     wsdot_rank = wsdot.get("ranking") if isinstance(wsdot.get("ranking"), dict) else {}
+    county_rank = county.get("ranking") if isinstance(county.get("ranking"), dict) else {}
     public_impact = min(25, max(
         _int_value(nws_rank.get("total_alert_weight")) // 2,
         _int_value(wsdot_rank.get("public_impact_score")) // 2,
+        _int_value(county_rank.get("public_impact_score")),
         10 if "public-impact" in item.get("tags", []) else 0,
     ))
     factors = {

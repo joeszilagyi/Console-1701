@@ -196,6 +196,49 @@ def test_wsdot_documented_json_shape_preserves_corridor_and_status_evidence() ->
     assert parse_fixture_items(source, '{"alerts": []}') == []
 
 
+def test_king_county_emergency_rss_separates_alerts_recovery_and_tests() -> None:
+    source = {
+        "id": "king_county_emergency_news", "scope": "REGIONAL", "kind": "rss",
+        "parser": "king_county_emergency_rss", "source_family": "county_emergency",
+    }
+    fixture = (
+        Path(__file__).resolve().parent / "fixtures/news/regional_king_county_emergency.rss"
+    ).read_text()
+    items = parse_fixture_items(source, fixture)
+
+    assert len(items) == 3
+    assert [item["evidence"]["king_county_emergency"]["classification"] for item in items] == [
+        "emergency_alert", "recovery", "test"
+    ]
+    alert = items[0]
+    assert alert["source_published_at"] == "2026-10-15T10:00:00+00:00"
+    assert alert["description"] == (
+        "Residents in the posted zone should follow official evacuation directions."
+    )
+    assert "<p>" not in alert["description"]
+    assert alert["evidence"]["king_county_emergency"]["county"] == "King County"
+    assert alert["evidence"]["king_county_emergency"]["geography_basis"] == (
+        "publisher_jurisdiction_only"
+    )
+    assert alert["evidence"]["king_county_emergency"]["body_stored"] is False
+    assert "public-impact" in alert["tags"]
+    assert items[2]["evidence"]["king_county_emergency"]["ranking"]["public_impact_score"] == 0
+    assert "public-impact" not in items[2]["tags"]
+
+    ranking = build_rank_result(
+        source, alert, seen_at="2026-10-15T11:00:00+00:00",
+        combined_tags=alert["tags"], latest_health_state="healthy", repeat_count=0,
+    )
+    assert ranking["factors"]["regional_public_impact_bonus"] == 25
+    with pytest.raises(NewsParserError, match="unexpected channel"):
+        parse_fixture_items(source, fixture.replace("King County Emergency News", "Other News"))
+    with pytest.raises(NewsParserError, match="official URL"):
+        parse_fixture_items(
+            source,
+            fixture.replace("kcemergency.com/2026/10/15", "example.com/2026/10/15"),
+        )
+
+
 def test_parse_usgs_regional_geojson_filters_and_preserves_seismic_evidence() -> None:
     source = {
         "id": "usgs_eq_geojson",
