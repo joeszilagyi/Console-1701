@@ -58,6 +58,30 @@ OFFICIAL_SOURCES = {
     ("ORBITAL", "swpc_aurora_json"): (
         SWPC_OVATION_AURORA_URL, "api_json", "swpc_aurora_json", "application/json"
     ),
+    ("ORBITAL", "nasa_rss_feeds"): (
+        "https://www.nasa.gov/news-release/feed/", "rss", "nasa_orbital_rss",
+        "application/rss+xml"
+    ),
+    ("ORBITAL", "nasa_iss_page"): (
+        "https://www.nasa.gov/missions/station/feed/", "rss", "nasa_orbital_rss",
+        "application/rss+xml"
+    ),
+    ("ORBITAL", "nasa_spacestation_blog"): (
+        "https://www.nasa.gov/blogs/spacestation/feed/", "rss", "nasa_orbital_rss",
+        "application/rss+xml"
+    ),
+    ("ORBITAL", "nasa_artemis"): (
+        "https://www.nasa.gov/missions/artemis/feed/", "rss", "nasa_orbital_rss",
+        "application/rss+xml"
+    ),
+    ("ORBITAL", "nasa_artemis_blog"): (
+        "https://www.nasa.gov/blogs/artemis/feed/", "rss", "nasa_orbital_rss",
+        "application/rss+xml"
+    ),
+    ("ORBITAL", "nasa_kennedy_blog"): (
+        "https://www.nasa.gov/blogs/kennedy/feed/", "rss", "nasa_orbital_rss",
+        "application/rss+xml"
+    ),
 }
 MAX_HTTP_BYTES = 4 * 1024 * 1024
 MAX_HTTP_TIMEOUT_SECONDS = 30

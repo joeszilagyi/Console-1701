@@ -30,7 +30,7 @@ from console1701.news.official_http import (
     fetch_official_text,
     is_supported_official_source,
 )
-from console1701.news.orbital_events import correlate_orbital_items
+from console1701.news.orbital_events import correlate_orbital_items, orbital_independent_family
 from console1701.news.orbital_evidence import build_orbital_evidence_contract
 from console1701.news.orbital_impact import derive_orbital_impact
 from console1701.news.orbital_ranking import rank_orbital_event
@@ -557,6 +557,8 @@ def _fresh_live_orbital_items(
         "swpc_alerts_json", "swpc_noaa_scales_json",
         "swpc_kp_summary_json", "swpc_kp_1m_json", "swpc_boulder_k_json",
         "swpc_aurora_json",
+        "nasa_rss_feeds", "nasa_iss_page", "nasa_spacestation_blog",
+        "nasa_artemis", "nasa_artemis_blog", "nasa_kennedy_blog",
     }:
         return items
     fresh: list[dict[str, Any]] = []
@@ -591,6 +593,8 @@ def _fresh_live_orbital_items(
                 now - timedelta(hours=2) <= published <= now + timedelta(minutes=10)
                 and now - timedelta(hours=1) <= forecast <= now + timedelta(hours=3)
             )
+        elif source_key.startswith("nasa_"):
+            keep = now - timedelta(days=7) <= published <= now + timedelta(hours=1)
         else:
             max_age = 6 if source_key == "swpc_kp_summary_json" else 1
             keep = now - timedelta(hours=max_age) <= published <= now + timedelta(minutes=10)
@@ -2783,7 +2787,9 @@ def _rebuild_orbital_clusters(conn: sqlite3.Connection) -> None:
         confidence = "corroborated" if group["corroborated"] else "source_reported"
         for member in members:
             evidence = member["evidence"]
-            family = str((evidence.get("source") or {}).get("source_family") or "unknown")
+            family = orbital_independent_family(
+                (evidence.get("source") or {}).get("source_family")
+            )
             family_scores[family] = max(family_scores.get(family, 0), int(member["rank_score"]))
             fixture_only = fixture_only and bool((evidence.get("ingest") or {}).get("fixture_only"))
             tags.extend(json_loads(str(member["tags_json"]), []))
