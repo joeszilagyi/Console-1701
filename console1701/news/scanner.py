@@ -35,6 +35,7 @@ from console1701.news.orbital_evidence import build_orbital_evidence_contract
 from console1701.news.orbital_impact import derive_orbital_impact
 from console1701.news.orbital_ranking import rank_orbital_event
 from console1701.news.orbital_registry import list_orbital_source_registry
+from console1701.news.orbital_safety import classify_orbital_item
 from console1701.news.parsers import (
     NewsIngestError,
     NewsParserError,
@@ -2016,7 +2017,7 @@ def _upsert_item(
             item["evidence"]["sensitivity"] = item_sensitivity
         item = _redact_global_sensitive_item(item)
     if str(source.get("scope") or "").upper() == "ORBITAL":
-        item = dict(item)
+        item = classify_orbital_item(source, item)
         item["evidence"] = dict(item.get("evidence") or {})
         impact = derive_orbital_impact(item)
         item["evidence"]["orbital_impact"] = impact
@@ -2034,6 +2035,12 @@ def _upsert_item(
         item["evidence"] = item_evidence
         cluster = str(contract["event_key"])
     retention_days = int(source.get("retention_days") or default_retention_days)
+    if str(source.get("scope") or "").upper() == "ORBITAL":
+        retention_days = min(retention_days, 7)
+        if (item.get("evidence") or {}).get("orbital_safety", {}).get(
+            "redacted_before_storage"
+        ) is True:
+            retention_days = min(retention_days, 1)
     expire_at = expires_at(seen_at, retention_days)
     existing = conn.execute(
         """

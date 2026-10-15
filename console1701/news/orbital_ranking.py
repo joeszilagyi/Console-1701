@@ -145,7 +145,8 @@ def rank_orbital_event(
         and key in {
             "tactical_tracking", "restricted_source", "classified_inference",
             "private_operator_monitoring", "object_surveillance", "sensitive_reentry",
-            "debris_fear_framing", "social_only_claim",
+            "debris_fear_framing", "social_only_claim", "launch_rumor",
+            "neo_panic_language",
         }
     })
     hard_flags = sorted(set(sensitive_flags) & {

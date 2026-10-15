@@ -120,7 +120,7 @@ def test_orbital_ui_hides_tactical_item_even_if_stored(tmp_path, monkeypatch):
     with connect_db(config["_db_path"]) as conn:
         view = get_news_scope_view(conn, config, "ORBITAL")
         tactical_id = conn.execute(
-            "SELECT id FROM news_items WHERE title LIKE 'Tactical object%'"
+            "SELECT id FROM news_items WHERE title='Sensitive orbital tracking claim'"
         ).fetchone()[0]
         assert get_news_item_detail(conn, tactical_id) is None
     assert len(view["items"]) == len(view["clusters"]) == 1
