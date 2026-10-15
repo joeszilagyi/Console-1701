@@ -1,0 +1,64 @@
+{
+  "data": [
+    {
+      "id": 81001,
+      "fields": {
+        "title": "Fictional Archipelago: Cyclone Situation Report",
+        "url": "https://reliefweb.int/report/fictional-archipelago/cyclone-situation-report",
+        "headline": {"summary": "Shelter and clean water response for affected communities."},
+        "body": "This body must never enter Recent Signal storage.",
+        "date": {"original": "2026-10-15T08:00:00+00:00", "changed": "2026-10-15T09:00:00+00:00"},
+        "disaster": [{"id": 51000, "name": "Fictional Archipelago: Tropical Cyclone"}],
+        "source": [{"name": "UN Office for the Coordination of Humanitarian Affairs"}],
+        "theme": [{"name": "Shelter and Non-Food Items"}],
+        "country": [{"name": "Fictional Archipelago"}]
+      }
+    },
+    {
+      "id": 81002,
+      "fields": {
+        "title": "Unrelated historical update",
+        "url": "https://reliefweb.int/report/example/unrelated",
+        "date": {"original": "2026-10-15T08:00:00+00:00"},
+        "disaster": [{"id": 49999, "name": "Old disaster"}],
+        "source": [{"name": "UN Office for the Coordination of Humanitarian Affairs"}],
+        "theme": [{"name": "Shelter and Non-Food Items"}]
+      }
+    },
+    {
+      "id": 81003,
+      "fields": {
+        "title": "Unofficial commentary",
+        "url": "https://reliefweb.int/report/example/commentary",
+        "date": {"original": "2026-10-15T08:00:00+00:00"},
+        "disaster": [{"id": 51000, "name": "Fictional Archipelago: Tropical Cyclone"}],
+        "source": [{"name": "Example Blog"}],
+        "theme": [{"name": "Shelter and Non-Food Items"}]
+      }
+    },
+    {
+      "id": 81004,
+      "fields": {
+        "title": "Low relevance generic update",
+        "url": "https://reliefweb.int/report/example/generic",
+        "date": {"original": "2026-10-15T08:00:00+00:00"},
+        "disaster": [{"id": 51000, "name": "Fictional Archipelago: Tropical Cyclone"}],
+        "source": [{"name": "UN Office for the Coordination of Humanitarian Affairs"}],
+        "theme": [{"name": "Education"}]
+      }
+    },
+    {
+      "id": 81005,
+      "fields": {
+        "title": "Fictional Archipelago: Water Update",
+        "url": "https://reliefweb.int/report/fictional-archipelago/water-update",
+        "headline": {"summary": "Water access response."},
+        "date": {"original": "2026-10-15T07:00:00+00:00"},
+        "disaster": [{"id": 51000, "name": "Fictional Archipelago: Tropical Cyclone"}],
+        "source": [{"name": "UN Office for the Coordination of Humanitarian Affairs"}],
+        "theme": [{"name": "Water Sanitation Hygiene"}],
+        "country": [{"name": "Fictional Archipelago"}]
+      }
+    }
+  ]
+}
