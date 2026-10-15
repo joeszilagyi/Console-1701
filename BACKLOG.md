@@ -2848,11 +2848,17 @@ ranking evidence. Do not add Kafka or other dependencies without explicit approv
 
 ### GCN Circular Source Verification
 
-Status: not implemented.
+Status: completed 2026-10-15 for first-pass access and metadata classification.
 
 Verify GCN Circular machine-readable access, policy terms, parser shape, rate limits, retention
 needs, and source-health behavior before implementation. Store metadata only, preserve circular id,
 event id, follow-up basis, source URL, and preliminary status.
+
+Current state: `docs/project/SCIENCE_GCN_CIRCULAR_SOURCE_VERIFICATION.md` records NASA GCN
+ownership, public archive and schema, circular/event IDs and time fields, inferred-event and
+privacy limits, and the absence of a verified narrow public metadata API. The daily full archive
+is too large for Recent Signal; Kafka/email need separate auth/policy work. No live adapter is
+enabled, and the future fixture/parser must retain preliminary/follow-up/retraction semantics.
 
 ### ATel RSS Parser
 
