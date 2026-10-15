@@ -236,6 +236,10 @@ def test_national_fda_recalls_rss_fixture_keeps_metadata_limits() -> None:
     assert first["ranking"]["public_hazard_score"] == 0
     assert items[1]["evidence"]["fda_recall_notice"]["translation_relationship"] == "unverified"
     assert all(item["evidence"]["fda_recall_notice"]["body_stored"] is False for item in items)
+    assert all(item["evidence"]["national_identity"]["event_type"] == "fda_recall_notice"
+               for item in items)
+    assert all(item["evidence"]["national_identity"]["affected_states"] == []
+               for item in items)
     with pytest.raises(NewsParserError, match="unexpected channel"):
         parse_fixture_items(source, fixture.replace("Recalls/Safety Alerts", "MedWatch"))
     with pytest.raises(NewsParserError, match="official recall URL"):

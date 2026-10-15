@@ -38,6 +38,15 @@ def test_cpsc_fixture_preserves_recall_identity_hazard_and_instruction_url():
     assert first["images_downloaded"] is False
     assert "death_risk" in first["risk_indicators"]
     assert items[0]["source_published_at"] == "2026-10-01T00:00:00+00:00"
+    assert items[0]["evidence"]["national_identity"] == {
+        "event_type": "consumer_product_recall",
+        "agency": "CPSC",
+        "official_event_ids": ["cpsc:11013"],
+        "affected_states": [],
+        "distribution_areas": [],
+        "multi_state_impact": False,
+        "distribution_basis": "not_structured_in_api",
+    }
 
 
 def test_cpsc_risk_indicator_does_not_claim_reported_deaths():
@@ -97,6 +106,8 @@ def test_cpsc_rejects_malformed_or_too_many_rows():
     rows = json.loads(FIXTURE.read_text())
     with pytest.raises(NewsParserError):
         parse_fixture_items(_source(), json.dumps(rows * 34))
+    with pytest.raises(NewsParserError, match="duplicates a recall ID"):
+        parse_fixture_items(_source(), json.dumps([rows[0], rows[0]]))
 
 
 def test_cpsc_fixture_scans_offline_with_bounded_contract(tmp_path, monkeypatch):
@@ -141,3 +152,6 @@ news:
     assert len(rows) == 3
     assert all(json_loads(row["evidence_json"], {})["ingest"]["fixture_only"]
                for row in rows)
+    assert all(json_loads(row["evidence_json"], {})["national_identity"][
+        "event_type"
+    ] == "consumer_product_recall" for row in rows)

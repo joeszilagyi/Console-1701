@@ -40,6 +40,7 @@ def national_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         ("usgs_earthquake", "id", "usgs"),
         ("nws_alert", "id", "nws"),
         ("nhtsa_recall", "campaign_number", "nhtsa_campaign"),
+        ("cpsc_recall", "recall_id", "cpsc"),
         ("cisa_kev", "cve_id", "cve"),
         ("federal_register", "document_number", "fr_document"),
         ("govinfo_publication", "document_id", "govinfo_document"),
@@ -66,12 +67,17 @@ def national_item_signature(item: dict[str, Any]) -> dict[str, Any]:
             "earthquake" if evidence.get("usgs_earthquake") else
             "weather_alert" if nws else
             "vehicle_recall" if evidence.get("nhtsa_recall") else
+            "consumer_product_recall" if evidence.get("cpsc_recall") else
+            "fda_recall_notice" if evidence.get("fda_recall_notice") else
             "cyber_vulnerability" if evidence.get("cisa_kev") else
             "aviation_disruption" if faa else
             "federal_action" if evidence.get("federal_register") else
             "federal_publication" if evidence.get("govinfo_publication") else ""
         )).strip().casefold(),
-        "agency": str(identity.get("agency") or "").strip().casefold(),
+        "agency": str(identity.get("agency") or (
+            "CPSC" if evidence.get("cpsc_recall") else
+            "FDA" if evidence.get("fda_recall_notice") else ""
+        )).strip().casefold(),
         "affected_states": states,
         "affected_territories": _values(identity.get("affected_territories")),
         "fema_regions": _values(identity.get("fema_regions")),
