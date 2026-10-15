@@ -21,6 +21,16 @@ configured LOCAL or REGIONAL coordinate windows, records the peak model value an
 and labels the result as model output rather than observed visibility. No local tag is possible
 without a configured location and an enabled ORBITAL parent policy.
 
-All four registry candidates remain disabled. None is in the live HTTP allowlist. The OVATION
-response also exceeds the current default fetch size cap; a future live decision must set and
-verify a bounded cap, cadence, freshness, and attribution before enabling it.
+On 2026-10-15, read-only HEAD checks of the three K-index endpoints returned HTTP 200,
+`application/json`, `ETag`, and `Last-Modified`. Response sizes were approximately 4.8 KB for
+planetary summary, 28 KB for planetary one-minute, and 86 KB for Boulder one-minute. Their exact
+URL/parser pairs are now in the live HTTP allowlist. Registry defaults remain disabled; local
+opt-in requires verified status, explicit news/ORBITAL/source/HTTP enablement, and a K-index
+floor of at least 5.0. The scanner keeps only the latest qualifying measurement and drops live
+planetary summary records older than six hours, minute records older than one hour, or timestamps
+more than ten minutes in the future. Mocked-transport tests cover those gates and persisted
+provenance; no live app scan was run.
+
+The OVATION candidate remains disabled and outside the live allowlist. Its response can approach
+the current default fetch-size cap; live admission still needs an explicit bounded cap and
+freshness check. The parser's configured coordinate window and model-only wording remain required.
