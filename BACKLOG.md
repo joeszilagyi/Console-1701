@@ -1403,7 +1403,7 @@ sensitivity evidence, and retention/purge verification remain pending.
 
 ### GLOBAL Fixture Pack
 
-Status: not implemented.
+Status: partially implemented.
 
 Create local-only fixtures for GDACS feeds/API responses, ReliefWeb disasters and reports, WHO
 Disease Outbreak News, ECDC RSS, USGS earthquake GeoJSON, NHC RSS, Smithsonian GVP weekly report,
@@ -1411,21 +1411,34 @@ UN News RSS, UN Press RSS, IAEA RSS, global news RSS, source-health states, disa
 sources, auth-required sources, and parser failures. Fixture ingest must not perform network calls
 and must be safe for pytest.
 
+Current state: checked-in GDACS RSS and API GeoJSON fixtures exercise offline parser and
+`news-scan` persistence paths. Remaining source families and health/failure variants are pending.
+
 ### GDACS Feed Parser
 
-Status: not implemented.
+Status: completed 2026-10-15.
 
 Build a fixture-first GDACS feed parser for GLOBAL scope. Preserve alert id, event type, country or
 region, event name, alert level, severity fields when source-provided, published/update time,
 source URL, geometry or bounding metadata when available, and official-alert ranking evidence.
 
+Verified against the official GDACS RSS endpoint shape on 2026-10-15. The dedicated GLOBAL parser
+preserves event and episode IDs, alert and severity, country, dates, report URL, point and bounding
+metadata, and official-alert ranking evidence. Offline fixture and `news-scan` persistence tests pass;
+live GDACS HTTP remains disabled.
+
 ### GDACS API Fixture Parser
 
-Status: not implemented.
+Status: completed 2026-10-15.
 
 Build a fixture-first GDACS API parser after endpoint behavior is verified. Preserve disaster id,
 event type, severity, alert level, affected geography, coordinates or geometry when available,
 start/update time, source URL, and source-health evidence. Keep live API access disabled by default.
+
+Verified against the official GDACS API Search GeoJSON response shape on 2026-10-15. The dedicated
+GLOBAL parser preserves event and episode IDs, alert/severity, affected country, point/bounding
+metadata, start/update time, report URL, and fixture source-health evidence. Offline fixture and
+`news-scan` persistence tests pass; live GDACS HTTP remains disabled.
 
 ### ReliefWeb Disasters API Parser
 

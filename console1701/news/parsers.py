@@ -121,6 +121,10 @@ def parse_fixture_items(
         return _parse_nws_alerts_json(source, payload_text)
     if parser_name == "usgs_earthquake_geojson":
         return _parse_usgs_earthquake_geojson(source, payload_text)
+    if parser_name == "gdacs_rss":
+        return _parse_gdacs_rss(source, payload_text)
+    if parser_name == "gdacs_geojson":
+        return _parse_gdacs_geojson(source, payload_text)
     if parser_name == "wsdot_highway_alerts_rss":
         return _parse_wsdot_highway_alerts_rss(source, payload_text)
     if parser_name == "alertseattle_rss":
@@ -221,6 +225,226 @@ def _parse_json_items(source: dict[str, Any], payload_text: str) -> list[dict[st
             raise NewsParserError(f"JSON item {index} must be an object.")
         normalized.append(_normalize_item(source, item, index=index))
     return normalized
+
+
+_GDACS_NS = "http://www.gdacs.org"
+_GDACS_GEO_NS = "http://www.w3.org/2003/01/geo/wgs84_pos#"
+_GDACS_ALERT_WEIGHTS = {"green": 8, "orange": 24, "red": 40}
+
+
+def _gdacs_official_url(value: Any, *, index: int) -> str:
+    url = normalize_url(value)
+    parts = urlsplit(url)
+    if parts.scheme != "https" or parts.hostname not in {"gdacs.org", "www.gdacs.org"}:
+        raise NewsParserError(f"GDACS item {index} has no official HTTPS report URL.")
+    return url
+
+
+def _gdacs_number(value: Any) -> float | None:
+    if isinstance(value, bool) or value in (None, ""):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if math.isfinite(number) else None
+
+
+def _gdacs_point(latitude: Any, longitude: Any) -> list[float] | None:
+    lat, lon = _gdacs_number(latitude), _gdacs_number(longitude)
+    if lat is None or lon is None or not -90 <= lat <= 90 or not -180 <= lon <= 180:
+        return None
+    return [lon, lat]
+
+
+def _gdacs_bbox(value: Any) -> list[float] | None:
+    if isinstance(value, str):
+        parts = value.split()
+        # RSS explicitly documents lon-min, lon-max, lat-min, lat-max.
+        if len(parts) != 4:
+            return None
+        numbers = [_gdacs_number(part) for part in parts]
+        if any(number is None for number in numbers):
+            return None
+        lon_min, lon_max, lat_min, lat_max = numbers
+        value = [lon_min, lat_min, lon_max, lat_max]
+    if not isinstance(value, list) or len(value) != 4:
+        return None
+    numbers = [_gdacs_number(part) for part in value]
+    if any(number is None for number in numbers):
+        return None
+    west, south, east, north = numbers
+    if not (-180 <= west <= east <= 180 and -90 <= south <= north <= 90):
+        return None
+    return [west, south, east, north]
+
+
+def _gdacs_item(
+    source: dict[str, Any], *, index: int, data: dict[str, Any]
+) -> dict[str, Any]:
+    if str(source.get("scope") or "").upper() != "GLOBAL":
+        raise NewsParserError("GDACS parser requires GLOBAL scope.")
+    event_type = bounded_text(data.get("event_type"), max_chars=12)
+    event_id = bounded_text(data.get("event_id"), max_chars=32)
+    alert_level = bounded_text(data.get("alert_level"), max_chars=16)
+    alert_key = str(alert_level or "").lower()
+    published_at = normalize_timestamp(data.get("published_at"))
+    updated_at = normalize_timestamp(data.get("updated_at"))
+    if not event_type or not event_id or alert_key not in _GDACS_ALERT_WEIGHTS:
+        raise NewsParserError(f"GDACS item {index} is missing event identity or alert level.")
+    if not published_at:
+        raise NewsParserError(f"GDACS item {index} has no valid event time.")
+    url = _gdacs_official_url(data.get("url"), index=index)
+    name = bounded_text(data.get("name"), max_chars=MAX_TITLE_LENGTH)
+    country = bounded_text(data.get("country"), max_chars=120)
+    title = bounded_text(data.get("title"), max_chars=MAX_TITLE_LENGTH)
+    title = title or name or f"{alert_level} {event_type} in {country or 'unknown region'}"
+    item = _normalize_item(
+        source,
+        {
+            "title": title,
+            "url": url,
+            "description": data.get("description"),
+            "published_at": published_at,
+            "tags": ["official", "gdacs", "global", "disaster", alert_key, event_type.lower()],
+        },
+        index=index,
+    )
+    item["evidence"]["gdacs"] = {
+        "event_id": event_id,
+        "episode_id": bounded_text(data.get("episode_id"), max_chars=32),
+        "event_type": event_type,
+        "event_name": name,
+        "alert_level": alert_level,
+        "alert_score": _gdacs_number(data.get("alert_score")),
+        "severity": _gdacs_number(data.get("severity")),
+        "severity_unit": bounded_text(data.get("severity_unit"), max_chars=32),
+        "severity_text": bounded_text(data.get("severity_text"), max_chars=240),
+        "country": country,
+        "iso3": bounded_text(data.get("iso3"), max_chars=3),
+        "affected_countries": _unique_texts(data.get("affected_countries") or [], max_chars=120),
+        "coordinates": data.get("coordinates"),
+        "bbox": data.get("bbox"),
+        "raw_bbox": data.get("raw_bbox"),
+        "geometry_type": bounded_text(data.get("geometry_type"), max_chars=32),
+        "start_at": normalize_timestamp(data.get("start_at")),
+        "updated_at": updated_at,
+        "source_url": url,
+        "source_format": data.get("source_format"),
+        "source_health": {"source": "official_gdacs", "fixture_parser": True},
+        "ranking": {
+            "official_alert": True,
+            "alert_level_weight": _GDACS_ALERT_WEIGHTS[alert_key],
+            "basis": "GDACS alert level; independent impact scoring pending",
+        },
+    }
+    return item
+
+
+def _parse_gdacs_rss(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:
+    try:
+        root = ET.fromstring(payload_text)
+    except ET.ParseError as exc:
+        raise NewsParserError(f"Malformed GDACS RSS fixture: {exc}") from exc
+    if _local_name(root.tag) != "rss":
+        raise NewsParserError("GDACS RSS fixture must have an rss root.")
+    rows = root.findall("./channel/item")
+    if not rows:
+        raise NewsParserError("GDACS RSS fixture has no item rows.")
+    items = []
+    for index, row in enumerate(rows):
+        def field(key: str, current_row: ET.Element = row) -> str | None:
+            return current_row.findtext(f"{{{_GDACS_NS}}}{key}")
+        severity = row.find(f"{{{_GDACS_NS}}}severity")
+        geo = row.find(f"{{{_GDACS_GEO_NS}}}Point")
+        items.append(_gdacs_item(source, index=index, data={
+            "event_type": field("eventtype"),
+            "event_id": field("eventid"),
+            "episode_id": field("episodeid"),
+            "alert_level": field("alertlevel"),
+            "alert_score": field("alertscore"),
+            "severity": severity.get("value") if severity is not None else None,
+            "severity_unit": severity.get("unit") if severity is not None else None,
+            "severity_text": severity.text if severity is not None else None,
+            "country": field("country"),
+            "iso3": field("iso3"),
+            "coordinates": _gdacs_point(
+                geo.findtext(f"{{{_GDACS_GEO_NS}}}lat") if geo is not None else None,
+                geo.findtext(f"{{{_GDACS_GEO_NS}}}long") if geo is not None else None,
+            ),
+            "bbox": _gdacs_bbox(field("bbox")),
+            "raw_bbox": bounded_text(field("bbox"), max_chars=160),
+            "geometry_type": "Point" if geo is not None else None,
+            "title": row.findtext("title"),
+            "name": field("eventname"),
+            "description": row.findtext("description"),
+            "url": row.findtext("link"),
+            "published_at": row.findtext("pubDate"),
+            "start_at": field("fromdate"),
+            "updated_at": field("datemodified"),
+            "source_format": "rss",
+        }))
+    return items
+
+
+def _parse_gdacs_geojson(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:
+    try:
+        payload = json.loads(payload_text)
+    except json.JSONDecodeError as exc:
+        raise NewsParserError(f"Malformed GDACS GeoJSON fixture: {exc}") from exc
+    if not isinstance(payload, dict) or payload.get("type") != "FeatureCollection":
+        raise NewsParserError("GDACS API fixture must be a GeoJSON FeatureCollection.")
+    features = payload.get("features")
+    if not isinstance(features, list):
+        raise NewsParserError("GDACS API fixture must have features.")
+    items = []
+    for index, feature in enumerate(features):
+        if not isinstance(feature, dict) or feature.get("type") != "Feature":
+            raise NewsParserError(f"GDACS feature {index} must be a GeoJSON Feature.")
+        props = feature.get("properties")
+        geometry = feature.get("geometry")
+        if not isinstance(props, dict) or not isinstance(geometry, dict):
+            raise NewsParserError(f"GDACS feature {index} lacks properties or geometry.")
+        urls = props.get("url")
+        severity = props.get("severitydata") or {}
+        if not isinstance(urls, dict) or not isinstance(severity, dict):
+            raise NewsParserError(f"GDACS feature {index} has invalid URL or severity data.")
+        affected = props.get("affectedcountries") or []
+        if not isinstance(affected, list):
+            raise NewsParserError(f"GDACS feature {index} has invalid affected countries.")
+        countries = [row.get("countryname") for row in affected if isinstance(row, dict)]
+        coords = geometry.get("coordinates")
+        point = (
+            _gdacs_point(coords[1], coords[0])
+            if geometry.get("type") == "Point" and isinstance(coords, list) and len(coords) >= 2
+            else None
+        )
+        items.append(_gdacs_item(source, index=index, data={
+            "event_type": props.get("eventtype"),
+            "event_id": props.get("eventid"),
+            "episode_id": props.get("episodeid"),
+            "alert_level": props.get("alertlevel"),
+            "alert_score": props.get("alertscore"),
+            "severity": severity.get("severity"),
+            "severity_unit": severity.get("severityunit"),
+            "severity_text": severity.get("severitytext"),
+            "country": props.get("country"),
+            "iso3": props.get("iso3"),
+            "affected_countries": countries,
+            "coordinates": point,
+            "bbox": _gdacs_bbox(feature.get("bbox")),
+            "raw_bbox": feature.get("bbox") if isinstance(feature.get("bbox"), list) else None,
+            "geometry_type": geometry.get("type"),
+            "title": props.get("name"),
+            "name": props.get("eventname"),
+            "description": props.get("description"),
+            "url": urls.get("report"),
+            "published_at": props.get("fromdate"),
+            "start_at": props.get("fromdate"),
+            "updated_at": props.get("datemodified"),
+            "source_format": "geojson",
+        }))
+    return items
 
 
 def _usgs_number(value: Any) -> float | None:

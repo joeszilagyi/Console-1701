@@ -1,0 +1,27 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "bbox": [-86.049, 10.3031, -86.049, 10.3031],
+      "geometry": {"type": "Point", "coordinates": [-86.049, 10.3031]},
+      "properties": {
+        "eventtype": "EQ",
+        "eventid": 1571782,
+        "episodeid": 1740355,
+        "eventname": "",
+        "name": "Earthquake in Costa Rica",
+        "description": "Earthquake in Costa Rica",
+        "url": {"report": "https://www.gdacs.org/report.aspx?eventid=1571782&episodeid=1740355&eventtype=EQ"},
+        "alertlevel": "Green",
+        "alertscore": 1,
+        "country": "Costa Rica",
+        "iso3": "CRI",
+        "affectedcountries": [{"iso2": "CR", "iso3": "CRI", "countryname": "Costa Rica"}],
+        "fromdate": "2026-10-15T15:40:38",
+        "datemodified": "2026-10-15T17:32:06",
+        "severitydata": {"severity": 4.5, "severitytext": "Magnitude 4.5M, Depth:22.782km", "severityunit": "M"}
+      }
+    }
+  ]
+}
