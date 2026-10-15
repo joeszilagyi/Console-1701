@@ -36,7 +36,8 @@ GLOBAL_OFFICIAL_STATUSES = set(
 GLOBAL_OFFICIAL_STATUSES.add("ngo")
 GLOBAL_VERIFICATION_STATUSES = set(
     """assistant_seeded candidate_needs_verification candidate_policy_sensitive
-    official_feed_seen official_page_seen reject_for_now unofficial_secondary user_seeded""".split()
+    official_feed_seen official_page_seen reject_for_now unofficial_secondary user_seeded
+    verified""".split()
 )
 GLOBAL_RISK_LEVELS = {"low", "medium", "high"}
 GLOBAL_FUTURE_PHASES = {"G1", "G2", "G6", "G7", "G8", "G9", "G10"}

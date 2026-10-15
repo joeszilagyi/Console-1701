@@ -115,7 +115,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-081** [GLOBAL UI Disabled States](../../BACKLOG.md#L1515) — honest GLOBAL state matrix, complete source-health overflow list, and expired-content hiding.
 - [x] **RS-082** [GLOBAL Source Health States](../../BACKLOG.md#L1525) — configured health states surfaced on GLOBAL and SYSTEM and verified across transition and gate cases.
 - [ ] **RS-083** [GLOBAL Evidence Drawer Contract](../../BACKLOG.md#L1535) — partial: item and event payloads/drawers now include matching, score factors, public-impact basis, and penalties; wider source-specific coverage remains.
-- [ ] **RS-084** [GLOBAL Official-Source Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L1545) — not implemented.
+- [x] **RS-084** [GLOBAL Official-Source Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L1545) — exact USGS M4.5+ past-week feed is opt-in for GLOBAL with M6+ default, official-place caution, bounded fetch, live smoke, and no page-load fetch; other endpoints need separate signoff.
 - [x] **RS-085** [Documentation For Source Verification](../../BACKLOG.md#L1581) — endpoint signoff template, exact live gates, and six evidence-linked GLOBAL walkthrough groups complete.
 - [x] **RS-086** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L1596) — GLOBAL/SYSTEM/API GETs trapped across unstarted, stored-health, and gated-source states.
 - [x] **RS-087** [Tests For No Heavy Source Running Without Explicit Config](../../BACKLOG.md#L1605) — all 20 heavy registry candidates blocked before file/network access.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-084 with the exact official USGS M4.5+ past-week GeoJSON feed as the first GLOBAL live opt-in. A bounded direct read returned HTTP 200, 120,403 bytes and 172 features; an isolated explicit scan stored eight M6+ items in temporary state. Registry defaults remain disabled, and unverified source-place is not a country-impact claim. Full pytest passed (593 tests); Ruff passed. Progress: 121/150. GDACS direct RSS returned HTTP 403 here and remains fixture-only. Next: remaining first-pass fixture, correlation, and evidence gaps.
 - **2026-10-15:** Completed RS-099. Verified ESA's exact Top News and Human Spaceflight RSS feeds, added channel-specific ORBITAL parsing and fixtures, and kept reentry/debris under separate review. Full pytest passed (407 tests); Ruff passed. Progress: 74/150. RS-092 remains partial.
 - **2026-10-15:** Advanced RS-098 partially. Verified five more exact NASA mission/blog feeds and their channel shapes; added per-feed paths and fixture tests. JPL's linked RSS returned 403 and the science candidate was not parseable RSS. All remain disabled; no live admission. Full pytest passed (403 tests); Ruff passed. Progress remains 73/150.
 - **2026-10-15:** Advanced RS-098 partially. Verified NASA's RSS directory and exact news releases feed, then added an offline ORBITAL parser that preserves official metadata and filters unrelated or routine items. Dedicated feed coverage remains open. Full pytest passed (397 tests); Ruff passed. Progress remains 73/150. RS-092 remains partial.

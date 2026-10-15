@@ -92,6 +92,7 @@ disabled. A different query or endpoint needs a new signoff.
 | Source | Evidence and current decision |
 | --- | --- |
 | GDACS | [Official API/source shape and disaster/geography fixture](GLOBAL_GDACS_SOURCE_VERIFICATION.md). `fixture_only`; no exact live endpoint has passed the HTTP release gate. |
+| USGS global earthquakes | [Exact M4.5+ past-week GeoJSON signoff](GLOBAL_USGS_LIVE_SOURCE_SIGNOFF.md). `live_opt_in`; M6+ default, official source-place remains unverified geography. |
 | WHO Disease Outbreak News | [Official OData shape and bounded health metadata](GLOBAL_WHO_DON_SOURCE_VERIFICATION.md). `fixture_only`; global jurisdiction and preliminary status must remain explicit. |
 | ReliefWeb | [Disaster/report API and humanitarian contract](GLOBAL_RELIEFWEB_SOURCE_VERIFICATION.md). `fixture_only`; broad report searches need strict filters, row caps and public-impact evidence before live access. |
 | USGS global earthquake feed | [Official GeoJSON shape and magnitude/geography rules](GLOBAL_USGS_GEOJSON_SOURCE_VERIFICATION.md). `fixture_only` for GLOBAL; the separately signed-off domestic USGS feed does not automatically authorize a GLOBAL query. |

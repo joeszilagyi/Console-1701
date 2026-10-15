@@ -2083,7 +2083,11 @@ coverage still depends on the source-specific adapters and policy rules in RS-07
 
 ### GLOBAL Official-Source Live Ingest Phase, Disabled By Default
 
-Status: not implemented.
+Status: implemented for the first exact official source. The USGS M4.5+
+past-week GeoJSON feed is opt-in for GLOBAL with a M6+ default threshold,
+30-minute minimum interval, bounded transport, offline tests, and an isolated
+successful live smoke. [Endpoint signoff](docs/project/GLOBAL_USGS_LIVE_SOURCE_SIGNOFF.md).
+GDACS and other GLOBAL endpoints remain disabled pending individual signoff.
 
 After fixtures, correlation, ranking, retention, source health, and tests exist, add opt-in live
 ingest for one safe official GLOBAL source at a time. First candidates are GDACS feed/API,

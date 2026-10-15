@@ -59,9 +59,9 @@ news stack.
   allowlist. Current opt-in entries are NWS Washington active alerts for LOCAL/REGIONAL, USGS
   M2.5+ day GeoJSON for REGIONAL/NATIONAL, WSDOT Highway Alerts RSS for REGIONAL, and ORBITAL
   NOAA SWPC alerts/scales/K-index/OVATION, six NASA news/Station/Artemis/Kennedy RSS feeds,
-  and two ESA RSS feeds. All remain disabled in default config. GLOBAL has fixture parsers and
-  signoff work but no allowlisted live endpoint; Solar System and Beyond has a disabled config
-  foundation and no ingest scope yet. Do not enable the news timer by default.
+  and two ESA RSS feeds. GLOBAL has an exact opt-in USGS M4.5+ past-week GeoJSON feed with an
+  M6+ default, and Solar System and Beyond has one exact opt-in ESA Space Science RSS feed.
+  All remain disabled in default config. Do not enable the news timer by default.
 - Source verification documents in `docs/project/` explain each exact endpoint, parser, response
   and policy boundary. A registry entry or working fixture is not live authorization. JPL CNEOS
   APIs, ESA reentry predictions, launch-provider pages, NASA/JPL direct RSS, and other unlisted
@@ -77,6 +77,8 @@ news stack.
   non-earthquake event types and out-of-region features. NATIONAL uses coarse U.S./territory
   coordinate relevance; it does not prove cross-border or multi-state impact. A successful
   zero-match response is healthy, not a failure.
+- The GLOBAL USGS feed has a M4.5 floor and a 30-minute minimum interval. Its parser defaults to
+  M6+ and stores source-place text as unverified geography, with no inferred country impact.
 - ORBITAL opt-ins keep source-specific freshness limits. Alerts, NOAA scales, K-index, OVATION,
   and NASA/ESA RSS have parser and mocked-transport tests; OVATION also requires configured
   LOCAL/REGIONAL coordinate windows and stores only a bounded modeled signal, not the grid.
