@@ -3394,8 +3394,11 @@ metadata pass bounded opt-in live scans. GraceDB uses a 48-hour query, 10-row ov
 64 KiB aggregate cap, 60-minute interval, exact REST links, and revision/retraction parsing;
 the live smoke was healthy with an empty recent window. Mocked preliminary-to-retraction
 and later empty-window scans preserve one item until its seven-day purge and withdraw
-elevation. GCN live transport, cross-source retention
-and purge sequences, and TNS auth/policy work remain open.
+elevation. A fixture-only GCN notice plus separate Circular now correlates as one event;
+the Circular's retraction forces event and item scores to zero even alongside stronger
+reports. An offline retention sequence keeps that retraction active after the notice
+expires and removes the event when the Circular expires. GCN live transport, a
+retraction-first expiry/re-ingest sequence, and TNS auth/policy work remain open.
 
 ### Heavy Archive Phase, Disabled By Default
 

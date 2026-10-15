@@ -57,7 +57,8 @@ def _signals(member: dict[str, Any]) -> dict[str, Any]:
         "identity": identity, "safety": evidence.get("science_safety") or {},
         "archive": archive, "official": official, "significance": significance,
         "rarity": rarity, "transient": transient, "mission": mission,
-        "public": public, "tags": tags, "gcn": gcn, "gracedb": gracedb,
+        "public": public, "tags": tags, "gcn": gcn, "circular": circular,
+        "gracedb": gracedb,
         "published_at": _time(member.get("source_published_at")),
     }
 
@@ -104,11 +105,13 @@ def rank_science_event(
     archive_firehose = 45 if any(signal["safety"].get("archive_firehose_blocked")
                                  for signal in signals) else (
         15 if signals and all(signal["archive"] for signal in signals) else 0)
-    retraction = 50 if any(
+    retracted = any(
         signal["gcn"].get("status") == "retracted"
+        or signal["circular"].get("status") == "retracted"
         or signal["gracedb"].get("status") == "retracted"
         for signal in signals
-    ) else 0
+    )
+    retraction = 50 if retracted else 0
     factors = {
         "recency_score": recency,
         "official_provenance_score": official,
@@ -132,8 +135,10 @@ def rank_science_event(
     }
     bonuses = sum(value for key, value in factors.items() if key.endswith("_score"))
     penalties = sum(value for key, value in factors.items() if key.endswith("_penalty"))
-    score = max(0, bonuses - penalties)
+    score = 0 if retracted else max(0, bonuses - penalties)
     reasons = [f"{key}={value}" for key, value in factors.items() if value]
+    if retracted:
+        reasons.append("Source retraction withdraws event elevation regardless of other reports.")
     if any(signal["archive"] for signal in signals):
         reasons.append("Archive update/harvest/observation dates are not discovery dates.")
     if all(signal["archive"] for signal in signals) and signals:
@@ -146,4 +151,5 @@ def rank_science_event(
         "recency_basis": "source_publication_or_alert" if latest else "no_release_date",
         "scientific_significance_basis": "explicit_source_metadata_only",
         "hype_basis": "explicit_science_safety_flag_only",
+        "retraction_override": retracted,
     }
