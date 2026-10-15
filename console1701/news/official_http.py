@@ -15,6 +15,9 @@ NWS_WASHINGTON_ALERTS_URL = "https://api.weather.gov/alerts/active?area=WA"
 USGS_REGIONAL_EARTHQUAKES_URL = (
     "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson"
 )
+USGS_GLOBAL_EARTHQUAKES_URL = (
+    "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.geojson"
+)
 WSDOT_HIGHWAY_ALERTS_RSS_URL = "https://www.wsdot.wa.gov/traffic/api/HighwayAlerts/rss.aspx"
 SWPC_ALERTS_URL = "https://services.swpc.noaa.gov/products/alerts.json"
 SWPC_NOAA_SCALES_URL = "https://services.swpc.noaa.gov/products/noaa-scales.json"
@@ -35,6 +38,10 @@ OFFICIAL_SOURCES = {
     ),
     ("NATIONAL", "usgs_eq_geojson"): (
         USGS_REGIONAL_EARTHQUAKES_URL, "api_json", "usgs_earthquake_geojson",
+        "application/json"
+    ),
+    ("GLOBAL", "usgs_eq_geojson_global"): (
+        USGS_GLOBAL_EARTHQUAKES_URL, "api_json", "usgs_earthquake_geojson",
         "application/json"
     ),
     ("REGIONAL", "wsdot_highway_alerts_rss"): (
@@ -139,6 +146,10 @@ def is_supported_official_source(source: dict[str, Any]) -> bool:
             or _usgs_feed_covers_threshold(source.get("min_magnitude", 3.0))
         )
         and (
+            (source.get("scope"), source.get("id")) != ("GLOBAL", "usgs_eq_geojson_global")
+            or _usgs_feed_covers_threshold(source.get("min_magnitude", 6.0), feed_floor=4.5)
+        )
+        and (
             source.get("scope") != "ORBITAL"
             or source.get("id") not in {
                 "swpc_kp_summary_json", "swpc_kp_1m_json", "swpc_boulder_k_json",
@@ -153,12 +164,12 @@ def is_supported_official_source(source: dict[str, Any]) -> bool:
     )
 
 
-def _usgs_feed_covers_threshold(value: Any) -> bool:
+def _usgs_feed_covers_threshold(value: Any, *, feed_floor: float = 2.5) -> bool:
     try:
         minimum = float(value)
     except (TypeError, ValueError):
         return False
-    return isfinite(minimum) and minimum >= 2.5
+    return isfinite(minimum) and minimum >= feed_floor
 
 
 def _orbital_k_threshold_safe(value: Any) -> bool:

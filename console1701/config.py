@@ -1141,6 +1141,21 @@ def _normalize_news_source(
         _normalize_global_source_metadata(source_cfg, path=path, global_cfg=global_cfg)
         if str(source_cfg.get("parser") or "").strip().lower() == "usgs_earthquake_geojson":
             source_cfg.setdefault("min_magnitude", global_cfg["earthquake_min_magnitude"])
+        if (source_key == "usgs_eq_geojson_global" and source_cfg.get("enabled")
+                and str(source_cfg.get("url") or "").startswith("https://")):
+            from console1701.news.official_http import USGS_GLOBAL_EARTHQUAKES_URL
+
+            interval = _coerce_int(
+                source_cfg.get("interval_minutes", 0), f"{path}.interval_minutes", minimum=30
+            )
+            if (
+                source_cfg["url"] != USGS_GLOBAL_EARTHQUAKES_URL
+                or source_cfg.get("parser") != "usgs_earthquake_geojson"
+                or source_cfg["kind"] != "api_json"
+                or source_cfg.get("verification_status") != "verified"
+            ):
+                raise ConfigError(f"{path} must use the verified GLOBAL USGS feed contract.")
+            source_cfg["interval_minutes"] = interval
     if source_scope == "ORBITAL":
         from console1701.news.orbital_registry import (
             ORBITAL_ADAPTER_TYPES,
