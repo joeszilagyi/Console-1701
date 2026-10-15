@@ -92,6 +92,12 @@ def national_item_facets(evidence: dict[str, Any]) -> set[tuple[str, str]]:
     if isinstance(nas, dict):
         add("agency", "faa")
         add("sector", "aviation")
+    register = evidence.get("federal_register") or {}
+    if isinstance(register, dict):
+        add("source_family", "federal_register")
+        add("sector", "regulatory")
+        for agency in _list_values(register.get("agency_slugs"))[:10]:
+            add("agency", agency)
     return facets
 
 

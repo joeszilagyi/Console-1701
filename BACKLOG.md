@@ -1154,7 +1154,9 @@ and a below-threshold event. `national_nhtsa_recalls.json` covers campaign group
 park instructions and missing optional population data. `national_cisa_kev.json` covers full
 catalog envelope, CVE identity, due dates, ransomware/triage evidence, and offline scan.
 `national_faa_nas_status.xml` covers FAA delay, ground stop, closure notice, airport filtering,
-and offline scan. The other NATIONAL source-family fixtures listed above remain pending.
+and offline scan. `national_federal_register_documents.json` covers document filters, action
+windows, low-value suppression, and offline scan. The other NATIONAL source-family fixtures
+listed above remain pending.
 
 ### NWS Active Alert Parser
 
@@ -1336,7 +1338,16 @@ and source-health behavior. Keep KEV disabled until endpoint verification and fi
 
 ### Federal Register API Parser With Filters
 
-Status: not implemented.
+Status: implemented for offline filtered fixture ingest; live remains disabled.
+
+The published-documents JSON envelope and default row metadata were verified in a bounded
+official API read on 2026-10-15. `federal_register_documents_json` requires explicit agency,
+document-type and title-impact allowlists, suppresses routine administrative notices, validates
+document identity/URL, preserves optional comment/effective dates and bounded action evidence,
+and supplies capped ranking and agency/sector facets. A synthetic fixture and offline scan test
+pass. Optional action-window fields were not present in the default sampled list response, so
+live field selection remains unsigned. See
+`docs/project/NATIONAL_FEDERAL_REGISTER_API_FIXTURE_VERIFICATION.md`.
 
 Build a fixture-first Federal Register API parser with agency allowlists, document type allowlists,
 high-impact filters, public-comment/action window fields, and low-public-value suppression. Prevent
