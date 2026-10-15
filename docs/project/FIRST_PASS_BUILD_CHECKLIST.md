@@ -167,7 +167,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-127** [MAST Tiny Metadata Parser](../../BACKLOG.md#L2083) — not implemented.
 - [ ] **RS-128** [PDS Metadata-Only Parser](../../BACKLOG.md#L2091) — not implemented.
 - [ ] **RS-129** [GCN Notice Fixture Parser](../../BACKLOG.md#L2099) — not implemented.
-- [ ] **RS-130** [GCN Circular Source Verification](../../BACKLOG.md#L2107) — not implemented.
+- [x] **RS-130** [GCN Circular Source Verification](../../BACKLOG.md#L2107) — official schema and archive classified; no narrow API verified, bulk export blocked, and metadata/privacy/status contract recorded.
 - [ ] **RS-131** [ATel RSS Parser](../../BACKLOG.md#L2115) — not implemented.
 - [ ] **RS-132** [GraceDB/LIGO Public Alert Policy Design](../../BACKLOG.md#L2132) — not implemented.
 - [ ] **RS-133** [Minor Planet Center Science-Context Source Verification](../../BACKLOG.md#L2141) — not implemented.
