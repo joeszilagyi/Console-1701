@@ -10,6 +10,55 @@ from console1701.news.parsers import NewsParserError, parse_fixture_items
 from console1701.news.ranking import build_rank_result
 
 
+def test_national_nhtsa_recall_fixture_groups_campaign_and_preserves_safety_evidence() -> None:
+    source = {
+        "id": "nhtsa_recalls", "scope": "NATIONAL", "kind": "api_json",
+        "parser": "nhtsa_recalls_json", "source_family": "nhtsa",
+    }
+    fixture = (
+        Path(__file__).resolve().parent / "fixtures/news/national_nhtsa_recalls.json"
+    ).read_text()
+    items = parse_fixture_items(source, fixture)
+    assert len(items) == 2
+    first = items[0]
+    evidence = first["evidence"]["nhtsa_recall"]
+    assert evidence["campaign_number"] == "26V123000"
+    assert evidence["vehicles"] == [
+        {"model_year": "2025", "make": "EXAMPLE", "model": "SEDAN"},
+        {"model_year": "2026", "make": "EXAMPLE", "model": "WAGON"},
+    ]
+    assert first["url"] == "https://api.nhtsa.gov/recalls/campaignNumber?campaignNumber=26V123000"
+    assert first["source_published_at"] == "2026-10-14T00:00:00+00:00"
+    assert evidence["date_precision"] == "day"
+    assert evidence["potential_units_affected"] == 120000
+    assert evidence["park_it"] is True and evidence["park_outside"] is True
+    assert evidence["ranking"]["vehicle_safety_score"] == 35
+    assert evidence["body_stored"] is False
+    assert items[1]["evidence"]["nhtsa_recall"]["potential_units_affected"] is None
+    assert items[1]["evidence"]["nhtsa_recall"]["ranking"]["vehicle_safety_score"] == 0
+
+    high_rank = build_rank_result(source, first, seen_at="2026-10-15T00:00:00+00:00",
+                                  combined_tags=first["tags"], latest_health_state="healthy",
+                                  repeat_count=0)
+    low_rank = build_rank_result(source, items[1], seen_at="2026-10-15T00:00:00+00:00",
+                                 combined_tags=items[1]["tags"], latest_health_state="healthy",
+                                 repeat_count=0)
+    assert high_rank["factors"]["national_vehicle_safety_bonus"] == 35
+    assert low_rank["factors"]["national_vehicle_safety_bonus"] == 0
+
+    malformed = json.loads(fixture)
+    malformed["Count"] = 2
+    with pytest.raises(NewsParserError, match="matching Count"):
+        parse_fixture_items(source, json.dumps(malformed))
+    malformed["Count"] = 3
+    malformed["results"][1]["Component"] = "BRAKES"
+    with pytest.raises(NewsParserError, match="conflicting rows"):
+        parse_fixture_items(source, json.dumps(malformed))
+    assert parse_fixture_items(source, '{"Count": 0, "results": []}') == []
+    with pytest.raises(NewsParserError, match="NATIONAL scope"):
+        parse_fixture_items({**source, "scope": "LOCAL"}, fixture)
+
+
 def test_regional_nws_fixture_preserves_official_county_zone_and_alert_evidence() -> None:
     source = {
         "id": "nws_active_alerts_wa", "scope": "REGIONAL", "kind": "api_json",

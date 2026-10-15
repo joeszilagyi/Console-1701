@@ -1115,6 +1115,50 @@ def test_run_news_scan_ingests_national_nws_alert_fixture(tmp_path):
         ).fetchone()[0] == 0
 
 
+def test_run_news_scan_ingests_national_nhtsa_recall_fixture(tmp_path):
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        news:
+          enabled: true
+          scopes:
+            NATIONAL:
+              enabled: true
+              sources:
+                - id: nhtsa_recalls
+                  name: NHTSA recalls fixture
+                  kind: api_json
+                  parser: nhtsa_recalls_json
+                  source_family: nhtsa
+                  agency: NHTSA
+                  sector: transportation
+                  official_status: official
+                  tags: [official]
+                  enabled: true
+                  url: "{_file_url(FIXTURE_DIR / 'national_nhtsa_recalls.json')}"
+        """,
+    )
+    result = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        rows = conn.execute(
+            "SELECT evidence_json FROM news_items WHERE scope = 'NATIONAL' ORDER BY id"
+        ).fetchall()
+        agency_items = list_national_items_by_facet(conn, "agency", "NHTSA")
+    assert result["status"] == "complete"
+    assert result["item_count"] == 2
+    assert len(rows) == 2
+    assert len(agency_items) == 2
+    evidence_rows = [json_loads(row["evidence_json"], {}) for row in rows]
+    assert {row["nhtsa_recall"]["campaign_number"] for row in evidence_rows} == {
+        "26V123000", "26V124000"
+    }
+    assert all(row["ingest"]["fixture_only"] is True for row in evidence_rows)
+    assert all(row["ranking"]["score"] == sum(row["ranking"]["factors"].values())
+               for row in evidence_rows)
+
+
 def test_run_news_scan_uses_national_usgs_threshold_for_fixture(tmp_path):
     config_path = _write_config(
         tmp_path / "config.yml",

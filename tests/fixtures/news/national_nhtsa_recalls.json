@@ -1,0 +1,50 @@
+{
+  "Count": 3,
+  "Message": "Results returned successfully",
+  "results": [
+    {
+      "NHTSACampaignNumber": "26V123000",
+      "Manufacturer": "Example Motors",
+      "ReportReceivedDate": "10/14/2026",
+      "Component": "ELECTRICAL SYSTEM",
+      "ModelYear": "2025",
+      "Make": "EXAMPLE",
+      "Model": "SEDAN",
+      "PotentialNumberofUnitsAffected": 120000,
+      "Summary": "A power component may overheat.",
+      "Consequence": "An overheated component can increase fire risk.",
+      "Remedy": "Owners should contact dealers for a replacement.",
+      "parkIt": "Yes",
+      "parkOutSide": "Yes"
+    },
+    {
+      "NHTSACampaignNumber": "26V123000",
+      "Manufacturer": "Example Motors",
+      "ReportReceivedDate": "10/14/2026",
+      "Component": "ELECTRICAL SYSTEM",
+      "ModelYear": "2026",
+      "Make": "EXAMPLE",
+      "Model": "WAGON",
+      "PotentialNumberofUnitsAffected": 120000,
+      "Summary": "A power component may overheat.",
+      "Consequence": "An overheated component can increase fire risk.",
+      "Remedy": "Owners should contact dealers for a replacement.",
+      "parkIt": "Yes",
+      "parkOutSide": "Yes"
+    },
+    {
+      "NHTSACampaignNumber": "26V124000",
+      "Manufacturer": "Another Vehicle Company",
+      "ReportReceivedDate": "10/13/2026",
+      "Component": "STEERING",
+      "ModelYear": "2024",
+      "Make": "ANOTHER",
+      "Model": "TRUCK",
+      "Summary": "A steering fastener may loosen.",
+      "Consequence": "Reduced steering control may increase crash risk.",
+      "Remedy": "Dealers will inspect and replace the fastener.",
+      "parkIt": "No",
+      "parkOutSide": "No"
+    }
+  ]
+}
