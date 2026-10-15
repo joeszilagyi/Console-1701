@@ -58,5 +58,6 @@ The earlier timeout was an access failure at that moment, not a permanent API bl
 has a local response-subset fixture and parser with exact source, date, size and row bounds.
 The API does not supply a structured national distribution field or an injury/death count in
 the sampled response. Evidence preserves source-reported text and separates stated risk from
-reported harm. Live polling remains disabled until scan cadence, update semantics, response
+reported harm. Source-stated death or injury risk adds a capped NATIONAL attention and ranking
+contribution. Live polling remains disabled until scan cadence, update semantics, response
 ceilings, and allowlist behavior are signed off.

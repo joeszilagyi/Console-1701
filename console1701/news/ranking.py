@@ -186,6 +186,7 @@ def build_rank_result(
                     55, max(0, _int_value(seismic_ranking.get("regional_seismic_weight")))
                 )
     national_vehicle_safety_bonus = 0
+    national_consumer_safety_bonus = 0
     national_cyber_bonus = 0
     national_aviation_bonus = 0
     national_regulatory_bonus = 0
@@ -198,6 +199,13 @@ def build_rank_result(
             if isinstance(recall_ranking, dict):
                 national_vehicle_safety_bonus = min(
                     35, max(0, _int_value(recall_ranking.get("vehicle_safety_score")))
+                )
+        cpsc = item_evidence.get("cpsc_recall")
+        if isinstance(cpsc, dict):
+            cpsc_ranking = cpsc.get("ranking")
+            if isinstance(cpsc_ranking, dict):
+                national_consumer_safety_bonus = min(
+                    25, max(0, _int_value(cpsc_ranking.get("consumer_safety_score")))
                 )
         kev = item_evidence.get("cisa_kev")
         if isinstance(kev, dict):
@@ -239,6 +247,7 @@ def build_rank_result(
         "source_health_confidence": health_confidence,
         "regional_seismic_boost": regional_seismic_boost,
         "national_vehicle_safety_bonus": national_vehicle_safety_bonus,
+        "national_consumer_safety_bonus": national_consumer_safety_bonus,
         "national_cyber_bonus": national_cyber_bonus,
         "national_aviation_bonus": national_aviation_bonus,
         "national_regulatory_bonus": national_regulatory_bonus,
@@ -270,6 +279,10 @@ def build_rank_result(
     if national_vehicle_safety_bonus:
         reasons.append(
             f"NATIONAL NHTSA vehicle-safety evidence adds {national_vehicle_safety_bonus}."
+        )
+    if national_consumer_safety_bonus:
+        reasons.append(
+            f"NATIONAL CPSC consumer-safety evidence adds {national_consumer_safety_bonus}."
         )
     if national_cyber_bonus:
         reasons.append(f"NATIONAL CISA KEV evidence adds {national_cyber_bonus}.")

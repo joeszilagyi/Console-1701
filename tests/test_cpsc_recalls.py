@@ -5,7 +5,9 @@ from pathlib import Path
 
 import pytest
 
+from console1701.news.national_policy import classify_national_item
 from console1701.news.parsers import NewsParserError, PayloadTooLargeError, parse_fixture_items
+from console1701.news.ranking import build_rank_result
 
 FIXTURE = Path(__file__).parent / "fixtures/national/cpsc_recalls_2026_10_01.json"
 
@@ -41,6 +43,20 @@ def test_cpsc_risk_indicator_does_not_claim_reported_deaths():
     assert "death_risk" in evidence["risk_indicators"]
     assert "death_reports" not in evidence
     assert evidence["injury_report_text"]
+
+
+def test_cpsc_source_risk_contributes_to_national_attention_and_rank():
+    source = _source() | {"official_status": "official", "source_family": "cpsc",
+                          "priority": 70}
+    item = parse_fixture_items(source, FIXTURE.read_text())[0]
+    policy = classify_national_item(source, item)
+    assert policy["attention_state"] == "elevated"
+    assert policy["official_impact_score"] == 25
+    ranking = build_rank_result(
+        source, item, seen_at="2026-10-02T00:00:00+00:00", combined_tags=item["tags"],
+        latest_health_state="healthy", repeat_count=0,
+    )
+    assert ranking["factors"]["national_consumer_safety_bonus"] == 25
 
 
 @pytest.mark.parametrize(("field", "value"), [

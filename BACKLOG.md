@@ -1276,7 +1276,8 @@ response shape. `cpsc_recalls_json` now validates an exact fixture source, seven
 15-second timeout ceiling, 1 MiB payload, 100-row cap, CPSC recall permalink, recall identity and
 date. It stores bounded product, firm, hazard, injury-report and remedy text; labels death/injury
 **risk** without claiming a reported death, and marks distribution geography unavailable when the
-API does not structure it. The official response subset fixture and parser tests pass. No live
+API does not structure it. Source-stated risk contributes capped NATIONAL attention and ranking;
+the official response subset fixture and parser tests pass. No live
 adapter or allowlisted network fetch is enabled. See
 `docs/project/NATIONAL_NHTSA_RECALL_API_VERIFICATION.md`.
 
