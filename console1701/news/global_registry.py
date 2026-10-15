@@ -7,6 +7,8 @@ import re
 from pathlib import Path
 from typing import Any
 
+from console1701.config import NEWS_SOURCE_KINDS
+
 GLOBAL_SOURCE_CLASSES = set(
     """global_news heavy_open_data_candidate manual_review_only nonprofit_news
     official_air_quality official_aviation official_conflict_humanitarian
@@ -116,7 +118,10 @@ def _load_registry() -> tuple[dict[str, Any], ...]:
         entry = dict(row)
         entry["priority"] = int(row["priority"])
         entry["interval_minutes"] = _interval_minutes(str(row["refresh_interval"]))
-        entry["kind"] = _source_kind(str(row["adapter"]))
+        kind = str(row.get("kind") or _source_kind(str(row["adapter"])))
+        if kind not in NEWS_SOURCE_KINDS:
+            raise ValueError(f"Invalid GLOBAL kind for {key}: {kind}")
+        entry["kind"] = kind
         entry["enabled"] = False
         entry["parser"] = None
         entry["source_health_behavior"] = (

@@ -1508,11 +1508,19 @@ record the observed shape. No ECDC HTTP URL is allowlisted for app ingest.
 
 ### WMO CAP Warning Source Verification
 
-Status: not implemented.
+Status: first-pass source verification complete; CAP parser and exact-feed ingest remain open.
 
 Verify WMO severe weather source references, CAP availability, national meteorological service
 links, ownership, policy notes, parser shape, refresh interval, and source-health behavior before
 implementation. Do not scrape warning maps or dashboards.
+
+The official SWIC source directory names issuing national services and links to exact CAP feeds.
+Australian BoM's WMO-hosted RSS and linked CAP 1.2 warning shape were inspected; DWD's official
+RSS channel was reachable but had no current items. The SWIC dashboard and directory are now
+reference-only health entries, never alert adapters, with an offline scan regression proving no
+file or HTTP ingest. The [verification notes](docs/project/GLOBAL_WMO_CAP_SOURCE_VERIFICATION.md)
+record issuer attribution, parser fields, tentative feed-specific cadence, and policy/health gates.
+No CAP URL is live-allowlisted by the app.
 
 ### USGS Global Earthquake GeoJSON Parser
 
