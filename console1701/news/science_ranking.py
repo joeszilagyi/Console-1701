@@ -28,6 +28,7 @@ def _signals(member: dict[str, Any]) -> dict[str, Any]:
     evidence = member.get("evidence") or {}
     identity = evidence.get("science_identity") or {}
     gcn = evidence.get("gcn_notice") or {}
+    gracedb = evidence.get("gracedb_public_alert") or {}
     rss = evidence.get("science_rss") or {}
     archive = bool(evidence.get("exoplanet_archive") or evidence.get("mast_caom")
                    or evidence.get("pds_collection") or "archive_metadata" in (
@@ -39,7 +40,12 @@ def _signals(member: dict[str, Any]) -> dict[str, Any]:
     rarity = min(20, max(0, _int(identity.get("rarity_score"))))
     if gcn.get("status") == "preliminary" and gcn.get("alert_type") == "initial":
         rarity = max(rarity, 8)
-    transient = 12 if gcn and gcn.get("status") == "preliminary" else 0
+    transient = 12 if (
+        (gcn and gcn.get("status") == "preliminary")
+        or (gracedb and gracedb.get("status") in {
+            "early_warning", "preliminary", "initial", "update",
+        })
+    ) else 0
     mission = 10 if identity.get("mission_relevance") is True else (
         5 if rss.get("mission_label") or rss.get("telescope") else 0)
     public = min(20, max(0, _int(identity.get("public_interest_score"))))
@@ -49,7 +55,7 @@ def _signals(member: dict[str, Any]) -> dict[str, Any]:
         "identity": identity, "safety": evidence.get("science_safety") or {},
         "archive": archive, "official": official, "significance": significance,
         "rarity": rarity, "transient": transient, "mission": mission,
-        "public": public, "tags": tags, "gcn": gcn,
+        "public": public, "tags": tags, "gcn": gcn, "gracedb": gracedb,
         "published_at": _time(member.get("source_published_at")),
     }
 
@@ -96,8 +102,11 @@ def rank_science_event(
     archive_firehose = 45 if any(signal["safety"].get("archive_firehose_blocked")
                                  for signal in signals) else (
         15 if signals and all(signal["archive"] for signal in signals) else 0)
-    retraction = 50 if signals and all(signal["gcn"].get("status") == "retracted"
-                                       for signal in signals) else 0
+    retraction = 50 if any(
+        signal["gcn"].get("status") == "retracted"
+        or signal["gracedb"].get("status") == "retracted"
+        for signal in signals
+    ) else 0
     factors = {
         "recency_score": recency,
         "official_provenance_score": official,

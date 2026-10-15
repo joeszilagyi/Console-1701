@@ -1800,6 +1800,26 @@
     "future_phase": "S9"
   },
   {
+    "source_key": "gracedb_public_alerts",
+    "source_name": "GraceDB public alert metadata",
+    "source_family": "ligo",
+    "source_class": "official_gravitational_wave",
+    "scope": "SYSTEM_SOLAR",
+    "raw_url": "https://gracedb.ligo.org/api/v2/superevents/",
+    "expected_access_kind": "public REST metadata; fixture only",
+    "adapter": "gracedb_api_candidate",
+    "refresh_interval": "disabled",
+    "priority": "80",
+    "official_status": "official",
+    "privacy_risk": "low",
+    "policy_risk": "medium",
+    "parser_risk": "medium",
+    "retention_sensitivity": "medium",
+    "verification_status": "official_page_seen",
+    "why_it_matters": "Public gravitational-wave candidate revisions and retractions without sky-map downloads.",
+    "future_phase": "S9"
+  },
+  {
     "source_key": "gracedb_home",
     "source_name": "GraceDB",
     "source_family": "ligo",
