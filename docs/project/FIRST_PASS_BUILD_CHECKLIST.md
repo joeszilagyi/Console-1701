@@ -126,13 +126,13 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-089** [ORBITAL Source Registry Design Implementation](../../BACKLOG.md#L1627) — all 136 design entries disabled, validated and inherited by config, persisted in SQLite and summary; reference rows cannot ingest.
 - [x] **RS-090** [Disabled-By-Default ORBITAL Config](../../BACKLOG.md#L1637) — disabled and validated policy tree; sensitive and unparsed candidates blocked before access; no live ORBITAL allowlist.
 - [x] **RS-091** [ORBITAL SQLite Schema Or Extension](../../BACKLOG.md#L1647) — shared scoped storage plus indexed event/object/mission, safety, sensitivity and impact facets; backfill, refresh and purge verified.
-- [ ] **RS-092** [ORBITAL Fixture Pack](../../BACKLOG.md#L1658) — partial: SWPC alerts/scales/K-index/aurora, JPL CAD/fireball, NASA RSS; other products and source-health variants pending.
+- [ ] **RS-092** [ORBITAL Fixture Pack](../../BACKLOG.md#L1658) — partial: SWPC alerts/scales/K-index/aurora, JPL CAD/fireball, NASA news and Station RSS; other products and source-health variants pending.
 - [x] **RS-093** [SWPC Alerts JSON Parser](../../BACKLOG.md#L1670) — official-shape offline parser with identity, validity, scale, impacts, cancellation, provenance and facet coverage; live ingest remains disabled.
 - [x] **RS-094** [SWPC NOAA Scales Parser](../../BACKLOG.md#L1679) — official-shape offline parser for nonzero G/R/S states with source timing, current/forecast distinction, provenance and facets; live ingest remains disabled.
 - [x] **RS-095** [SWPC Kp And Aurora Fixture Parsers](../../BACKLOG.md#L1687) — official-shape offline planetary/Boulder K-index and bounded OVATION grid parsers; configurable thresholds, coordinate windows, staleness and provenance.
 - [x] **RS-096** [JPL CNEOS Close Approach Parser](../../BACKLOG.md#L1696) — NASA/JPL CAD v1.5 field-array parser; TDB, distance/velocity/diameter, bounded thresholds, no impact inference, offline persistence.
 - [x] **RS-097** [JPL CNEOS Fireball Parser](../../BACKLOG.md#L1705) — NASA/JPL v1.2 field-array parser; UTC peak brightness, source units/location/velocity, energy and age filters, no damage inference, offline persistence.
-- [ ] **RS-098** [NASA RSS Parser](../../BACKLOG.md#L1748) — partial: verified news releases feed and narrow ORBITAL parser; JPL, blog, Kennedy, Station, Artemis and science feed coverage pending.
+- [ ] **RS-098** [NASA RSS Parser](../../BACKLOG.md#L1748) — partial: six verified NASA news/Station/Artemis/Kennedy feeds and parser; JPL feed returned 403 and science feed needs a verified RSS endpoint.
 - [ ] **RS-099** [ESA RSS Parser](../../BACKLOG.md#L1757) — not implemented.
 - [ ] **RS-100** [Official Launch Provider Source Verification](../../BACKLOG.md#L1766) — not implemented.
 - [ ] **RS-101** [ISS And Crewed-Spaceflight Source Verification](../../BACKLOG.md#L1775) — not implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Advanced RS-098 partially. Verified five more exact NASA mission/blog feeds and their channel shapes; added per-feed paths and fixture tests. JPL's linked RSS returned 403 and the science candidate was not parseable RSS. All remain disabled; no live admission. Full pytest passed (403 tests); Ruff passed. Progress remains 73/150.
 - **2026-10-15:** Advanced RS-098 partially. Verified NASA's RSS directory and exact news releases feed, then added an offline ORBITAL parser that preserves official metadata and filters unrelated or routine items. Dedicated feed coverage remains open. Full pytest passed (397 tests); Ruff passed. Progress remains 73/150. RS-092 remains partial.
 - **2026-10-15:** Completed RS-097. Checked NASA/JPL Fireball API v1.2 documentation and added a fixture-first parser for UTC peak-brightness time, source energy units, optional location/velocity, and configurable energy/freshness filters. It makes no ground-damage inference. Offline scan and indexed event tests pass; live HTTP remains blocked. Full pytest passed (394 tests); Ruff passed. Progress: 73/150. RS-092 remains partial.
 - **2026-10-15:** Completed RS-096. Checked NASA/JPL CAD v1.5 documentation and added a fixture-first close-approach parser with TDB time, distance/velocity/diameter evidence, conservative configurable filters, and explicit no-impact framing. Offline scan and indexed object tests pass; live HTTP remains blocked. Full pytest passed (391 tests); Ruff passed. Progress: 72/150. RS-092 remains partial.

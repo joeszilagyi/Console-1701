@@ -2356,12 +2356,13 @@ agency/source family, mission labels where available, and filter routine feature
 they have recent-signal value.
 
 Current state: NASA's RSS directory was verified as an HTML index and the registry candidate now
-points to its exact news releases feed. The dedicated parser validates the NASA RSS channel and
-official article links, keeps title, canonical URL, GUID, time, categories and bounded description,
-and requires a narrow ORBITAL path plus title action. Unrelated Earth science, education and
-routine station stories are suppressed in offline tests. The candidate remains disabled and
-has no live HTTP allowlist entry. Dedicated JPL, blog, Kennedy, Station, Artemis and science feed
-coverage remains open. See `docs/project/ORBITAL_NASA_RSS_SOURCE_VERIFICATION.md`.
+points to its exact news releases feed. Five additional Station, Artemis, and Kennedy mission/blog
+RSS endpoints were observed and added as disabled exact-feed candidates. The source-specific parser
+validates each NASA channel and official article path, keeps canonical URL, GUID, time, categories
+and bounded description, and requires an ORBITAL title action. Unrelated Earth science, education
+and routine stories are suppressed in offline tests. No live HTTP allowlist entry was added.
+JPL's linked feed returned HTTP 403 here and the NASA Science candidate did not return parseable
+RSS; those paths remain open. See `docs/project/ORBITAL_NASA_RSS_SOURCE_VERIFICATION.md`.
 
 ### ESA RSS Parser
 
