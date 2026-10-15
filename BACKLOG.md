@@ -681,7 +681,7 @@ risk, privacy risk, retention sensitivity, verification status, and future phase
 enum values and keep all REGIONAL sources disabled until explicitly configured.
 
 The REGIONAL registry now contains all 224 design-table entries plus six pre-existing reviewed
-operational candidates. All 230 rows are disabled by default. At load time it validates unique
+operational candidates, plus one Pierce Road Alert RSS candidate. All 231 rows are disabled by default. At load time it validates unique
 keys, classes/adapters/kinds, official and verification status, risks, HTTPS URLs, priority,
 interval, and future phase. The config layer inherits metadata, and SQLite sync persists the full
 inventory. Reference-only pages and documentation cannot trigger fixture or HTTP ingest when
@@ -717,7 +717,7 @@ retention purge evidence. Use JSON-heavy columns and indexes for latest-by-scope
 source health, source family, geographic filters, and `expires_at` purge. Do not store full article
 bodies by default.
 
-The shared schema persists all 230 REGIONAL registry rows, configured sources, fetch runs, items,
+The shared schema persists all 231 REGIONAL registry rows, configured sources, fetch runs, items,
 source health, and scoped `news_clusters` with member, family, geography, confidence, and ranking
 evidence. `news_item_facets` now indexes source-provided REGIONAL zone, route, facility, county, and
 region labels, plus event type and source family. It excludes free-text USGS place labels from
@@ -755,7 +755,9 @@ IDs, cancellation/delay classification and impact evidence while leaving absent 
 and end-time fields unknown. The NWCC blog's linked public Atom feed now has a curated observed
 metadata fixture for fire updates, with body and Washington impact excluded. WA Ecology's official
 hourly AQI ArcGIS layer now has an observed three-station Seattle fixture; exact street addresses
-from the source response are dropped before storage. Dedicated WA DNR incident, other county
+from the source response are dropped before storage. Pierce County's official Road Alert RSS now
+has an observed metadata fixture and fixture-only parser; it collapses four revisions of one AID,
+stores no description/body, and ranks routine roadwork low. Dedicated WA DNR incident, other county
 emergency, outage, and other regional fixture shapes remain pending endpoint verification; do not
 invent live API shapes to close this pack.
 

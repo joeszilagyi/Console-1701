@@ -51,6 +51,7 @@ def apply_regional_privacy_policy(
     wsdot = evidence.get("wsdot_alert") or {}
     usgs = evidence.get("usgs_earthquake") or {}
     county = evidence.get("king_county_emergency") or {}
+    pierce = evidence.get("pierce_road_alert") or {}
     wsf = evidence.get("wsf_alert") or {}
     aqi = evidence.get("ecology_aqi") or {}
     title = str(item.get("title") or "")
@@ -62,6 +63,7 @@ def apply_regional_privacy_policy(
         or _score((wsdot.get("ranking") or {}).get("public_impact_score")) >= 15
         or _score((usgs.get("ranking") or {}).get("regional_seismic_weight")) >= 25
         or _score((county.get("ranking") or {}).get("public_impact_score")) >= 15
+        or _score((pierce.get("ranking") or {}).get("public_impact_score")) >= 15
         or _score((wsf.get("ranking") or {}).get("public_impact_score")) >= 15
         or _score((aqi.get("ranking") or {}).get("public_impact_score")) >= 20
     )

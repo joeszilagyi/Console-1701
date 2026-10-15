@@ -30,11 +30,12 @@ def test_regional_source_registry_is_disabled_and_validated():
     )
     core_keys = {
         "nws_active_alerts_wa", "wsdot_traveler_api", "wsdot_highway_alerts_rss",
-        "usgs_eq_geojson", "king_county_emergency_news", "regional_news_rss",
+        "usgs_eq_geojson", "king_county_emergency_news", "pierce_road_alert_rss",
+        "regional_news_rss",
     }
 
     assert len(design) == 224
-    assert len(entries) == 230
+    assert len(entries) == 231
     assert keys == {row["source_key"] for row in design} | core_keys
     assert "nws_active_alerts_wa" in keys
     assert "wsdot_traveler_api" in keys
@@ -169,7 +170,7 @@ def test_regional_registry_is_persisted_in_sqlite_news_scan(tmp_path):
         storage_summary = get_news_storage_summary(conn, config)
 
     assert result["status"] == "disabled"
-    assert len(registry_rows) == 230
+    assert len(registry_rows) == 231
     by_key = {str(row["source_key"]): row for row in registry_rows}
     nws_row = by_key.get("nws_active_alerts_wa")
 

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+  <title>Pierce County, WA - Alert Center - Road Alert</title>
+  <link>https://www.piercecountywa.gov/AlertCenter.aspx</link>
+  <lastBuildDate>Thu, 15 Oct 2026 16:09:40 -0800</lastBuildDate>
+  <description>Pierce County, WA - Get the latest alerts</description>
+  <item>
+    <title>176th St. E/Gem Heights Dr. E sidewalk repairs</title>
+    <link>https://www.piercecountywa.gov/AlertCenter.aspx?AID=2892</link>
+    <pubDate>Mon, 12 Oct 2026 15:10:22 -0800</pubDate>
+    <description>Motorists should expect delays during sidewalk repairs.</description>
+    <guid>https://www.piercecountywa.gov/AlertCenter.aspx?AID=2892/639274182220000000</guid>
+  </item>
+  <item>
+    <title>Inclement weather update, Sept. 25 Updated on Sep 25 2026 4:52PM</title>
+    <link>https://www.piercecountywa.gov/AlertCenter.aspx?AID=2889</link>
+    <pubDate>Fri, 25 Sep 2026 16:52:15 -0800</pubDate>
+    <description>Wet and windy weather can affect roadways.</description>
+    <guid>https://www.piercecountywa.gov/AlertCenter.aspx?AID=2889/639259555350000000</guid>
+  </item>
+  <item>
+    <title>Inclement weather update, Sept. 25 Updated on Sep 25 2026 4:17PM</title>
+    <link>https://www.piercecountywa.gov/AlertCenter.aspx?AID=2889</link>
+    <pubDate>Fri, 25 Sep 2026 16:17:02 -0800</pubDate>
+    <description>Earlier revision of the same road alert.</description>
+    <guid>https://www.piercecountywa.gov/AlertCenter.aspx?AID=2889/639259534220000000</guid>
+  </item>
+</channel></rss>

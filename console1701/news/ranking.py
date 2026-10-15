@@ -368,6 +368,10 @@ def _regional_signal_factors(
     nws_rank = nws.get("ranking") if isinstance(nws.get("ranking"), dict) else {}
     wsdot_rank = wsdot.get("ranking") if isinstance(wsdot.get("ranking"), dict) else {}
     county_rank = county.get("ranking") if isinstance(county.get("ranking"), dict) else {}
+    pierce = evidence.get("pierce_road_alert") if isinstance(
+        evidence.get("pierce_road_alert"), dict
+    ) else {}
+    pierce_rank = pierce.get("ranking") if isinstance(pierce.get("ranking"), dict) else {}
     wsf = evidence.get("wsf_alert") if isinstance(evidence.get("wsf_alert"), dict) else {}
     wsf_rank = wsf.get("ranking") if isinstance(wsf.get("ranking"), dict) else {}
     aqi = evidence.get("ecology_aqi") if isinstance(evidence.get("ecology_aqi"), dict) else {}
@@ -385,6 +389,7 @@ def _regional_signal_factors(
         _int_value(nws_rank.get("total_alert_weight")) // 2,
         _int_value(wsdot_rank.get("public_impact_score")) // 2,
         _int_value(county_rank.get("public_impact_score")),
+        _int_value(pierce_rank.get("public_impact_score")),
         _int_value(wsf_rank.get("public_impact_score")),
         _int_value(aqi_rank.get("public_impact_score")),
         10 if "public-impact" in item.get("tags", []) else 0,

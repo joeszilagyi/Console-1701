@@ -238,6 +238,10 @@ def parse_fixture_items(
         return _parse_wsdot_highway_alerts_rss(source, payload_text)
     if parser_name == "king_county_emergency_rss":
         return _parse_king_county_emergency_rss(source, payload_text)
+    if parser_name == "pierce_road_rss_fixture":
+        from console1701.news.regional_pierce import parse_pierce_road_rss_fixture
+
+        return parse_pierce_road_rss_fixture(source, payload_text)
     if parser_name == "nhtsa_recalls_json":
         return _parse_nhtsa_recalls_json(source, payload_text)
     if parser_name == "cisa_kev_json":
