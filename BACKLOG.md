@@ -2042,9 +2042,11 @@ first-pass public-impact scores. It does not infer impact from headline wording.
 opinion, domestic politics without international evidence, and single-source social background;
 explicit rumor and graphic/private-person language set sensitivity evidence, and graphic content
 is redacted before storage. Official alert metadata prevents a routine headline from suppressing
-an active alert. Direct and offline scan tests verify those rules. Remaining work: source-specific
-coverage for broader public-impact categories, duplicate syndication across source families,
-and additional low-value/sensitive fixture variants.
+an active alert. Exact article URLs and parser-provided syndication IDs now group duplicate stories
+without granting independent-family or temporal credit, and a bounded syndication penalty offsets
+their cluster-size contribution; a shared homepage URL alone cannot merge unrelated titles.
+Direct and offline scan tests verify those rules. Remaining work: source-specific coverage for
+broader public-impact categories and additional low-value/sensitive fixture variants.
 
 ### GLOBAL UI Disabled States
 
