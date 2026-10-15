@@ -75,6 +75,12 @@ NATIONAL_VERIFICATION_STATUSES = {
     "user_seeded",
 }
 NATIONAL_RISK_LEVELS = {"low", "medium", "high"}
+NATIONAL_AUTH_REQUIRED_SOURCE_KEYS = {
+    "airnow_api_docs",
+    "bea_developers",
+    "congress_api",
+    "fred_api_docs",
+}
 _RSS_ADAPTERS = {"rss_atom", "govinfo_rss", "cap_alerts"}
 _API_ADAPTERS = {
     "aviation_status_json_or_xml",
@@ -196,6 +202,8 @@ def national_registry_config_defaults(source_key: str) -> dict[str, Any] | None:
     }
     if entry["parser"]:
         source["parser"] = entry["parser"]
+    if source_key in NATIONAL_AUTH_REQUIRED_SOURCE_KEYS:
+        source["auth"] = {"api_key": ""}
     return source
 
 

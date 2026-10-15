@@ -158,6 +158,53 @@ def test_same_source_key_ingests_independent_local_and_national_fixtures(tmp_pat
     assert all(row["fetch_count"] == 1 and row["item_count"] >= 1 for row in rows)
 
 
+def test_api_key_sources_require_local_auth_before_any_ingest(tmp_path, monkeypatch):
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        """
+        paths: {repo_roots: [], explicit_repos: []}
+        national: {enabled: true}
+        news:
+          enabled: true
+          scopes:
+            NATIONAL:
+              enabled: true
+              sources:
+                - {id: congress_api, enabled: true, url: 'file:///tmp/congress.json'}
+                - {id: bea_developers, enabled: true, url: 'file:///tmp/bea.json'}
+                - {id: fred_api_docs, enabled: true, url: 'file:///tmp/fred.json'}
+                - {id: airnow_api_docs, enabled: true, url: 'file:///tmp/airnow.json'}
+                - {id: custom_keyed, name: Custom keyed source, kind: local_file_json,
+                   enabled: true, url: 'file:///tmp/custom.json', auth: {api_key: ''}}
+        """,
+    )
+
+    def unexpected_access(*_args, **_kwargs):
+        raise AssertionError("Auth-required source attempted fixture or network access")
+
+    monkeypatch.setattr("console1701.news.scanner.load_fixture_text", unexpected_access)
+    monkeypatch.setattr("console1701.news.scanner.fetch_official_text", unexpected_access)
+
+    result = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        statuses = get_news_sources_status(conn, config)
+        fetch_states = {
+            str(row["status"])
+            for row in conn.execute("SELECT status FROM news_fetch_runs").fetchall()
+        }
+        item_count = conn.execute("SELECT COUNT(*) AS count FROM news_items").fetchone()["count"]
+
+    assert result["status"] == "partial"
+    assert result["scanned_sources"] == 5
+    assert len(result["errors"]) == 5
+    assert {status["health_state"] for status in statuses} == {"auth_required"}
+    assert all(status["policy"]["auth_required"] for status in statuses)
+    assert all(not status["policy"]["auth_configured"] for status in statuses)
+    assert fetch_states == {"auth_required"}
+    assert item_count == 0
+
+
 def test_existing_source_registry_migrates_to_scoped_unique_key(tmp_path):
     schema = files("console1701").joinpath("schema.sql").read_text(encoding="utf-8")
     old_schema = schema.replace(

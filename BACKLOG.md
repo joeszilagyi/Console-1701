@@ -1319,19 +1319,32 @@ Per-source signoff templates and endpoint-specific walkthroughs still need a ded
 
 ### Tests For No Page-Load External Fetches
 
-Status: not implemented.
+Status: implemented.
 
 Add tests proving GET routes and page renders read SQLite/config only and never call NATIONAL
 network fetchers. Include disabled/not configured/stale/failing/auth-required/policy-blocked/parser
 failed state tests for NATIONAL and SYSTEM source health.
 
+Current state: the GET-route regression now includes NATIONAL page and API paths with a deliberately
+missing fixture, and fails if scan or official HTTP fetch is attempted. It also checks SYSTEM page
+and summary state. NATIONAL/SYSTEM baseline and source-state matrix regressions cover disabled,
+not configured, never run, stale, parser failure, policy blocking, auth required, and failing
+aggregation without a network call.
+
 ### Tests For No API-Key Source Running Without Config
 
-Status: not implemented.
+Status: implemented.
 
 Add tests proving Congress.gov, BEA, FRED, and any other API-key or auth-required source cannot run
 without explicit local configuration. The tests should assert clear `auth_required` source-health
 state and no network calls.
+
+Current state: the NATIONAL registry marks Congress.gov API, BEA developer/API reference, FRED API
+docs, and AirNow API docs as key-required candidates; these remain disabled and are not live
+endpoints. The scanner rejects every enabled source with declared but unconfigured auth before
+fixture access or HTTP. A regression covers those four candidates plus a custom auth-required
+source, asserting `auth_required` fetch/health states, zero stored items, and no fixture or network
+access. No credential is stored in SQLite policy evidence.
 
 ## GLOBAL World Recent Signal Layer
 

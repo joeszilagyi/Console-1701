@@ -308,6 +308,10 @@ def test_national_scope_health_baseline_states(tmp_path):
     assert get_news_scope_states(conn, disabled)["NATIONAL"]["state"] == "disabled"
     assert get_news_scope_states(conn, empty)["NATIONAL"]["state"] == "not_configured"
     assert get_news_scope_states(conn, configured)["NATIONAL"]["state"] == "configured_never_run"
+    disabled_summary = get_news_storage_summary(conn, disabled)
+    empty_summary = get_news_storage_summary(conn, empty)
+    assert disabled_summary["scope_states"]["NATIONAL"]["state"] == "disabled"
+    assert empty_summary["scope_states"]["NATIONAL"]["state"] == "not_configured"
 
     source_id = _insert_news_source(
         conn,
@@ -327,6 +331,9 @@ def test_national_scope_health_baseline_states(tmp_path):
     national = get_news_scope_states(conn, configured)["NATIONAL"]
     assert national["state"] == "healthy"
     assert national["source_state_counts"] == {"healthy": 1}
+    summary = get_news_storage_summary(conn, configured)
+    assert summary["scope_states"]["NATIONAL"]["state"] == "healthy"
+    assert summary["source_state_counts"]["healthy"] == 1
 
 
 def test_news_scope_states_report_stale_source_state_when_health_is_stale(tmp_path):
