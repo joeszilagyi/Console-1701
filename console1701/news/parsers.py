@@ -127,6 +127,8 @@ def parse_fixture_items(
         return _parse_gdacs_geojson(source, payload_text)
     if parser_name == "reliefweb_disasters_json":
         return _parse_reliefweb_disasters_json(source, payload_text)
+    if parser_name == "reliefweb_reports_json":
+        return _parse_reliefweb_reports_json(source, payload_text)
     if parser_name == "wsdot_highway_alerts_rss":
         return _parse_wsdot_highway_alerts_rss(source, payload_text)
     if parser_name == "alertseattle_rss":
@@ -455,6 +457,111 @@ def _reliefweb_names(value: Any) -> list[str]:
     return _unique_texts(
         [row.get("name") for row in value if isinstance(row, dict)], max_chars=120
     )
+
+
+def _reliefweb_config_set(source: dict[str, Any], key: str) -> set[str]:
+    raw = source.get(key)
+    if not isinstance(raw, list) or not raw:
+        raise NewsParserError(f"ReliefWeb reports require configured {key}.")
+    values = {str(value).strip().casefold() for value in raw if str(value).strip()}
+    if not values:
+        raise NewsParserError(f"ReliefWeb reports require configured {key}.")
+    return values
+
+
+def _parse_reliefweb_reports_json(
+    source: dict[str, Any], payload_text: str
+) -> list[dict[str, Any]]:
+    if str(source.get("scope") or "").upper() != "GLOBAL":
+        raise NewsParserError("ReliefWeb reports parser requires GLOBAL scope.")
+    active_ids = _reliefweb_config_set(source, "active_disaster_ids")
+    official_sources = _reliefweb_config_set(source, "official_source_names")
+    themes = _reliefweb_config_set(source, "humanitarian_theme_names")
+    max_items = source.get("max_items", 10)
+    if isinstance(max_items, bool) or not isinstance(max_items, int) or not 1 <= max_items <= 25:
+        raise NewsParserError("ReliefWeb reports max_items must be 1..25.")
+    retention_days = source.get("retention_days")
+    if (
+        isinstance(retention_days, bool)
+        or not isinstance(retention_days, int)
+        or not 1 <= retention_days <= 7
+    ):
+        raise NewsParserError("ReliefWeb reports require retention_days of 1..7.")
+    try:
+        payload = json.loads(payload_text)
+    except json.JSONDecodeError as exc:
+        raise NewsParserError(f"Malformed ReliefWeb reports fixture: {exc}") from exc
+    if not isinstance(payload, dict) or not isinstance(payload.get("data"), list):
+        raise NewsParserError("ReliefWeb reports fixture must have a data list.")
+    items = []
+    for index, row in enumerate(payload["data"]):
+        if not isinstance(row, dict) or not isinstance(row.get("fields"), dict):
+            raise NewsParserError(f"ReliefWeb report {index} lacks fields.")
+        fields = row["fields"]
+        disaster_rows = fields.get("disaster") or []
+        if not isinstance(disaster_rows, list):
+            raise NewsParserError(f"ReliefWeb report {index} has invalid disasters.")
+        matched_disasters = [
+            entry for entry in disaster_rows
+            if isinstance(entry, dict) and str(entry.get("id") or "").casefold() in active_ids
+        ]
+        source_names = _reliefweb_names(fields.get("source"))
+        matched_sources = [name for name in source_names if name.casefold() in official_sources]
+        theme_names = _reliefweb_names(fields.get("theme"))
+        matched_themes = [name for name in theme_names if name.casefold() in themes]
+        if not (matched_disasters and matched_sources and matched_themes):
+            continue
+        report_id = bounded_text(row.get("id") or fields.get("id"), max_chars=32)
+        title = bounded_text(fields.get("title"), max_chars=MAX_TITLE_LENGTH)
+        url = normalize_url(fields.get("url"))
+        parts = urlsplit(url)
+        if not report_id or not title or parts.scheme != "https" or parts.hostname not in {
+            "reliefweb.int", "www.reliefweb.int"
+        }:
+            raise NewsParserError(f"ReliefWeb report {index} lacks official identity or URL.")
+        date = fields.get("date") or {}
+        if not isinstance(date, dict):
+            raise NewsParserError(f"ReliefWeb report {index} has invalid dates.")
+        published_at = normalize_timestamp(date.get("original") or date.get("created"))
+        if not published_at:
+            raise NewsParserError(f"ReliefWeb report {index} has no publication date.")
+        headline = fields.get("headline")
+        summary = headline.get("summary") if isinstance(headline, dict) else None
+        countries = _reliefweb_names(fields.get("country"))
+        item = _normalize_item(
+            source,
+            {
+                "title": title,
+                "url": url,
+                "description": summary,
+                "published_at": published_at,
+                "tags": ["reliefweb", "global", "humanitarian", "report"],
+            },
+            index=index,
+        )
+        item["evidence"]["reliefweb_report"] = {
+            "id": report_id,
+            "disaster_ids": [str(entry["id"]) for entry in matched_disasters],
+            "disaster_names": _reliefweb_names(matched_disasters),
+            "sources": matched_sources,
+            "countries": countries,
+            "themes": matched_themes,
+            "published_at": published_at,
+            "updated_at": normalize_timestamp(date.get("changed")),
+            "source_url": url,
+            "filter": {
+                "configured_active_disaster_match": True,
+                "official_source_match": True,
+                "humanitarian_theme_match": True,
+                "max_items": max_items,
+                "retention_days": retention_days,
+            },
+            "ranking": {"humanitarian_source": True, "report_volume_capped": True},
+        }
+        items.append(item)
+        if len(items) >= max_items:
+            break
+    return items
 
 
 def _parse_reliefweb_disasters_json(

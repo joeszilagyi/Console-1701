@@ -93,11 +93,11 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-059** [GLOBAL Source Registry Design Implementation](../../BACKLOG.md#L1275) — 172 disabled design entries, enum validation, config defaults, SQLite sync, and summary.
 - [x] **RS-060** [Disabled-By-Default GLOBAL Config](../../BACKLOG.md#L1285) — validated inclusion/attention flags and explicit social, auth, heavy-data, homepage, conflict gates.
 - [ ] **RS-061** [GLOBAL SQLite Schema Or Extension](../../BACKLOG.md#L1296) — partial: scoped registry persistence and summary; country/region indexes and purge evidence remain.
-- [ ] **RS-062** [GLOBAL Fixture Pack](../../BACKLOG.md#L1306) — partial: GDACS RSS/API and ReliefWeb disaster fixtures with offline scan tests; other families/states pending.
+- [ ] **RS-062** [GLOBAL Fixture Pack](../../BACKLOG.md#L1306) — partial: GDACS RSS/API and ReliefWeb disaster/report fixtures with offline scan tests; other families/states pending.
 - [x] **RS-063** [GDACS Feed Parser](../../BACKLOG.md#L1316) — official RSS shape verified; dedicated GLOBAL parser, evidence, fixture, and scan persistence test.
 - [x] **RS-064** [GDACS API Fixture Parser](../../BACKLOG.md#L1324) — official Search GeoJSON shape verified; dedicated GLOBAL parser, evidence, fixture, and scan persistence test.
 - [x] **RS-065** [ReliefWeb Disasters API Parser](../../BACKLOG.md#L1332) — documented v2 fixture contract, metadata-only parser, offline persistence and appname gate tests; live response unverified.
-- [ ] **RS-066** [ReliefWeb Reports API Parser](../../BACKLOG.md#L1340) — not implemented.
+- [x] **RS-066** [ReliefWeb Reports API Parser](../../BACKLOG.md#L1340) — explicit active-disaster/source/theme filters, cap, short expiry, metadata-only fixture ingest; live blocked.
 - [ ] **RS-067** [WHO Disease Outbreak News Parser](../../BACKLOG.md#L1349) — not implemented.
 - [ ] **RS-068** [ECDC RSS Parser](../../BACKLOG.md#L1358) — not implemented.
 - [ ] **RS-069** [WMO CAP Warning Source Verification](../../BACKLOG.md#L1366) — not implemented.

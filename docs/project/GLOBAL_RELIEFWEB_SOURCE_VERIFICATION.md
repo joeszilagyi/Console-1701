@@ -16,3 +16,10 @@ unapproved sample request on 2026-10-15 returned HTTP 403. The fixture is theref
 on the documented field schema, not a sampled live response. Registered ReliefWeb disaster
 and update sources are credential-gated, disabled by default, and have no HTTP allowlist.
 The tests read a local JSON fixture and block network access.
+
+The reports parser uses documented `data[].fields` report metadata: title, canonical URL,
+`date.original`/`date.created`, source, country, disaster, theme, and optional headline summary.
+It requires a reviewed list of active disaster IDs, official source names, humanitarian theme
+names, an item cap, and short source retention. The local fixture includes rejected historical,
+unapproved-source, and low-relevance rows. It includes a full `body` value to verify that the
+parser discards it. Live report responses also remain unverified pending approved appname access.
