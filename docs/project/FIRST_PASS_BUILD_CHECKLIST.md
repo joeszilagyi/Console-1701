@@ -173,7 +173,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-133** [Minor Planet Center Science-Context Source Verification](../../BACKLOG.md#L2141) — official MPEC/orbit/observation/list APIs classified, rate and volume limits recorded, and ORBITAL CNEOS remains canonical for hazards.
 - [x] **RS-134** [HEASARC Metadata Source Verification](../../BACKLOG.md#L2149) — official Xamin/TAP/cone interfaces, bounded VOTable probe, row-cap/overflow policy, mission conditions, and disabled promotion gates recorded.
 - [ ] **RS-135** [Deterministic Event Correlation For Transients, Exoplanets, Missions, And Telescope Releases](../../BACKLOG.md#L2173) — complete-link metadata matcher and tests added; scan/persistence integration pending.
-- [ ] **RS-136** [Deterministic Ranking For Official Science And Rarity](../../BACKLOG.md#L2182) — not implemented.
+- [ ] **RS-136** [Deterministic Ranking For Official Science And Rarity](../../BACKLOG.md#L2182) — stored-metadata scorer and tests added; scan/evidence persistence integration pending.
 - [ ] **RS-137** [Hype And Speculation Suppression Rules](../../BACKLOG.md#L2192) — not implemented.
 - [ ] **RS-138** [Archive Firehose Blocking Rules](../../BACKLOG.md#L2202) — not implemented.
 - [ ] **RS-139** [UI Disabled States After Naming Decision](../../BACKLOG.md#L2211) — not implemented.

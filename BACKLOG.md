@@ -3061,13 +3061,22 @@ science ingest is wired.
 
 ### Deterministic Ranking For Official Science And Rarity
 
-Status: not implemented.
+Status: partially implemented 2026-10-15; runtime integration pending.
 
 Implement explainable ranking with recency, official science provenance, scientific significance,
 source diversity, mission relevance, rarity, transient status, public interest, source priority,
 cluster size, local/global/orbital impact tags, duplicate-family penalty, stale-source penalty,
 low-confidence penalty, low-public-value penalty, hype penalty, out-of-scope penalty, and
 archive-firehose penalty. Store score features and ranking reasons in JSON evidence.
+
+Current state: `science_ranking.py` scores stored source-backed science groups with bounded
+recency, official provenance, explicit scientific significance, independent families, mission
+relevance, explicit rarity, preliminary transient status, public interest, source priority,
+cluster size and impact tags. It records duplicate-family, stale, confidence, low-value, hype,
+out-of-scope, archive and retraction penalties as factors and reasons. Archive parameter updates,
+observation times, and harvest dates receive no release-recency bonus; dramatic titles alone do
+not create scientific significance. Focused tests cover those semantics. The science scan path
+does not yet call this ranker or persist its evidence to `science_events`; finish that with ingest.
 
 ### Hype And Speculation Suppression Rules
 
