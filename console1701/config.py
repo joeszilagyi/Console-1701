@@ -1176,6 +1176,31 @@ def _normalize_news_source(
         if str(source_cfg.get("parser") or "").strip().lower() == "jpl_fireball_json":
             source_cfg["min_impact_kt"] = orbital_cfg["fireball_min_impact_kt"]
             source_cfg["max_age_days"] = orbital_cfg["fireball_max_age_days"]
+    if source_scope == "SYSTEM_SOLAR":
+        from console1701.news.science_registry import get_science_source_registry_entry
+        from console1701.news.science_sources import SCIENCE_FIXTURE_SOURCES
+
+        fixture = SCIENCE_FIXTURE_SOURCES.get(source_key)
+        registry = get_science_source_registry_entry(source_key)
+        if (
+            fixture is None
+            or registry is None
+            or source_cfg.get("parser") != fixture[0]
+            or source_cfg.get("official_url") != fixture[1]
+            or not str(source_cfg.get("url") or "").startswith("file://")
+            or source_cfg.get("fixture_only") is not True
+            or source_cfg["kind"] not in {"rss", "api_json", "local_file_json"}
+        ):
+            raise ConfigError(
+                f"{path} must be an exact, verified local COSMIC fixture source."
+            )
+        for field in (
+            "source_family", "source_class", "official_status",
+            "verification_status", "expected_access_kind",
+        ):
+            if field in source_cfg and source_cfg[field] != registry[field]:
+                raise ConfigError(f"{path}.{field} must match the science registry.")
+            source_cfg[field] = registry[field]
 
     source_cfg["enabled"] = _coerce_bool(source_cfg.get("enabled", False), f"{path}.enabled")
     source_cfg["priority"] = _coerce_int(source_cfg.get("priority", 50), f"{path}.priority")

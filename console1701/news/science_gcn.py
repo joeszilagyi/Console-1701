@@ -9,6 +9,7 @@ from urllib.parse import quote, urlsplit
 
 from console1701.news.normalize import bounded_text, normalize_timestamp
 from console1701.news.parsers import NewsParserError, PayloadTooLargeError, _normalize_item
+from console1701.news.science_sources import exact_science_endpoint
 
 _SCHEMA_PREFIX = "https://gcn.nasa.gov/schema/"
 _ALERT_TYPES = {"initial", "subsequent", "update", "retraction"}
@@ -24,7 +25,7 @@ def _event_value(value: Any) -> str | None:
 def parse_gcn_notice_fixture(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:
     if source.get("scope") != "SYSTEM_SOLAR" or source.get("id") != "gcn_notices":
         raise NewsParserError("GCN notice parser requires its exact working scope and source")
-    if source.get("url") != "https://gcn.nasa.gov/docs/notices":
+    if not exact_science_endpoint(source, "https://gcn.nasa.gov/docs/notices"):
         raise NewsParserError("GCN notice parser requires the official documentation source")
     if not source.get("fixture_only"):
         raise NewsParserError("GCN notice parser is fixture-only")

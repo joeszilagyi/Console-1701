@@ -9,6 +9,7 @@ from urllib.parse import quote
 
 from console1701.news.normalize import bounded_text
 from console1701.news.parsers import NewsParserError, PayloadTooLargeError, _normalize_item
+from console1701.news.science_sources import exact_science_endpoint
 
 EXOPLANET_TAP_URL = "https://exoplanetarchive.ipac.caltech.edu/TAP/sync"
 PS_COLUMNS = (
@@ -42,7 +43,7 @@ def _query_contract(source: dict[str, Any]) -> dict[str, Any]:
 def parse_exoplanet_ps_json(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:
     if source.get("scope") != "SYSTEM_SOLAR" or source.get("id") != "nasa_exoplanet_ps_tap":
         raise NewsParserError("Exoplanet parser requires its exact working scope and source")
-    if source.get("url") != EXOPLANET_TAP_URL:
+    if not exact_science_endpoint(source, EXOPLANET_TAP_URL):
         raise NewsParserError("Exoplanet parser requires the exact NASA TAP endpoint")
     query = _query_contract(source)
     if len(payload_text.encode("utf-8")) > 65_536:

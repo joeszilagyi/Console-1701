@@ -81,9 +81,10 @@ def test_cosmic_configured_fixture_cannot_run_with_parent_disabled(tmp_path, mon
     raw["news"]["scopes"] = {"SYSTEM_SOLAR": {
         "enabled": True,
         "sources": [{
-            "id": "science_fixture", "name": "Science fixture", "enabled": True,
-            "kind": "local_file_json", "parser": "generic_json_items",
-            "url": "file:///missing-science.json",
+            "id": "nasa_jpl_science_feed", "name": "Science fixture", "enabled": True,
+            "kind": "rss", "parser": "nasa_jpl_science_rss", "fixture_only": True,
+            "official_url": "https://www.nasa.gov/centers-and-facilities/jpl/feed/",
+            "url": "file:///missing-science.rss",
         }],
     }}
     path.write_text(yaml.safe_dump(raw))

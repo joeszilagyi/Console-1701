@@ -10,6 +10,7 @@ from urllib.parse import urlsplit
 
 from console1701.news.normalize import bounded_text, normalize_timestamp
 from console1701.news.parsers import NewsParserError, PayloadTooLargeError, _normalize_item
+from console1701.news.science_sources import exact_science_endpoint
 
 NASA_JPL_SCIENCE_FEED = "https://www.nasa.gov/centers-and-facilities/jpl/feed/"
 ESA_SPACE_SCIENCE_FEED = "https://www.esa.int/rssfeed/Our_Activities/Space_Science"
@@ -48,7 +49,7 @@ def parse_nasa_jpl_science_rss(
 ) -> list[dict[str, Any]]:
     if source.get("scope") != "SYSTEM_SOLAR" or source.get("id") != "nasa_jpl_science_feed":
         raise NewsParserError("NASA JPL science parser requires its exact working scope and source")
-    if source.get("url") != NASA_JPL_SCIENCE_FEED:
+    if not exact_science_endpoint(source, NASA_JPL_SCIENCE_FEED):
         raise NewsParserError("NASA JPL science parser requires the verified feed URL")
     if len(payload_text.encode("utf-8")) > 1_048_576:
         raise PayloadTooLargeError("NASA JPL science RSS exceeds the 1 MiB parser cap")
@@ -86,6 +87,10 @@ def parse_nasa_jpl_science_rss(
         description = " ".join(html.unescape(
             _TAG_RE.sub(" ", _text(row.find("description")))
         ).split())
+        path_parts = parts.path.strip("/").split("/")
+        mission_label = path_parts[1].replace("-", " ") if (
+            len(path_parts) >= 3 and path_parts[0] == "missions"
+        ) else None
         item = _normalize_item(source, {
             "title": title,
             "url": url,
@@ -100,6 +105,7 @@ def parse_nasa_jpl_science_rss(
             "guid": bounded_text(_text(row.find("guid")), max_chars=300),
             "categories": categories,
             "science_categories": science_categories,
+            "mission_label": mission_label,
             "scope_basis": "official_science_category_and_nonoperational_title",
             "published_at": published,
             "article_body_fetched": False,
@@ -112,7 +118,7 @@ def parse_nasa_jpl_science_rss(
 def parse_esa_science_rss(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:
     if source.get("scope") != "SYSTEM_SOLAR" or source.get("id") != "esa_space_science_feed":
         raise NewsParserError("ESA science parser requires its exact working scope and source")
-    if source.get("url") != ESA_SPACE_SCIENCE_FEED:
+    if not exact_science_endpoint(source, ESA_SPACE_SCIENCE_FEED):
         raise NewsParserError("ESA science parser requires the verified feed URL")
     if len(payload_text.encode("utf-8")) > 1_048_576:
         raise PayloadTooLargeError("ESA science RSS exceeds the 1 MiB parser cap")
@@ -173,7 +179,7 @@ def parse_esa_telescope_science_rss(
     if source.get("scope") != "SYSTEM_SOLAR" or key not in ESA_TELESCOPE_FEEDS:
         raise NewsParserError("ESA telescope parser requires a known science source")
     feed_url, channel_title, telescope, host, release_re = ESA_TELESCOPE_FEEDS[key]
-    if source.get("url") != feed_url:
+    if not exact_science_endpoint(source, feed_url):
         raise NewsParserError("ESA telescope parser requires the publisher-linked feed URL")
     if len(payload_text.encode("utf-8")) > 1_048_576:
         raise PayloadTooLargeError("ESA telescope RSS exceeds the 1 MiB parser cap")

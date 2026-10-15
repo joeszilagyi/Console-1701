@@ -159,7 +159,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-119** [Disabled-By-Default Solar System And Beyond Config](../../BACKLOG.md#L2006) — disabled config tree, strict flag/attention validation, explicit sensitive-category gates, and example config; runtime scope remains pending.
 - [x] **RS-120** [Solar System And Beyond Source Registry Design Implementation](../../BACKLOG.md#L2016) — all 170 design candidates validated and disabled under the internal working name, with per-source health behavior and no runtime fetch wiring.
 - [x] **RS-121** [Solar System And Beyond SQLite Schema Or Extension](../../BACKLOG.md#L2026) — disabled registry sync plus scoped science event/evidence/query-bound schema, indexes, and expiry purge.
-- [ ] **RS-122** [Solar System And Beyond Fixture Pack](../../BACKLOG.md#L2038) — not implemented.
+- [ ] **RS-122** [Solar System And Beyond Fixture Pack](../../BACKLOG.md#L2038) — parser fixtures and first offline JPL/ESA scan pass; blocked-state matrix and other fixture families pending.
 - [x] **RS-123** [NASA/JPL RSS Parser](../../BACKLOG.md#L2049) — exact NASA-hosted JPL science RSS fixture parser with topic/operations filtering, bounded metadata, and no-download evidence; live access remains gated.
 - [x] **RS-124** [ESA RSS Parser](../../BACKLOG.md#L2058) — exact ESA Space Science fixture parser with article-path/launch/image filtering, mission labels, bounded metadata, and no-download evidence.
 - [x] **RS-125** [Hubble/JWST RSS Parser](../../BACKLOG.md#L2066) — fixture-only ESA Hubble/Webb science-release parsers with release IDs, telescope identity, bounded metadata, and explicit third-party feed block.
@@ -172,13 +172,13 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-132** [GraceDB/LIGO Public Alert Policy Design](../../BACKLOG.md#L2132) — public REST versus authenticated Kafka, bounded query, status/retraction, rate, and no-sky-map-download policy recorded.
 - [x] **RS-133** [Minor Planet Center Science-Context Source Verification](../../BACKLOG.md#L2141) — official MPEC/orbit/observation/list APIs classified, rate and volume limits recorded, and ORBITAL CNEOS remains canonical for hazards.
 - [x] **RS-134** [HEASARC Metadata Source Verification](../../BACKLOG.md#L2149) — official Xamin/TAP/cone interfaces, bounded VOTable probe, row-cap/overflow policy, mission conditions, and disabled promotion gates recorded.
-- [ ] **RS-135** [Deterministic Event Correlation For Transients, Exoplanets, Missions, And Telescope Releases](../../BACKLOG.md#L2173) — complete-link metadata matcher and tests added; scan/persistence integration pending.
-- [ ] **RS-136** [Deterministic Ranking For Official Science And Rarity](../../BACKLOG.md#L2182) — stored-metadata scorer and tests added; scan/evidence persistence integration pending.
+- [x] **RS-135** [Deterministic Event Correlation For Transients, Exoplanets, Missions, And Telescope Releases](../../BACKLOG.md#L2173) — complete-link matcher runs during offline COSMIC scans and persists event, cluster, and item evidence.
+- [x] **RS-136** [Deterministic Ranking For Official Science And Rarity](../../BACKLOG.md#L2182) — explainable science rank runs during offline COSMIC scans and persists score features and reasons.
 - [ ] **RS-137** [Hype And Speculation Suppression Rules](../../BACKLOG.md#L2192) — not implemented.
 - [ ] **RS-138** [Archive Firehose Blocking Rules](../../BACKLOG.md#L2202) — not implemented.
 - [ ] **RS-139** [UI Disabled States After Naming Decision](../../BACKLOG.md#L2211) — COSMIC route and truthful disabled/not-configured states exist; source-specific states pending.
 - [ ] **RS-140** [Source Health States](../../BACKLOG.md#L2220) — not implemented.
-- [ ] **RS-141** [Evidence Drawer Contract](../../BACKLOG.md#L2231) — not implemented.
+- [ ] **RS-141** [Evidence Drawer Contract](../../BACKLOG.md#L2231) — fixture item/event evidence renders; auth and broader policy/health states pending.
 - [ ] **RS-142** [Official RSS Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L2242) — not implemented.
 - [ ] **RS-143** [Official Small API Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L2250) — not implemented.
 - [ ] **RS-144** [Transient Alert Ingest Phase, Disabled By Default](../../BACKLOG.md#L2259) — not implemented.

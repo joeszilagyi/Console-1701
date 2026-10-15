@@ -10,6 +10,7 @@ from urllib.parse import quote
 
 from console1701.news.normalize import bounded_text
 from console1701.news.parsers import NewsParserError, PayloadTooLargeError, _normalize_item
+from console1701.news.science_sources import exact_science_endpoint
 
 MAST_INVOKE_URL = "https://mast.stsci.edu/api/v0/invoke"
 MAST_COLUMNS = (
@@ -64,7 +65,7 @@ def _observation_url(obsid: int) -> str:
 def parse_mast_caom_tiny_json(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:
     if source.get("scope") != "SYSTEM_SOLAR" or source.get("id") != "mast_caom_tiny_metadata":
         raise NewsParserError("MAST parser requires its exact working scope and source")
-    if source.get("url") != MAST_INVOKE_URL:
+    if not exact_science_endpoint(source, MAST_INVOKE_URL):
         raise NewsParserError("MAST parser requires the exact official API endpoint")
     query = _contract(source)
     if len(payload_text.encode("utf-8")) > 65_536:

@@ -9,6 +9,7 @@ from urllib.parse import quote
 
 from console1701.news.normalize import bounded_text, normalize_timestamp
 from console1701.news.parsers import NewsParserError, PayloadTooLargeError, _normalize_item
+from console1701.news.science_sources import exact_science_endpoint
 
 PDS_PRODUCTS_URL = "https://pds.nasa.gov/api/search/1/products/"
 _COLLECTION_LID_RE = re.compile(r"urn:nasa:pds:[a-z0-9_.-]+:[a-z0-9_.-]+")
@@ -47,7 +48,7 @@ def parse_pds_collection_metadata(
 ) -> list[dict[str, Any]]:
     if source.get("scope") != "SYSTEM_SOLAR" or source.get("id") != "pds_collection_metadata":
         raise NewsParserError("PDS parser requires its exact working scope and source")
-    if source.get("url") != PDS_PRODUCTS_URL:
+    if not exact_science_endpoint(source, PDS_PRODUCTS_URL):
         raise NewsParserError("PDS parser requires the official collection lookup endpoint")
     query = _contract(source)
     if len(payload_text.encode("utf-8")) > 65_536:

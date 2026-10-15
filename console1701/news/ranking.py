@@ -9,6 +9,7 @@ SCOPE_PRIORITY_BOOST = {
     "NATIONAL": 10,
     "GLOBAL": 8,
     "ORBITAL": 6,
+    "SYSTEM_SOLAR": 5,
 }
 
 HEALTH_CONFIDENCE_BOOST = {
@@ -260,7 +261,8 @@ def build_rank_result(
     reasons = [
         f"Source priority contributes {source_priority}.",
         f"Recency contributes {recency_bonus} from age_hours={age_hours}.",
-        f"Scope boost contributes {scope_boost} for {source.get('scope')}.",
+        f"Scope boost contributes {scope_boost} for "
+        f"{'COSMIC' if scope == 'SYSTEM_SOLAR' else source.get('scope')}.",
     ]
     if freshness_bonus:
         reasons.append(f"Freshness adds {freshness_bonus} because the item is <= 6 hours old.")
