@@ -892,11 +892,17 @@ bounded endpoint observation, retention and the separate live-ingest release gat
 
 ### County Emergency Alert Source Verification
 
-Status: not implemented.
+Status: implemented (source review; no live county feed enabled).
 
 Verify Snohomish, Pierce, Thurston, Whatcom, Skagit, Kitsap, Clallam, Jefferson, and other regional
 county emergency sources before implementation. Record source ownership, feed/API availability,
 access method, parser risk, policy notes, privacy risk, source-health behavior, and fallback state.
+
+Current state: `docs/project/REGIONAL_COUNTY_EMERGENCY_SOURCE_REVIEW.md` records official source
+pages and access paths for Snohomish, Pierce, Thurston, Whatcom, Skagit, Kitsap, Clallam and
+Jefferson. It distinguishes advertised public RSS categories from signup-only alert services,
+records parser/policy/privacy risk, source-health and fallback behavior, and requires per-feed
+bounded signoff before any exact-URL live opt-in. No feed or API was enabled by the review.
 
 ### Regional News RSS Parser
 
