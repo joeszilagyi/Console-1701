@@ -316,7 +316,17 @@ news:
     SYSTEM_SOLAR:
       enabled: false
       label: "Cosmic"
-      sources: [] # Internal scope key; COSMIC is the UI tab, SYSTEM remains app health.
+      # Internal scope key; COSMIC is the UI tab, SYSTEM remains app health.
+      sources:
+        - id: "esa_space_science_feed"
+          name: "ESA Space Science"
+          kind: "rss"
+          parser: "esa_science_rss"
+          enabled: false
+          fixture_only: false
+          official_url: "https://www.esa.int/rssfeed/Our_Activities/Space_Science"
+          url: "https://www.esa.int/rssfeed/Our_Activities/Space_Science"
+          interval_minutes: 60
 
 projects:
   - name: "console-1701"

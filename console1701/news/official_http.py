@@ -90,6 +90,10 @@ OFFICIAL_SOURCES = {
         "https://www.esa.int/rssfeed/Our_Activities/Human_Spaceflight", "rss",
         "esa_orbital_rss", "application/rss+xml"
     ),
+    ("SYSTEM_SOLAR", "esa_space_science_feed"): (
+        "https://www.esa.int/rssfeed/Our_Activities/Space_Science", "rss",
+        "esa_science_rss", "application/rss+xml"
+    ),
 }
 MAX_HTTP_BYTES = 4 * 1024 * 1024
 MAX_HTTP_TIMEOUT_SECONDS = 30
@@ -123,6 +127,13 @@ def is_supported_official_source(source: dict[str, Any]) -> bool:
         and source.get("url") == spec[0]
         and source.get("verification_status") == "verified"
         and not source.get("auth")
+        and (
+            source.get("scope") != "SYSTEM_SOLAR"
+            or (
+                source.get("official_url") == spec[0]
+                and source.get("fixture_only") is False
+            )
+        )
         and (
             source.get("id") != "usgs_eq_geojson"
             or _usgs_feed_covers_threshold(source.get("min_magnitude", 3.0))

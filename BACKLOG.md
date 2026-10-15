@@ -2802,9 +2802,9 @@ the design table plus four later RSS candidates and narrow Exoplanet Archive, MA
 candidates,
 under the internal `SYSTEM_SOLAR` working name. `science_registry.py` validates
 unique keys, required fields, URL shape, enums, intervals, and priorities, and derives a disabled
-source-health behavior for each candidate. A COSMIC route and internal news scope now exist, but
-the registry is still disabled and no live science adapter is enabled. Focused tests check inventory
-isolation and invalid entries.
+source-health behavior for each candidate. A COSMIC route and internal news scope now exist. All
+registry candidates remain disabled by default; the exact ESA Space Science RSS feed has a
+separate opt-in live adapter. Focused tests check inventory isolation and invalid entries.
 
 ### Solar System And Beyond SQLite Schema Or Extension
 
@@ -2884,7 +2884,8 @@ Current state: `science_rss.py` parses the exact official ESA Space Science feed
 accepts only ESA Space Science article paths, rejects launch and image-only links, preserves the
 source path's mission label when present, and stores bounded headline metadata and no-download
 evidence. Focused fixtures cover endpoint/channel and payload gates. The registry source remains
-disabled; no live science fetch or UI route exists yet.
+disabled by default. Its separately gated live RSS path now uses the same bounded parser and
+COSMIC route.
 
 ### Hubble/JWST RSS Parser
 
@@ -3180,11 +3181,21 @@ Auth-required and broader policy/health states still need fixture and UI coverag
 
 ### Official RSS Live Ingest Phase, Disabled By Default
 
-Status: not implemented.
+Status: completed 2026-10-15 for the first verified ESA science RSS source.
 
 After fixtures, ranking, retention, and source health exist, add opt-in live ingest for one verified
 official RSS feed at a time. First candidates are JPL RSS, ESA RSS, NASA RSS, Hubble/JWST RSS, and
 ATel RSS if policy-safe. Require explicit command/config and no page-load fetches.
+
+Current state: ESA's dedicated Space Science RSS endpoint is exact-allowlisted only under
+`SYSTEM_SOLAR` with the verified parser, official URL, explicit `fixture_only: false`, science
+parent/scope/source flags, and global official-HTTP opt-in. A bounded 2026-10-15 read returned
+HTTP 200, `application/rss+xml`, the `ESA Space Science` channel, and 15 entries. Live scans keep
+only source-dated items within 14 days, cap the response at 1 MiB, require at least 60 minutes
+between successful fetches, and retain science items at most seven days. Mocked transport tests
+cover exact identity, disabled gates, stale rejection, and metadata-only storage. JPL direct,
+NASA Science, Hubble/Webb FeedBurner, and ATel remain blocked by their recorded endpoint or
+hosting-policy limitations.
 
 ### Official Small API Live Ingest Phase, Disabled By Default
 
@@ -3270,7 +3281,7 @@ blocked source-health states.
 
 The COSMIC configuration test iterates every heavy-archive and astronomy-catalog registry
 candidate and confirms exact fixture-source validation rejects it, even with heavy-archive flags
-enabled. This release has no heavy-archive adapter or live science transport. Source-specific
+enabled. This release has no heavy-archive or live archive transport. Source-specific
 blocked health states remain part of RS-138/140.
 
 ### Tests For No Auth Source Running Without Config

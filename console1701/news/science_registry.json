@@ -2195,7 +2195,7 @@
     "policy_risk": "low",
     "parser_risk": "medium",
     "retention_sensitivity": "low",
-    "verification_status": "candidate_needs_verification",
+    "verification_status": "verified",
     "why_it_matters": "Dedicated ESA Space Science feed; scope filter excludes launches and image-only releases.",
     "future_phase": "S7"
   },

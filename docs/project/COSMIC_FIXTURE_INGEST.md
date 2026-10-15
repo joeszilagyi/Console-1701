@@ -1,4 +1,4 @@
-# COSMIC local fixture ingest
+# COSMIC source ingest
 
 COSMIC is the UI label for the internal `SYSTEM_SOLAR` recent-signal scope. It is disabled by
 default. To exercise a verified parser without network access, set the science parent and scope
@@ -24,10 +24,9 @@ news:
           url: file:///absolute/path/to/nasa_jpl_science.rss
 ```
 
-The source ID, parser, and `official_url` must match the verified source identity. The actual
-input URL must be `file://`. An HTTP URL is rejected for this scope even when the global official
-HTTP flag is enabled. The same exact-identity rule applies to the ESA Space Science, ESA
-Hubble/Webb, NASA Exoplanet Archive, MAST, PDS, and GCN fixture parsers. Tiny archive fixtures
+The source ID, parser, and `official_url` must match the verified source identity. Fixture input
+must be `file://`. The same exact-identity rule applies to the ESA Space Science, ESA Hubble/Webb,
+NASA Exoplanet Archive, MAST, PDS, and GCN fixture parsers. Tiny archive fixtures
 also require their parser-specific `query_contract` with explicit columns, row and time bounds,
 or collection ID; see the parser fixtures and tests for accepted shapes.
 
@@ -35,4 +34,32 @@ The scanner stores headline or record metadata, event correlation, rank reasons,
 source health, and retention evidence. The parser contracts reject oversized or broad archive
 responses and do not call product, sky-map, image, article-body, or paper endpoints. Registry
 candidates for heavy catalogs and archives cannot be configured as these fixture parsers, even
-when the science heavy-archive flags are set. Live science ingest is a separate later phase.
+when the science heavy-archive flags are set.
+
+ESA Space Science RSS is the single opt-in live COSMIC source in this first pass. Set
+`solar_system_beyond.enabled`, `news.enabled`, and `news.scopes.SYSTEM_SOLAR.enabled` to true,
+configure this exact source, and invoke `news-scan`:
+
+```yaml
+news:
+  fetch_policy:
+    allow_official_http: true
+  scopes:
+    SYSTEM_SOLAR:
+      enabled: true
+      sources:
+        - id: esa_space_science_feed
+          name: ESA Space Science
+          kind: rss
+          parser: esa_science_rss
+          enabled: true
+          fixture_only: false
+          official_url: https://www.esa.int/rssfeed/Our_Activities/Space_Science
+          url: https://www.esa.int/rssfeed/Our_Activities/Space_Science
+          interval_minutes: 60
+```
+
+The exact ESA URL/parser/verification status is checked again by the HTTP transport. Successful
+live scans retain only source-dated science items from the last 14 days, cap response reads at
+1 MiB, and retain item metadata for at most seven days. This opt-in never runs on page loads.
+Other COSMIC HTTP URLs remain blocked; heavy archives and product downloads remain disabled.

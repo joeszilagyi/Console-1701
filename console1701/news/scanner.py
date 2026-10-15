@@ -439,6 +439,8 @@ def _is_allowed_live_source(config: dict[str, Any], source: dict[str, Any]) -> b
         if scope == "GLOBAL"
         else bool((config.get("orbital") or {}).get("enabled"))
         if scope == "ORBITAL"
+        else bool((config.get("solar_system_beyond") or {}).get("enabled"))
+        if scope == "SYSTEM_SOLAR"
         else False
     )
     return (
@@ -621,6 +623,24 @@ def _fresh_live_orbital_items(
     return fresh
 
 
+def _fresh_live_science_items(
+    source: dict[str, Any], items: list[dict[str, Any]], *, now: datetime
+) -> list[dict[str, Any]]:
+    if source.get("scope") != "SYSTEM_SOLAR":
+        return items
+    fresh: list[dict[str, Any]] = []
+    for candidate in items:
+        try:
+            published = datetime.fromisoformat(
+                str(candidate.get("source_published_at"))
+            ).astimezone(UTC)
+        except (TypeError, ValueError):
+            continue
+        if now - timedelta(days=14) <= published <= now + timedelta(hours=1):
+            fresh.append(candidate)
+    return fresh
+
+
 def _ingest_source(
     conn: sqlite3.Connection,
     config: dict[str, Any],
@@ -639,6 +659,8 @@ def _ingest_source(
             1048576,
         )
     )
+    if source.get("scope") == "SYSTEM_SOLAR":
+        max_bytes = min(max_bytes, 1_048_576)
     default_retention_days = int(
         ((config.get("news") or {}).get("retention") or {}).get("items_days", 7)
     )
@@ -742,6 +764,7 @@ def _ingest_source(
         items = parse_fixture_items(source, text)
         if is_live:
             items = _fresh_live_orbital_items(source, items, now=datetime.now(UTC))
+            items = _fresh_live_science_items(source, items, now=datetime.now(UTC))
         stored_count = 0
         science_policy_dropped = 0
         seen_item_ids: set[int] = set()
@@ -2126,6 +2149,8 @@ def _upsert_item(
         item["evidence"] = item_evidence
         cluster = str(contract["event_key"])
     retention_days = int(source.get("retention_days") or default_retention_days)
+    if str(source.get("scope") or "").upper() == "SYSTEM_SOLAR":
+        retention_days = min(retention_days, 7)
     if str(source.get("scope") or "").upper() == "ORBITAL":
         retention_days = min(retention_days, 7)
         if (item.get("evidence") or {}).get("orbital_safety", {}).get(

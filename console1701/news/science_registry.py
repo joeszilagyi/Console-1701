@@ -36,7 +36,7 @@ SCIENCE_OFFICIAL_STATUSES = set(
 SCIENCE_VERIFICATION_STATUSES = set(
     """assistant_seeded auth_required candidate_needs_verification
     candidate_policy_sensitive heavy_archive_risk official_page_seen reject_for_now
-    unofficial_secondary user_seeded""".split()
+    unofficial_secondary user_seeded verified""".split()
 )
 SCIENCE_FUTURE_PHASES = {f"S{n}" for n in (2, 3, 7, 8, 9, 10, 11, 12)}
 SCIENCE_RISK_LEVELS = {"low", "medium", "high"}
