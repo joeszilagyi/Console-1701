@@ -215,8 +215,8 @@
     "policy_risk": "low",
     "parser_risk": "medium",
     "retention_sensitivity": "low",
-    "verification_status": "candidate_needs_verification",
-    "why_it_matters": "NASA-hosted parseable JPL feed; science routing requires strict topic filter.",
+    "verification_status": "verified",
+    "why_it_matters": "NASA-hosted JPL RSS with exact opt-in URL and strict science-category routing.",
     "future_phase": "S7"
   },
   {

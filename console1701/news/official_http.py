@@ -105,6 +105,10 @@ OFFICIAL_SOURCES = {
         "https://www.esa.int/rssfeed/Our_Activities/Space_Science", "rss",
         "esa_science_rss", "application/rss+xml"
     ),
+    ("SYSTEM_SOLAR", "nasa_jpl_science_feed"): (
+        "https://www.nasa.gov/centers-and-facilities/jpl/feed/", "rss",
+        "nasa_jpl_science_rss", "application/rss+xml"
+    ),
     ("SYSTEM_SOLAR", "nasa_exoplanet_ps_tap"): (
         "https://exoplanetarchive.ipac.caltech.edu/TAP/sync", "api_json",
         "exoplanet_ps_json", "application/json"

@@ -1200,12 +1200,16 @@ def _normalize_news_source(
         url = str(source_cfg.get("url") or "")
         is_fixture = url.startswith("file://") and source_cfg.get("fixture_only") is True
         is_verified_live = (
-            source_key in {"esa_space_science_feed", "nasa_exoplanet_ps_tap"}
+            source_key in {
+                "esa_space_science_feed", "nasa_jpl_science_feed",
+                "nasa_exoplanet_ps_tap",
+            }
             and fixture is not None
             and url == fixture[1]
             and source_cfg.get("fixture_only") is False
             and source_cfg["kind"] == (
-                "rss" if source_key == "esa_space_science_feed" else "api_json"
+                "rss" if source_key in {"esa_space_science_feed", "nasa_jpl_science_feed"}
+                else "api_json"
             )
         )
         if (
@@ -1227,7 +1231,9 @@ def _normalize_news_source(
                 raise ConfigError(f"{path}.{field} must match the science registry.")
             source_cfg[field] = registry[field]
         if is_verified_live:
-            minimum_interval = 60 if source_key == "esa_space_science_feed" else 1440
+            minimum_interval = 60 if source_key in {
+                "esa_space_science_feed", "nasa_jpl_science_feed",
+            } else 1440
             source_cfg["interval_minutes"] = _coerce_int(
                 source_cfg.get("interval_minutes", minimum_interval),
                 f"{path}.interval_minutes", minimum=minimum_interval,
