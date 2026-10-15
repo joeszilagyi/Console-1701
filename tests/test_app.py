@@ -704,7 +704,7 @@ news:
     assert "forced parser failure" in body.lower()
 
 
-@pytest.mark.parametrize("scope_name", ["REGIONAL", "NATIONAL"])
+@pytest.mark.parametrize("scope_name", ["LOCAL", "REGIONAL", "NATIONAL"])
 def test_scope_source_health_matrix_is_visible_without_fetch(tmp_path, monkeypatch, scope_name):
     db_path = _use_temp_state(monkeypatch, tmp_path)
     config_path = tmp_path / "config.yml"

@@ -543,7 +543,7 @@ homepage extraction are now surfaced as dedicated health states and included in 
 
 ### LOCAL Source Health States
 
-Status: partially implemented.
+Status: implemented (first-pass state contract and presentation).
 
 Implement source health states for LOCAL: `disabled`, `not_configured`, `configured_never_run`,
 `healthy`, `stale`, `failing`, `parser_failed`, `policy_blocked`, `robots_blocked`,
@@ -554,8 +554,12 @@ Current state: API/UI/CLI source summaries now derive `disabled`, `configured_ne
 `healthy`, `stale`, `failing`, `parser_failed`, `policy_blocked`, `social_disabled`,
 `homepage_disabled`, `auth_required`, `manual_review_only`, `rate_limited`, `robots_blocked`,
 and `unsupported` from config, policy, fetch runs, and latest health rows. Remaining live-fetch-
-specific robots and rate-limit evidence still needs actual HTTP ingest before it can be populated
-from real network responses.
+specific robots and rate-limit evidence will only be populated when a verified live source is
+enabled; the states themselves are wired and tested. `not_configured` is a scope state when no
+sources exist, rather than a state for a nonexistent source. A shared LOCAL/REGIONAL/NATIONAL
+offline state-matrix test now verifies LOCAL source counts and labels in the scope API, scope page,
+and SYSTEM summary for stale, parser failure, policy block, never run, disabled, manual review,
+robots block, rate limit, unsupported, and auth required. No external fetch is performed.
 
 ### LOCAL Evidence Drawer Contract
 
