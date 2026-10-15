@@ -60,5 +60,6 @@ reads do not prove live revision behavior; that remains covered by the mocked se
 Sky-map URLs can be retained as official provenance links, but no FITS, HEALPix, image, or other
 sky-map file is downloaded, parsed, cached, or shown as a precise location. The REST API's
 `files/` subtree and broad logs/annotations are outside the fetch contract. Cross-source
-retention and purge sequences remain an RS-144 follow-up; do not use credentials for
-nonpublic GraceDB data.
+retention and purge are now covered for a fixture-only GCN notice plus Circular retraction.
+Retraction-first expiry followed by re-ingest remains an RS-144 follow-up; do not use
+credentials for nonpublic GraceDB data.

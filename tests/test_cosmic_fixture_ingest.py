@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -10,7 +12,11 @@ from console1701 import config as config_module
 from console1701.api import build_router
 from console1701.config import ConfigError, load_config
 from console1701.db import connect_db, json_loads
-from console1701.news.scanner import run_news_scan
+from console1701.news.scanner import (
+    _rebuild_science_clusters,
+    purge_news_retention,
+    run_news_scan,
+)
 from console1701.news.science_exoplanets import PS_COLUMNS
 from console1701.news.science_mast import MAST_COLUMNS
 from console1701.news.science_registry import list_science_source_registry
@@ -87,6 +93,66 @@ def test_cosmic_fixture_scan_ingests_science_only_without_network(tmp_path, monk
     assert again["status"] == "complete"
     with connect_db(config["_db_path"]) as conn:
         assert conn.execute("SELECT COUNT(*) FROM science_events").fetchone()[0] == len(events)
+
+
+def test_gcn_cross_source_retraction_survives_other_report_until_purge(tmp_path, monkeypatch):
+    path = _config(tmp_path, monkeypatch)
+    payload = yaml.safe_load(path.read_text())
+    circular = json.loads((FIXTURES / "gcn_circular.json").read_text())
+    circular.update({
+        "eventId": "FRB 20261015A",
+        "subject": "Retraction: FRB 20261015A",
+        "createdOn": int(datetime(2026, 10, 15, 18, 30, tzinfo=UTC).timestamp() * 1000),
+    })
+    circular_path = tmp_path / "gcn-retraction.json"
+    circular_path.write_text(json.dumps(circular))
+    payload["news"]["scopes"]["SYSTEM_SOLAR"]["sources"] = [
+        {
+            "id": source_id, "name": source_id, "kind": "api_json", "parser": parser,
+            "enabled": True, "fixture_only": True, "official_url": official_url,
+            "url": f"file://{fixture_path}",
+        }
+        for source_id, parser, official_url, fixture_path in (
+            ("gcn_notices", "gcn_notice_fixture", "https://gcn.nasa.gov/docs/notices",
+             FIXTURES / "gcn_notice.json"),
+            ("gcn_circulars", "gcn_circular_fixture", "https://gcn.nasa.gov/circulars",
+             circular_path),
+        )
+    ]
+    path.write_text(yaml.safe_dump(payload))
+    monkeypatch.setattr("console1701.news.scanner.fetch_official_text", lambda *a, **kw: (
+        (_ for _ in ()).throw(AssertionError("GCN fixture scan attempted HTTP"))
+    ))
+    assert run_news_scan(path)["item_count"] == 2
+    config = load_config(path)
+    with connect_db(config["_db_path"]) as conn:
+        rows = conn.execute("SELECT id, evidence_json FROM news_items ORDER BY id").fetchall()
+        event = conn.execute(
+            "SELECT status, score, item_ids_json, ranking_explanation_json "
+            "FROM science_events"
+        ).fetchone()
+        assert event["status"] == "retracted"
+        assert event["score"] == 0
+        assert len(json_loads(event["item_ids_json"], [])) == 2
+        assert json_loads(event["ranking_explanation_json"], {})["retraction_override"]
+        assert all(json_loads(row["evidence_json"], {})["science_event"]["status"]
+                   == "retracted" for row in rows)
+        notice_id = next(row["id"] for row in rows
+                         if "gcn_notice" in json_loads(row["evidence_json"], {}))
+        circular_id = next(row["id"] for row in rows if row["id"] != notice_id)
+
+        conn.execute("UPDATE news_items SET expires_at = ? WHERE id = ?",
+                     ("2026-01-01T00:00:00+00:00", notice_id))
+        assert purge_news_retention(conn, config)["items"] == 1
+        _rebuild_science_clusters(conn)
+        retained = conn.execute("SELECT status, score FROM science_events").fetchone()
+        assert tuple(retained) == ("retracted", 0)
+
+        conn.execute("UPDATE news_items SET expires_at = ? WHERE id = ?",
+                     ("2026-01-01T00:00:00+00:00", circular_id))
+        assert purge_news_retention(conn, config)["items"] == 1
+        _rebuild_science_clusters(conn)
+        assert conn.execute("SELECT COUNT(*) FROM science_events").fetchone()[0] == 0
 
 
 @pytest.mark.parametrize("override", [
