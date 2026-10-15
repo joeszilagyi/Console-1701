@@ -106,6 +106,46 @@ def test_national_cisa_kev_fixture_preserves_dates_and_cyber_evidence() -> None:
                             '"dateReleased": "2026-10-15", "vulnerabilities": []}')
 
 
+def test_national_faa_nas_xml_fixture_groups_airport_events() -> None:
+    source = {
+        "id": "faa_nasstatus_api", "scope": "NATIONAL", "kind": "rss",
+        "parser": "faa_nas_status_xml", "source_family": "faa",
+        "airport_codes": ["SEA", "SFO", "SAN"],
+    }
+    fixture = (
+        Path(__file__).resolve().parent / "fixtures/news/national_faa_nas_status.xml"
+    ).read_text()
+    items = parse_fixture_items(source, fixture)
+    assert len(items) == 3
+    by_code = {item["evidence"]["faa_nas_status"]["airport_code"]: item for item in items}
+    assert set(by_code) == {"SEA", "SFO", "SAN"}
+    assert by_code["SFO"]["evidence"]["faa_nas_status"]["event_count"] == 2
+    assert by_code["SFO"]["evidence"]["faa_nas_status"]["events"][0]["delay_minutes"] == 39
+    assert by_code["SEA"]["evidence"]["faa_nas_status"]["events"][0]["event_type"] == "ground_stop"
+    closure = by_code["SAN"]["evidence"]["faa_nas_status"]["events"][0]
+    assert closure["start_text"] == "Oct 13 at 06:30 UTC."
+    assert closure["end_text"] == "Oct 17 at 13:15 UTC."
+    assert closure["time_precision"] == "source_text_without_year"
+    assert by_code["SAN"]["evidence"]["faa_nas_status"]["geography_basis"] == (
+        "airport_code_only_not_country_verified"
+    )
+    assert by_code["SFO"]["source_published_at"] == "2026-10-15T19:16:39+00:00"
+    rank = build_rank_result(source, by_code["SEA"], seen_at="2026-10-15T20:00:00+00:00",
+                             combined_tags=by_code["SEA"]["tags"],
+                             latest_health_state="healthy", repeat_count=0)
+    assert rank["factors"]["national_aviation_bonus"] == 40
+    sea_only = parse_fixture_items({**source, "airport_codes": ["SEA"]}, fixture)
+    assert [item["evidence"]["faa_nas_status"]["airport_code"] for item in sea_only] == ["SEA"]
+    with pytest.raises(NewsParserError, match="airport_codes allowlist"):
+        parse_fixture_items({**source, "airport_codes": []}, fixture)
+    empty = fixture.replace("<Delay_type>", "<Removed_type>").replace(
+        "</Delay_type>", "</Removed_type>"
+    )
+    assert parse_fixture_items(source, empty) == []
+    with pytest.raises(NewsParserError, match="DTD or entity"):
+        parse_fixture_items(source, '<!DOCTYPE x SYSTEM "https://example.test/x">' + fixture)
+
+
 def test_regional_nws_fixture_preserves_official_county_zone_and_alert_evidence() -> None:
     source = {
         "id": "nws_active_alerts_wa", "scope": "REGIONAL", "kind": "api_json",

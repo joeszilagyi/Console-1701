@@ -1152,8 +1152,9 @@ features, including a U.S. territory and an untrusted instruction-link candidate
 `national_usgs_earthquakes.json` covers California, Alaska, Puerto Rico, an out-of-region event,
 and a below-threshold event. `national_nhtsa_recalls.json` covers campaign grouping, model rows,
 park instructions and missing optional population data. `national_cisa_kev.json` covers full
-catalog envelope, CVE identity, due dates, ransomware/triage evidence, and offline scan. The other
-NATIONAL source-family fixtures listed above remain pending.
+catalog envelope, CVE identity, due dates, ransomware/triage evidence, and offline scan.
+`national_faa_nas_status.xml` covers FAA delay, ground stop, closure notice, airport filtering,
+and offline scan. The other NATIONAL source-family fixtures listed above remain pending.
 
 ### NWS Active Alert Parser
 
@@ -1293,7 +1294,15 @@ metadata where available, and vehicle-safety ranking evidence.
 
 ### FAA NAS Status Fixture Parser
 
-Status: not implemented.
+Status: implemented for NATIONAL offline XML fixture ingest; live remains disabled.
+
+The exact FAA NAS XML endpoint and active-event groups were checked on 2026-10-15. The
+`faa_nas_status_xml` parser validates root/update time, rejects DTD/entity declarations and
+unsupported active lists, groups events by airport, requires a verified airport-code allowlist,
+preserves delay and closure source text, and supplies capped aviation ranking and NATIONAL
+FAA/aviation facets. A synthetic fixture and offline scan test pass. Yearless closure times,
+partial-airport closures, and country ambiguity remain explicit in the evidence. See
+`docs/project/NATIONAL_FAA_NAS_XML_FIXTURE_VERIFICATION.md`.
 
 Build a fixture-first parser for FAA NAS status and airport status candidates after endpoint
 behavior is verified. Preserve airport, system, event type, delay estimate, ground stop or ground

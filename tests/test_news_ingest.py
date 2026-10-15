@@ -1199,6 +1199,46 @@ def test_run_news_scan_ingests_national_cisa_kev_fixture(tmp_path):
     assert all(row["ingest"]["fixture_only"] is True for row in evidence_rows)
 
 
+def test_run_news_scan_ingests_national_faa_nas_xml_fixture(tmp_path):
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        news:
+          enabled: true
+          scopes:
+            NATIONAL:
+              enabled: true
+              sources:
+                - id: faa_nasstatus_api
+                  name: FAA NAS XML fixture
+                  kind: rss
+                  parser: faa_nas_status_xml
+                  source_family: faa
+                  official_status: official
+                  tags: [official]
+                  airport_codes: [SEA, SFO, SAN]
+                  enabled: true
+                  url: "{_file_url(FIXTURE_DIR / 'national_faa_nas_status.xml')}"
+        """,
+    )
+    result = run_news_scan(config_path)
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        rows = conn.execute(
+            "SELECT evidence_json FROM news_items WHERE scope = 'NATIONAL' ORDER BY id"
+        ).fetchall()
+        agency_items = list_national_items_by_facet(conn, "agency", "FAA")
+    assert result["status"] == "complete"
+    assert result["item_count"] == 3
+    assert len(rows) == len(agency_items) == 3
+    evidence_rows = [json_loads(row["evidence_json"], {}) for row in rows]
+    assert {row["faa_nas_status"]["airport_code"] for row in evidence_rows} == {
+        "SEA", "SFO", "SAN"
+    }
+    assert all(row["ingest"]["fixture_only"] is True for row in evidence_rows)
+
+
 def test_run_news_scan_uses_national_usgs_threshold_for_fixture(tmp_path):
     config_path = _write_config(
         tmp_path / "config.yml",
