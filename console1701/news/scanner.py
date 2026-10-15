@@ -668,6 +668,21 @@ def _ingest_source(
             fetch_evidence = {"fixture_path": str(path), "fixture_only": True}
             success_message = f"Fixture ingest succeeded for {path.name}."
         items = parse_fixture_items(source, text)
+        if is_live and source.get("scope") == "ORBITAL" and source.get("id") == (
+            "swpc_alerts_json"
+        ):
+            scan_now = datetime.now(UTC)
+            cutoff = scan_now - timedelta(hours=72)
+            fresh_items = []
+            for candidate in items:
+                published = candidate.get("source_published_at")
+                try:
+                    published_at = datetime.fromisoformat(str(published)).astimezone(UTC)
+                except (TypeError, ValueError):
+                    continue
+                if cutoff <= published_at <= scan_now + timedelta(hours=1):
+                    fresh_items.append(candidate)
+            items = fresh_items
         stored_count = 0
         seen_item_ids: set[int] = set()
         for item in items:

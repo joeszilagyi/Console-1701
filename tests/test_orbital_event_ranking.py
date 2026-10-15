@@ -34,7 +34,8 @@ def _group(*families, corroborated=False, identifiers=None):
 def test_orbital_rank_uses_official_scale_and_explicit_impact_without_panic():
     alert = _item(
         1, "swpc", safety={"official_alert": True},
-        swpc_alert={"noaa_scale": "G3", "potential_impacts": [
+        swpc_alert={"noaa_scale": "G3", "issued_at": "2026-10-15T17:00:00+00:00",
+                    "valid_until": "2026-10-15T19:00:00+00:00", "potential_impacts": [
             {"system": "radio"}, {"system": "aurora"},
         ]},
         identity={"impact_tags": ["REGIONAL_IMPACT"]},
@@ -85,6 +86,16 @@ def test_orbital_close_approach_does_not_infer_threat_from_distance():
     ranked = rank_orbital_event(_group("jpl", identifiers=["cad:one"]), [cad], now=NOW)
     assert ranked["factors"]["official_severity_score"] == 0
     assert ranked["factors"]["public_impact_score"] == 0
+
+
+def test_expired_swpc_warning_is_not_an_active_window():
+    expired = _item(
+        1, "swpc", safety={"official_alert": True},
+        swpc_alert={"issued_at": "2026-10-10T12:00:00+00:00",
+                    "valid_until": "2026-10-10T20:00:00+00:00", "noaa_scale": "G3"},
+    )
+    ranked = rank_orbital_event(_group("swpc"), [expired], now=NOW)
+    assert ranked["factors"]["active_alert_or_launch_window_score"] == 0
 
 
 def test_orbital_ui_hides_tactical_item_even_if_stored(tmp_path, monkeypatch):

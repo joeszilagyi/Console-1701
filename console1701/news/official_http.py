@@ -16,6 +16,7 @@ USGS_REGIONAL_EARTHQUAKES_URL = (
     "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson"
 )
 WSDOT_HIGHWAY_ALERTS_RSS_URL = "https://www.wsdot.wa.gov/traffic/api/HighwayAlerts/rss.aspx"
+SWPC_ALERTS_URL = "https://services.swpc.noaa.gov/products/alerts.json"
 OFFICIAL_SOURCES = {
     ("LOCAL", "nws_active_alerts_api"): (
         NWS_WASHINGTON_ALERTS_URL, "api_json", "nws_alerts_json", "application/geo+json"
@@ -33,6 +34,9 @@ OFFICIAL_SOURCES = {
     ),
     ("REGIONAL", "wsdot_highway_alerts_rss"): (
         WSDOT_HIGHWAY_ALERTS_RSS_URL, "rss", "wsdot_highway_alerts_rss", "application/rss+xml"
+    ),
+    ("ORBITAL", "swpc_alerts_json"): (
+        SWPC_ALERTS_URL, "api_json", "swpc_alerts_json", "application/json"
     ),
 }
 MAX_HTTP_BYTES = 4 * 1024 * 1024
