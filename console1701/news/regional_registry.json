@@ -1566,9 +1566,9 @@
     "source_class": "official_wildfire",
     "scope": "REGIONAL",
     "raw_url": "https://dnr.wa.gov/wildfire-resources/current-wildfire-incident-information",
-    "expected_access_kind": "public official webpage",
-    "adapter": "arcgis_feature_service_candidate",
-    "refresh_interval": "15 min",
+    "expected_access_kind": "manual current-wildfire page; no verified active incident feed",
+    "adapter": "source_health_probe_only",
+    "refresh_interval": "24 h",
     "priority": "95",
     "official_status": "official",
     "privacy_risk": "low",
@@ -1576,7 +1576,7 @@
     "parser_risk": "high",
     "retention_sensitivity": "high",
     "verification_status": "official_page_seen",
-    "why_it_matters": "Official wildfire incidents can drive hazard and smoke ranking.",
+    "why_it_matters": "Official wildfire reference; statistics layer does not prove active incidents.",
     "future_phase": "R7"
   },
   {

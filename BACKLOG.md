@@ -819,12 +819,22 @@ WSDOT access code, so direct HTTP remains blocked. See the source verification n
 
 ### WA DNR Wildfire Endpoint Research
 
-Status: not implemented.
+Status: implemented (active-feed suitability review).
 
 Research WA DNR wildfire source options and identify official machine-readable endpoints or feature
 services for current wildfire incident information. Do not screen scrape ArcGIS dashboard HTML. If
 no suitable endpoint exists, keep dashboard sources `source_health_probe_only` or
 `manual_review_only`.
+
+Current state: WA DNR's official Current Wildfire Incident Information page and Wildfire Portal
+identify public incident references and an ArcGIS dashboard. DNR's official ArcGIS REST layer
+`Current DNR Fire Statistics` supports bounded JSON queries; a 2026-10-15 query for fires
+discovered since 2026-10-01 returned 24 records. A three-record sample included one controlled
+fire and one out fire; the layer has discovery, control and out dates but no positive active
+incident flag or authoritative update time. Missing control/out dates do not prove a fire is
+active. The page therefore stays reference-only in the registry, and no live/fixture incident
+parser is claimed. Resume with a DNR-endorsed current-incident feature service or source-backed
+active-status field, then verify geography, retention, refresh and no page/dashboard scraping.
 
 ### NWCC Feed Verification
 
