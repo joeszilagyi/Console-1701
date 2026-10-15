@@ -19,7 +19,7 @@ from console1701.news.global_ranking import rank_global_event
 from console1701.news.global_registry import list_global_source_registry
 from console1701.news.local_registry import list_local_source_registry
 from console1701.news.national_registry import list_national_source_registry
-from console1701.news.normalize import cluster_key, content_hash, expires_at, url_hash
+from console1701.news.normalize import bounded_text, cluster_key, content_hash, expires_at, url_hash
 from console1701.news.official_http import (
     OfficialFetchResult,
     RateLimitedError,
@@ -1843,6 +1843,43 @@ def _global_evidence_contract(
     }
 
 
+def _humanitarian_evidence_contract(
+    source: dict[str, Any],
+    item: dict[str, Any],
+    evidence: dict[str, Any],
+) -> dict[str, Any]:
+    disaster = evidence.get("reliefweb_disaster") or {}
+    report = evidence.get("reliefweb_report") or {}
+    global_evidence = evidence.get("global") or {}
+    source_field = disaster if disaster else report
+    disaster_ids = (
+        [str(disaster["id"])] if disaster.get("id") else
+        [str(value) for value in report.get("disaster_ids") or []]
+    )
+    return {
+        "contract_version": 1,
+        "source_id": source["id"],
+        "source_family": source.get("source_family"),
+        "official_status": source.get("official_status"),
+        "humanitarian_source": True,
+        "affected_countries": global_evidence.get("affected_countries") or [],
+        "disaster_ids": disaster_ids[:20],
+        "event_type": global_evidence.get("event_type") or (
+            "humanitarian_report" if report else "disaster"
+        ),
+        "source_published_at": item.get("source_published_at"),
+        "first_seen_at": global_evidence.get("first_seen_at"),
+        "last_seen_at": global_evidence.get("last_seen_at"),
+        "description": bounded_text(item.get("description"), max_chars=500),
+        "report_url": item["url"] if report else None,
+        "source_url": source_field.get("source_url") or item["url"],
+        "retention_expires_at": (evidence.get("retention") or {}).get("expires_at"),
+        "policy_notes": (evidence.get("policy") or {}).get("notes") or [],
+        "people_at_risk": {"status": "not_provided_in_stored_metadata", "value": None},
+        "body_stored": False,
+    }
+
+
 def _upsert_item(
     conn: sqlite3.Connection,
     source_id: int,
@@ -1936,6 +1973,8 @@ def _upsert_item(
             first_seen_at=str(existing["first_seen_at"]) if existing else seen_at,
             last_seen_at=seen_at,
         )
+        if evidence.get("reliefweb_disaster") or evidence.get("reliefweb_report"):
+            evidence["humanitarian"] = _humanitarian_evidence_contract(source, item, evidence)
     item_rank = int(ranking["score"])
     local_event: dict[str, Any] | None = None
     local_event_id = None

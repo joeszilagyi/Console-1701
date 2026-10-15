@@ -107,7 +107,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-073** [UN News RSS Parser](../../BACKLOG.md#L1407) — exact official RSS shape and story GUID verified; bounded fixture parser, narrow low-value exclusions, and offline scan.
 - [ ] **RS-074** [UN Press RSS Parser](../../BACKLOG.md#L1415) — not implemented.
 - [ ] **RS-075** [IAEA RSS Parser](../../BACKLOG.md#L1423) — not implemented.
-- [ ] **RS-076** [Humanitarian Source Evidence Contract](../../BACKLOG.md#L1432) — not implemented.
+- [x] **RS-076** [Humanitarian Source Evidence Contract](../../BACKLOG.md#L1432) — persisted ReliefWeb disaster/report provenance, geography, timing, bounded metadata, retention, policy and explicit missing people-at-risk evidence verified.
 - [ ] **RS-077** [Conflict-Humanitarian Sensitivity Rules](../../BACKLOG.md#L1441) — not implemented.
 - [ ] **RS-078** [GLOBAL Deterministic Event Correlation](../../BACKLOG.md#L1485) — partial: structured identity/context matching, complete-link bridge guard, family dedupe, and auditable cluster evidence; source-specific parser/fixture coverage remains.
 - [x] **RS-079** [GLOBAL Deterministic Ranking](../../BACKLOG.md#L1494) — bounded event factors/reasons, stored scores, and tests across every named first-pass factor.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-076. Added persisted GLOBAL humanitarian evidence for ReliefWeb disasters/reports with provenance, source geography, crisis IDs, timing, retention, policy and explicit omitted people-at-risk data. Offline scan tests cover both items. Full pytest passed (342 tests); Ruff passed. Progress: 57/150.
 - **2026-10-15:** Advanced RS-034 with an FDA Recalls RSS metadata fixture parser and offline scan. Preserved FDA-hosted provenance and structured-hazard limits without inventing severity or treating Spanish notices as independent confirmation. Recorded RS-045's unverified CISA advisory endpoint blocker. Full pytest passed (342 tests); Ruff passed. Progress: 56/150.
 - **2026-10-15:** Completed RS-048 and advanced RS-034. Verified three GovInfo collection RSS feeds, added collection/title-filtered fixture parser with publication-stage caveats, and tested offline scan. Full pytest passed (340 tests); Ruff passed. Progress: 56/150.
 - **2026-10-15:** Completed RS-047 and advanced RS-034. Verified Federal Register JSON list shape, implemented explicit agency/type/impact filtering and administrative suppression, preserved optional action windows, and tested fixture scan. Full pytest passed (338 tests); Ruff passed. Progress: 55/150.

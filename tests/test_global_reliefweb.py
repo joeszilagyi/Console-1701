@@ -68,7 +68,24 @@ def test_reliefweb_disaster_fixture_scan_is_offline(tmp_path, monkeypatch):
         ).fetchall()
     assert result["status"] == "complete"
     assert result["item_count"] == 1
-    assert json_loads(rows[0]["evidence_json"], {})["reliefweb_disaster"]["id"] == "51000"
+    evidence = json_loads(rows[0]["evidence_json"], {})
+    assert evidence["reliefweb_disaster"]["id"] == "51000"
+    humanitarian = evidence["humanitarian"]
+    assert humanitarian["source_id"] == "reliefweb_disaster_fixture"
+    assert humanitarian["source_family"] == "reliefweb"
+    assert humanitarian["official_status"] == "official"
+    assert humanitarian["disaster_ids"] == ["51000"]
+    assert humanitarian["affected_countries"] == [
+        "Fictional Archipelago", "Example Island"
+    ]
+    assert humanitarian["source_published_at"] == evidence["global"]["published_at"]
+    assert humanitarian["first_seen_at"] == evidence["global"]["first_seen_at"]
+    assert humanitarian["last_seen_at"] == evidence["global"]["last_seen_at"]
+    assert humanitarian["retention_expires_at"] == evidence["retention"]["expires_at"]
+    assert humanitarian["people_at_risk"] == {
+        "status": "not_provided_in_stored_metadata", "value": None
+    }
+    assert humanitarian["report_url"] is None
 
 
 def test_reliefweb_registered_source_requires_approved_appname(tmp_path, monkeypatch):
@@ -177,7 +194,14 @@ def test_reliefweb_reports_scan_stores_bounded_metadata_with_short_expiry(tmp_pa
     assert result["item_count"] == len(rows) == 1
     row = rows[0]
     assert "This body must never" not in str(dict(row))
-    assert json_loads(row["evidence_json"], {})["reliefweb_report"]["id"] == "81001"
+    evidence = json_loads(row["evidence_json"], {})
+    assert evidence["reliefweb_report"]["id"] == "81001"
+    humanitarian = evidence["humanitarian"]
+    assert humanitarian["report_url"] == evidence["reliefweb_report"]["source_url"]
+    assert humanitarian["disaster_ids"] == ["51000"]
+    assert humanitarian["retention_expires_at"] == row["expires_at"]
+    assert humanitarian["body_stored"] is False
+    assert "This body must never" not in str(humanitarian)
     from datetime import datetime
 
     assert (datetime.fromisoformat(row["expires_at"]) -
