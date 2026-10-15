@@ -783,9 +783,7 @@ def _normalize_global_source_metadata(
         GLOBAL_VERIFICATION_STATUSES,
     )
 
-    source_family = _normalize_optional_keyword(
-        source_cfg, "source_family", path, allowed=GLOBAL_SOURCE_FAMILIES
-    )
+    _normalize_optional_keyword(source_cfg, "source_family", path, allowed=GLOBAL_SOURCE_FAMILIES)
     source_class = _normalize_optional_keyword(
         source_cfg, "source_class", path, allowed=GLOBAL_SOURCE_CLASSES
     )
@@ -804,25 +802,6 @@ def _normalize_global_source_metadata(
     for key in ("privacy_risk", "policy_risk", "parser_risk", "retention_sensitivity"):
         _normalize_optional_keyword(source_cfg, key, path, allowed=GLOBAL_RISK_LEVELS)
 
-    is_social = source_class == "social_candidate" or source_family in LOCAL_SOCIAL_SOURCE_FAMILIES
-    if is_social and not global_cfg["include_social_sources"]:
-        raise ConfigError(
-            f"{path} is a GLOBAL social source; set global.include_social_sources true first."
-        )
-    if source_class == "heavy_open_data_candidate" and not global_cfg[
-        "allow_heavy_open_data_sources"
-    ]:
-        raise ConfigError(
-            f"{path} is a heavy GLOBAL open-data source; set "
-            "global.allow_heavy_open_data_sources true first."
-        )
-    if source_cfg.get("kind") in NEWS_HOMEPAGE_SOURCE_KINDS and not global_cfg[
-        "allow_homepage_extractors"
-    ]:
-        raise ConfigError(
-            f"{path} kind uses homepage extraction; set "
-            "global.allow_homepage_extractors true first."
-        )
     source_enabled = _coerce_bool(source_cfg.get("enabled", False), f"{path}.enabled")
     auth_required = (
         source_cfg.get("id") in GLOBAL_AUTH_REQUIRED_SOURCE_KEYS
@@ -876,7 +855,11 @@ def _normalize_news_source(
         raise ConfigError(
             f"{path}.kind must be one of: {', '.join(sorted(NEWS_SOURCE_KINDS))}."
         )
-    if source_cfg["kind"] in NEWS_HOMEPAGE_SOURCE_KINDS and not allow_homepage_extractors:
+    if (
+        source_cfg["kind"] in NEWS_HOMEPAGE_SOURCE_KINDS
+        and not allow_homepage_extractors
+        and scope != "GLOBAL"
+    ):
         raise ConfigError(
             f"{path}.kind uses homepage extraction, but "
             "news.fetch_policy.allow_homepage_extractors is false."

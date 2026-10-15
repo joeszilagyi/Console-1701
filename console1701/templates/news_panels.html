@@ -1,7 +1,7 @@
 {% macro tone_for_state(state) -%}
 {%- if state in ["healthy"] -%}ok
   {%- elif state in ["failing"] -%}critical
-  {%- elif state in ["social_disabled", "homepage_disabled"] -%}warning
+  {%- elif state in ["social_disabled", "homepage_disabled", "homepage_extract_disabled", "heavy_open_data_disabled"] -%}warning
   {%- elif state in ["stale", "configured_never_run", "configured_disabled"] -%}warning
   {%- else -%}muted
   {%- endif -%}
@@ -196,6 +196,10 @@
       <div><span>Auth required</span><strong>{{ (state.source_state_counts or {}).get("auth_required", 0) }}</strong></div>
       <div><span>Social blocked</span><strong>{{ (state.source_state_counts or {}).get("social_disabled", 0) }}</strong></div>
       <div><span>Homepage blocked</span><strong>{{ (state.source_state_counts or {}).get("homepage_disabled", 0) }}</strong></div>
+      {% if state.scope == "GLOBAL" %}
+        <div><span>GLOBAL homepage blocked</span><strong>{{ (state.source_state_counts or {}).get("homepage_extract_disabled", 0) }}</strong></div>
+        <div><span>Heavy data blocked</span><strong>{{ (state.source_state_counts or {}).get("heavy_open_data_disabled", 0) }}</strong></div>
+      {% endif %}
       <div><span>Manual review</span><strong>{{ (state.source_state_counts or {}).get("manual_review_only", 0) }}</strong></div>
       <div><span>Rate limited</span><strong>{{ (state.source_state_counts or {}).get("rate_limited", 0) }}</strong></div>
       <div><span>Robots blocked</span><strong>{{ (state.source_state_counts or {}).get("robots_blocked", 0) }}</strong></div>

@@ -1381,10 +1381,11 @@ tags, and local impact tags. Reject social, auth-required, heavy open-data, and 
 sources unless explicit local flags are set.
 
 Current state: `global:` defaults to disabled and validates the specified inclusion flags,
-impact tags, thresholds, and attention settings. Source normalization validates registry metadata
-and rejects social, heavy open-data, homepage, enabled auth-required, and high-policy-risk conflict
-sources unless their explicit local gates are satisfied. The example config documents the disabled
-settings. No GLOBAL source is live allowlisted.
+impact tags, thresholds, and attention settings. Source normalization validates registry metadata.
+Enabled auth-required and high-policy-risk conflict sources still require explicit configuration
+before config loads; social, heavy open-data, homepage, and manual-review candidates load into
+visible source health but are blocked before file or network access until their gates are met.
+The example config documents disabled settings. No GLOBAL source is live allowlisted.
 
 ### GLOBAL SQLite Schema Or Extension
 
@@ -1656,9 +1657,10 @@ failed, auth required, rate limited, social disabled, homepage extraction disabl
 disabled, token/account source not configured, and manual-review-only sources. Do not show fake
 headlines.
 
-Current state: the shared scope page already renders GLOBAL state, source health, and real stored
-items without placeholder headlines. Dedicated GLOBAL coverage for heavy open-data and homepage
-extractor gate states is missing, and source cards show only the first six configured sources.
+Current state: the shared scope page renders GLOBAL state, source health, and real stored items
+without placeholder headlines. It now shows dedicated heavy open-data and homepage extractor gate
+counts, with source cards naming those states. Source cards still show only the first six
+configured sources; a broader disabled/not-configured/stale/failure UI matrix remains to verify.
 
 ### GLOBAL Source Health States
 
@@ -1672,10 +1674,9 @@ states in SYSTEM later and summarize them on GLOBAL.
 
 Current state: shared health reporting covers disabled, never-run, healthy, stale, parser failure,
 policy block, auth required, rate limit, robots block, manual review, unsupported, and social block.
-It does not yet expose dedicated `heavy_open_data_disabled` or
-`homepage_extract_disabled` GLOBAL states. The current GLOBAL config rejects several gated
-sources before they can appear in a source-health list, so the UI and validation contract need a
-coherent blocked-source path.
+GLOBAL now also exposes `heavy_open_data_disabled` and `homepage_extract_disabled`, including
+fetch-run health evidence when an enabled candidate is scanned. More GLOBAL state transitions and
+SYSTEM presentation still need dedicated verification.
 
 ### GLOBAL Evidence Drawer Contract
 
@@ -1740,28 +1741,41 @@ dedicated follow-up.
 
 ### Tests For No Page-Load External Fetches
 
-Status: not implemented.
+Status: partially implemented.
 
 Add tests proving GET routes and page renders read SQLite/config only and never call GLOBAL network
 fetchers. Include disabled/not configured/stale/failing/auth-required/policy-blocked/parser-failed,
 heavy-open-data-disabled, social-disabled, homepage-extraction-disabled, and manual-review-only
 state tests for GLOBAL and SYSTEM source health.
 
+Current state: GLOBAL and SYSTEM page GETs plus GLOBAL scope/summary/source API GETs run under
+file/HTTP access traps with a five-gate failure matrix. Disabled, not-configured, stale, parser
+failure, rate-limit, robots, and other transitions still need the dedicated GLOBAL GET matrix.
+
 ### Tests For No Heavy Source Running Without Explicit Config
 
-Status: not implemented.
+Status: completed 2026-10-15.
 
 Add tests proving HDX/HAPI, NASA FIRMS, GDELT, OWID, World Bank, IMF, ArcGIS, catalog, CSV, and
 other heavy open-data candidates cannot run unless explicitly enabled in local config. Tests should
 assert no network calls and clear disabled source-health states.
 
+All 20 current heavy GLOBAL registry candidates are configured as enabled with nonexistent local
+fixtures and no heavy-data gate. Scan records `heavy_open_data_disabled` or `auth_required` before
+file/network access; zero items are stored. This includes HDX/HAPI, NASA FIRMS, GDELT, OWID,
+World Bank, IMF, ArcGIS, catalogs, and CSV candidates.
+
 ### Tests For No Token/Account Source Running Without Config
 
-Status: not implemented.
+Status: completed 2026-10-15 for known registry candidates.
 
 Add tests proving ACLED, Reddit, X, Bluesky, NASA FIRMS if key-required, IMF if key-required, and
 any other token/account source cannot run without explicit local configuration. The tests should
 assert clear `auth_required` or policy-disabled source-health state and no network calls.
+
+The known auth-required registry set plus Reddit, X, and Bluesky candidates are scanned with
+nonexistent local fixtures and no account material. They produce `auth_required`, social-disabled,
+heavy-disabled, or manual-review states before file/network access; zero items are stored.
 
 ## ORBITAL Space Recent Signal Layer
 

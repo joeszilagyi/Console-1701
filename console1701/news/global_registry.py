@@ -42,6 +42,11 @@ GLOBAL_AUTH_REQUIRED_SOURCE_KEYS = {
     "nasa_firms_api", "nasa_firms_web_services", "acled_home", "acled_api_docs",
     "marinetraffic_api", "reliefweb_disasters", "reliefweb_updates",
 }
+GLOBAL_HEAVY_ADAPTERS = {
+    "acled_api_candidate", "arcgis_feature_service_candidate", "csv_download_candidate",
+    "data_catalog_candidate", "gdelt_api_candidate", "hdx_hapi_json",
+    "imf_api_candidate", "nasa_firms_api_candidate", "worldbank_api_json",
+}
 _RSS_ADAPTERS = {"cap_alerts", "ecdc_rss", "gdacs_feed", "rss_atom"}
 _API_ADAPTERS = {
     "acled_api_candidate", "arcgis_feature_service_candidate", "disaster_api_json",

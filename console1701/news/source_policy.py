@@ -3,7 +3,10 @@ from __future__ import annotations
 from typing import Any
 
 from console1701.config import LOCAL_SOCIAL_SOURCE_FAMILIES, NEWS_HOMEPAGE_SOURCE_KINDS
-from console1701.news.global_registry import GLOBAL_AUTH_REQUIRED_SOURCE_KEYS
+from console1701.news.global_registry import (
+    GLOBAL_AUTH_REQUIRED_SOURCE_KEYS,
+    GLOBAL_HEAVY_ADAPTERS,
+)
 from console1701.news.national_registry import NATIONAL_AUTH_REQUIRED_SOURCE_KEYS
 from console1701.news.official_http import is_supported_official_source
 
@@ -81,7 +84,11 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
     )
     uses_homepage = kind in NEWS_HOMEPAGE_SOURCE_KINDS
     homepage_allowed = bool(fetch_policy.get("allow_homepage_extractors"))
-    homepage_extractor_blocked = uses_homepage and not homepage_allowed
+    global_cfg = config.get("global") or {}
+    homepage_extractor_blocked = uses_homepage and (
+        not homepage_allowed
+        or (scope == "GLOBAL" and not bool(global_cfg.get("allow_homepage_extractors")))
+    )
     local_policy = _local_policy(config, source)
     source_family = str(source.get("source_family") or "").strip().lower()
     source_class = str(source.get("source_class") or "").strip().lower()
@@ -99,8 +106,32 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
     global_social_blocked = (
         scope == "GLOBAL"
         and is_social
-        and not bool((config.get("global") or {}).get("include_social_sources"))
+        and not bool(global_cfg.get("include_social_sources"))
     )
+    global_heavy_source = scope == "GLOBAL" and (
+        source_class == "heavy_open_data_candidate"
+        or str(source.get("adapter") or "").strip().lower() in GLOBAL_HEAVY_ADAPTERS
+    )
+    global_heavy_source_blocked = global_heavy_source and not bool(
+        global_cfg.get("allow_heavy_open_data_sources")
+    )
+    global_manual_review = scope == "GLOBAL" and str(
+        source.get("adapter") or ""
+    ).strip().lower() == "manual_review_only"
+    global_reference_only = scope == "GLOBAL" and str(
+        source.get("adapter") or ""
+    ).strip().lower() == "source_health_probe_only"
+    gate_state = None
+    if global_social_blocked:
+        gate_state = "social_disabled"
+    elif global_heavy_source_blocked:
+        gate_state = "heavy_open_data_disabled"
+    elif scope == "GLOBAL" and homepage_extractor_blocked:
+        gate_state = "homepage_extract_disabled"
+    elif global_manual_review:
+        gate_state = "manual_review_only"
+    elif global_reference_only:
+        gate_state = "unsupported"
 
     if is_local_fixture:
         policy_state = "allowed_fixture_only"
@@ -119,6 +150,9 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
             robots_state = "deferred_until_live_fetch"
         else:
             robots_state = "not_applicable_fixture_phase"
+    if gate_state:
+        policy_state = gate_state
+        basis = "global_source_gate"
 
     notes: list[str] = []
     if not scope_cfg.get("enabled"):
@@ -151,6 +185,14 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
         notes.append("REGIONAL social source allowance is disabled.")
     if global_social_blocked:
         notes.append("GLOBAL social source allowance is disabled.")
+    if global_heavy_source_blocked:
+        notes.append("GLOBAL heavy open-data source allowance is disabled.")
+    if scope == "GLOBAL" and homepage_extractor_blocked:
+        notes.append("GLOBAL homepage extraction allowance is disabled.")
+    if global_manual_review:
+        notes.append("GLOBAL source requires manual review and has no ingest adapter.")
+    if global_reference_only:
+        notes.append("GLOBAL registry reference is for source health only.")
     for note in source.get("evidence_notes") or []:
         if note not in notes:
             notes.append(str(note))
@@ -177,6 +219,9 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
         "homepage_extractor_allowed": homepage_allowed,
         "uses_homepage_extractor": uses_homepage,
         "homepage_extractor_blocked": homepage_extractor_blocked,
+        "global_heavy_source": global_heavy_source,
+        "global_heavy_source_blocked": global_heavy_source_blocked,
+        "gate_state": gate_state,
         "robots_state": robots_state,
         "social_source_blocked": bool(
             (local_policy and local_policy.get("social_source_blocked"))
