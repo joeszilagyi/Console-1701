@@ -33,6 +33,10 @@ NASA_FEEDS = {
         "https://www.nasa.gov/blogs/kennedy/feed/", "Kennedy Space Center",
         ("/blogs/kennedy/",),
     ),
+    "jpl_rss": (
+        "https://www.nasa.gov/centers-and-facilities/jpl/feed/",
+        "Jet Propulsion Laboratory", ("/missions/", "/news-release/"),
+    ),
 }
 ESA_FEEDS = {
     "esa_rss": ("https://www.esa.int/rssfeed/Our_Activities/Space_News", "ESA Top News"),
@@ -123,6 +127,7 @@ def parse_nasa_orbital_rss(source: dict[str, Any], payload_text: str) -> list[di
             "launch_update" if "launch" in title_folded or "liftoff" in title_folded else
             "crewed_mission_update" if source_key in {"nasa_artemis", "nasa_artemis_blog"}
             or "crew" in title_folded else
+            "jpl_mission_update" if source_key == "jpl_rss" else
             "orbital_agency_update"
         )
         item = _normalize_item(source, {

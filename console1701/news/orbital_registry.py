@@ -146,6 +146,7 @@ def _load_registry() -> tuple[dict[str, Any], ...]:
             "nasa_artemis": "nasa_orbital_rss",
             "nasa_artemis_blog": "nasa_orbital_rss",
             "nasa_kennedy_blog": "nasa_orbital_rss",
+            "jpl_rss": "nasa_orbital_rss",
             "esa_rss": "esa_orbital_rss",
             "esa_iss": "esa_orbital_rss",
         }.get(key)

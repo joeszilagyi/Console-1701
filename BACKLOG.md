@@ -2410,9 +2410,12 @@ points to its exact news releases feed. Five additional Station, Artemis, and Ke
 RSS endpoints were observed and added as disabled exact-feed candidates. The source-specific parser
 validates each NASA channel and official article path, keeps canonical URL, GUID, time, categories
 and bounded description, and requires an ORBITAL title action. Unrelated Earth science, education
-and routine stories are suppressed in offline tests. No live HTTP allowlist entry was added.
-JPL's linked feed returned HTTP 403 here and the NASA Science candidate did not return parseable
-RSS; those paths remain open. See `docs/project/ORBITAL_NASA_RSS_SOURCE_VERIFICATION.md`.
+and routine stories are suppressed in offline tests. The six NASA agency/mission feeds and the
+NASA-hosted JPL feed have exact opt-in HTTP allowlist entries. A controlled JPL scan returned
+HTTP 200, healthy source state, and two ORBITAL mission items; science-only content stayed out.
+The JPL-hosted feed still returns HTTP 403 to the identifying scanner agent, and the NASA Science
+candidate has no verified accessible RSS endpoint. See
+`docs/project/ORBITAL_NASA_RSS_SOURCE_VERIFICATION.md`.
 
 ### ESA RSS Parser
 

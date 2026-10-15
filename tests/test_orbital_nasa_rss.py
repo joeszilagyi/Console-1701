@@ -73,3 +73,39 @@ def test_nasa_rss_fixture_scan_stays_offline(tmp_path, monkeypatch):
     with connect_db(config["_db_path"]) as conn:
         assert len(list_orbital_items_by_facet(conn, "event_type", "iss_update")) == 1
         assert len(list_orbital_items_by_facet(conn, "source_family", "nasa")) == 2
+
+
+def test_nasa_hosted_jpl_fixture_filters_science_and_stays_offline(tmp_path, monkeypatch):
+    fixture = Path(__file__).parent / "fixtures/orbital/nasa_jpl_mission.rss"
+    source = {"id": "jpl_rss", "scope": "ORBITAL", "kind": "rss",
+              "parser": "nasa_orbital_rss", "url": f"file://{fixture}"}
+    items = parse_fixture_items(source, fixture.read_text())
+    assert len(items) == 2
+    assert {item["evidence"]["nasa_rss"]["story_type"] for item in items} == {
+        "jpl_mission_update", "launch_update",
+    }
+    assert all(item["evidence"]["nasa_rss"]["feed_url"] == (
+        "https://www.nasa.gov/centers-and-facilities/jpl/feed/"
+    ) for item in items)
+    monkeypatch.setattr(
+        "console1701.news.scanner.fetch_official_text",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("no HTTP")),
+    )
+    path = tmp_path / "jpl.yml"
+    path.write_text(dedent(f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        orbital: {{enabled: true}}
+        news:
+          enabled: true
+          scopes:
+            ORBITAL:
+              enabled: true
+              sources:
+                - id: jpl_rss
+                  enabled: true
+                  url: "file://{fixture}"
+    """).strip() + "\n")
+    assert run_news_scan(path)["item_count"] == 2
+    config = load_config(path)
+    with connect_db(config["_db_path"]) as conn:
+        assert len(list_orbital_items_by_facet(conn, "source_family", "nasa_jpl")) == 2

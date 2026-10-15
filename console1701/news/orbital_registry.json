@@ -667,12 +667,13 @@
   },
   {
     "source_key": "jpl_rss",
-    "source_name": "JPL RSS",
+    "source_name": "NASA-hosted JPL RSS",
     "source_family": "nasa_jpl",
     "source_class": "official_mission_news",
     "scope": "ORBITAL",
-    "raw_url": "https://www.jpl.nasa.gov/rss/",
-    "expected_access_kind": "public official RSS index",
+    "raw_url": "https://www.nasa.gov/centers-and-facilities/jpl/feed/",
+    "homepage_url": "https://www.jpl.nasa.gov/rss/",
+    "expected_access_kind": "public official RSS feed",
     "adapter": "rss_atom",
     "refresh_interval": "60 min",
     "priority": "70",
@@ -682,7 +683,7 @@
     "parser_risk": "medium",
     "retention_sensitivity": "low",
     "verification_status": "official_page_seen",
-    "why_it_matters": "Preferred JPL metadata path if stable.",
+    "why_it_matters": "NASA-hosted JPL mission metadata; exact opt-in feed with science-only story filtering.",
     "future_phase": "O6"
   },
   {
