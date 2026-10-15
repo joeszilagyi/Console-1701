@@ -167,9 +167,10 @@ Explicit command path only
 Page loads read SQLite and config only
 No hidden fetch on GET routes
 Fixture ingest for enabled file:// JSON/RSS/Atom/homepage sources
-Three separately opted-in official HTTPS URLs: Washington NWS active alerts for LOCAL/REGIONAL,
-USGS M2.5+ past-day earthquake GeoJSON for REGIONAL, and WSDOT Highway Alerts RSS for REGIONAL;
-all are disabled by default, and the NWS scopes share one request per scan
+Exact opt-in official HTTPS allowlist: Washington NWS active alerts for LOCAL/REGIONAL,
+USGS M2.5+ past-day earthquake GeoJSON for REGIONAL/NATIONAL, WSDOT Highway Alerts RSS for
+REGIONAL, and selected NOAA SWPC, NASA RSS, and ESA RSS products for ORBITAL. Every URL remains
+disabled by default; shared NWS and USGS URLs use one response per explicit scan
 LOCAL Seattle policy config defaults to disabled and gates social/neighborhood-blog sources
 LOCAL registry seeds known source metadata for disabled official, blog, and social candidates
 Fixture parsers include LOCAL SFD, AlertSeattle, NWS, WSDOT, Metro, City Light, FAA/SEA, and local-blog evidence
@@ -194,6 +195,8 @@ policy_blocked / auth_required states without fetching
 access kind so registry-backed sources can be audited without opening the database
 Source verification workflow: `docs/project/NEWS_SOURCE_VERIFICATION_WORKFLOW.md`
 Operational guide: `docs/project/NEWS_OPERATIONAL_GUIDE.md`
+The guide lists current live gates, scope/source examples, retention audit steps, and the
+distinction between fixture-tested, live-allowlisted, and blocked candidates.
 First official HTTP source signoff: `docs/project/NWS_WASHINGTON_ALERTS_SOURCE_VERIFICATION.md`
 USGS REGIONAL source signoff: `docs/project/USGS_REGIONAL_EARTHQUAKE_SOURCE_VERIFICATION.md`
 REGIONAL event matching contract: `docs/project/REGIONAL_EVENT_CONTRACT.md`

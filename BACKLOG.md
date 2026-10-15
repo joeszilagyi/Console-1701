@@ -250,20 +250,18 @@ and retention policy for any future enabled social source.
 
 ### Documentation Update
 
-Status: partially implemented.
+Status: completed 2026-10-15 for first-pass operations.
 
 When news scaffolding exists, update README, config documentation, safety notes, and command help to
 explain disabled-by-default behavior, page-load SQLite-only reads, explicit ingest commands,
 retention, source policy, and how to audit source health.
 
-Current state: README and CLI surfaces now mention `news-scan`, `news-sources`, page-load SQLite-only
-reads, and the current fixture-plus-NWS opt-in behavior. Config-specific walkthroughs and retention
-auditing details are still pending. README and CLI help now also describe the
-source-audit workflow with family/class/verification/access metadata, and the website audit drawers
-surface the same registry fields alongside policy and health. `docs/project/NEWS_OPERATIONAL_GUIDE.md`
-now captures the disabled-by-default operating notes, explicit ingest boundary, retention and purge
-evidence, and the SQLite-only page-load rule. The remaining live-ingest operational notes still need
-a dedicated pass.
+Current state: README, config example, CLI help and `docs/project/NEWS_OPERATIONAL_GUIDE.md`
+describe disabled defaults, exact source/scope/HTTP gates, fixture versus live status, explicit
+`news-scan` and no-fetch `news-sources`, SQLite-only page loads, timer posture, source-health
+audit, retention windows and purge evidence. The guide lists the current LOCAL/REGIONAL/NATIONAL
+and ORBITAL allowlist families and records that GLOBAL and Solar System and Beyond have no live
+endpoint. Endpoint-specific signoffs remain in their source documents.
 
 ### Separate Disabled Systemd News Timer
 

@@ -22,7 +22,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 
 - [ ] **RS-001** [Deterministic Ranking](../../BACKLOG.md#L161) — partially implemented.
 - [ ] **RS-002** [Official API/RSS First Live Ingest](../../BACKLOG.md#L206) — partially implemented.
-- [ ] **RS-003** [Documentation Update](../../BACKLOG.md#L251) — partially implemented.
+- [x] **RS-003** [Documentation Update](../../BACKLOG.md#L251) — README and operational guide now cover current exact opt-ins, config and audit commands, retention/purge evidence, blocked sources, and SQLite-only page loads.
 
 ### LOCAL Seattle Recent Signal Layer
 
