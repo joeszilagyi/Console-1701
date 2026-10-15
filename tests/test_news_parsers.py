@@ -214,6 +214,34 @@ def test_national_govinfo_rss_fixture_filters_collection_and_title() -> None:
         parse_fixture_items({**source, "collection": "FR"}, fixture)
 
 
+def test_national_fda_recalls_rss_fixture_keeps_metadata_limits() -> None:
+    source = {
+        "id": "fda_recalls", "scope": "NATIONAL", "kind": "rss",
+        "parser": "fda_recalls_rss", "source_family": "fda",
+    }
+    fixture = (
+        Path(__file__).resolve().parent / "fixtures/news/national_fda_recalls.rss"
+    ).read_text()
+    items = parse_fixture_items(source, fixture)
+    assert len(items) == 2
+    assert items[0]["url"].startswith("https://www.fda.gov/")
+    assert items[0]["source_published_at"] == "2026-10-13T18:07:00+00:00"
+    first = items[0]["evidence"]["fda_recall_notice"]
+    assert first["guid"].startswith("http://www.fda.gov/")
+    assert first["source_url"] == items[0]["url"]
+    assert first["hosted_by"] == "FDA"
+    assert first["severity"] == "not_in_feed"
+    assert first["distribution_geography"] == "not_in_feed"
+    assert first["recall_classification"] == "not_in_feed"
+    assert first["ranking"]["public_hazard_score"] == 0
+    assert items[1]["evidence"]["fda_recall_notice"]["translation_relationship"] == "unverified"
+    assert all(item["evidence"]["fda_recall_notice"]["body_stored"] is False for item in items)
+    with pytest.raises(NewsParserError, match="unexpected channel"):
+        parse_fixture_items(source, fixture.replace("Recalls/Safety Alerts", "MedWatch"))
+    with pytest.raises(NewsParserError, match="official recall URL"):
+        parse_fixture_items(source, fixture.replace("www.fda.gov", "example.com"))
+
+
 def test_regional_nws_fixture_preserves_official_county_zone_and_alert_evidence() -> None:
     source = {
         "id": "nws_active_alerts_wa", "scope": "REGIONAL", "kind": "api_json",

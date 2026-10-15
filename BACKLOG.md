@@ -1156,8 +1156,9 @@ catalog envelope, CVE identity, due dates, ransomware/triage evidence, and offli
 `national_faa_nas_status.xml` covers FAA delay, ground stop, closure notice, airport filtering,
 and offline scan. `national_federal_register_documents.json` covers document filters, action
 windows, low-value suppression, and offline scan. `national_govinfo_enrolled_bills.rss` covers
-allowlisted collection, title filtering, identity and offline scan. The other NATIONAL
-source-family fixtures listed above remain pending.
+allowlisted collection, title filtering, identity and offline scan. `national_fda_recalls.rss`
+covers bounded FDA-hosted notice metadata, translated-notice uncertainty and offline scan. The
+other NATIONAL source-family fixtures listed above remain pending.
 
 ### NWS Active Alert Parser
 
@@ -1315,6 +1316,11 @@ ranking evidence.
 ### CISA Advisory Parser
 
 Status: not implemented.
+
+2026-10-15 endpoint check: CISA's advisory page documents categories, but a candidate RSS query
+returned HTTP 403 and a guessed XML path returned HTTP 404. No verified machine-readable schema
+exists for this parser yet; see `docs/project/NATIONAL_CISA_ADVISORY_ENDPOINT_BLOCKER.md`. Keep
+disabled while other source work proceeds.
 
 Build a fixture-first parser for CISA cybersecurity advisories, alerts, ICS advisories, bulletins,
 and emergency directives after feed/API shapes are verified. Preserve advisory id, title, CVE ids,

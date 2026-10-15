@@ -151,6 +151,8 @@ def parse_fixture_items(
         return _parse_federal_register_documents_json(source, payload_text)
     if parser_name == "govinfo_collection_rss":
         return _parse_govinfo_collection_rss(source, payload_text)
+    if parser_name == "fda_recalls_rss":
+        return _parse_fda_recalls_rss(source, payload_text)
     if parser_name == "alertseattle_rss":
         return _parse_alertseattle_rss_feed(source, payload_text)
     if parser_name == "metro_rss":
@@ -2103,6 +2105,79 @@ def _parse_govinfo_collection_rss(
             "matched_impact_terms": matched_terms[:10],
             "legal_effect_inferred": False,
             "ranking": {"publication_score": 8},
+            "body_stored": False,
+        }
+        normalized.append(item)
+    return normalized
+
+
+def _parse_fda_recalls_rss(
+    source: dict[str, Any], payload_text: str
+) -> list[dict[str, Any]]:
+    if str(source.get("scope") or "").upper() != "NATIONAL":
+        raise NewsParserError("FDA recalls RSS parser requires NATIONAL scope.")
+    if re.search(r"<!\s*(?:DOCTYPE|ENTITY)\b", payload_text, re.I):
+        raise NewsParserError("FDA recalls RSS must not contain DTD or entity declarations.")
+    try:
+        root = ET.fromstring(payload_text)
+    except ET.ParseError as exc:
+        raise NewsParserError(f"Malformed FDA recalls RSS: {exc}") from exc
+    channel = root.find("channel") if root.tag == "rss" else None
+    if channel is None or _element_text(channel.find("title")) != (
+        "Food and Drugs Administration--Recalls/Safety Alerts"
+    ):
+        raise NewsParserError("FDA recalls RSS has an unexpected channel.")
+    normalized: list[dict[str, Any]] = []
+    seen_urls: set[str] = set()
+    for index, row in enumerate(channel.findall("item")[:100]):
+        title = bounded_text(_wsdot_plain_text(_element_text(row.find("title"))), max_chars=280)
+        link = str(_element_text(row.find("link")) or "").strip()
+        guid = str(_element_text(row.find("guid")) or "").strip()
+        if not title or not link or not guid or link != guid:
+            raise NewsParserError(f"FDA recalls RSS item {index} lacks identity or title.")
+        parts = urlsplit(link)
+        if (
+            parts.scheme not in {"http", "https"}
+            or parts.hostname != "www.fda.gov"
+            or not parts.path.startswith("/safety/recalls-market-withdrawals-safety-alerts/")
+        ):
+            raise NewsParserError(f"FDA recalls RSS item {index} has no official recall URL.")
+        url = normalize_url(parts._replace(scheme="https").geturl())
+        if url in seen_urls:
+            raise NewsParserError(f"FDA recalls RSS item {index} duplicates an official URL.")
+        seen_urls.add(url)
+        published = normalize_timestamp(_element_text(row.find("pubDate")))
+        if not published:
+            raise NewsParserError(f"FDA recalls RSS item {index} lacks publication time.")
+        description = bounded_text(
+            _wsdot_plain_text(_element_text(row.find("description"))), max_chars=500
+        )
+        creator = bounded_text(
+            _element_text(row.find("{http://purl.org/dc/elements/1.1/}creator")),
+            max_chars=100,
+        )
+        item = _normalize_item(source, {
+            "title": title,
+            "url": url,
+            "description": description,
+            "published_at": published,
+            "tags": ["official", "fda-hosted", "recall-notice"],
+        }, index=index)
+        item["evidence"]["fda_recall_notice"] = {
+            "feed_name": "Recalls/Safety Alerts",
+            "feed_url": (
+                "https://www.fda.gov/about-fda/contact-fda/stay-informed/"
+                "rss-feeds/recalls/rss.xml"
+            ),
+            "guid": guid,
+            "source_url": url,
+            "feed_creator": creator,
+            "hosted_by": "FDA",
+            "severity": "not_in_feed",
+            "distribution_geography": "not_in_feed",
+            "recall_classification": "not_in_feed",
+            "translation_relationship": "unverified",
+            "ranking": {"public_hazard_score": 0},
             "body_stored": False,
         }
         normalized.append(item)
