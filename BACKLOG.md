@@ -1181,7 +1181,8 @@ risk, privacy risk, retention sensitivity, verification status, and future phase
 enum values and keep all NATIONAL sources disabled until explicitly configured.
 
 Current state: the checked-in NATIONAL registry contains all 227 source targets from the design
-inventory, with their original provenance, risk, verification, priority, phase, and access fields.
+inventory plus three verified, fixture-only NHC basin RSS entries (230 total), with their
+provenance, risk, verification, priority, phase, and access fields.
 The loader validates required enum values and scope/URL shape. Config defaults for known source IDs
 remain disabled and reject invalid metadata. The registry is persisted by explicit `news-scan`
 and summarized from SQLite. Candidate adapter/kind assignments are inert planning metadata;
@@ -1201,8 +1202,9 @@ is true.
 Current state: `national:` now has disabled defaults, type and threshold validation, explicit
 social-source gating, and a separate scope switch. Source policy and the live-source gate require
 the national policy switch before any future exact-allowlisted official HTTP source can run. The
-repository example config documents the defaults. No NATIONAL live source is allowlisted or
-enabled by this config work; homepage extraction remains blocked by the shared fetch policy.
+repository example config documents the defaults. This config work did not itself admit a live
+source; later exact source signoffs are separate. Homepage extraction remains blocked by the
+shared fetch policy.
 
 ### NATIONAL SQLite Schema Or Extension
 
@@ -1251,6 +1253,12 @@ covers bounded FDA-hosted notice metadata, translated-notice uncertainty and off
 `tests/fixtures/national/cpsc_recalls_2026_10_01.json` sample covers the CPSC recall API parser
 and offline scan. `national_cisa_advisories.rss` covers the verified mixed CISA feed shape,
 advisory classes, CVE/CVSS/sector metadata, KEV announcement suppression, and offline scan.
+The synthetic Eastern Pacific NHC RSS fixture now runs through NATIONAL; separate Atlantic
+and Central Pacific empty-basin fixtures prove healthy zero-event scans. Storm ATCF IDs and
+advisory numbers are retained without inferring U.S. watch geography, multi-state impact,
+or article body. NATIONAL attention suppresses these basin reports until a product provides
+source-verified U.S. watch geography; the stored metadata remains available for audit. The
+three exact basin registry entries remain fixture-only; live URLs are blocked before fetch.
 The other NATIONAL source-family fixtures listed above remain pending.
 
 ### NWS Active Alert Parser
@@ -1280,8 +1288,13 @@ official basin RSS URLs, the regular/intermediate advisory cycles, storm/wallet 
 watch/warning product distinctions, a proposed disabled polling policy, and source-health behavior.
 Bounded Atlantic, Eastern Pacific and Central Pacific XML reads confirmed RSS 2.0 item fields,
 cyclone-summary namespace fields, advisory product differences, conditional-request headers and
-empty-basin sentinel behavior. The future NATIONAL fixture parser and exact-URL live signoff remain
-separate tasks; no NHC endpoint is allowlisted or enabled.
+empty-basin sentinel behavior. A NATIONAL fixture parser now reuses the observed basin shape,
+requires exact basin/source identity and a local file, bounds bytes/rows, stores ATCF/advisory
+metadata without article body or inferred U.S. geography, and treats empty sentinels as healthy.
+NATIONAL attention suppresses storm reports without source-verified U.S. watch geography.
+A bounded follow-up GET returned HTTP 200 for all three feeds and a robots file without a
+disallow rule, but the two Eastern Pacific advisory rows still supplied no verified U.S.
+watch region. Exact-URL live signoff remains separate; no NHC endpoint is allowlisted or enabled.
 
 ### USGS Earthquake GeoJSON Parser
 
@@ -1525,7 +1538,8 @@ The CPSC fixture now labels official recall ID, consumer-product event type and 
 leaving distribution geography and multi-state impact unknown; the matcher can recover that ID
 from older stored evidence lacking the newer identity contract. FDA's RSS parser labels FDA notice
 type and agency without inventing a recall class or affected state. Duplicate CPSC IDs in a single
-API response fail parsing. The currently verified fixture parsers supply only some dimensions,
+API response fail parsing. NHC basin fixtures contribute official ATCF storm identity and basin
+context without claiming U.S. watch geography. The currently verified fixture parsers supply only some dimensions,
 so source-specific coverage remains open. Offline duplicate-campaign, CPSC URL-revision and
 synthetic context tests pass.
 
