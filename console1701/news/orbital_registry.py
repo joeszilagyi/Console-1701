@@ -41,7 +41,7 @@ assistant_seeded candidate_needs_verification candidate_policy_sensitive
 ORBITAL_RISK_LEVELS = {"low", "medium", "high"}
 ORBITAL_FUTURE_PHASES = {"O1", "O2", "O6", "O7", "O8", "O9", "O10", "O11"}
 ORBITAL_AUTH_REQUIRED_SOURCE_KEYS = {
-    "space_track_home", "space_track_docs",
+    "space_track_home", "space_track_docs", "nasa_open_apis",
 }
 _API_ADAPTERS = {
     "astronomy_tap_api_candidate", "celestrak_gp_json", "celestrak_satcat_csv_json",
