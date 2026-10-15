@@ -1411,7 +1411,7 @@ UN News RSS, UN Press RSS, IAEA RSS, global news RSS, source-health states, disa
 sources, auth-required sources, and parser failures. Fixture ingest must not perform network calls
 and must be safe for pytest.
 
-Current state: checked-in GDACS RSS/API GeoJSON, ReliefWeb disaster, and ReliefWeb report fixtures
+Current state: checked-in GDACS RSS/API GeoJSON, ReliefWeb disaster/report, and WHO DON fixtures
 exercise offline parser and `news-scan` persistence paths. Remaining source families and
 health/failure variants are pending.
 
@@ -1474,12 +1474,18 @@ ReliefWeb's pre-approved appname rule and absent live allowlist keep live update
 
 ### WHO Disease Outbreak News Parser
 
-Status: not implemented.
+Status: completed 2026-10-15 for fixture-first parser; live source remains disabled.
 
 Build a fixture-first WHO Disease Outbreak News parser. Preserve outbreak title, disease or hazard
 label, affected country or region, publication/update time, source URL, bounded summary, official
 public-health evidence, and outbreak ranking features. Do not infer case counts unless the source
 provides structured values.
+
+Current state: the WHO OData DON response shape and an article URL were verified against official
+WHO endpoints on 2026-10-15. The parser retains title, publication/modification time, a bounded
+summary, official URL, and clearly marked title-derived hazard/geography labels. It ignores full
+article fields and does not infer case counts. Offline fixture and scan persistence tests pass;
+there is no WHO live HTTP allowlist.
 
 ### ECDC RSS Parser
 
