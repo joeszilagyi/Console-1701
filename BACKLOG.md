@@ -1442,7 +1442,20 @@ evidence.
 
 ### NATIONAL Low-Public-Value And Public-Impact Rules
 
-Status: not implemented.
+Status: implemented for first-pass NATIONAL attention classification.
+
+`national_policy.py` classifies source/item metadata before storage and records a reasoned
+`national_policy` evidence block. It suppresses routine agency press families and personnel
+announcements, opinion/punditry, generic campaign politics, procedural court filings, local-only
+reports without explicit national impact, vague social-only claims, and economic releases outside a
+configured title allowlist. Suppressed metadata stays auditable but is excluded from NATIONAL item
+and cluster attention views. Same-article URLs and explicit syndication IDs merge without counting
+as independent confirmation or adding duplicate article score. Official severe NWS alerts,
+high-risk NHTSA recalls, CISA KEV, active FAA NAS disruptions, filtered Federal Register actions,
+and explicit official disaster, cyber directive, high-risk recall, and public-health guidance
+evidence receive cautious elevation. Headline-only severity is never inferred. Source-specific
+parsers for later candidates will need to supply the explicit identity/action fields; the rules
+already have offline unit and scan coverage.
 
 Add deterministic NATIONAL rules that suppress routine agency press releases, generic political
 messaging, minor personnel announcements, punditry, duplicate syndicated stories, local stories with

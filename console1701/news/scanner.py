@@ -19,6 +19,7 @@ from console1701.news.global_ranking import rank_global_event
 from console1701.news.global_registry import list_global_source_registry
 from console1701.news.local_registry import list_local_source_registry
 from console1701.news.national_events import correlate_national_items
+from console1701.news.national_policy import classify_national_item
 from console1701.news.national_ranking import rank_national_event
 from console1701.news.national_registry import list_national_source_registry
 from console1701.news.normalize import bounded_text, cluster_key, content_hash, expires_at, url_hash
@@ -1908,6 +1909,21 @@ def _upsert_item(
     default_retention_days: int,
     policy: dict[str, Any],
 ) -> int:
+    if str(source.get("scope") or "").upper() == "NATIONAL":
+        item = dict(item)
+        item["evidence"] = dict(item.get("evidence") or {})
+        item["evidence"]["national_policy"] = classify_national_item(source, item)
+        identity = dict(item["evidence"].get("national_identity") or {})
+        if item["evidence"]["national_policy"]["suppressed"]:
+            identity["public_value_class"] = "routine"
+        policy_impact = item["evidence"]["national_policy"]["official_impact_score"]
+        if policy_impact:
+            try:
+                current_impact = int(identity.get("public_impact_score") or 0)
+            except (TypeError, ValueError):
+                current_impact = 0
+            identity["public_impact_score"] = max(0, current_impact, policy_impact)
+        item["evidence"]["national_identity"] = identity
     if str(source.get("scope") or "").upper() == "GLOBAL":
         source_flags = source.get("sensitivity_flags") or []
         if source_flags:
@@ -2411,7 +2427,8 @@ def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
 def _rebuild_national_clusters(conn: sqlite3.Connection) -> None:
     rows = conn.execute(
         """
-        SELECT id, scope, title, source_published_at, first_seen_at, last_seen_at,
+        SELECT id, scope, title, canonical_url, url, source_published_at,
+               first_seen_at, last_seen_at,
                expires_at, rank_score, tags_json, evidence_json
         FROM news_items
         WHERE scope = 'NATIONAL' AND status = 'active' AND expires_at >= ?
@@ -2427,11 +2444,26 @@ def _rebuild_national_clusters(conn: sqlite3.Connection) -> None:
     conn.execute("DELETE FROM news_clusters WHERE scope = 'NATIONAL'")
     for group in correlate_national_items(items):
         members = [by_id[item_id] for item_id in group["item_ids"]]
+        attention_members = [
+            member for member in members
+            if not (member["evidence"].get("national_policy") or {}).get("suppressed")
+        ]
+        scoring_members = attention_members or members
+        scoring_families = sorted({
+            str((member["evidence"].get("source") or {}).get("source_family") or "unknown")
+            for member in scoring_members
+        })
+        scoring_group = {
+            **group,
+            "families": scoring_families,
+            "corroborated": group["corroborated"] and len(scoring_families) >= 2,
+        }
         event_ranking = rank_national_event(
-            group, members, now=datetime.now(UTC).isoformat(timespec="seconds")
+            scoring_group, scoring_members, now=datetime.now(UTC).isoformat(timespec="seconds")
         )
         representative = max(
-            members, key=lambda item: (int(item["rank_score"]), item["last_seen_at"], item["id"])
+            scoring_members,
+            key=lambda item: (int(item["rank_score"]), item["last_seen_at"], item["id"])
         )
         fixture_only = all(
             bool((member["evidence"].get("ingest") or {}).get("fixture_only"))
@@ -2441,7 +2473,7 @@ def _rebuild_national_clusters(conn: sqlite3.Connection) -> None:
             tag for member in members for tag in json_loads(str(member["tags_json"]), [])
         ))
         confidence = (
-            "corroborated" if group["corroborated"] else
+            "corroborated" if scoring_group["corroborated"] else
             "source_reported" if group["identifiers"] else "uncorroborated"
         )
         for member in members:
@@ -2450,6 +2482,7 @@ def _rebuild_national_clusters(conn: sqlite3.Connection) -> None:
                 **group,
                 "confidence": confidence,
                 "ranking": event_ranking,
+                "attention_state": "suppressed" if not attention_members else "visible",
                 "matching_tokens": sorted({
                     token for match in group["matches"]
                     for token in match["shared_tokens"]
@@ -2459,6 +2492,8 @@ def _rebuild_national_clusters(conn: sqlite3.Connection) -> None:
                 "UPDATE news_items SET evidence_json = ? WHERE id = ?",
                 (json_dumps(evidence), member["id"]),
             )
+        if not attention_members:
+            continue
         conn.execute(
             """
             INSERT INTO news_clusters (
@@ -2478,6 +2513,7 @@ def _rebuild_national_clusters(conn: sqlite3.Connection) -> None:
                 json_dumps({"fixture_only": fixture_only, "national_event": {
                     **group, "confidence": confidence,
                     "ranking": event_ranking,
+                    "scoring_item_ids": [member["id"] for member in scoring_members],
                 }}),
             ),
         )

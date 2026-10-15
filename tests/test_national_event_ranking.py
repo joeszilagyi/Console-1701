@@ -119,3 +119,19 @@ def test_national_rank_accounts_for_time_priority_cluster_size_and_confidence():
     assert rank_national_event(
         {**_group("nws"), "identifiers": []}, [first], now=NOW
     )["factors"]["low_confidence_penalty"] == 24
+
+
+def test_national_rank_does_not_reward_syndicated_duplicate_as_convergence():
+    first = _member(1, family="publisher_one")
+    second = _member(2, family="publisher_two")
+    first["canonical_url"] = second["canonical_url"] = "https://wire.example/story/123"
+    group = {
+        **_group("publisher_one", "publisher_two"),
+        "corroborated": False,
+        "matches": [{"item_ids": [1, 2], "basis": ["same_article_url"]}],
+    }
+    ranking = rank_national_event(group, [first, second], now=NOW)
+    assert ranking["factors"]["source_diversity_score"] == 9
+    assert ranking["factors"]["temporal_proximity_score"] == 0
+    assert ranking["factors"]["cluster_size_score"] == 1
+    assert ranking["factors"]["syndicated_duplicate_penalty"] == 6

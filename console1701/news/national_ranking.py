@@ -98,13 +98,27 @@ def rank_national_event(
         and signal["source"].get("source_family")
     }
     identities = [signal["identity"] for signal in signals]
+    syndicated_only = bool(group.get("matches")) and all(
+        match.get("basis") in (["same_article_url"], ["same_syndication_id"])
+        for match in group["matches"]
+    )
+    distinct_article_keys = {
+        str((member.get("evidence") or {}).get("national_identity", {}).get(
+            "syndication_id"
+        ) or member.get("canonical_url") or member.get("url") or member["id"])
+        for member in members
+    }
     factors = {
         "recency_score": max(0, 20 - min(20, age_hours // 4)),
         "official_severity_score": max((s["severity"] for s in signals), default=0),
-        "source_diversity_score": min(30, len(families) * 5 + len(official_families) * 4),
+        "source_diversity_score": min(30, (
+            1 if syndicated_only else len(families)
+        ) * 5 + (
+            min(1, len(official_families)) if syndicated_only else len(official_families)
+        ) * 4),
         "temporal_proximity_score": (
-            10 if len(families) >= 2 and span_hours is not None and span_hours <= 24
-            else 5 if len(families) >= 2 and span_hours is not None and span_hours <= 72
+            10 if group.get("corroborated") and span_hours is not None and span_hours <= 24
+            else 5 if group.get("corroborated") and span_hours is not None and span_hours <= 72
             else 0
         ),
         "public_impact_score": max((s["public_impact"] for s in signals), default=0),
@@ -118,13 +132,16 @@ def rank_national_event(
         "source_priority_score": min(10, max((
             _bounded_int(s["source"].get("priority"), 100) for s in signals
         ), default=0) // 10),
-        "cluster_size_score": min(8, len({member["id"] for member in members})),
+        "cluster_size_score": min(8, len(distinct_article_keys)),
         "local_regional_impact_score": min(20, max((
             _bounded_int(identity.get("local_regional_impact_score"), 20)
             for identity in identities
         ), default=0)),
         "duplicate_family_penalty": min(30, 3 * sum(
             max(0, count - 1) for count in family_counts.values()
+        )),
+        "syndicated_duplicate_penalty": min(24, 6 * (
+            len(members) - len(distinct_article_keys)
         )),
         "stale_source_penalty": min(24, sum(
             8 for signal in signals

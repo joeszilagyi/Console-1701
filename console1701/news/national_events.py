@@ -88,6 +88,8 @@ def national_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         "published_at": _time(item.get("source_published_at") or item.get("first_seen_at")),
         "family": str(source.get("source_family") or "unknown").strip().casefold(),
         "source_key": str(source.get("source_key") or "").strip(),
+        "article_url": str(item.get("canonical_url") or item.get("url") or "").strip(),
+        "syndication_id": str(identity.get("syndication_id") or "").strip().casefold(),
     }
 
 
@@ -101,6 +103,10 @@ _CONTEXT_FIELDS = (
 def national_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str]:
     if left["identifiers"] & right["identifiers"]:
         return ["shared_official_event_id"]
+    if left["article_url"] and left["article_url"] == right["article_url"]:
+        return ["same_article_url"]
+    if left["syndication_id"] and left["syndication_id"] == right["syndication_id"]:
+        return ["same_syndication_id"]
     if left["family"] == "unknown" or left["family"] == right["family"]:
         return []
     if not left["event_type"] or left["event_type"] != right["event_type"]:
@@ -176,6 +182,9 @@ def correlate_national_items(items: list[dict[str, Any]]) -> list[dict[str, Any]
             "national_impact": any(member["national_impact"] for member in members),
             "multi_state_impact": any(member["multi_state_impact"] for member in members),
             "matches": [match for match in matches if set(match["item_ids"]) <= set(ids)],
-            "corroborated": len(family_set) >= 2 and len(ids) >= 2,
+            "corroborated": len(family_set) >= 2 and any(
+                "independent_family" in match["basis"]
+                for match in matches if set(match["item_ids"]) <= set(ids)
+            ),
         })
     return sorted(result, key=lambda group: group["item_ids"][0])

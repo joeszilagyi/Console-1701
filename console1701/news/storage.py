@@ -842,10 +842,12 @@ def get_news_scope_view(
         SELECT *
         FROM news_items
         WHERE scope = ? AND status = 'active' AND expires_at >= ?
+          AND (? != 'NATIONAL' OR
+               json_extract(evidence_json, '$.national_policy.suppressed') IS NOT 1)
         ORDER BY rank_score DESC, last_seen_at DESC, id DESC
         LIMIT ?
         """,
-        (normalized_scope, now, item_limit),
+        (normalized_scope, now, normalized_scope, item_limit),
     ).fetchall()
     clusters = conn.execute(
         """

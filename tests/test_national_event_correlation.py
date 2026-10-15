@@ -64,6 +64,17 @@ def test_national_correlation_shared_official_id_does_not_fake_diversity():
     assert groups[0]["corroborated"] is False
 
 
+def test_national_syndicated_article_does_not_count_as_independent_confirmation():
+    first = _item(1, "publisher_one")
+    second = _item(2, "publisher_two")
+    first["canonical_url"] = "https://wire.example/story/123"
+    second["canonical_url"] = "https://wire.example/story/123"
+    group = correlate_national_items([first, second])[0]
+    assert group["item_ids"] == [1, 2]
+    assert group["matches"][0]["basis"] == ["same_article_url"]
+    assert group["corroborated"] is False
+
+
 def test_national_scan_persists_correlation_without_http(tmp_path, monkeypatch):
     monkeypatch.setattr(
         "console1701.news.scanner.fetch_official_text",

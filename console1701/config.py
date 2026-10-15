@@ -920,6 +920,10 @@ def _normalize_news_source(
         )
 
         _normalize_optional_keyword(source_cfg, "source_family", path)
+        if "economic_release_terms" in source_cfg:
+            source_cfg["economic_release_terms"] = _normalize_string_list(
+                source_cfg["economic_release_terms"], f"{path}.economic_release_terms"
+            )[:20]
         _normalize_optional_keyword(
             source_cfg, "source_class", path, allowed=NATIONAL_SOURCE_CLASSES
         )
