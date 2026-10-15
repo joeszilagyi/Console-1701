@@ -5,7 +5,11 @@ from pathlib import Path
 import pytest
 
 from console1701.news.parsers import NewsParserError, PayloadTooLargeError, parse_fixture_items
-from console1701.news.science_rss import ESA_SPACE_SCIENCE_FEED, NASA_JPL_SCIENCE_FEED
+from console1701.news.science_rss import (
+    ESA_SPACE_SCIENCE_FEED,
+    ESA_TELESCOPE_FEEDS,
+    NASA_JPL_SCIENCE_FEED,
+)
 
 FIXTURE = Path(__file__).parent / "fixtures" / "science" / "nasa_jpl_science.rss"
 ESA_FIXTURE = Path(__file__).parent / "fixtures" / "science" / "esa_space_science.rss"
@@ -90,3 +94,32 @@ def test_esa_science_parser_rejects_wrong_source_channel_and_oversize():
         parse_fixture_items(_esa_source(), content.replace("ESA Space Science", "ESA Top News"))
     with pytest.raises(PayloadTooLargeError):
         parse_fixture_items(_esa_source(), content + " " * 1_048_576)
+
+
+@pytest.mark.parametrize(("key", "fixture", "telescope", "release_id"), [
+    ("esa_hubble_science_rss", "esa_telescope_science.rss", "Hubble", "heic2611"),
+    ("esa_webb_science_rss", "esa_webb_science.rss", "JWST", "weic2621"),
+])
+def test_esa_telescope_parser_keeps_only_official_science_releases(
+    key, fixture, telescope, release_id
+):
+    source = {
+        "id": key,
+        "scope": "SYSTEM_SOLAR",
+        "kind": "rss",
+        "parser": "esa_telescope_science_rss",
+        "url": ESA_TELESCOPE_FEEDS[key][0],
+    }
+    payload = (FIXTURE.parent / fixture).read_text()
+    items = parse_fixture_items(source, payload)
+    assert len(items) == 1
+    assert "<img" not in items[0]["description"]
+    evidence = items[0]["evidence"]["science_rss"]
+    assert evidence["telescope"] == telescope
+    assert evidence["instrument"] is None
+    assert evidence["release_id"] == release_id
+    assert evidence["image_downloaded"] is False
+    assert evidence["live_policy_status"] == "third_party_feed_host_review_required"
+    source["url"] = "https://www.esa.int/rssfeed/Our_Activities/Space_Science"
+    with pytest.raises(NewsParserError):
+        parse_fixture_items(source, payload)

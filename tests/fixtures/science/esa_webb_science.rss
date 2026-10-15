@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+  <title>ESAWebb News</title>
+  <item>
+    <title>Science Release: Webb measures a distant fast radio burst</title>
+    <link>https://esawebb.org/news/weic2621/</link>
+    <guid>https://esawebb.org/news/weic2621/</guid>
+    <pubDate>Thu, 08 Oct 2026 20:00:00 +0200</pubDate>
+    <description><![CDATA[<img src="https://example.test/no-download.jpg"/>A fast radio burst result.]]></description>
+  </item>
+  <item>
+    <title>Photo Release: Webb captures nebula jets</title>
+    <link>https://esawebb.org/news/weic2620/</link>
+    <pubDate>Tue, 06 Oct 2026 15:00:00 +0200</pubDate>
+  </item>
+</channel></rss>
