@@ -31,6 +31,7 @@ def _source_signals(member: dict[str, Any]) -> dict[str, Any]:
     report = evidence.get("reliefweb_report") or {}
     who = evidence.get("who_don") or {}
     usgs = evidence.get("usgs_earthquake") or {}
+    nhc = evidence.get("nhc_rss") or {}
     identity = evidence.get("global_identity") or {}
     level = str(gdacs.get("alert_level") or "").lower()
     official_severity = {"red": 50, "orange": 35, "green": 12}.get(level, 0)
@@ -44,11 +45,18 @@ def _source_signals(member: dict[str, Any]) -> dict[str, Any]:
             official_severity,
             45 if magnitude >= 7 else 35 if magnitude >= 6 else 20 if magnitude >= 5 else 0,
         )
+    storm_type = str(nhc.get("storm_type") or "").lower()
+    if storm_type == "hurricane":
+        official_severity = max(official_severity, 30)
+    elif storm_type == "tropical storm":
+        official_severity = max(official_severity, 18)
+    nhc_watch = bool(nhc.get("watch_warning_terms"))
     public_impact = max(
         30 if level == "red" else 18 if level == "orange" else 0,
         25 if isinstance(magnitude, (int, float)) and magnitude >= 7 else 0,
         18 if usgs.get("tsunami") is True else 0,
         15 if reliefweb.get("status") in {"current", "alert"} else 0,
+        12 if nhc_watch else 0,
         min(35, max(0, _int(identity.get("public_impact_score")))),
     )
     humanitarian = max(
@@ -56,7 +64,7 @@ def _source_signals(member: dict[str, Any]) -> dict[str, Any]:
         12 if report else 0,
         min(35, max(0, _int(identity.get("humanitarian_impact_score")))),
     )
-    alert = bool(level in {"red", "orange"} or usgs.get("tsunami") is True or
+    alert = bool(nhc_watch or level in {"red", "orange"} or usgs.get("tsunami") is True or
                  reliefweb.get("status") in {"current", "alert"})
     return {
         "official_severity": official_severity,
@@ -185,6 +193,11 @@ def rank_global_event(
             ((member.get("evidence") or {}).get("reliefweb_disaster") or {}).get(
                 "status"
             ) in {"current", "alert"} for member in members
+        ) else None,
+        "NHC advisory watch/warning terms (geography unverified)" if any(
+            ((member.get("evidence") or {}).get("nhc_rss") or {}).get(
+                "watch_warning_terms"
+            ) for member in members
         ) else None,
         "parser-provided impact score" if any(
             identity.get("public_impact_score") for identity in identities

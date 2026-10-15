@@ -1423,12 +1423,12 @@
   },
   {
     "source_key": "nhc_rss",
-    "source_name": "NHC RSS info",
+    "source_name": "NHC Eastern Pacific basin RSS",
     "source_family": "noaa_nhc",
     "source_class": "official_tropical_cyclone",
     "scope": "GLOBAL",
-    "raw_url": "https://www.nhc.noaa.gov/aboutrss.shtml",
-    "expected_access_kind": "official feed docs",
+    "raw_url": "https://www.nhc.noaa.gov/index-ep.xml",
+    "expected_access_kind": "public official RSS feed",
     "adapter": "rss_atom",
     "refresh_interval": "10 min",
     "priority": "85",
@@ -1437,8 +1437,8 @@
     "policy_risk": "low",
     "parser_risk": "medium",
     "retention_sensitivity": "medium",
-    "verification_status": "candidate_needs_verification",
-    "why_it_matters": "Feed discovery for advisories.",
+    "verification_status": "official_feed_seen",
+    "why_it_matters": "Eastern Pacific basin outlook and cyclone advisories; parser filters active storm items.",
     "future_phase": "G7"
   },
   {

@@ -1779,6 +1779,7 @@ def _global_evidence_contract(
     report = evidence.get("reliefweb_report") or {}
     who = evidence.get("who_don") or {}
     usgs = evidence.get("usgs_earthquake") or {}
+    nhc = evidence.get("nhc_rss") or {}
     countries = list(dict.fromkeys([
         *([gdacs["country"]] if gdacs.get("country") else []),
         *(gdacs.get("affected_countries") or []),
@@ -1788,6 +1789,7 @@ def _global_evidence_contract(
     event_type = (
         gdacs.get("event_type") or disaster.get("primary_type")
         or who.get("hazard_label") or usgs.get("event_type")
+        or ("tropical_cyclone" if nhc.get("storm_name") else None)
     )
     regions = [who["geography_label"]] if who.get("geography_label") else (
         [usgs["place"]] if usgs.get("place") else []

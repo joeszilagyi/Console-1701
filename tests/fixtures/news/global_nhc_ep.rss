@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:nhc="https://www.nhc.noaa.gov">
+  <channel>
+    <title>NHC Eastern North Pacific</title>
+    <item>
+      <title>Eastern North Pacific Tropical Weather Outlook</title>
+      <link>https://www.nhc.noaa.gov/gtwo.php?basin=epac</link>
+      <pubDate>Thu, 15 Oct 2026 17:30:39 GMT</pubDate>
+    </item>
+    <item>
+      <title>Summary for Hurricane Trudy (EP1/EP212026)</title>
+      <guid isPermaLink="false">summary-ep212026-202610151739</guid>
+      <pubDate>Thu, 15 Oct 2026 17:39:09 GMT</pubDate>
+      <link>https://www.nhc.noaa.gov/text/refresh/MIATCPEP1+shtml/151739.shtml</link>
+      <description>Hurricane Trudy located over the eastern Pacific.</description>
+      <nhc:Cyclone>
+        <nhc:type>Hurricane</nhc:type><nhc:name>Trudy</nhc:name>
+        <nhc:wallet>EP1</nhc:wallet><nhc:atcf>EP212026</nhc:atcf>
+      </nhc:Cyclone>
+    </item>
+    <item>
+      <title>Hurricane Trudy Public Advisory Number 9a</title>
+      <guid>https://www.nhc.noaa.gov/text/refresh/MIATCPEP1+shtml/151739.shtml</guid>
+      <pubDate>Thu, 15 Oct 2026 17:39:09 GMT</pubDate>
+      <link>https://www.nhc.noaa.gov/text/refresh/MIATCPEP1+shtml/151739.shtml</link>
+      <description>EP212026 &lt;pre&gt;A Tropical Storm Watch is in effect for a section of the coast. This fixture is synthetic.&lt;/pre&gt;</description>
+    </item>
+    <item>
+      <title>Summary for Tropical Storm Simon (EP5/EP202026)</title>
+      <guid isPermaLink="false">summary-ep202026-202610151442</guid>
+      <pubDate>Thu, 15 Oct 2026 14:42:00 GMT</pubDate>
+      <link>https://www.nhc.noaa.gov/text/refresh/MIATCPEP5+shtml/151442.shtml</link>
+      <description>Tropical Storm Simon over the eastern Pacific.</description>
+      <nhc:Cyclone>
+        <nhc:type>Tropical Storm</nhc:type><nhc:name>Simon</nhc:name>
+        <nhc:wallet>EP5</nhc:wallet><nhc:atcf>EP202026</nhc:atcf>
+      </nhc:Cyclone>
+    </item>
+    <item><title>There are no tropical cyclones at this time.</title><link>https://www.nhc.noaa.gov/</link></item>
+  </channel>
+</rss>
