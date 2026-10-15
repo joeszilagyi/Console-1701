@@ -66,6 +66,53 @@ def test_regional_cluster_ranking_uses_independent_families_without_accumulating
     assert first["reasons"] == again["reasons"]
 
 
+def test_regional_ranking_records_alert_stale_geography_and_event_timing() -> None:
+    source = {"scope": "REGIONAL", "priority": 80}
+    item = {
+        "source_published_at": "2026-10-15T06:00:00+00:00",
+        "evidence": {
+            "regional_event": {"confidence": "high", "geography": {"matched": True}},
+            "nws_alert": {
+                "ranking": {"active_alert": True, "total_alert_weight": 40},
+                "expires": "2026-10-16T12:00:00+00:00",
+            },
+        },
+    }
+    seen_at = "2026-10-15T12:00:00+00:00"
+    active = build_rank_result(
+        source, item, seen_at=seen_at, combined_tags=["official"],
+        latest_health_state="stale", repeat_count=0,
+    )
+    expired = build_rank_result(
+        source, {**item, "evidence": {**item["evidence"], "nws_alert": {
+            **item["evidence"]["nws_alert"], "expires": "2026-10-14T12:00:00+00:00",
+        }}}, seen_at=seen_at, combined_tags=["official"],
+        latest_health_state="healthy", repeat_count=0,
+    )
+    rejected = build_rank_result(
+        source, {**item, "evidence": {**item["evidence"], "usgs_earthquake": {
+            "filter": {"matched": False},
+        }}}, seen_at=seen_at, combined_tags=["official"],
+        latest_health_state="healthy", repeat_count=0,
+    )
+    assert active["factors"]["regional_active_alert_bonus"] == 10
+    assert active["factors"]["regional_stale_source_penalty"] == -6
+    assert expired["factors"]["regional_active_alert_bonus"] == 0
+    assert rejected["factors"]["regional_out_of_region_penalty"] == -30
+    assert active["score"] == sum(active["factors"].values())
+    near = apply_regional_cluster_ranking_adjustments(
+        active, family_count=2, same_family_count=1, item_count=2,
+        temporal_proximity_hours=4,
+    )
+    far = apply_regional_cluster_ranking_adjustments(
+        near, family_count=2, same_family_count=1, item_count=2,
+        temporal_proximity_hours=36,
+    )
+    assert near["factors"]["regional_temporal_proximity_bonus"] == 6
+    assert far["factors"]["regional_temporal_proximity_bonus"] == 0
+    assert far["score"] == sum(far["factors"].values())
+
+
 def test_apply_local_event_ranking_adjustments_keeps_score_equal_to_factor_sum() -> None:
     ranking = {
         "score": -40,

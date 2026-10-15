@@ -48,7 +48,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-020** [King County Emergency Feed Parser](../../BACKLOG.md#L787) — official RSS source, bounded item parser, classification/ranking and offline scan verified; live ingest disabled.
 - [x] **RS-021** [County Emergency Alert Source Verification](../../BACKLOG.md#L795) — eight county access paths, feed candidates, risks and fallbacks recorded; no live feed enabled.
 - [ ] **RS-022** [REGIONAL Deterministic Event Correlation](../../BACKLOG.md#L816) — partially implemented.
-- [ ] **RS-023** [REGIONAL Deterministic Ranking](../../BACKLOG.md#L831) — partially implemented.
+- [x] **RS-023** [REGIONAL Deterministic Ranking](../../BACKLOG.md#L831) — implemented for first pass.
 - [x] **RS-024** [REGIONAL Privacy And Public-Impact Rules](../../BACKLOG.md#L846) — completed 2026-10-15; pre-storage address redaction, low-value/outage penalty, official-impact exception, and offline scan test.
 - [x] **RS-025** [REGIONAL UI Disabled States](../../BACKLOG.md#L855) — page/API state matrix and scope-specific social/homepage blocked messaging verified without fetch.
 - [x] **RS-026** [REGIONAL Source Health States](../../BACKLOG.md#L869) — implemented; REGIONAL API/page state matrix test passes.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-023 for admitted REGIONAL sources. Ranking now stores an expiry-bounded active NWS alert boost, explicit stale-source and out-of-region guard terms, and a cross-family publication-time proximity bonus alongside the previously stored recency, severity, priority, geography, impact, privacy, confidence, cluster-size, diversity, and duplicate terms. Offline tests cover active/expired alerts, stale state, out-of-region guard, non-accumulating timing, and end-to-end correlation. Full pytest passed (609 tests); Ruff passed. Progress: 131/150.
 - **2026-10-15:** Completed RS-027. REGIONAL items now persist a versioned source, geography, matching, public-impact, privacy, ranking, timing, retention, health, and policy contract. Event clusters include each member's contract plus pairwise match reasons; page drawers expose them. An offline scan/page/API regression verifies stored values and rendered labels. Full pytest passed (608 tests); Ruff passed. Progress: 130/150.
 - **2026-10-15:** Advanced RS-022. REGIONAL cluster rebuilding now joins independent official reports only when event type, parser-backed geography, three title tokens, and a 48-hour publication window agree; every pair must match. Unverified headlines remain isolated. Pairwise reasons and tokens are stored on item and cluster evidence, with an offline scan regression. Full pytest passed (607 tests); Ruff passed. Progress: 129/150; remaining geography families await source parsers.
 - **2026-10-15:** Completed RS-139 and RS-140 for the current COSMIC source set. The candidate inventory now distinguishes two verified opt-ins from heavy archive blocks, while configured source health remains separate. A GET-only state matrix covers disabled/policy/never-run and all reachable stored health variants; no route fetches. Full pytest passed (604 tests); Ruff passed. Progress: 129/150.
