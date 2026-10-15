@@ -1681,13 +1681,20 @@ social-disabled, and homepage-extraction-disabled outcomes with fetch-run eviden
 
 ### GLOBAL Evidence Drawer Contract
 
-Status: not implemented.
+Status: partially implemented.
 
 Define and test evidence payloads for GLOBAL items and events. Include source ids, names, families,
 classes, item URLs, canonical URLs, official flags, published times, first/last seen, fetch run ids,
 parser names, source health, ranking features, affected countries/regions, public impact basis,
 source diversity basis, retention expiration, matching tokens, event type, event confidence, policy
 notes, sensitivity notes, low-public-value penalty, out-of-scope penalty, and impact tags.
+
+Current state: fixture-ingested GLOBAL items persist a versioned `evidence.global` payload with
+source identity/class/official status, URL and seen/published times, fetch/parser/health context,
+parser-provided geography and event type, policy and sensitivity notes, and explicit unassessed
+values for correlation, impact, and penalty fields. The GLOBAL item drawer displays the contract
+alongside existing retention and ranking evidence. Event-level evidence and assessed correlation,
+confidence, impact, diversity, matching, and penalties remain for RS-078 through RS-080.
 
 ### GLOBAL Official-Source Live Ingest Phase, Disabled By Default
 
