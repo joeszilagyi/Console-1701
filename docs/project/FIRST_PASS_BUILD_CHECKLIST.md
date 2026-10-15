@@ -44,7 +44,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-016** [REGIONAL Fixture Pack](../../BACKLOG.md#L665) — partially implemented.
 - [x] **RS-017** [NWS Alert Parser For Washington](../../BACKLOG.md#L682) — dedicated WA/OR fixture, official county/zone evidence, configurable filters, and offline scan verified.
 - [ ] **RS-018** [WSDOT Traveler API Fixture Parser](../../BACKLOG.md#L697) — partially implemented.
-- [ ] **RS-019** [USGS Earthquake GeoJSON Parser](../../BACKLOG.md#L738) — partially implemented.
+- [x] **RS-019** [USGS Earthquake GeoJSON Parser](../../BACKLOG.md#L738) — official GeoJSON identity, bounded geography/magnitude/radius, event evidence, and fixture scan verified.
 - [ ] **RS-020** [King County Emergency Feed Parser](../../BACKLOG.md#L787) — not implemented.
 - [ ] **RS-021** [County Emergency Alert Source Verification](../../BACKLOG.md#L795) — not implemented.
 - [ ] **RS-022** [REGIONAL Deterministic Event Correlation](../../BACKLOG.md#L816) — partially implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-019. Added optional validated REGIONAL USGS center/radius filtering using great-circle distance, retained distance and geography basis in evidence, and verified parser plus configured scan behavior. Existing official GeoJSON identity, seismic ranking, and exact live-source gate remain intact. Full pytest passed (327 tests); Ruff passed. Progress: 42/150.
 - **2026-10-15:** Completed RS-017 and advanced RS-016. Added a dedicated REGIONAL NWS WA/OR fixture, official UGC/SAME geography evidence, configured county/zone filters, and a scan regression. The broader pack remains open for sources whose machine-readable shapes require verification. Full pytest passed (327 tests); Ruff passed. Progress: 41/150.
 - **2026-10-15:** Completed RS-012. Expanded the shared verification workflow with a per-source signoff record and release gate, linking the existing NWS signoff and FAA/NAS reference-only decision. The record distinguishes documentation, bounded observations, fixture tests, and actual live smoke checks. Progress: 40/150.
 - **2026-10-15:** Completed RS-011 at its first-source boundary. Audited the existing exact NWS Washington allowlist and opt-in command; prior controlled scan evidence recorded successful fetch plus immediate interval skip. Focused offline tests passed (7 tests) for gate, conditional request, interval, retirement, rate limit, and GET isolation. Other candidate endpoints remain disabled. Progress: 39/150.

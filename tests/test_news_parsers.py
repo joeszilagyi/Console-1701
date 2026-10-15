@@ -187,6 +187,24 @@ def test_parse_usgs_regional_geojson_filters_and_preserves_seismic_evidence() ->
     stricter = parse_fixture_items({**source, "min_magnitude": 4.0}, fixture)
     assert len(stricter) == 1
 
+    nearby = parse_fixture_items({
+        **source, "center_latitude": 47.6, "center_longitude": -122.4,
+        "radius_km": 100,
+    }, fixture)
+    assert [item["evidence"]["usgs_earthquake"]["id"] for item in nearby] == [
+        "wa-puget-001"
+    ]
+    radius_filter = nearby[0]["evidence"]["usgs_earthquake"]["filter"]
+    assert radius_filter["geography_basis"] == "configured_radius_and_bounds"
+    assert 0 < radius_filter["distance_km"] < 100
+    with pytest.raises(NewsParserError, match="requires center"):
+        parse_fixture_items({**source, "radius_km": 100}, fixture)
+    with pytest.raises(NewsParserError, match="radius center"):
+        parse_fixture_items({
+            **source, "center_latitude": 47.6, "center_longitude": -122.4,
+            "radius_km": -1,
+        }, fixture)
+
     non_earthquake = json.loads(fixture)
     blast = json.loads(json.dumps(non_earthquake["features"][0]))
     blast["id"] = "wa-quarry-blast"
