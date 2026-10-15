@@ -135,7 +135,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-098** [NASA RSS Parser](../../BACKLOG.md#L1748) — partial: six verified NASA news/Station/Artemis/Kennedy feeds and parser; JPL feed returned 403 and science feed needs a verified RSS endpoint.
 - [x] **RS-099** [ESA RSS Parser](../../BACKLOG.md#L1757) — verified Top News/Human Spaceflight RSS parsers with official links, timing, mission labels, bounded descriptions and routine/reentry filters; live ingest disabled.
 - [ ] **RS-100** [Official Launch Provider Source Verification](../../BACKLOG.md#L1766) — not implemented.
-- [ ] **RS-101** [ISS And Crewed-Spaceflight Source Verification](../../BACKLOG.md#L1775) — not implemented.
+- [x] **RS-101** [ISS And Crewed-Spaceflight Source Verification](../../BACKLOG.md#L1775) — seven agency/feed groups classified, with operational-event rules, current JAXA reference, NASA Commercial Crew RSS candidate, and Spot the Station held as sky-interest reference.
 - [x] **RS-102** [ESA Reentry Source Verification](../../BACKLOG.md#L1801) — ESA guide confirms login for predictions; registry now blocks as auth-required and records machine-endpoint and uncertainty gaps.
 - [x] **RS-103** [NASA Orbital Debris Source Verification](../../BACKLOG.md#L1809) — official program, quarterly PDF index, and reentry methods classified as disabled reference/source-health entries; no event feed claimed.
 - [ ] **RS-104** [ORBITAL Deterministic Event Correlation](../../BACKLOG.md#L1818) — partially implemented; core matcher and stored evidence pass, future adapter identities pending.

@@ -2394,12 +2394,19 @@ and whether homepage extraction is allowed. Keep provider pages disabled by defa
 
 ### ISS And Crewed-Spaceflight Source Verification
 
-Status: not implemented.
+Status: completed 2026-10-15 for first-pass source classification.
 
 Verify NASA Space Station blog, NASA humans-in-space pages, Commercial Crew, ESA ISS, JAXA ISS,
 CSA ISS, Spot the Station, and related crewed-spaceflight sources before implementation. Define
 which signals are recent operational events, mission context, local sky-interest events, or
 source-health-only references.
+
+Current state: `docs/project/ORBITAL_CREWED_SOURCE_VERIFICATION.md` classifies NASA Station/blog
+and ESA Human Spaceflight RSS as verified opt-in sources, NASA Commercial Crew RSS as a parser
+candidate, NASA Humans in Space as context, JAXA and CSA pages as source-health references, and
+Spot the Station as local sky-interest reference rather than a tracking feed. It defines
+operational events, context, source independence, and date/schedule evidence. The registry points
+to the current JAXA page, exact NASA Commercial Crew feed candidate, and honest non-feed states.
 
 ### CelesTrak Public GP Safety Review And Tiny Allowlisted Fixture Parser
 
