@@ -2561,13 +2561,22 @@ fixture scan tests the direct item-detail payload and HTML without GET-time fetc
 
 ### ORBITAL Official-Source Live Ingest Phase, Disabled By Default
 
-Status: not implemented.
+Status: partially implemented.
 
 After fixtures, correlation, ranking, retention, source health, and tests exist, add opt-in live
 ingest for one safe official ORBITAL source at a time. First candidates are SWPC alerts JSON, SWPC
 NOAA scales JSON, SWPC Kp JSON, SWPC aurora JSON, JPL CNEOS close approach API, JPL CNEOS fireball
 API, NASA RSS, ESA RSS, and JPL RSS after verification. Require explicit commands and no page-load
 fetches.
+
+Current state: NOAA SWPC alerts JSON is the first exact allowlisted ORBITAL endpoint. The
+endpoint and HTTP headers were rechecked on 2026-10-15; explicit parent/news/HTTP/source enablement
+and `verification_status: verified` are required. Live alerts outside a 72-hour freshness window
+are discarded, validity and cancellation affect active-alert scoring, and mocked-transport tests
+cover source gates, 200/304 handling, provenance, and offline GET. Registry defaults remain
+disabled and no live app scan was run. Remaining candidates should be admitted one at a time only
+after their endpoint, content type, parser, response size, freshness, and source policy are
+reviewed; JPL RSS remains unverified in this environment.
 
 ### ORBITAL Launch/Event API Ingest Phase, Disabled By Default
 

@@ -24,7 +24,7 @@ def _int(value: Any, default: int = 0) -> int:
         return default
 
 
-def _member_signals(member: dict[str, Any]) -> dict[str, Any]:
+def _member_signals(member: dict[str, Any], observed: datetime | None) -> dict[str, Any]:
     evidence = member.get("evidence") or {}
     source = evidence.get("source") or {}
     identity = evidence.get("orbital_identity") or {}
@@ -43,6 +43,14 @@ def _member_signals(member: dict[str, Any]) -> dict[str, Any]:
         official_severity = max(official_severity, 18)
     if swpc.get("cancelled"):
         official_severity = 0
+    alert_active = bool(safety.get("official_alert"))
+    if swpc and observed:
+        issued = _time(swpc.get("issued_at"))
+        until = _time(swpc.get("valid_until"))
+        alert_active = bool(
+            alert_active and issued and 0 <= (observed - issued).total_seconds() <= 72 * 3600
+            and (until is None or observed <= until)
+        )
     operational = min(25, 5 * len(swpc.get("potential_impacts") or []))
     if safety.get("official_alert"):
         operational = max(operational, 10)
@@ -75,7 +83,7 @@ def _member_signals(member: dict[str, Any]) -> dict[str, Any]:
         "public_impact": public,
         "operational_impact_basis": [value for value in operational_basis if value],
         "public_impact_basis": [value for value in public_basis if value],
-        "active_window": bool(safety.get("official_alert") or
+        "active_window": bool(alert_active or
                               safety.get("official_current_scale") or
                               identity.get("active_launch_window")),
     }
@@ -96,7 +104,7 @@ def rank_orbital_event(
         if observed and latest else 72
     )
     span_hours = int((latest - earliest).total_seconds() // 3600) if latest and earliest else None
-    signals = [_member_signals(member) for member in members]
+    signals = [_member_signals(member, observed) for member in members]
     families = list(group.get("families") or [])
     family_counts = Counter(
         str(signal["source"].get("source_family") or "unknown") for signal in signals
