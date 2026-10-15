@@ -488,6 +488,46 @@ news:
     assert "LOCAL is enabled, but no sources are configured for it." in summary["config_warnings"]
 
 
+def test_regional_evidence_drawers_show_item_and_event_contract(tmp_path, monkeypatch):
+    _use_temp_state(monkeypatch, tmp_path)
+    fixture_url = (FIXTURE_DIR / "local_wsdot_alerts.json").resolve().as_uri()
+    config_path = tmp_path / "regional-evidence.yml"
+    config_path.write_text(f"""
+paths: {{repo_roots: [], explicit_repos: []}}
+news:
+  enabled: true
+  scopes:
+    REGIONAL:
+      enabled: true
+      sources:
+        - id: wsdot_traveler_api
+          enabled: true
+          url: "{fixture_url}"
+""".strip() + "\n", encoding="utf-8")
+    assert run_news_scan(config_path)["item_count"] == 2
+    router = build_router(str(config_path))
+    page = _route_endpoint(router, "/{scope}")(_request("/REGIONAL"), "REGIONAL")
+    body = page.body.decode()
+    scope = _route_endpoint(router, "/api/news/scopes/{scope}")("REGIONAL", 8)
+    item = scope["items"][0]
+    contract = item["evidence"]["regional"]
+    event = scope["clusters"][0]["evidence"]
+
+    assert page.status_code == 200
+    assert "Privacy redaction" in body
+    assert "Source diversity" in body
+    assert "Matching basis" in body
+    assert "Corroborated" in body
+    assert contract["contract_version"] == 1
+    assert contract["source_key"] == "wsdot_traveler_api"
+    assert contract["fetch_run_id"] is not None
+    assert contract["item_url"] == item["url"]
+    assert contract["ranking_features"] == item["evidence"]["ranking"]["factors"]
+    assert contract["retention_expires_at"] == item["expires_at"]
+    assert event["member_evidence"][0]["source_key"] == "wsdot_traveler_api"
+    assert event["correlation"]["item_ids"]
+
+
 def test_news_summary_surfaces_source_state_counts(tmp_path, monkeypatch):
     _use_temp_state(monkeypatch, tmp_path)
     config_path = tmp_path / "config.yml"

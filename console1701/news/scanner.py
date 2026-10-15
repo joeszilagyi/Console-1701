@@ -2056,6 +2056,57 @@ def _national_evidence_contract(
     }
 
 
+def _regional_evidence_contract(
+    source: dict[str, Any],
+    item: dict[str, Any],
+    evidence: dict[str, Any],
+    *,
+    first_seen_at: str,
+    last_seen_at: str,
+) -> dict[str, Any]:
+    event = evidence.get("regional_event") or {}
+    geography = event.get("geography") or {}
+    privacy = evidence.get("privacy") or {}
+    return {
+        "contract_version": 1,
+        "source_key": source["id"],
+        "source_name": source["name"],
+        "source_family": source.get("source_family"),
+        "source_class": source.get("source_class"),
+        "official_status": source.get("official_status"),
+        "item_url": item["url"],
+        "canonical_url": item.get("canonical_url"),
+        "published_at": item.get("source_published_at"),
+        "first_seen_at": first_seen_at,
+        "last_seen_at": last_seen_at,
+        "fetch_run_id": (evidence.get("ingest") or {}).get("fetch_run_id"),
+        "parser": source.get("parser"),
+        "source_health_at_ingest": (evidence.get("ingest") or {}).get(
+            "source_health_state_at_ingest"
+        ),
+        "event_type": event.get("event_type"),
+        "event_confidence": event.get("confidence"),
+        "event_key": event.get("event_key"),
+        "geography_basis": geography.get("basis"),
+        "geography_matched": bool(geography.get("matched")),
+        "geography": geography,
+        "matching_basis": event.get("matching_basis"),
+        "matching_tokens": event.get("matching_tokens") or [],
+        "source_diversity_basis": "not_correlated",
+        "public_impact_basis": event.get("public_impact_basis"),
+        "privacy_redaction_decision": {
+            "redaction_applied": bool(privacy.get("redaction_applied")),
+            "redaction_basis": privacy.get("redaction_basis"),
+            "attention_state": privacy.get("attention_state"),
+            "low_acuity_private": bool(privacy.get("low_acuity_private")),
+            "basis": event.get("privacy_basis"),
+        },
+        "ranking_features": (evidence.get("ranking") or {}).get("factors") or {},
+        "retention_expires_at": (evidence.get("retention") or {}).get("expires_at"),
+        "policy_notes": (evidence.get("policy") or {}).get("notes") or [],
+    }
+
+
 def _humanitarian_evidence_contract(
     source: dict[str, Any],
     item: dict[str, Any],
@@ -2253,6 +2304,14 @@ def _upsert_item(
             evidence["humanitarian"] = _humanitarian_evidence_contract(source, item, evidence)
     elif str(source.get("scope") or "").upper() == "NATIONAL":
         evidence["national"] = _national_evidence_contract(
+            source,
+            item,
+            evidence,
+            first_seen_at=str(existing["first_seen_at"]) if existing else seen_at,
+            last_seen_at=seen_at,
+        )
+    elif str(source.get("scope") or "").upper() == "REGIONAL":
+        evidence["regional"] = _regional_evidence_contract(
             source,
             item,
             evidence,
@@ -2643,6 +2702,26 @@ def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
                     item_count=group["item_count"],
                 )
                 evidence["ranking"] = ranking
+                regional = dict(evidence.get("regional") or {})
+                correlation = group["correlation"] or {}
+                regional["event_key"] = key
+                regional["event_confidence"] = (
+                    "corroborated" if correlation.get("corroborated") else
+                    "source_reported" if (evidence.get("source") or {}).get(
+                        "official_status"
+                    ) == "official" else "unverified"
+                )
+                regional["matching_tokens"] = sorted({
+                    *(regional.get("matching_tokens") or []),
+                    *(token for match in correlation.get("matches") or []
+                      for token in match.get("shared_tokens") or []),
+                })
+                regional["source_diversity_basis"] = (
+                    f"{len(group['families'])} independent official families"
+                    if correlation.get("corroborated") else "not_correlated"
+                )
+                regional["ranking_features"] = ranking["factors"]
+                evidence["regional"] = regional
                 score = int(ranking["score"])
                 group["score"] += score
                 if score > highest_score:
@@ -2662,6 +2741,10 @@ def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
                     "family_count": len(group["families"]),
                     "corroborated": bool((group["correlation"] or {}).get("corroborated")),
                     "correlation": group["correlation"],
+                    "member_evidence": [
+                        {"item_id": member["id"], **(member["evidence"].get("regional") or {})}
+                        for member in group["members"]
+                    ],
                     "duplicate_family_counts": family_counts,
                     "ranking": {
                         "score": group["score"],

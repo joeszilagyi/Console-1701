@@ -52,7 +52,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-024** [REGIONAL Privacy And Public-Impact Rules](../../BACKLOG.md#L846) — completed 2026-10-15; pre-storage address redaction, low-value/outage penalty, official-impact exception, and offline scan test.
 - [x] **RS-025** [REGIONAL UI Disabled States](../../BACKLOG.md#L855) — page/API state matrix and scope-specific social/homepage blocked messaging verified without fetch.
 - [x] **RS-026** [REGIONAL Source Health States](../../BACKLOG.md#L869) — implemented; REGIONAL API/page state matrix test passes.
-- [ ] **RS-027** [REGIONAL Evidence Drawer Contract](../../BACKLOG.md#L883) — partially implemented.
+- [x] **RS-027** [REGIONAL Evidence Drawer Contract](../../BACKLOG.md#L883) — implemented for first pass.
 - [x] **RS-028** [REGIONAL Official-Source Live Ingest Phase](../../BACKLOG.md#L898) — exact NWS, USGS, and WSDOT opt-ins have live checks, offline gates, and no GET fetch; other source admissions remain separate.
 - [x] **RS-029** [Documentation For Source Verification](../../BACKLOG.md#L942) — shared signoff/release gate and REGIONAL geography, privacy and fallback checks linked to worked decisions.
 - [x] **RS-030** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L955) — REGIONAL/SYSTEM state matrix and opt-in HTTP GET no-fetch regression verified.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-027. REGIONAL items now persist a versioned source, geography, matching, public-impact, privacy, ranking, timing, retention, health, and policy contract. Event clusters include each member's contract plus pairwise match reasons; page drawers expose them. An offline scan/page/API regression verifies stored values and rendered labels. Full pytest passed (608 tests); Ruff passed. Progress: 130/150.
 - **2026-10-15:** Advanced RS-022. REGIONAL cluster rebuilding now joins independent official reports only when event type, parser-backed geography, three title tokens, and a 48-hour publication window agree; every pair must match. Unverified headlines remain isolated. Pairwise reasons and tokens are stored on item and cluster evidence, with an offline scan regression. Full pytest passed (607 tests); Ruff passed. Progress: 129/150; remaining geography families await source parsers.
 - **2026-10-15:** Completed RS-139 and RS-140 for the current COSMIC source set. The candidate inventory now distinguishes two verified opt-ins from heavy archive blocks, while configured source health remains separate. A GET-only state matrix covers disabled/policy/never-run and all reachable stored health variants; no route fetches. Full pytest passed (604 tests); Ruff passed. Progress: 129/150.
 - **2026-10-15:** Completed RS-137 for the current COSMIC source set. The pre-storage policy now labels archive metadata updates and unreviewed preprint claims as background, while existing unsupported alien/UFO/rumor language remains blocked. Live Exoplanet Archive scan evidence is checked for the background state. Future literature and social sources remain disabled pending source-specific review. Full pytest passed (603 tests); Ruff passed. Progress: 127/150.

@@ -999,7 +999,7 @@ presentation remains tracked under REGIONAL UI Disabled States.
 
 ### REGIONAL Evidence Drawer Contract
 
-Status: partially implemented.
+Status: implemented for first pass.
 
 Define and test evidence payloads for REGIONAL items and events. Include source ids, names,
 families, classes, item URLs, canonical URLs, official flags, published times, first/last seen,
@@ -1007,10 +1007,14 @@ fetch run ids, parser names, source health, ranking features, geographic match b
 basis, source diversity basis, privacy redaction decision, retention expiration, matching tokens,
 event type, event confidence, and policy notes.
 
-Current state: item evidence now carries official-ID matching, geography basis, public-impact and
-privacy basis, source metadata, ranking, ingest, policy, and retention. Cluster evidence carries
-members, source-family counts, corroboration, and score. The existing drawers expose that JSON.
-Scope-specific display design and full public-impact/privacy explanation remain pending.
+Current state: each stored REGIONAL item now carries a versioned evidence contract with source ID,
+name, family, class, official status, URLs, publication and observation times, fetch run, parser,
+source health, geographic basis/match, event type/confidence, matching basis/tokens, source
+diversity, public-impact basis, privacy-redaction decision, ranking features, retention expiry,
+and policy notes. Cluster evidence stores pairwise match reasons and a contract snapshot for every
+member alongside source-family counts, corroboration, and score. REGIONAL item and cluster drawers
+render those fields. An offline scan/page/API regression verifies persistence and presentation;
+future source parsers must supply their own evidence fields when admitted.
 
 ### REGIONAL Official-Source Live Ingest Phase
 
