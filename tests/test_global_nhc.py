@@ -47,7 +47,7 @@ def test_nhc_basin_feed_empty_and_invalid_cases():
         "</title></item></channel></rss>"
     )
     assert parse_fixture_items(SOURCE, empty) == []
-    with pytest.raises(NewsParserError, match="GLOBAL scope"):
+    with pytest.raises(NewsParserError, match="exact fixture source identity"):
         parse_fixture_items({**SOURCE, "scope": "NATIONAL"}, FIXTURE.read_text())
     with pytest.raises(NewsParserError, match="unknown channel/basin"):
         parse_fixture_items(SOURCE, empty.replace("NHC Atlantic", "Unknown feed"))

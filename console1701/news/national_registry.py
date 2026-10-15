@@ -82,6 +82,9 @@ NATIONAL_AUTH_REQUIRED_SOURCE_KEYS = {
     "congress_api",
     "fred_api_docs",
 }
+NATIONAL_NHC_RSS_KEYS = {
+    "nhc_atlantic_rss", "nhc_eastern_pacific_rss", "nhc_central_pacific_rss",
+}
 _RSS_ADAPTERS = {"rss_atom", "govinfo_rss", "cap_alerts"}
 _API_ADAPTERS = {
     "aviation_status_json_or_xml",
@@ -157,6 +160,7 @@ def _load_registry() -> tuple[dict[str, Any], ...]:
             "nws_active_alerts_api": "nws_alerts_json",
             "usgs_eq_geojson": "usgs_earthquake_geojson",
             "cisa_advisories": "cisa_advisories_rss",
+            **{key: "nhc_basin_rss" for key in NATIONAL_NHC_RSS_KEYS},
         }.get(key)
         entries.append(entry)
     return tuple(entries)
@@ -204,6 +208,8 @@ def national_registry_config_defaults(source_key: str) -> dict[str, Any] | None:
     }
     if entry["parser"]:
         source["parser"] = entry["parser"]
+    if source_key in NATIONAL_NHC_RSS_KEYS:
+        source["official_url"] = entry["raw_url"]
     if source_key in NATIONAL_AUTH_REQUIRED_SOURCE_KEYS:
         source["auth"] = {"api_key": ""}
     return source

@@ -1,7 +1,7 @@
 # NATIONAL NHC advisory feed verification
 
 Checked 2026-10-15 against NHC's official public documentation and bounded basin-feed responses.
-This is source planning only;
+The three basin URLs are now registered as disabled, fixture-only NATIONAL sources;
 no NHC URL is enabled or added to the live HTTP allowlist.
 
 ## Ownership and candidate feeds
@@ -66,8 +66,21 @@ with this sentinel is healthy with zero active storms, not a parser failure.
 - A valid feed with no active cyclone is a healthy empty result. Invalid XML is parser failure;
   authorization failure, rate limiting, and transport failure receive their existing source-health
   states. Never turn a missing active storm into a fabricated alert.
-- Before live admission: create a small synthetic fixture from the observed standard and summary
-  shapes, verify item identity across an update, ignore empty sentinels, add an exact URL allowlist
-  entry, and run a no-page-load fetch regression. The observed feed had no structured U.S.
+- Before live admission: add an exact URL allowlist entry, verify current response/policy and
+  polling backoff, and run a no-page-load fetch regression. The observed feed had no structured U.S.
   watch/warning geography; do not infer it from a storm name or basin. Keep GIS files and homepage
   extraction outside the first text-feed adapter.
+
+## Fixture implementation
+
+The synthetic Eastern Pacific fixture now runs through the NATIONAL parser, alongside Atlantic
+and Central Pacific empty-basin fixtures. Only the matching basin/source pair is accepted; the
+feed must be a local file of at most 64 KiB and 50 entries, without DTD/entities. Admitted
+product links stay within NHC's HTTPS `/text/` tree. The parser retains ATCF IDs, advisory number,
+storm type, issue time, official product URL, and watch/warning terms while omitting the product
+body. A storm type contributes bounded official severity, but basin location and unlocated
+watch/warning terms do not establish U.S. or multi-state impact. Atlantic and Central Pacific
+empty-sentinel fixtures yield healthy scans with no item. A live URL is rejected before HTTP.
+An advisory URL/number revision still groups by the explicit ATCF ID, while a second storm
+stays separate and same-family revisions do not count as independent corroboration.
+Live signoff remains open, including a separate current response and policy review.

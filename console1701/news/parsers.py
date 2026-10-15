@@ -554,6 +554,11 @@ _NHC_BASINS = {
     "NHC Eastern North Pacific": "eastern_pacific",
     "CPHC Central North Pacific": "central_pacific",
 }
+_NHC_NATIONAL_SOURCES = {
+    "nhc_atlantic_rss": ("https://www.nhc.noaa.gov/index-at.xml", "atlantic"),
+    "nhc_eastern_pacific_rss": ("https://www.nhc.noaa.gov/index-ep.xml", "eastern_pacific"),
+    "nhc_central_pacific_rss": ("https://www.nhc.noaa.gov/index-cp.xml", "central_pacific"),
+}
 _NHC_ATCF_RE = re.compile(r"\b(?:AL|EP|CP)\d{2}20\d{2}\b")
 _NHC_ADVISORY_RE = re.compile(
     r"^(?P<storm_type>.+?) (?P<name>[A-Z][A-Za-z0-9-]+) "
@@ -565,8 +570,21 @@ _NHC_WATCH_RE = re.compile(
 
 
 def _parse_nhc_basin_rss(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:
-    if str(source.get("scope") or "").upper() != "GLOBAL":
-        raise NewsParserError("NHC basin RSS parser requires GLOBAL scope.")
+    scope = str(source.get("scope") or "").upper()
+    if scope not in {"GLOBAL", "NATIONAL"}:
+        raise NewsParserError("NHC basin RSS parser requires GLOBAL or NATIONAL scope.")
+    expected = _NHC_NATIONAL_SOURCES.get(str(source.get("id") or "")) if (
+        scope == "NATIONAL"
+    ) else None
+    if scope == "NATIONAL" and (
+        expected is None or source.get("official_url") != expected[0]
+        or not str(source.get("url") or "").startswith("file://")
+    ):
+        raise NewsParserError("NATIONAL NHC parser requires its exact fixture source identity.")
+    if scope == "NATIONAL" and len(payload_text.encode("utf-8")) > 65_536:
+        raise PayloadTooLargeError("NATIONAL NHC fixture exceeds 64 KiB.")
+    if scope == "NATIONAL" and re.search(r"<!\s*(?:DOCTYPE|ENTITY)\b", payload_text, re.I):
+        raise NewsParserError("NATIONAL NHC fixture cannot contain DTD or entities.")
     try:
         root = ET.fromstring(payload_text)
     except ET.ParseError as exc:
@@ -575,7 +593,11 @@ def _parse_nhc_basin_rss(source: dict[str, Any], payload_text: str) -> list[dict
     basin = _NHC_BASINS.get(_element_text(channel.find("./title"))) if channel is not None else None
     if not basin:
         raise NewsParserError("NHC basin RSS fixture has an unknown channel/basin.")
+    if expected and basin != expected[1]:
+        raise NewsParserError("NATIONAL NHC fixture basin does not match its source identity.")
     rows = channel.findall("./item")
+    if scope == "NATIONAL" and len(rows) > 50:
+        raise NewsParserError("NATIONAL NHC fixture exceeds 50 entries.")
     summaries: dict[str, dict[str, str | None]] = {}
     for row in rows:
         title = _element_text(row.find("./title")) or ""
@@ -604,7 +626,11 @@ def _parse_nhc_basin_rss(source: dict[str, Any], payload_text: str) -> list[dict
             parts = urlsplit(url or "")
         except ValueError as exc:
             raise NewsParserError(f"NHC advisory {index} has an invalid URL.") from exc
-        if parts.scheme != "https" or parts.hostname != "www.nhc.noaa.gov":
+        if (parts.scheme != "https" or parts.hostname != "www.nhc.noaa.gov"
+                or (scope == "NATIONAL" and (
+                    not parts.path.startswith("/text/") or parts.query or parts.fragment
+                    or parts.username or parts.password or parts.port
+                ))):
             raise NewsParserError(f"NHC advisory {index} lacks an official HTTPS URL.")
         published = normalize_timestamp(_element_text(row.find("./pubDate")))
         if not published:
@@ -623,7 +649,7 @@ def _parse_nhc_basin_rss(source: dict[str, Any], payload_text: str) -> list[dict
         item = _normalize_item(source, {
             "title": title,
             "url": url,
-            "description": _wsdot_plain_text(raw_description),
+            "description": _wsdot_plain_text(raw_description) if scope == "GLOBAL" else None,
             "published_at": published,
             "tags": ["official", "nhc", "tropical-cyclone", basin],
         }, index=index)
@@ -640,11 +666,16 @@ def _parse_nhc_basin_rss(source: dict[str, Any], payload_text: str) -> list[dict
             "guid": bounded_text(_element_text(row.find("./guid")), max_chars=500),
             "published_at": published,
             "source_url": item["url"],
+            **({"body_stored": False} if scope == "NATIONAL" else {}),
         }
-        item["evidence"]["global_identity"] = {
-            "basin": basin,
-            "storm_id": storm_id,
-        }
+        if scope == "NATIONAL":
+            item["evidence"]["national_identity"] = _nhc_national_identity(
+                basin, storm_id, item["evidence"]["nhc_rss"]["storm_type"]
+            )
+        else:
+            item["evidence"]["global_identity"] = {
+                "basin": basin, "storm_id": storm_id,
+            }
         advisory_urls.add(url or "")
         items.append(item)
     for index, row in enumerate(rows):
@@ -660,12 +691,19 @@ def _parse_nhc_basin_rss(source: dict[str, Any], payload_text: str) -> list[dict
         except ValueError as exc:
             raise NewsParserError(f"NHC summary {index} has an invalid URL.") from exc
         published = normalize_timestamp(_element_text(row.find("./pubDate")))
-        if parts.scheme != "https" or parts.hostname != "www.nhc.noaa.gov" or not published:
+        if (parts.scheme != "https" or parts.hostname != "www.nhc.noaa.gov" or not published
+                or (scope == "NATIONAL" and (
+                    not parts.path.startswith("/text/") or parts.query or parts.fragment
+                    or parts.username or parts.password or parts.port
+                ))):
             raise NewsParserError(f"NHC summary {index} lacks an official URL or time.")
         item = _normalize_item(source, {
             "title": title,
             "url": url,
-            "description": _wsdot_plain_text(_element_text(row.find("./description"))),
+            "description": (
+                _wsdot_plain_text(_element_text(row.find("./description")))
+                if scope == "GLOBAL" else None
+            ),
             "published_at": published,
             "tags": ["official", "nhc", "tropical-cyclone", basin],
         }, index=index)
@@ -675,12 +713,38 @@ def _parse_nhc_basin_rss(source: dict[str, Any], payload_text: str) -> list[dict
             "watch_warning_geography_verified": False,
             "guid": bounded_text(_element_text(row.find("./guid")), max_chars=500),
             "published_at": published, "source_url": item["url"],
+            **({"body_stored": False} if scope == "NATIONAL" else {}),
         }
-        item["evidence"]["global_identity"] = {
-            "basin": basin, "storm_id": summary.get("storm_id"),
-        }
+        if scope == "NATIONAL":
+            item["evidence"]["national_identity"] = _nhc_national_identity(
+                basin, summary.get("storm_id"), summary.get("storm_type")
+            )
+        else:
+            item["evidence"]["global_identity"] = {
+                "basin": basin, "storm_id": summary.get("storm_id"),
+            }
         items.append(item)
     return items
+
+
+def _nhc_national_identity(
+    basin: str, storm_id: str | None, storm_type: str | None
+) -> dict[str, Any]:
+    category = str(storm_type or "").casefold()
+    return {
+        "event_type": "tropical_cyclone",
+        "agency": "NOAA NHC/CPHC",
+        "official_event_ids": [f"nhc:{storm_id}"] if storm_id else [],
+        "storm_basins": [basin],
+        "official_severity_score": (
+            25 if category == "hurricane" else 15 if category == "tropical storm" else 0
+        ),
+        "national_impact": False,
+        "multi_state_impact": False,
+        "impact_scope_basis": (
+            "Basin advisory does not establish U.S. watch/warning geography or impact"
+        ),
+    }
 
 
 _UN_NEWS_LOW_VALUE_PREFIXES = (
