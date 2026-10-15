@@ -7,6 +7,7 @@ from typing import Any
 
 from console1701.config import NEWS_SCOPES, iter_news_sources
 from console1701.db import json_loads
+from console1701.news.global_registry import global_source_registry_summary
 from console1701.news.local_registry import local_source_registry_summary
 from console1701.news.national_registry import national_source_registry_summary
 from console1701.news.regional_registry import regional_source_registry_summary
@@ -97,6 +98,8 @@ def _base_source_state(
     if policy.get("auth_required") and not policy.get("auth_configured"):
         return "auth_required", SOURCE_HEALTH_STATE_MESSAGES["auth_required"]
     if policy.get("social_source_blocked"):
+        if policy.get("scope") == "GLOBAL":
+            return "social_disabled", "GLOBAL social source allowance is disabled."
         if policy.get("scope") == "NATIONAL":
             return "social_disabled", "NATIONAL social source allowance is disabled."
         if policy.get("scope") == "REGIONAL":
@@ -495,6 +498,7 @@ def get_news_storage_summary(conn: sqlite3.Connection, config: dict[str, Any]) -
         "local_registry": get_local_registry_state(conn),
         "regional_registry": get_regional_registry_state(conn),
         "national_registry": get_national_registry_state(conn),
+        "global_registry": get_global_registry_state(conn),
         "scope_states": scope_states,
         "source_state_counts": source_state_counts,
         "failing_source_count": int(
@@ -553,6 +557,10 @@ def get_regional_registry_state(conn: sqlite3.Connection) -> dict[str, Any]:
 
 def get_national_registry_state(conn: sqlite3.Connection) -> dict[str, Any]:
     return _get_source_registry_state(conn, "NATIONAL", national_source_registry_summary())
+
+
+def get_global_registry_state(conn: sqlite3.Connection) -> dict[str, Any]:
+    return _get_source_registry_state(conn, "GLOBAL", global_source_registry_summary())
 
 
 def get_news_sources_status(

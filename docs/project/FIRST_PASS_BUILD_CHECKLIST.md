@@ -90,9 +90,9 @@ Each selected row needs working implementation, relevant verification, and a mat
 
 ### GLOBAL World Recent Signal Layer
 
-- [ ] **RS-059** [GLOBAL Source Registry Design Implementation](../../BACKLOG.md#L1275) — not implemented.
-- [ ] **RS-060** [Disabled-By-Default GLOBAL Config](../../BACKLOG.md#L1285) — not implemented.
-- [ ] **RS-061** [GLOBAL SQLite Schema Or Extension](../../BACKLOG.md#L1296) — not implemented.
+- [x] **RS-059** [GLOBAL Source Registry Design Implementation](../../BACKLOG.md#L1275) — 172 disabled design entries, enum validation, config defaults, SQLite sync, and summary.
+- [x] **RS-060** [Disabled-By-Default GLOBAL Config](../../BACKLOG.md#L1285) — validated inclusion/attention flags and explicit social, auth, heavy-data, homepage, conflict gates.
+- [ ] **RS-061** [GLOBAL SQLite Schema Or Extension](../../BACKLOG.md#L1296) — partial: scoped registry persistence and summary; country/region indexes and purge evidence remain.
 - [ ] **RS-062** [GLOBAL Fixture Pack](../../BACKLOG.md#L1306) — not implemented.
 - [ ] **RS-063** [GDACS Feed Parser](../../BACKLOG.md#L1316) — not implemented.
 - [ ] **RS-064** [GDACS API Fixture Parser](../../BACKLOG.md#L1324) — not implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-059 and RS-060; advanced RS-061. Added 172 disabled GLOBAL design inventory entries, registry metadata validation/persistence, and a disabled policy config with geography/attention settings. Explicit gates cover social, auth-required, heavy open-data, homepage, and high-risk conflict sources. Every inventory entry was checked for config seeding under its explicit policy gates. No GLOBAL HTTP allowlist entry was added. Full pytest passed (257 tests); Ruff passed. Next: continue GLOBAL fixture/parser and storage paths.
 - **2026-10-15:** Completed RS-058. The scanner now records `auth_required` before fixture or official HTTP access when declared credentials are absent. Congress.gov, BEA, FRED, and AirNow API candidates default to a local key requirement; a custom auth source uses the same gate. The regression proves no item or network/fixture read occurs. Full pytest passed (248 tests); Ruff passed. Next: advance NATIONAL evidence/schema work.
 - **2026-10-15:** Completed RS-057. Extended the no-fetch GET regression to NATIONAL page/API and SYSTEM summary using a missing fixture, with scan and official HTTP fetch hooks set to fail. NATIONAL/SYSTEM source-state tests cover disabled/not configured, never-run, healthy, stale, parser failure, policy blocking, auth required, and failing aggregation. Full pytest passed (247 tests); Ruff passed. Next: continue NATIONAL API-key gating and schema evidence.
 - **2026-10-15:** Advanced RS-005, RS-015, and RS-033. Migrated configured `news_sources` to `(scope, source_key)` uniqueness while preserving primary IDs and dependent fetch/item rows. Config accepts the same source key in distinct scopes but still rejects duplicates within one scope; status lookup and live-success checks are scope-aware. A local/NATIONAL fixture scan proves independent ingest under the same documented ID. Full pytest passed (247 tests); Ruff passed. Next: add queryable geographic and agency/sector evidence to the shared schema.

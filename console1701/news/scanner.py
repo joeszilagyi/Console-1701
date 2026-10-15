@@ -9,6 +9,7 @@ from typing import Any
 
 from console1701.config import ensure_state_dirs, iter_news_sources, load_config
 from console1701.db import connect_db, init_db, json_dumps, json_loads, utc_now
+from console1701.news.global_registry import list_global_source_registry
 from console1701.news.local_registry import list_local_source_registry
 from console1701.news.national_registry import list_national_source_registry
 from console1701.news.normalize import cluster_key, content_hash, expires_at, url_hash
@@ -86,6 +87,7 @@ def run_news_scan(config_path: str | Path | None = None) -> dict[str, Any]:
     _sync_local_source_registry(conn, synced_at=sync_time)
     _sync_regional_source_registry(conn, synced_at=sync_time)
     _sync_national_source_registry(conn, synced_at=sync_time)
+    _sync_global_source_registry(conn, synced_at=sync_time)
 
     scanned_sources = 0
     skipped_sources = 0
@@ -344,6 +346,10 @@ def _sync_national_source_registry(conn: sqlite3.Connection, synced_at: str) -> 
     return _sync_source_registry(conn, synced_at, "NATIONAL", list_national_source_registry())
 
 
+def _sync_global_source_registry(conn: sqlite3.Connection, synced_at: str) -> int:
+    return _sync_source_registry(conn, synced_at, "GLOBAL", list_global_source_registry())
+
+
 def _count_rows(conn: sqlite3.Connection, table: str) -> int:
     row = conn.execute(f"SELECT COUNT(*) AS count FROM {table}").fetchone()
     return int(row["count"] if row else 0)
@@ -382,6 +388,8 @@ def _is_allowed_live_source(config: dict[str, Any], source: dict[str, Any]) -> b
         if scope == "REGIONAL"
         else bool((config.get("national") or {}).get("enabled"))
         if scope == "NATIONAL"
+        else bool((config.get("global") or {}).get("enabled"))
+        if scope == "GLOBAL"
         else False
     )
     return (
