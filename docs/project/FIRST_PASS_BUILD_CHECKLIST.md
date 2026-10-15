@@ -82,7 +82,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [x] **RS-051** [NATIONAL Low-Public-Value And Public-Impact Rules](../../BACKLOG.md#L1175) — deterministic suppression/elevation with persisted reasons, syndication dedupe, excluded attention views, and offline tests; new sources must supply explicit evidence.
 - [x] **RS-052** [NATIONAL UI Disabled States](../../BACKLOG.md#L1185) — shared NATIONAL page shows verified disabled/failure states without fake items or fetch.
 - [x] **RS-053** [NATIONAL Source Health States](../../BACKLOG.md#L1194) — shared health and NATIONAL page/API state matrix verified without fetch.
-- [ ] **RS-054** [NATIONAL Evidence Drawer Contract](../../BACKLOG.md#L1203) — not implemented.
+- [x] **RS-054** [NATIONAL Evidence Drawer Contract](../../BACKLOG.md#L1203) — versioned item and event provenance, geography/impact/match/rank/policy/retention fields, rendered drawers, and offline contract test.
 - [ ] **RS-055** [NATIONAL Official-Source Live Ingest Phase](../../BACKLOG.md#L1213) — not implemented.
 - [ ] **RS-056** [Documentation For Source Verification](../../BACKLOG.md#L1240) — partially implemented.
 - [x] **RS-057** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L1253) — NATIONAL/SYSTEM GET and state regressions run without scan, fixture read, or official HTTP fetch.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-054. NATIONAL items and event clusters now persist and render source, URLs, timing, fetch/parser/health, geography basis, match/confidence, public impact, ranking, policy and retention evidence. A read-only fixture test checks the JSON contract and HTML without HTTP. Full pytest passed (363 tests); Ruff passed. Progress: 63/150. Next: source verification and selected live-ingest gates.
 - **2026-10-15:** Completed RS-051. Added deterministic NATIONAL attention classification, official public-impact elevation, economic title allowlist, social/local/routine/opinion/court suppression, and same-article syndication dedupe without false convergence. Suppressed metadata remains auditable but absent from item and cluster attention views. Full pytest passed (362 tests); Ruff passed. Progress: 62/150. Next: NATIONAL evidence drawer and remaining official-source gaps.
 - **2026-10-15:** Completed RS-050. NATIONAL events now use source-evidenced bounded ranking with all named first-pass factors and reasons, including official severity, impact, reach, diversity, temporal and health penalties. Cluster scores no longer sum repeat items; item and cluster evidence show the same score. Full pytest passed (357 tests); Ruff passed. Progress: 61/150. Next: RS-051 policy classification and suppression.
 - **2026-10-15:** Advanced RS-049. NATIONAL cluster rebuild now uses official event identifiers and conservative cross-family context matching across explicit geography/sector fields, title, and time. Match evidence and confidence persist in items/clusters; same-family duplicate campaigns remain uncorroborated. Source-specific mappings and first-pass NATIONAL ranking are open. Full pytest passed (352 tests); Ruff passed. Progress: 60/150. Next: implement RS-050 ranking without duplicate-score inflation.

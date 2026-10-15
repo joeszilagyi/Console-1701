@@ -20,6 +20,7 @@
         {% set source_health = evidence.source_health or {} %}
         {% set local_event = evidence.local_event or {} %}
         {% set global_evidence = evidence.global or {} %}
+        {% set national_evidence = evidence.national or {} %}
         <li class="news-item">
           <div class="news-item-head">
             <a href="{{ item.url }}" target="_blank" rel="noreferrer">{{ item.title }}</a>
@@ -99,6 +100,31 @@
                     <li><b>Impact tags</b><span>{{ global_evidence.impact_tags | join(", ") or "not assessed" }}</span></li>
                     <li><b>Sensitivity notes</b><span>{{ global_evidence.sensitivity_notes | join("; ") or "none recorded" }}</span></li>
                     <li><b>Ranking factors</b><span>{{ ranking.factors | tojson }}</span></li>
+                  </ul>
+                {% endif %}
+                {% if item.scope == "NATIONAL" and national_evidence %}
+                  <div class="news-evidence-grid">
+                    <div><span>Source ID</span><strong>{{ national_evidence.source_key }}</strong></div>
+                    <div><span>Family / class</span><strong>{{ national_evidence.source_family or "unknown" }} / {{ national_evidence.source_class or "unknown" }}</strong></div>
+                    <div><span>Official status</span><strong>{{ national_evidence.official_status or "unverified" }}</strong></div>
+                    <div><span>Parser</span><strong>{{ national_evidence.parser or "unknown" }}</strong></div>
+                    <div><span>Published</span><strong>{{ national_evidence.published_at or "unknown" }}</strong></div>
+                    <div><span>First / last seen</span><strong>{{ national_evidence.first_seen_at }} / {{ national_evidence.last_seen_at }}</strong></div>
+                    <div><span>Event type</span><strong>{{ national_evidence.event_type or "unclassified" }}</strong></div>
+                    <div><span>Event confidence</span><strong>{{ national_evidence.event_confidence or "not assessed" }}</strong></div>
+                    <div><span>States / territories</span><strong>{{ national_evidence.affected_states | join(", ") or "not provided" }} / {{ national_evidence.affected_territories | join(", ") or "not provided" }}</strong></div>
+                    <div><span>Geography basis</span><strong>{{ national_evidence.geography_basis or "not provided" }}</strong></div>
+                    <div><span>Source diversity</span><strong>{{ national_evidence.source_diversity_basis }}</strong></div>
+                    <div><span>Public impact</span><strong>{{ national_evidence.public_impact_basis | join("; ") or "not assessed" }}</strong></div>
+                    <div><span>Low-value / scope penalties</span><strong>{{ national_evidence.low_public_value_penalty }} / {{ national_evidence.out_of_scope_penalty }}</strong></div>
+                    <div><span>Attention</span><strong>{{ national_evidence.attention_state or "background" }}</strong></div>
+                  </div>
+                  <ul class="news-evidence-list">
+                    <li><b>Item URL</b><span>{{ national_evidence.item_url }}</span></li>
+                    <li><b>Canonical URL</b><span>{{ national_evidence.canonical_url or "not provided" }}</span></li>
+                    <li><b>Matching tokens</b><span>{{ national_evidence.matching_tokens | join(", ") or "not correlated" }}</span></li>
+                    <li><b>Policy notes</b><span>{{ national_evidence.policy_notes | join("; ") or "none recorded" }}</span></li>
+                    <li><b>Ranking features</b><span>{{ national_evidence.ranking_features | tojson }}</span></li>
                   </ul>
                 {% endif %}
                 {% if local_event %}
@@ -291,6 +317,7 @@
           {% for cluster in view['clusters'] %}
             {% set cluster_evidence = cluster.evidence or {} %}
             {% set global_event = cluster_evidence.global_event or {} %}
+            {% set national_event = cluster_evidence.national_event or {} %}
             <li>
               <b>{{ cluster.title }}</b>
               <span>{{ cluster.item_count }} item{{ "" if cluster.item_count == 1 else "s" }} · score {{ cluster.score }}</span>
@@ -317,6 +344,33 @@
                     {% endfor %}
                     {% for reason in global_event.ranking.reasons %}
                       <li><b>Rank</b><span>{{ reason }}</span></li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+                {% if view['scope'] == "NATIONAL" and national_event %}
+                  <div class="news-evidence-grid">
+                    <div><span>Event confidence</span><strong>{{ national_event.confidence }}</strong></div>
+                    <div><span>Source families</span><strong>{{ national_event.families | join(", ") or "unknown" }}</strong></div>
+                    <div><span>Affected states</span><strong>{{ national_event.affected_states | join(", ") or "not provided" }}</strong></div>
+                    <div><span>Territories</span><strong>{{ national_event.affected_territories | join(", ") or "not provided" }}</strong></div>
+                    <div><span>Geography basis</span><strong>{{ national_event.geography_basis | join(", ") or "not provided" }}</strong></div>
+                    <div><span>Event types</span><strong>{{ national_event.event_types | join(", ") or "unclassified" }}</strong></div>
+                    <div><span>Source diversity</span><strong>{{ national_event.source_diversity_basis }}</strong></div>
+                    <div><span>Public impact</span><strong>{{ national_event.public_impact_basis | join("; ") or "not assessed" }}</strong></div>
+                    <div><span>Cluster scoring</span><strong>{{ national_event.ranking.method }}</strong></div>
+                    <div><span>Event score</span><strong>{{ national_event.ranking.score }}</strong></div>
+                  </div>
+                  <ul class="news-evidence-list">
+                    <li><b>Matching tokens</b><span>{{ national_event.matching_tokens | join(", ") or "not correlated" }}</span></li>
+                    <li><b>Low-value / scope penalties</b><span>{{ national_event.ranking.factors.low_public_value_penalty }} / {{ national_event.ranking.factors.out_of_scope_penalty }}</span></li>
+                    {% for match in national_event.matches %}
+                      <li><b>Match {{ match.item_ids | join(" + ") }}</b><span>{{ match.basis | join(", ") }}{% if match.shared_tokens %} · tokens {{ match.shared_tokens | join(", ") }}{% endif %}</span></li>
+                    {% endfor %}
+                    {% for reason in national_event.ranking.reasons %}
+                      <li><b>Rank</b><span>{{ reason }}</span></li>
+                    {% endfor %}
+                    {% for member in national_event.member_evidence %}
+                      <li><b>Source {{ member.source_key }}</b><span>{{ member.source_family or "unknown family" }} · {{ member.official_status or "unverified" }} · {{ member.attention_state or "background" }} · fetch {{ member.fetch_run_id or "unknown" }}</span></li>
                     {% endfor %}
                   </ul>
                 {% endif %}

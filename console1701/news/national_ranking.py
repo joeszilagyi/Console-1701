@@ -183,7 +183,7 @@ def rank_national_event(
                 "faa_nas_status", {}).get("events") for m in members)),
             ("Federal Register configured impact filter", any((m.get("evidence") or {}).get(
                 "federal_register") for m in members)),
-            ("configured national impact evidence", any(identity.get(
+            ("explicit national impact evidence", any(identity.get(
                 "public_impact_score") for identity in identities)),
         ) if present],
     }

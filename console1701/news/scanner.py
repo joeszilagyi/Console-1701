@@ -1846,6 +1846,75 @@ def _global_evidence_contract(
     }
 
 
+def _national_evidence_contract(
+    source: dict[str, Any],
+    item: dict[str, Any],
+    evidence: dict[str, Any],
+    *,
+    first_seen_at: str,
+    last_seen_at: str,
+) -> dict[str, Any]:
+    identity = evidence.get("national_identity") or {}
+    nws = evidence.get("nws_alert") or {}
+    usgs = evidence.get("usgs_earthquake") or {}
+    faa = evidence.get("faa_nas_status") or {}
+    states = list(dict.fromkeys([
+        *(identity.get("affected_states") or []),
+        *(nws.get("affected_states") or []),
+    ]))[:30]
+    territories = list(dict.fromkeys(identity.get("affected_territories") or []))[:20]
+    event_type = identity.get("event_type") or (
+        "weather_alert" if nws else "earthquake" if usgs else
+        "vehicle_recall" if evidence.get("nhtsa_recall") else
+        "cyber_vulnerability" if evidence.get("cisa_kev") else
+        "aviation_disruption" if faa else
+        "federal_action" if evidence.get("federal_register") else
+        "federal_publication" if evidence.get("govinfo_publication") else None
+    )
+    geography_basis = (
+        nws.get("geography_basis") if nws else
+        usgs.get("filter", {}).get("geography_basis") if usgs else
+        faa.get("geography_basis") if faa else
+        "configured_identity_fields" if states or territories else "not_provided"
+    )
+    return {
+        "contract_version": 1,
+        "source_key": source["id"],
+        "source_name": source["name"],
+        "source_family": source.get("source_family"),
+        "source_class": source.get("source_class"),
+        "official_status": source.get("official_status"),
+        "item_url": item["url"],
+        "canonical_url": item.get("canonical_url"),
+        "published_at": item.get("source_published_at"),
+        "first_seen_at": first_seen_at,
+        "last_seen_at": last_seen_at,
+        "fetch_run_id": (evidence.get("ingest") or {}).get("fetch_run_id"),
+        "parser": source.get("parser"),
+        "source_health_at_ingest": (evidence.get("ingest") or {}).get(
+            "source_health_state_at_ingest"
+        ),
+        "affected_states": states,
+        "affected_territories": territories,
+        "affected_airports": [faa["airport_code"]] if faa.get("airport_code") else [],
+        "geography_basis": geography_basis,
+        "event_type": event_type,
+        "event_confidence": None,
+        "matching_tokens": [],
+        "source_diversity_basis": "not_correlated",
+        "public_impact_basis": [],
+        "ranking_features": {},
+        "retention_expires_at": (evidence.get("retention") or {}).get("expires_at"),
+        "policy_notes": [
+            *((evidence.get("policy") or {}).get("notes") or []),
+            *((evidence.get("national_policy") or {}).get("reasons") or []),
+        ],
+        "attention_state": (evidence.get("national_policy") or {}).get("attention_state"),
+        "low_public_value_penalty": None,
+        "out_of_scope_penalty": None,
+    }
+
+
 def _humanitarian_evidence_contract(
     source: dict[str, Any],
     item: dict[str, Any],
@@ -2018,6 +2087,14 @@ def _upsert_item(
         )
         if evidence.get("reliefweb_disaster") or evidence.get("reliefweb_report"):
             evidence["humanitarian"] = _humanitarian_evidence_contract(source, item, evidence)
+    elif str(source.get("scope") or "").upper() == "NATIONAL":
+        evidence["national"] = _national_evidence_contract(
+            source,
+            item,
+            evidence,
+            first_seen_at=str(existing["first_seen_at"]) if existing else seen_at,
+            last_seen_at=seen_at,
+        )
     item_rank = int(ranking["score"])
     local_event: dict[str, Any] | None = None
     local_event_id = None
@@ -2478,6 +2555,24 @@ def _rebuild_national_clusters(conn: sqlite3.Connection) -> None:
         )
         for member in members:
             evidence = member["evidence"]
+            contract = dict(evidence.get("national") or {})
+            contract["event_confidence"] = confidence
+            contract["matching_tokens"] = sorted({
+                token for match in group["matches"] for token in match["shared_tokens"]
+            })
+            contract["source_diversity_basis"] = (
+                f"{len(scoring_families)} independent attention families"
+                if scoring_group["corroborated"] else "not_correlated"
+            )
+            contract["public_impact_basis"] = event_ranking["public_impact_basis"]
+            contract["ranking_features"] = event_ranking["factors"]
+            contract["low_public_value_penalty"] = event_ranking["factors"][
+                "low_public_value_penalty"
+            ]
+            contract["out_of_scope_penalty"] = event_ranking["factors"][
+                "out_of_scope_penalty"
+            ]
+            evidence["national"] = contract
             evidence["national_event"] = {
                 **group,
                 "confidence": confidence,
@@ -2513,7 +2608,57 @@ def _rebuild_national_clusters(conn: sqlite3.Connection) -> None:
                 json_dumps({"fixture_only": fixture_only, "national_event": {
                     **group, "confidence": confidence,
                     "ranking": event_ranking,
+                    "geography_basis": sorted({
+                        str(member["evidence"]["national"].get("geography_basis"))
+                        for member in members
+                        if member["evidence"]["national"].get("geography_basis")
+                    }),
+                    "public_impact_basis": event_ranking["public_impact_basis"],
+                    "source_diversity_basis": (
+                        f"{len(scoring_families)} independent attention families"
+                        if scoring_group["corroborated"] else "not_correlated"
+                    ),
+                    "matching_tokens": sorted({
+                        token for match in group["matches"]
+                        for token in match["shared_tokens"]
+                    }),
                     "scoring_item_ids": [member["id"] for member in scoring_members],
+                    "member_evidence": [
+                        {
+                            "item_id": member["id"],
+                            "source_key": member["evidence"]["national"].get("source_key"),
+                            "source_name": member["evidence"]["national"].get("source_name"),
+                            "source_family": member["evidence"]["national"].get("source_family"),
+                            "source_class": member["evidence"]["national"].get("source_class"),
+                            "official_status": member["evidence"]["national"].get(
+                                "official_status"
+                            ),
+                            "item_url": member.get("url"),
+                            "canonical_url": member.get("canonical_url"),
+                            "published_at": member.get("source_published_at"),
+                            "first_seen_at": member.get("first_seen_at"),
+                            "last_seen_at": member.get("last_seen_at"),
+                            "fetch_run_id": member["evidence"]["national"].get("fetch_run_id"),
+                            "parser": member["evidence"]["national"].get("parser"),
+                            "source_health_at_ingest": member["evidence"]["national"].get(
+                                "source_health_at_ingest"
+                            ),
+                            "attention_state": member["evidence"]["national"].get(
+                                "attention_state"
+                            ),
+                            "geography_basis": member["evidence"]["national"].get(
+                                "geography_basis"
+                            ),
+                            "retention_expires_at": member["evidence"]["national"].get(
+                                "retention_expires_at"
+                            ),
+                            "policy_notes": member["evidence"]["national"].get(
+                                "policy_notes"
+                            ),
+                        }
+                        for member in members[:30]
+                    ],
+                    "member_evidence_truncated": len(members) > 30,
                 }}),
             ),
         )
