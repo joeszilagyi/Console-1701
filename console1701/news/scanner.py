@@ -18,6 +18,7 @@ from console1701.news.global_events import correlate_global_items
 from console1701.news.global_ranking import rank_global_event
 from console1701.news.global_registry import list_global_source_registry
 from console1701.news.local_registry import list_local_source_registry
+from console1701.news.national_events import correlate_national_items
 from console1701.news.national_registry import list_national_source_registry
 from console1701.news.normalize import bounded_text, cluster_key, content_hash, expires_at, url_hash
 from console1701.news.official_http import (
@@ -2276,6 +2277,9 @@ def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
     if scope == "GLOBAL":
         _rebuild_global_clusters(conn)
         return
+    if scope == "NATIONAL":
+        _rebuild_national_clusters(conn)
+        return
     rows = conn.execute(
         """
         SELECT id, title, url_hash, first_seen_at, last_seen_at, rank_score,
@@ -2399,6 +2403,77 @@ def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
                 group["score"],
                 json_dumps(group["tags"]),
                 json_dumps(cluster_evidence),
+            ),
+        )
+
+
+def _rebuild_national_clusters(conn: sqlite3.Connection) -> None:
+    rows = conn.execute(
+        """
+        SELECT id, scope, title, source_published_at, first_seen_at, last_seen_at,
+               expires_at, rank_score, tags_json, evidence_json
+        FROM news_items
+        WHERE scope = 'NATIONAL' AND status = 'active' AND expires_at >= ?
+        ORDER BY id
+        """,
+        (datetime.now(UTC).isoformat(timespec="seconds"),),
+    ).fetchall()
+    items = [
+        {**dict(row), "evidence": json_loads(str(row["evidence_json"]), {})}
+        for row in rows
+    ]
+    by_id = {int(item["id"]): item for item in items}
+    conn.execute("DELETE FROM news_clusters WHERE scope = 'NATIONAL'")
+    for group in correlate_national_items(items):
+        members = [by_id[item_id] for item_id in group["item_ids"]]
+        representative = max(
+            members, key=lambda item: (int(item["rank_score"]), item["last_seen_at"], item["id"])
+        )
+        fixture_only = all(
+            bool((member["evidence"].get("ingest") or {}).get("fixture_only"))
+            for member in members
+        )
+        tags = list(dict.fromkeys(
+            tag for member in members for tag in json_loads(str(member["tags_json"]), [])
+        ))
+        confidence = (
+            "corroborated" if group["corroborated"] else
+            "source_reported" if group["identifiers"] else "uncorroborated"
+        )
+        for member in members:
+            evidence = member["evidence"]
+            evidence["national_event"] = {
+                **group,
+                "confidence": confidence,
+                "matching_tokens": sorted({
+                    token for match in group["matches"]
+                    for token in match["shared_tokens"]
+                }),
+            }
+            conn.execute(
+                "UPDATE news_items SET evidence_json = ? WHERE id = ?",
+                (json_dumps(evidence), member["id"]),
+            )
+        conn.execute(
+            """
+            INSERT INTO news_clusters (
+              scope, cluster_key, title, representative_item_id, first_seen_at,
+              last_seen_at, item_count, score, tags_json, evidence_json
+            ) VALUES ('NATIONAL', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                group["event_key"],
+                representative["title"],
+                representative["id"],
+                min(str(member["first_seen_at"]) for member in members),
+                max(str(member["last_seen_at"]) for member in members),
+                len(members),
+                sum(int(member["rank_score"]) for member in members),
+                json_dumps(tags),
+                json_dumps({"fixture_only": fixture_only, "national_event": {
+                    **group, "confidence": confidence,
+                    "ranking_state": "legacy_item_sum_until_RS-050",
+                }}),
             ),
         )
 

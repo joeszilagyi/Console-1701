@@ -1402,7 +1402,17 @@ independent convergence.
 
 ### NATIONAL Deterministic Event Correlation
 
-Status: not implemented.
+Status: partially implemented.
+
+NATIONAL clusters now use official USGS, NWS, NHTSA, CISA KEV, Federal Register, and GovInfo IDs
+where present, plus cautious cross-family matching on event type, explicit state/territory,
+FEMA/NWS region, storm basin, airport, distribution area, infrastructure sector, population group,
+or jurisdiction context, title tokens, and a 72-hour window. Match evidence, families, confidence,
+and identity are persisted in item and cluster JSON. Same-family repeats are not marked
+corroborated; complete-link grouping prevents a broad bridge from merging two incompatible events.
+The currently verified fixture parsers supply only some of these fields, so coverage of all
+specified dimensions and source-specific event mappings remains open. The legacy cluster item
+score sum remains until RS-050. An offline duplicate-campaign scan and synthetic context tests pass.
 
 Implement deterministic NATIONAL event matching by source family, time window, normalized title
 tokens, event type, agency, affected states, affected territories, FEMA region, NWS region, storm
