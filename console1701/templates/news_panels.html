@@ -514,6 +514,9 @@
                     <div><span>Event confidence</span><strong>{{ science_event.confidence }}</strong></div>
                     <div><span>Source families</span><strong>{{ science_event.families | join(", ") or "unknown" }}</strong></div>
                     <div><span>Event type / status</span><strong>{{ science_event.event_type }} / {{ science_event.status }}</strong></div>
+                    {% if science_event.withdrawal_basis %}
+                      <div><span>Withdrawal</span><strong>{{ "Source retraction" if science_event.withdrawal_basis == "source_retraction" else "Retained source retraction" }}</strong></div>
+                    {% endif %}
                     <div><span>Event score</span><strong>{{ science_event.ranking.score }}</strong></div>
                     <div><span>Impact tags</span><strong>{{ science_event.ranking.impact_tags | join(", ") or "none verified" }}</strong></div>
                   </div>

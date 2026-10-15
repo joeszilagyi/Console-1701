@@ -3400,8 +3400,13 @@ and later empty-window scans preserve one item until its seven-day purge and wit
 elevation. A fixture-only GCN notice plus separate Circular now correlates as one event;
 the Circular's retraction forces event and item scores to zero even alongside stronger
 reports. An offline retention sequence keeps that retraction active after the notice
-expires and removes the event when the Circular expires. GCN live transport, a
-retraction-first expiry/re-ingest sequence, and TNS auth/policy work remain open.
+expires and removes the event when the Circular expires. A minimal SQLite withdrawal
+record now retains exact GCN/GraceDB event identifiers for 21 days after the last
+observed retraction; a refreshed initial notice remains withdrawn after its separate
+retraction item expires, while an unrelated event stays active. Expired withdrawal
+records are purged without changing the shared purge-summary contract. GCN live
+transport and TNS auth/policy work remain open. The COSMIC evidence drawer labels
+whether the withdrawal comes from a current source item or a retained source retraction.
 
 ### Heavy Archive Phase, Disabled By Default
 

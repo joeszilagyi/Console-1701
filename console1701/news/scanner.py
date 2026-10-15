@@ -2809,6 +2809,11 @@ def _rebuild_scope_clusters(conn: sqlite3.Connection, scope: str) -> None:
 
 def _rebuild_science_clusters(conn: sqlite3.Connection) -> None:
     now = datetime.now(UTC).isoformat(timespec="seconds")
+    active_withdrawals = {
+        str(row["identifier"]) for row in conn.execute(
+            "SELECT identifier FROM science_withdrawals WHERE expires_at >= ?", (now,)
+        )
+    }
     rows = conn.execute(
         """
         SELECT id, scope, title, source_published_at, first_seen_at, last_seen_at,
@@ -2826,7 +2831,35 @@ def _rebuild_science_clusters(conn: sqlite3.Connection) -> None:
     conn.execute("DELETE FROM news_clusters WHERE scope = 'SYSTEM_SOLAR'")
     for group in correlate_science_items(items):
         members = [by_id[item_id] for item_id in group["item_ids"]]
-        ranking = rank_science_event(group, members, now=now)
+        withdrawal_ids = [
+            identifier for identifier in group["identifiers"]
+            if identifier.startswith(("gcn_event:", "gracedb:"))
+        ]
+        direct_retraction = any(
+            (member["evidence"].get("gcn_notice") or {}).get("status") == "retracted"
+            or (member["evidence"].get("gcn_circular") or {}).get("status") == "retracted"
+            or (member["evidence"].get("gracedb_public_alert") or {}).get("status")
+            == "retracted"
+            for member in members
+        )
+        if direct_retraction:
+            withdrawal_expiry = (datetime.now(UTC) + timedelta(days=21)).isoformat(
+                timespec="seconds"
+            )
+            for identifier in withdrawal_ids:
+                conn.execute(
+                    """INSERT INTO science_withdrawals
+                       (identifier, first_seen_at, last_seen_at, expires_at)
+                       VALUES (?, ?, ?, ?)
+                       ON CONFLICT(identifier) DO UPDATE SET
+                         last_seen_at = excluded.last_seen_at,
+                         expires_at = excluded.expires_at""",
+                    (identifier, now, now, withdrawal_expiry),
+                )
+            active_withdrawals.update(withdrawal_ids)
+        withdrawal_retained = bool(active_withdrawals.intersection(withdrawal_ids))
+        ranked_group = {**group, "withdrawal_retained": withdrawal_retained}
+        ranking = rank_science_event(ranked_group, members, now=now)
         representative = max(
             members, key=lambda member: (
                 int(member["rank_score"]), member["last_seen_at"], member["id"]
@@ -2853,16 +2886,13 @@ def _rebuild_science_clusters(conn: sqlite3.Connection) -> None:
             == "background"
         })
         event_type = group["event_kinds"][0] if group["event_kinds"] else "science_release"
-        status = "retracted" if any(
-            (member["evidence"].get("gcn_notice") or {}).get("status") == "retracted"
-            or (member["evidence"].get("gcn_circular") or {}).get("status") == "retracted"
-            or (member["evidence"].get("gracedb_public_alert") or {}).get("status")
-            == "retracted"
-            for member in members
-        ) else "active"
+        status = "retracted" if direct_retraction or withdrawal_retained else "active"
         event = {
             **group, "confidence": confidence, "fixture_only": fixture_only,
             "event_type": event_type, "status": status, "ranking": ranking,
+            "withdrawal_basis": "source_retraction" if direct_retraction else (
+                "retained_source_retraction" if withdrawal_retained else None
+            ),
             "query_bounds": query_bounds, "policy_flags": flags,
         }
         for member in members:
@@ -3304,6 +3334,10 @@ def purge_news_retention(
         "DELETE FROM science_events WHERE expires_at < ?",
         (cutoffs["items_before"],),
     ).rowcount
+    conn.execute(
+        "DELETE FROM science_withdrawals WHERE expires_at < ?",
+        (cutoffs["items_before"],),
+    )
     deleted_fetch_runs = conn.execute(
         "DELETE FROM news_fetch_runs WHERE started_at < ?",
         (cutoffs["fetch_runs_before"],),

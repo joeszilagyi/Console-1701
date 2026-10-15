@@ -95,7 +95,7 @@ def test_cosmic_fixture_scan_ingests_science_only_without_network(tmp_path, monk
         assert conn.execute("SELECT COUNT(*) FROM science_events").fetchone()[0] == len(events)
 
 
-def test_gcn_cross_source_retraction_survives_other_report_until_purge(tmp_path, monkeypatch):
+def _gcn_retraction_config(tmp_path, monkeypatch):
     path = _config(tmp_path, monkeypatch)
     payload = yaml.safe_load(path.read_text())
     circular = json.loads((FIXTURES / "gcn_circular.json").read_text())
@@ -123,6 +123,11 @@ def test_gcn_cross_source_retraction_survives_other_report_until_purge(tmp_path,
     monkeypatch.setattr("console1701.news.scanner.fetch_official_text", lambda *a, **kw: (
         (_ for _ in ()).throw(AssertionError("GCN fixture scan attempted HTTP"))
     ))
+    return path, payload
+
+
+def test_gcn_cross_source_retraction_survives_other_report_until_purge(tmp_path, monkeypatch):
+    path, _ = _gcn_retraction_config(tmp_path, monkeypatch)
     assert run_news_scan(path)["item_count"] == 2
     config = load_config(path)
     with connect_db(config["_db_path"]) as conn:
@@ -153,6 +158,50 @@ def test_gcn_cross_source_retraction_survives_other_report_until_purge(tmp_path,
         assert purge_news_retention(conn, config)["items"] == 1
         _rebuild_science_clusters(conn)
         assert conn.execute("SELECT COUNT(*) FROM science_events").fetchone()[0] == 0
+
+
+def test_gcn_withdrawal_survives_retraction_expiry_and_initial_reingest(tmp_path, monkeypatch):
+    path, payload = _gcn_retraction_config(tmp_path, monkeypatch)
+    assert run_news_scan(path)["item_count"] == 2
+    config = load_config(path)
+    with connect_db(config["_db_path"]) as conn:
+        assert conn.execute("SELECT COUNT(*) FROM science_withdrawals").fetchone()[0] == 1
+        row = conn.execute("SELECT id, evidence_json FROM news_items").fetchall()
+        circular_id = next(item["id"] for item in row
+                           if "gcn_circular" in json_loads(item["evidence_json"], {}))
+        conn.execute("UPDATE news_items SET expires_at = ? WHERE id = ?",
+                     ("2026-01-01T00:00:00+00:00", circular_id))
+        assert purge_news_retention(conn, config)["items"] == 1
+        _rebuild_science_clusters(conn)
+        event = conn.execute("SELECT status, score, evidence_json FROM science_events").fetchone()
+        assert (event["status"], event["score"]) == ("retracted", 0)
+        assert json_loads(event["evidence_json"], {})[
+            "withdrawal_basis"] == "retained_source_retraction"
+        conn.commit()
+
+    payload["news"]["scopes"]["SYSTEM_SOLAR"]["sources"][1]["enabled"] = False
+    path.write_text(yaml.safe_dump(payload))
+    assert run_news_scan(path)["item_count"] == 1
+    with connect_db(config["_db_path"]) as conn:
+        event = conn.execute("SELECT status, score FROM science_events").fetchone()
+        assert (event["status"], event["score"]) == ("retracted", 0)
+        assert conn.execute("SELECT COUNT(*) FROM science_withdrawals").fetchone()[0] == 1
+
+    other = json.loads((FIXTURES / "gcn_notice.json").read_text())
+    other.update({"event_name": "FRB 20261015B", "id": "261015bbbb"})
+    other_path = tmp_path / "other-gcn-notice.json"
+    other_path.write_text(json.dumps(other))
+    payload["news"]["scopes"]["SYSTEM_SOLAR"]["sources"][0]["url"] = (
+        f"file://{other_path}"
+    )
+    path.write_text(yaml.safe_dump(payload))
+    assert run_news_scan(path)["item_count"] == 1
+    with connect_db(config["_db_path"]) as conn:
+        events = conn.execute("SELECT status, score FROM science_events ORDER BY id").fetchall()
+        assert sorted(event["status"] for event in events) == ["active", "retracted"]
+        assert next(event["score"] for event in events if event["status"] == "active") > 0
+        purge_news_retention(conn, config, now="2026-11-15T00:00:00+00:00")
+        assert conn.execute("SELECT COUNT(*) FROM science_withdrawals").fetchone()[0] == 0
 
 
 @pytest.mark.parametrize("override", [

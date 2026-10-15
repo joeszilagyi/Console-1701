@@ -324,6 +324,16 @@ CREATE TABLE IF NOT EXISTS science_events (
   FOREIGN KEY(representative_item_id) REFERENCES news_items(id) ON DELETE SET NULL
 );
 
+CREATE TABLE IF NOT EXISTS science_withdrawals (
+  identifier TEXT PRIMARY KEY,
+  first_seen_at TEXT NOT NULL,
+  last_seen_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_science_withdrawals_expires
+  ON science_withdrawals(expires_at);
+
 CREATE INDEX IF NOT EXISTS idx_repo_snapshots_repo_time
   ON repo_snapshots(repo_id, scanned_at DESC);
 
