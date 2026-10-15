@@ -1607,9 +1607,10 @@ UN News RSS, UN Press RSS, IAEA RSS, global news RSS, source-health states, disa
 sources, auth-required sources, and parser failures. Fixture ingest must not perform network calls
 and must be safe for pytest.
 
-Current state: checked-in GDACS RSS/API GeoJSON, ReliefWeb disaster/report, and WHO DON fixtures
-exercise offline parser and `news-scan` persistence paths. Remaining source families and
-health/failure variants are pending.
+Current state: checked-in GDACS RSS/API GeoJSON, ReliefWeb disaster/report, WHO DON, ECDC RSS,
+USGS earthquake, NHC RSS, UN News RSS and UN Press RSS fixtures exercise offline parser and
+`news-scan` persistence paths. Smithsonian GVP, IAEA, broader news and remaining health/failure
+variants are pending.
 
 ### GDACS Feed Parser
 
@@ -1790,7 +1791,13 @@ record the observed shape and limitations.
 
 ### UN Press RSS Parser
 
-Status: not implemented.
+Status: implemented for filtered offline fixture ingest; live remains disabled.
+
+The exact official UN Press RSS channel and item fields were checked on 2026-10-15. A dedicated
+GLOBAL parser requires configured active-crisis terms, suppresses routine remarks and schedule
+items, and preserves bounded press metadata, official URL/GUID, publication time, cautious
+title-derived organ label, and institution evidence. Synthetic fixture and offline scan tests
+pass. See `docs/project/GLOBAL_UN_PRESS_RSS_SOURCE_VERIFICATION.md`.
 
 Build a fixture-first UN Press RSS parser with filters for Security Council, General Assembly,
 humanitarian, sanctions, emergency sessions, peacekeeping, and active crisis terms. Preserve title,

@@ -153,6 +153,8 @@ def parse_fixture_items(
         return _parse_govinfo_collection_rss(source, payload_text)
     if parser_name == "fda_recalls_rss":
         return _parse_fda_recalls_rss(source, payload_text)
+    if parser_name == "un_press_rss":
+        return _parse_un_press_rss(source, payload_text)
     if parser_name == "alertseattle_rss":
         return _parse_alertseattle_rss_feed(source, payload_text)
     if parser_name == "metro_rss":
@@ -630,6 +632,95 @@ def _parse_un_news_rss(source: dict[str, Any], payload_text: str) -> list[dict[s
                 "official_institution_source": True,
                 "impact_requires_other_evidence": True,
             },
+        }
+        item["evidence"]["global_identity"] = {"institution": "United Nations"}
+        items.append(item)
+    return items
+
+
+_UN_PRESS_ACTION_TERMS = (
+    "adopts", "adopted", "sanctions", "ceasefire", "emergency session",
+    "humanitarian crisis", "peacekeeping mandate", "resolution",
+)
+_UN_PRESS_LOW_VALUE_RE = re.compile(
+    r"\b(message for|remarks at|to hold|will hold|schedule of|briefing schedule)\b", re.I
+)
+
+
+def _parse_un_press_rss(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:
+    if str(source.get("scope") or "").upper() != "GLOBAL":
+        raise NewsParserError("UN Press RSS parser requires GLOBAL scope.")
+    crisis_terms = [
+        value.casefold()
+        for value in _configured_texts(source.get("active_crisis_terms"), default=[])
+    ]
+    if not crisis_terms:
+        raise NewsParserError("UN Press RSS requires configured active_crisis_terms.")
+    if re.search(r"<!\s*(?:DOCTYPE|ENTITY)\b", payload_text, re.I):
+        raise NewsParserError("UN Press RSS must not contain DTD or entity declarations.")
+    try:
+        root = ET.fromstring(payload_text)
+    except ET.ParseError as exc:
+        raise NewsParserError(f"Malformed UN Press RSS: {exc}") from exc
+    channel = root.find("channel") if root.tag == "rss" else None
+    if channel is None or _element_text(channel.find("title")) != (
+        "UN Meetings Coverage and Press Releases"
+    ):
+        raise NewsParserError("UN Press RSS has an unexpected channel.")
+    items: list[dict[str, Any]] = []
+    seen_urls: set[str] = set()
+    for index, row in enumerate(channel.findall("item")[:100]):
+        title = bounded_text(_wsdot_plain_text(_element_text(row.find("title"))), max_chars=280)
+        url = str(_element_text(row.find("link")) or "").strip()
+        guid = str(_element_text(row.find("guid")) or "").strip()
+        parts = urlsplit(url)
+        if (
+            not title or url != guid or url in seen_urls
+            or parts.scheme != "https" or parts.hostname != "press.un.org"
+            or not parts.path.startswith("/en/")
+        ):
+            raise NewsParserError(f"UN Press RSS item {index} has invalid official identity.")
+        seen_urls.add(url)
+        published = normalize_timestamp(_element_text(row.find("pubDate")))
+        if not published:
+            raise NewsParserError(f"UN Press RSS item {index} lacks publication time.")
+        title_folded = title.casefold()
+        organ = (
+            "security_council" if "security council" in title_folded else
+            "general_assembly" if "general assembly" in title_folded else None
+        )
+        matched_crises = [term for term in crisis_terms if term in title_folded]
+        matched_actions = [term for term in _UN_PRESS_ACTION_TERMS if term in title_folded]
+        if (
+            _UN_PRESS_LOW_VALUE_RE.search(title)
+            or not (organ or "humanitarian" in title_folded or "peacekeeping" in title_folded)
+            or not (matched_crises or matched_actions)
+        ):
+            continue
+        description = bounded_text(
+            _wsdot_plain_text(_element_text(row.find("description"))), max_chars=500
+        )
+        item = _normalize_item(source, {
+            "title": title,
+            "url": url,
+            "description": description,
+            "published_at": published,
+            "tags": ["official", "un-press", "institution", "global"],
+        }, index=index)
+        item["evidence"]["un_press"] = {
+            "organ": organ,
+            "organ_basis": "title_only_unverified" if organ else "not_provided",
+            "matched_crisis_terms": matched_crises[:10],
+            "matched_action_terms": matched_actions[:10],
+            "feed_creator": bounded_text(
+                _element_text(row.find("{http://purl.org/dc/elements/1.1/}creator")),
+                max_chars=100,
+            ),
+            "guid": guid,
+            "source_url": url,
+            "published_at": published,
+            "decision_or_outcome_inferred": False,
+            "body_stored": False,
         }
         item["evidence"]["global_identity"] = {"institution": "United Nations"}
         items.append(item)
