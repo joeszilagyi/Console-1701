@@ -501,7 +501,10 @@ def test_parse_sfd_fire_911_fixture_redacts_low_acuity_private_locations():
         "homepage_url": "https://dev.socrata.com/foundry/data.seattle.gov/kzjm-xkqj",
     }
 
-    items = parse_fixture_items(source, (FIXTURE_DIR / "local_sfd_fire_911.json").read_text())
+    rows = json.loads((FIXTURE_DIR / "local_sfd_fire_911.json").read_text())
+    rows[1]["report_location"]["human_address"] = "9876 15th Ave NW"
+    rows[1]["cross_street"] = "9876 15th Ave NW"
+    items = parse_fixture_items(source, json.dumps(rows))
 
     assert len(items) == 2
     major = items[0]

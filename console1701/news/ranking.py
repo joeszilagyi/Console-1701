@@ -598,14 +598,16 @@ def _local_signal_factors(item: dict[str, Any]) -> dict[str, Any]:
         if bool(spd_blotter.get("preliminary_report")):
             reasons.append("SPD feed marks this as preliminary report context.")
         spd_privacy = spd_blotter.get("privacy")
-        if isinstance(spd_privacy, dict) and bool(spd_privacy.get("low_acuity_private")):
+        if isinstance(spd_privacy, dict) and bool(
+            spd_privacy.get("low_acuity_private") or spd_privacy.get("low_public_value_private")
+        ):
             if factors["local_privacy_penalty"] == 0:
                 factors["local_privacy_penalty"] = -40
                 reasons.append(
-                    "SPD privacy rules subtract 40 for low-acuity private-call evidence."
+                    "SPD privacy rules subtract 40 for private or low-value incident evidence."
                 )
             else:
-                reasons.append("SPD evidence also includes low-acuity privacy suppression.")
+                reasons.append("SPD evidence also includes private-incident suppression.")
 
     sdot_blog = evidence.get("sdot_blog")
     if isinstance(sdot_blog, dict):
@@ -637,9 +639,13 @@ def _local_signal_factors(item: dict[str, Any]) -> dict[str, Any]:
             reasons.append(f"Local-news signal adds {boost}.")
 
     privacy = evidence.get("privacy")
-    if isinstance(privacy, dict) and privacy.get("low_acuity_private"):
+    if isinstance(privacy, dict) and (
+        privacy.get("low_acuity_private") or privacy.get("low_public_value_private")
+    ):
         factors["local_privacy_penalty"] = -40
-        reasons.append("LOCAL privacy rules subtract 40 for low-acuity private-call evidence.")
+        reasons.append(
+            "LOCAL privacy rules subtract 40 for private or low-value incident evidence."
+        )
 
     return {"factors": factors, "reasons": reasons}
 
