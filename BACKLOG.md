@@ -2436,13 +2436,22 @@ behavior.
 
 ### ORBITAL Deterministic Event Correlation
 
-Status: not implemented.
+Status: partially implemented.
 
 Implement deterministic ORBITAL event matching by source family, event type, time window, product
 id, NOAA scale, Kp window, mission name, launch id, launch vehicle, payload, provider, NEO
 designation, CNEOS event id, MPC designation, reentry object, safe satellite identifiers, fireball
 time/location, normalized title tokens, and impact tags. Do not use LLMs, embeddings, or hidden
 cloud calls.
+
+Current state: `orbital_events.py` builds deterministic, complete-link event groups from stored
+ORBITAL identity, type, source family, time, title tokens, and available structured context. The
+scanner persists match basis, member ids, independent families, and confidence in item and cluster
+evidence. Shared official identity can deduplicate same-family records without claiming independent
+corroboration; unrelated event types and observations outside 96 hours stay separate. Fixture
+integration and matcher tests pass. Remaining work: populate mission, launch, Kp, reentry, safe
+satellite, and impact identities in verified future adapters; test their real parsed records; and
+refine cross-product space-weather correlation without joining separate forecast periods.
 
 ### ORBITAL Deterministic Ranking
 

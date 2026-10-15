@@ -138,7 +138,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-101** [ISS And Crewed-Spaceflight Source Verification](../../BACKLOG.md#L1775) — not implemented.
 - [ ] **RS-102** [ESA Reentry Source Verification](../../BACKLOG.md#L1801) — not implemented.
 - [ ] **RS-103** [NASA Orbital Debris Source Verification](../../BACKLOG.md#L1809) — not implemented.
-- [ ] **RS-104** [ORBITAL Deterministic Event Correlation](../../BACKLOG.md#L1818) — not implemented.
+- [ ] **RS-104** [ORBITAL Deterministic Event Correlation](../../BACKLOG.md#L1818) — partially implemented; core matcher and stored evidence pass, future adapter identities pending.
 - [ ] **RS-105** [ORBITAL Deterministic Ranking](../../BACKLOG.md#L1828) — not implemented.
 - [ ] **RS-106** [ORBITAL Safety And Sensitivity Rules](../../BACKLOG.md#L1838) — not implemented.
 - [ ] **RS-107** [ORBITAL Local And Global Impact Tag Rules](../../BACKLOG.md#L1847) — not implemented.
