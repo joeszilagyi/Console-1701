@@ -61,8 +61,8 @@ def test_global_evidence_contract_persists_facts_and_unassessed_fields(tmp_path,
     assert contract["event_confidence"] == "source_reported"
     assert contract["source_diversity_basis"] == "not_correlated"
     assert contract["public_impact_basis"] is None
-    assert contract["low_public_value_penalty"] is None
-    assert contract["out_of_scope_penalty"] is None
+    assert contract["low_public_value_penalty"] == 0
+    assert contract["out_of_scope_penalty"] == 0
     assert contract["matching_tokens"] == []
 
     router = build_router(str(config_path))

@@ -175,8 +175,10 @@ def test_global_scan_stores_shared_id_event_without_duplicate_family_score(tmp_p
         ).fetchall()
     assert len(clusters) == 1
     assert clusters[0]["item_count"] == 2
-    assert clusters[0]["score"] == max(row["rank_score"] for row in rows)
     event = json_loads(clusters[0]["evidence_json"], {})["global_event"]
+    assert clusters[0]["score"] == event["ranking"]["score"]
+    assert event["family_scores"]["gdacs"] == max(row["rank_score"] for row in rows)
+    assert event["ranking"]["factors"]["duplicate_family_penalty"] == 2
     assert event["confidence"] == "source_reported"
     assert event["families"] == ["gdacs"]
     assert event["matches"][0]["basis"] == ["shared_event_id"]
