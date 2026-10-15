@@ -2766,7 +2766,7 @@ verification status, source-health behavior, and future phase fields. Validate e
 every source disabled until explicitly configured.
 
 Current state: `console1701/news/science_registry.json` preserves all 170 source candidates from
-the design table plus four later JPL, ESA Space Science, and ESA Hubble/Webb RSS candidates,
+the design table plus four later RSS candidates and one bounded Exoplanet Archive TAP candidate,
 under the internal `SYSTEM_SOLAR` working name. `science_registry.py` validates
 unique keys, required fields, URL shape, enums, intervals, and priorities, and derives a disabled
 source-health behavior for each candidate. The registry has no parser, route, news scope, or
@@ -2807,8 +2807,9 @@ network calls.
 Current state: `tests/fixtures/science/nasa_jpl_science.rss` covers NASA-hosted JPL astrophysics,
 exoplanet, Earth-only, launch, and nonofficial-link cases. The ESA fixture covers a science
 article, launch, image-only link, and nonofficial host. ESA telescope fixtures cover science
-releases, photo releases, and nonofficial links. The remaining fixture families and
-source-health/policy states are still pending.
+releases, photo releases, and nonofficial links. The tiny Exoplanet Archive JSON fixture covers
+two bounded PS parameter updates. The other fixture families and source-health/policy states
+are still pending.
 
 ### NASA/JPL RSS Parser
 
@@ -2858,12 +2859,20 @@ feed host; the advertised Webb direct URL returned 404, and no redirect bypass i
 
 ### NASA Exoplanet Archive Tiny Metadata Parser
 
-Status: not implemented.
+Status: completed 2026-10-15 for fixture-first tiny PS table metadata.
 
 Build a fixture-first parser for tiny allowlisted NASA Exoplanet Archive metadata responses. Preserve
 planet name, host star, confirmed/candidate status when source-provided, discovery method, update
 time, source URL or query evidence, row cap, and exoplanet ranking features. Reject broad catalog
 downloads.
+
+Current state: `science_exoplanets.py` requires the exact NASA Exoplanet Archive TAP endpoint,
+`ps` table, seven allowlisted columns, default parameter rows, a positive cap of at most ten,
+and a date window of at most seven days. A two-row public probe returned JSON with planet/host,
+method, year, `rowupdate`, and `soltype`; the parser keeps only those fields, records exact
+query bounds, and labels the date as a parameter update rather than a new discovery. Oversized,
+malformed, over-cap, extra-column, and out-of-window fixture data fail closed. The registry
+candidate stays heavy-archive/policy blocked and no live adapter runs.
 
 ### MAST Tiny Metadata Parser
 

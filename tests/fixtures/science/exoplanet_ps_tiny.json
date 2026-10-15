@@ -1,0 +1,20 @@
+[
+  {
+    "pl_name": "TOI-4567 b",
+    "hostname": "TOI-4567",
+    "discoverymethod": "Transit",
+    "disc_year": 2026,
+    "rowupdate": "2026-10-15",
+    "soltype": "Published Confirmed",
+    "default_flag": 1
+  },
+  {
+    "pl_name": "TOI-5696 b",
+    "hostname": "TOI-5696",
+    "discoverymethod": "Transit",
+    "disc_year": 2026,
+    "rowupdate": "2026-10-15",
+    "soltype": "Published Confirmed",
+    "default_flag": 1
+  }
+]
