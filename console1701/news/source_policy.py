@@ -83,6 +83,11 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
         and is_social
         and not bool((config.get("national") or {}).get("include_social_sources"))
     )
+    regional_social_blocked = (
+        scope == "REGIONAL"
+        and is_social
+        and not bool((config.get("regional") or {}).get("allow_social_sources"))
+    )
 
     if is_local_fixture:
         policy_state = "allowed_fixture_only"
@@ -129,6 +134,8 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
             notes.append("LOCAL neighborhood blog allowance is disabled.")
     if national_social_blocked:
         notes.append("NATIONAL social source allowance is disabled.")
+    if regional_social_blocked:
+        notes.append("REGIONAL social source allowance is disabled.")
     for note in source.get("evidence_notes") or []:
         if note not in notes:
             notes.append(str(note))
@@ -159,6 +166,7 @@ def evaluate_source_policy(config: dict[str, Any], source: dict[str, Any]) -> di
         "social_source_blocked": bool(
             (local_policy and local_policy.get("social_source_blocked"))
             or national_social_blocked
+            or regional_social_blocked
         ),
         "local": local_policy,
         "notes": notes,

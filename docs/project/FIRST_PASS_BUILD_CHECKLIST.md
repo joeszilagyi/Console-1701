@@ -39,7 +39,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 ### REGIONAL Pacific Northwest Recent Signal Layer
 
 - [ ] **RS-013** [REGIONAL Source Registry Design Implementation](../../BACKLOG.md#L620) — partially implemented.
-- [ ] **RS-014** [Disabled-By-Default REGIONAL Config](../../BACKLOG.md#L634) — partially implemented.
+- [x] **RS-014** [Disabled-By-Default REGIONAL Config](../../BACKLOG.md#L634) — validated geography/topic flags and explicit social/homepage gates; defaults remain off.
 - [ ] **RS-015** [REGIONAL SQLite Schema Or Extension](../../BACKLOG.md#L649) — partially implemented.
 - [ ] **RS-016** [REGIONAL Fixture Pack](../../BACKLOG.md#L665) — partially implemented.
 - [ ] **RS-017** [NWS Alert Parser For Washington](../../BACKLOG.md#L682) — partially implemented.
@@ -50,7 +50,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-022** [REGIONAL Deterministic Event Correlation](../../BACKLOG.md#L816) — partially implemented.
 - [ ] **RS-023** [REGIONAL Deterministic Ranking](../../BACKLOG.md#L831) — partially implemented.
 - [ ] **RS-024** [REGIONAL Privacy And Public-Impact Rules](../../BACKLOG.md#L846) — not implemented.
-- [ ] **RS-025** [REGIONAL UI Disabled States](../../BACKLOG.md#L855) — partially implemented.
+- [x] **RS-025** [REGIONAL UI Disabled States](../../BACKLOG.md#L855) — page/API state matrix and scope-specific social/homepage blocked messaging verified without fetch.
 - [x] **RS-026** [REGIONAL Source Health States](../../BACKLOG.md#L869) — implemented; REGIONAL API/page state matrix test passes.
 - [ ] **RS-027** [REGIONAL Evidence Drawer Contract](../../BACKLOG.md#L883) — partially implemented.
 - [ ] **RS-028** [REGIONAL Official-Source Live Ingest Phase](../../BACKLOG.md#L898) — partially implemented.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Completed RS-014 and RS-025. Verified REGIONAL defaults, geography/topic flag validation, social and homepage config gates, and page states for disabled/not configured/configured disabled/never run plus blocked and failure outcomes. Added a REGIONAL-specific social-disabled health message. Full pytest passed (245 tests); Ruff passed. Next: address scoped configured-source identity so overlapping LOCAL/NATIONAL source IDs can be used together; then continue broader REGIONAL parser and storage gaps.
 - **2026-10-15:** Advanced RS-036 through official NHC/CPHC documentation. Recorded basin RSS endpoints, advisory timing, storm identity/watch-warning distinctions, health policy, and the remaining need for a bounded official XML fixture. No live source admitted. Next: obtain a verifiable XML shape through the allowed research/fixture path, then implement the parser.
 - **2026-10-15:** Completed RS-031 and advanced RS-033. Added all 227 disabled NATIONAL design inventory entries as checked-in data with enum validation and config defaults. Generalized registry sync/summary across LOCAL, REGIONAL, and NATIONAL; migrated SQLite uniqueness to `(scope, source_key)` so overlapping documented IDs coexist. The inventory is metadata only and does not add a live URL allowlist. Full pytest passed (233 tests); Ruff passed. A wheel build check could not run because setuptools is absent from the local virtual environment; `pyproject.toml` declares the JSON as package data. Next: continue NATIONAL schema/query work.
 - **2026-10-15:** Completed RS-052. Extended page tests to NATIONAL for configured-disabled, not-configured, never-run, stale/failure, and social/homepage-blocked states. Added NATIONAL social-source policy and a scope-specific health message for read-only status. No ingest or page-load fetch is used. Full pytest passed (228 tests); Ruff passed. Next: build NATIONAL registry and storage foundation.

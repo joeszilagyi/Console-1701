@@ -517,7 +517,7 @@ news:
     assert any(source["health_message"] for source in sources)
 
 
-@pytest.mark.parametrize("scope_name", ["LOCAL", "NATIONAL"])
+@pytest.mark.parametrize("scope_name", ["LOCAL", "REGIONAL", "NATIONAL"])
 def test_scope_ui_shows_disabled_source_states_without_fake_headlines(
     tmp_path, monkeypatch, scope_name
 ):
@@ -540,7 +540,7 @@ news:
           kind: local_file_json
           enabled: false
           url: "file:///tmp/disabled.json"
-    REGIONAL:
+    GLOBAL:
       enabled: false
       sources: []
 """
@@ -558,7 +558,7 @@ news:
     assert "Seattle ferry delay at Colman Dock" not in body
 
 
-@pytest.mark.parametrize("scope_name", ["LOCAL", "NATIONAL"])
+@pytest.mark.parametrize("scope_name", ["LOCAL", "REGIONAL", "NATIONAL"])
 def test_scope_ui_shows_not_configured_and_never_run_states(tmp_path, monkeypatch, scope_name):
     _use_temp_state(monkeypatch, tmp_path)
     config_path = tmp_path / "config.yml"
@@ -573,7 +573,7 @@ news:
   scopes:
     LOCAL:
       enabled: true
-    REGIONAL:
+    GLOBAL:
       enabled: true
       sources:
         - id: regional_stub
@@ -806,7 +806,7 @@ news:
         assert state in page.body.decode().lower()
 
 
-@pytest.mark.parametrize("scope_name", ["LOCAL", "NATIONAL"])
+@pytest.mark.parametrize("scope_name", ["LOCAL", "REGIONAL", "NATIONAL"])
 def test_scope_ui_shows_social_and_homepage_disabled_states(tmp_path, monkeypatch, scope_name):
     _use_temp_state(monkeypatch, tmp_path)
     config_path = tmp_path / "config.yml"
@@ -841,6 +841,7 @@ def test_scope_ui_shows_social_and_homepage_disabled_states(tmp_path, monkeypatc
         },
     ]
     config["local"]["allow_social_sources"] = False
+    config["regional"]["allow_social_sources"] = False
     config["national"]["include_social_sources"] = False
     config["news"]["fetch_policy"]["allow_homepage_extractors"] = False
 
@@ -865,6 +866,8 @@ def test_scope_ui_shows_social_and_homepage_disabled_states(tmp_path, monkeypatc
         social_message = (
             "LOCAL social source is blocked until local.allow_social_sources is enabled."
         )
+    elif scope_name == "REGIONAL":
+        social_message = "REGIONAL social source allowance is disabled."
     else:
         social_message = "NATIONAL social source allowance is disabled."
     assert social_message in body

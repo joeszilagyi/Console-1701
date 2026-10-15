@@ -99,6 +99,8 @@ def _base_source_state(
     if policy.get("social_source_blocked"):
         if policy.get("scope") == "NATIONAL":
             return "social_disabled", "NATIONAL social source allowance is disabled."
+        if policy.get("scope") == "REGIONAL":
+            return "social_disabled", "REGIONAL social source allowance is disabled."
         return "social_disabled", SOURCE_HEALTH_STATE_MESSAGES["social_disabled"]
     if policy.get("homepage_extractor_blocked"):
         return "homepage_disabled", SOURCE_HEALTH_STATE_MESSAGES["homepage_disabled"]

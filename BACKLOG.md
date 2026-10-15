@@ -634,7 +634,7 @@ REGIONAL source keys without deleting current entries; a repeat-scan regression 
 
 ### Disabled-By-Default REGIONAL Config
 
-Status: partially implemented.
+Status: implemented.
 
 Add a `regional_sources:` or equivalent REGIONAL config tree that defaults to disabled. Include
 geography flags for Washington, Puget Sound, Cascadia hazards, Oregon relevance, BC relevance,
@@ -642,10 +642,13 @@ transport corridors, wildfire/smoke, seismic/volcano, public health, state gover
 news, and social sources. Reject social sources unless explicitly allowed and reject homepage
 extraction unless a future `allow_homepage_extractors` flag is true.
 
-Current state: the top-level `regional` config tree now defaults to disabled and carries the
-regional geography, social, and homepage-extraction flags needed for later REGIONAL source
-planning. Source normalization rejects REGIONAL social sources unless the local configuration
-explicitly allows them, and homepage extraction stays blocked by default.
+Current state: the top-level `regional` config tree defaults to disabled and carries validated
+Washington, Puget Sound/Cascadia, Oregon/BC relevance, transport, wildfire/smoke, seismic,
+public-health, state-government, regional-news, social, and homepage-extraction settings. Source
+normalization rejects REGIONAL social sources unless `regional.allow_social_sources` is true and
+rejects homepage extraction unless both the regional and shared fetch-policy gates are true. A
+config matrix verifies defaults, type validation, and the two explicit gates. All registry sources
+remain disabled unless individually configured.
 
 ### REGIONAL SQLite Schema Or Extension
 
@@ -855,17 +858,18 @@ facility, or regional labels unless official public-impact evidence requires mor
 
 ### REGIONAL UI Disabled States
 
-Status: partially implemented.
+Status: implemented.
 
 Replace REGIONAL placeholders only after storage/config support exists. Show honest states for
 disabled, not configured, configured but disabled, never scanned, stale, policy blocked, parser
 failed, social disabled, homepage extraction disabled, and manual-review-only sources. Do not show
 fake headlines.
 
-Current state: the shared REGIONAL page and SQLite-backed API render honest source state, items,
-clusters, and evidence drawers. A REGIONAL regression covers disabled, never-run, stale,
-parser-failed, policy-blocked, and manual-review states without fetching. The full state matrix and
-scope-specific presentation remain pending.
+Current state: the shared REGIONAL page and SQLite-backed API render source state, items, clusters,
+and evidence drawers without fetching. Page regressions cover disabled, not configured, configured
+but disabled, never run, stale, parser failure, policy blocking, social disabled, homepage disabled,
+and manual-review states. REGIONAL social sources receive a scope-specific blocked message. Empty
+states show no fabricated headline.
 
 ### REGIONAL Source Health States
 

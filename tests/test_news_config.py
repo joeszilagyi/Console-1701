@@ -323,6 +323,69 @@ def test_regional_defaults_can_seed_nws_source(tmp_path):
     assert source["verification_status"] == "verified"
 
 
+@pytest.mark.parametrize(
+    "flag",
+    [
+        "include_oregon_when_relevant",
+        "include_bc_when_relevant",
+        "include_transport_corridors",
+        "include_wildfire_smoke",
+        "include_seismic_volcano",
+        "include_public_health",
+        "include_state_government",
+        "include_regional_news",
+    ],
+)
+def test_regional_geography_and_topic_flags_are_validated(tmp_path, flag):
+    config = load_config(_write_config(tmp_path / "valid.yml", "regional: {}"))
+    assert config["regional"]["enabled"] is False
+    assert config["regional"]["primary_region"] == "Washington"
+    assert {"Puget Sound", "Cascadia"} <= set(config["regional"]["secondary_regions"])
+    assert config["regional"][flag] is True
+
+    with pytest.raises(ConfigError, match=f"regional.{flag}"):
+        load_config(_write_config(tmp_path / "invalid.yml", f"regional: {{{flag}: maybe}}"))
+
+
+def test_regional_social_and_homepage_sources_require_explicit_gates(tmp_path):
+    social_config = """
+        news:
+          scopes:
+            REGIONAL:
+              sources:
+                - {id: regional_social, name: Regional social, kind: rss,
+                   source_class: social_candidate}
+    """
+    with pytest.raises(ConfigError, match="regional.allow_social_sources true"):
+        load_config(_write_config(tmp_path / "social-blocked.yml", social_config))
+    social_allowed = load_config(
+        _write_config(
+            tmp_path / "social-allowed.yml",
+            "regional: {allow_social_sources: true}\n" + dedent(social_config),
+        )
+    )
+    assert iter_news_sources(social_allowed)[0]["enabled"] is False
+
+    homepage_config = """
+        news:
+          fetch_policy: {allow_homepage_extractors: true}
+          scopes:
+            REGIONAL:
+              sources:
+                - {id: regional_home, name: Regional homepage,
+                   kind: homepage_headlines}
+    """
+    with pytest.raises(ConfigError, match="regional.allow_homepage_extractors true"):
+        load_config(_write_config(tmp_path / "homepage-blocked.yml", homepage_config))
+    homepage_allowed = load_config(
+        _write_config(
+            tmp_path / "homepage-allowed.yml",
+            "regional: {allow_homepage_extractors: true}\n" + dedent(homepage_config),
+        )
+    )
+    assert iter_news_sources(homepage_allowed)[0]["enabled"] is False
+
+
 def test_local_rejects_neighborhood_blog_without_explicit_allowance(tmp_path):
     with pytest.raises(ConfigError, match="local.allow_neighborhood_blogs true"):
         load_config(
