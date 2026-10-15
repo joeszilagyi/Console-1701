@@ -43,6 +43,38 @@ def test_national_nws_fixture_preserves_territory_and_official_instructions() ->
     assert wind["instruction_url"] is None
 
 
+def test_national_usgs_fixture_filters_geography_and_magnitude() -> None:
+    source = {
+        "id": "usgs_national_fixture",
+        "scope": "NATIONAL",
+        "kind": "api_json",
+        "parser": "usgs_earthquake_geojson",
+    }
+    fixture = (
+        Path(__file__).resolve().parent / "fixtures/news/national_usgs_earthquakes.json"
+    ).read_text()
+    items = parse_fixture_items(source, fixture)
+
+    assert [item["evidence"]["usgs_earthquake"]["id"] for item in items] == [
+        "national-ca-001", "national-ak-002", "national-pr-003"
+    ]
+    assert [item["evidence"]["usgs_earthquake"]["filter"]["region"] for item in items] == [
+        "contiguous_us", "alaska", "puerto_rico_usvi"
+    ]
+    assert all(item["evidence"]["usgs_earthquake"]["filter"]["min_magnitude"] == 5.0
+               for item in items)
+    assert all(item["evidence"]["usgs_earthquake"]["filter"]["geography_basis"]
+               == "coarse_us_region_coordinates" for item in items)
+    assert items[0]["evidence"]["usgs_earthquake"]["felt"] == 247
+    assert items[0]["evidence"]["usgs_earthquake"]["depth_km"] == 12.7
+    assert all("national" in item["tags"] for item in items)
+
+    stricter = parse_fixture_items({**source, "min_magnitude": 5.5}, fixture)
+    assert len(stricter) == 1
+    with pytest.raises(NewsParserError, match="finite nonnegative"):
+        parse_fixture_items({**source, "min_magnitude": float("nan")}, fixture)
+
+
 def test_wsdot_official_rss_preserves_ids_and_strips_embedded_markup() -> None:
     source = {
         "id": "wsdot_highway_alerts_rss",

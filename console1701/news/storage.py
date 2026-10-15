@@ -8,6 +8,7 @@ from typing import Any
 from console1701.config import NEWS_SCOPES, iter_news_sources
 from console1701.db import json_loads
 from console1701.news.local_registry import local_source_registry_summary
+from console1701.news.national_registry import national_source_registry_summary
 from console1701.news.regional_registry import regional_source_registry_summary
 from console1701.news.source_policy import evaluate_source_policy
 
@@ -96,6 +97,10 @@ def _base_source_state(
     if policy.get("auth_required") and not policy.get("auth_configured"):
         return "auth_required", SOURCE_HEALTH_STATE_MESSAGES["auth_required"]
     if policy.get("social_source_blocked"):
+        if policy.get("scope") == "NATIONAL":
+            return "social_disabled", "NATIONAL social source allowance is disabled."
+        if policy.get("scope") == "REGIONAL":
+            return "social_disabled", "REGIONAL social source allowance is disabled."
         return "social_disabled", SOURCE_HEALTH_STATE_MESSAGES["social_disabled"]
     if policy.get("homepage_extractor_blocked"):
         return "homepage_disabled", SOURCE_HEALTH_STATE_MESSAGES["homepage_disabled"]
@@ -489,6 +494,7 @@ def get_news_storage_summary(conn: sqlite3.Connection, config: dict[str, Any]) -
         "config_warnings": config_warnings,
         "local_registry": get_local_registry_state(conn),
         "regional_registry": get_regional_registry_state(conn),
+        "national_registry": get_national_registry_state(conn),
         "scope_states": scope_states,
         "source_state_counts": source_state_counts,
         "failing_source_count": int(
@@ -499,93 +505,64 @@ def get_news_storage_summary(conn: sqlite3.Connection, config: dict[str, Any]) -
     }
 
 
-def get_local_registry_state(conn: sqlite3.Connection) -> dict[str, Any]:
+def _get_source_registry_state(
+    conn: sqlite3.Connection, scope: str, fallback: dict[str, Any]
+) -> dict[str, Any]:
     try:
         rows = conn.execute(
-            "SELECT * FROM news_source_registry WHERE scope = 'LOCAL'",
+            "SELECT * FROM news_source_registry WHERE scope = ?", (scope,)
         ).fetchall()
     except sqlite3.OperationalError:
-        return local_source_registry_summary()
+        return fallback
 
     if not rows:
-        return local_source_registry_summary()
+        return fallback
 
-    source_count = 0
     source_classes: dict[str, int] = {}
     future_phases: dict[str, int] = {}
     official_status_counts: dict[str, int] = {}
     verification_status_counts: dict[str, int] = {}
-
     for row in rows:
-        source_count += 1
-        source_classes[str(row["source_class"])] = (
-            source_classes.get(str(row["source_class"]), 0) + 1
-        )
-        future_phases[str(row["future_phase"])] = future_phases.get(str(row["future_phase"]), 0) + 1
-        official_status_counts[str(row["official_status"])] = (
-            official_status_counts.get(str(row["official_status"]), 0) + 1
-        )
-        verification_status_counts[str(row["verification_status"])] = (
-            verification_status_counts.get(str(row["verification_status"]), 0) + 1
-        )
+        for counts, key in (
+            (source_classes, "source_class"),
+            (future_phases, "future_phase"),
+            (official_status_counts, "official_status"),
+            (verification_status_counts, "verification_status"),
+        ):
+            value = str(row[key])
+            counts[value] = counts.get(value, 0) + 1
 
     return {
-        "scope": "LOCAL",
-        "enabled_by_default": bool(any(bool(int(row["enabled_by_default"])) for row in rows)),
-        "source_count": source_count,
+        "scope": scope,
+        "enabled_by_default": any(bool(int(row["enabled_by_default"])) for row in rows),
+        "source_count": len(rows),
         "source_class_counts": source_classes,
         "future_phase_counts": future_phases,
         "official_status_counts": official_status_counts,
         "verification_status_counts": verification_status_counts,
     }
+
+
+def get_local_registry_state(conn: sqlite3.Connection) -> dict[str, Any]:
+    return _get_source_registry_state(conn, "LOCAL", local_source_registry_summary())
 
 
 def get_regional_registry_state(conn: sqlite3.Connection) -> dict[str, Any]:
-    try:
-        rows = conn.execute(
-            "SELECT * FROM news_source_registry WHERE scope = 'REGIONAL'",
-        ).fetchall()
-    except sqlite3.OperationalError:
-        return regional_source_registry_summary()
+    return _get_source_registry_state(conn, "REGIONAL", regional_source_registry_summary())
 
-    if not rows:
-        return regional_source_registry_summary()
 
-    source_count = 0
-    source_classes: dict[str, int] = {}
-    future_phases: dict[str, int] = {}
-    official_status_counts: dict[str, int] = {}
-    verification_status_counts: dict[str, int] = {}
-
-    for row in rows:
-        source_count += 1
-        source_classes[str(row["source_class"])] = (
-            source_classes.get(str(row["source_class"]), 0) + 1
-        )
-        future_phases[str(row["future_phase"])] = future_phases.get(str(row["future_phase"]), 0) + 1
-        official_status_counts[str(row["official_status"])] = (
-            official_status_counts.get(str(row["official_status"]), 0) + 1
-        )
-        verification_status_counts[str(row["verification_status"])] = (
-            verification_status_counts.get(str(row["verification_status"]), 0) + 1
-        )
-
-    return {
-        "scope": "REGIONAL",
-        "enabled_by_default": bool(any(bool(int(row["enabled_by_default"])) for row in rows)),
-        "source_count": source_count,
-        "source_class_counts": source_classes,
-        "future_phase_counts": future_phases,
-        "official_status_counts": official_status_counts,
-        "verification_status_counts": verification_status_counts,
-    }
+def get_national_registry_state(conn: sqlite3.Connection) -> dict[str, Any]:
+    return _get_source_registry_state(conn, "NATIONAL", national_source_registry_summary())
 
 
 def get_news_sources_status(
     conn: sqlite3.Connection,
     config: dict[str, Any],
 ) -> list[dict[str, Any]]:
-    stored_by_key = {source["source_key"]: source for source in list_news_sources(conn)}
+    stored_by_key = {
+        (source["scope"], source["source_key"]): source
+        for source in list_news_sources(conn)
+    }
     latest_fetch = _latest_fetch_runs_by_source(conn)
     recent_fetch = _recent_fetch_runs_by_source(conn)
     latest_health = _latest_health_by_source(conn)
@@ -594,7 +571,7 @@ def get_news_sources_status(
 
     for source in iter_news_sources(config):
         policy = evaluate_source_policy(config, source)
-        stored = stored_by_key.get(source["id"])
+        stored = stored_by_key.get((source["scope"], source["id"]))
         stored_id = int(stored["id"]) if stored else None
         fetch = latest_fetch.get(stored_id) if stored_id is not None else None
         health = latest_health.get(stored_id) if stored_id is not None else None

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from math import isfinite
 from pathlib import Path
 from typing import Any
 
@@ -151,6 +152,35 @@ DEFAULT_REGIONAL_CONFIG: dict[str, Any] = {
     "allow_homepage_extractors": False,
 }
 
+DEFAULT_NATIONAL_CONFIG: dict[str, Any] = {
+    "enabled": False,
+    "default_place_label": "United States",
+    "include_federal_alerts": True,
+    "include_weather_hazards": True,
+    "include_disasters": True,
+    "include_public_health": True,
+    "include_recalls": True,
+    "include_transportation": True,
+    "include_aviation": True,
+    "include_cybersecurity": True,
+    "include_energy_grid": True,
+    "include_economic_releases": True,
+    "include_federal_register": True,
+    "include_congress": False,
+    "include_courts": False,
+    "include_national_news": True,
+    "include_social_sources": False,
+    "include_state_events_when_national_impact": True,
+    "earthquake_min_magnitude": 5.0,
+    "hurricane_attention_minimum": "watch",
+    "severe_weather_attention_minimum": "warning",
+    "wildfire_national_attention_min_acres": 1000,
+    "recall_attention_classes": ["Class I", "high_public_impact"],
+    "cyber_attention_minimum": [
+        "known_exploited", "emergency_directive", "high_impact_advisory"
+    ],
+}
+
 DEFAULT_NEWS_CONFIG: dict[str, Any] = {
     "enabled": False,
     "retention": {
@@ -245,6 +275,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     },
     "regional": DEFAULT_REGIONAL_CONFIG,
     "local": DEFAULT_LOCAL_CONFIG,
+    "national": DEFAULT_NATIONAL_CONFIG,
     "news": DEFAULT_NEWS_CONFIG,
     "projects": [
         {
@@ -373,6 +404,7 @@ def normalize_config(config: dict[str, Any]) -> None:
 
     normalize_local_config(config)
     normalize_regional_config(config)
+    normalize_national_config(config)
     normalize_news_config(config)
 
 
@@ -448,7 +480,7 @@ def _normalize_optional_keyword(
 
 
 def _apply_scope_registry_defaults(source_cfg: dict[str, Any], scope: str) -> dict[str, Any]:
-    if scope not in {"LOCAL", "REGIONAL"}:
+    if scope not in {"LOCAL", "REGIONAL", "NATIONAL"}:
         return source_cfg
     source_key = str(source_cfg.get("id") or "").strip()
     if not source_key:
@@ -457,10 +489,14 @@ def _apply_scope_registry_defaults(source_cfg: dict[str, Any], scope: str) -> di
         from console1701.news.local_registry import local_registry_config_defaults
 
         defaults = local_registry_config_defaults(source_key)
-    else:
+    elif scope == "REGIONAL":
         from console1701.news.regional_registry import regional_registry_config_defaults
 
         defaults = regional_registry_config_defaults(source_key)
+    else:
+        from console1701.news.national_registry import national_registry_config_defaults
+
+        defaults = national_registry_config_defaults(source_key)
     if not defaults:
         return source_cfg
     return deep_merge(defaults, source_cfg)
@@ -534,6 +570,40 @@ def normalize_regional_config(config: dict[str, Any]) -> None:
         "regional.hazard_radius_miles",
         minimum=0,
     )
+
+
+def normalize_national_config(config: dict[str, Any]) -> None:
+    national = _require_mapping(
+        config.setdefault("national", deepcopy(DEFAULT_NATIONAL_CONFIG)), "national"
+    )
+    national["enabled"] = _coerce_bool(national.get("enabled", False), "national.enabled")
+    national["default_place_label"] = _require_string(
+        national.get("default_place_label", "United States"),
+        "national.default_place_label",
+    )
+    for key, default in DEFAULT_NATIONAL_CONFIG.items():
+        if key.startswith("include_"):
+            national[key] = _coerce_bool(national.get(key, default), f"national.{key}")
+    national["earthquake_min_magnitude"] = _coerce_float(
+        national.get("earthquake_min_magnitude", 5.0),
+        "national.earthquake_min_magnitude", minimum=0.0,
+    )
+    if not isfinite(national["earthquake_min_magnitude"]):
+        raise ConfigError("national.earthquake_min_magnitude must be finite.")
+    national["wildfire_national_attention_min_acres"] = _coerce_int(
+        national.get("wildfire_national_attention_min_acres", 1000),
+        "national.wildfire_national_attention_min_acres", minimum=0,
+    )
+    for key, allowed in (
+        ("hurricane_attention_minimum", {"watch", "warning"}),
+        ("severe_weather_attention_minimum", {"advisory", "watch", "warning"}),
+    ):
+        value = _require_string(national.get(key), f"national.{key}").lower()
+        if value not in allowed:
+            raise ConfigError(f"national.{key} must be one of: {', '.join(sorted(allowed))}.")
+        national[key] = value
+    for key in ("recall_attention_classes", "cyber_attention_minimum"):
+        national[key] = _normalize_string_list(national.get(key), f"national.{key}")
 
 
 def _normalize_local_source_metadata(
@@ -630,15 +700,17 @@ def _normalize_news_source(
     allow_homepage_extractors: bool,
     local_cfg: dict[str, Any],
     regional_cfg: dict[str, Any],
-    seen_source_keys: set[str],
+    national_cfg: dict[str, Any],
+    seen_source_keys: set[tuple[str, str]],
 ) -> dict[str, Any]:
     path = f"news.scopes.{scope}.sources[{index}]"
     source_cfg = _require_mapping(source, path)
 
     source_key = _require_string(source_cfg.get("id"), f"{path}.id")
-    if source_key in seen_source_keys:
-        raise ConfigError(f"Duplicate news source id: {source_key}")
-    seen_source_keys.add(source_key)
+    scoped_key = (scope, source_key)
+    if scoped_key in seen_source_keys:
+        raise ConfigError(f"Duplicate news source id within {scope}: {source_key}")
+    seen_source_keys.add(scoped_key)
 
     source_cfg = _apply_scope_registry_defaults(source_cfg, scope)
     source_cfg["id"] = source_key
@@ -665,6 +737,44 @@ def _normalize_news_source(
         _normalize_local_source_metadata(source_cfg, path=path, local_cfg=local_cfg)
     if source_scope == "REGIONAL":
         _normalize_regional_source_metadata(source_cfg, path=path, regional_cfg=regional_cfg)
+    if source_scope == "NATIONAL":
+        from console1701.news.national_registry import (
+            NATIONAL_ADAPTER_TYPES,
+            NATIONAL_OFFICIAL_STATUSES,
+            NATIONAL_RISK_LEVELS,
+            NATIONAL_SOURCE_CLASSES,
+            NATIONAL_VERIFICATION_STATUSES,
+        )
+
+        _normalize_optional_keyword(source_cfg, "source_family", path)
+        _normalize_optional_keyword(
+            source_cfg, "source_class", path, allowed=NATIONAL_SOURCE_CLASSES
+        )
+        _normalize_optional_keyword(source_cfg, "adapter", path, allowed=NATIONAL_ADAPTER_TYPES)
+        _normalize_optional_keyword(
+            source_cfg, "official_status", path, allowed=NATIONAL_OFFICIAL_STATUSES
+        )
+        _normalize_optional_keyword(
+            source_cfg,
+            "verification_status",
+            path,
+            allowed=NATIONAL_VERIFICATION_STATUSES,
+        )
+        for key in ("privacy_risk", "policy_risk", "parser_risk", "retention_sensitivity"):
+            _normalize_optional_keyword(source_cfg, key, path, allowed=NATIONAL_RISK_LEVELS)
+        if str(source_cfg.get("parser") or "").strip().lower() == "usgs_earthquake_geojson":
+            source_cfg.setdefault(
+                "min_magnitude", national_cfg["earthquake_min_magnitude"]
+            )
+        source_family = str(source_cfg.get("source_family") or "").strip().lower()
+        source_class = str(source_cfg.get("source_class") or "").strip().lower()
+        if (
+            source_class == "social_candidate" or source_family in LOCAL_SOCIAL_SOURCE_FAMILIES
+        ) and not national_cfg["include_social_sources"]:
+            raise ConfigError(
+                f"{path} is a NATIONAL social source; set "
+                "national.include_social_sources true first."
+            )
 
     source_cfg["enabled"] = _coerce_bool(source_cfg.get("enabled", False), f"{path}.enabled")
     source_cfg["priority"] = _coerce_int(source_cfg.get("priority", 50), f"{path}.priority")
@@ -709,6 +819,10 @@ def normalize_news_config(config: dict[str, Any]) -> None:
     regional_cfg = _require_mapping(
         config.setdefault("regional", deepcopy(DEFAULT_REGIONAL_CONFIG)),
         "regional",
+    )
+    national_cfg = _require_mapping(
+        config.setdefault("national", deepcopy(DEFAULT_NATIONAL_CONFIG)),
+        "national",
     )
     news["enabled"] = _coerce_bool(news.get("enabled", False), "news.enabled")
 
@@ -796,7 +910,7 @@ def normalize_news_config(config: dict[str, Any]) -> None:
     if unknown_scopes:
         raise ConfigError(f"Unknown news scope(s): {', '.join(unknown_scopes)}.")
 
-    seen_source_keys: set[str] = set()
+    seen_source_keys: set[tuple[str, str]] = set()
     for scope in NEWS_SCOPES:
         scope_cfg = _require_mapping(
             scopes.setdefault(
@@ -824,6 +938,7 @@ def normalize_news_config(config: dict[str, Any]) -> None:
                 allow_homepage_extractors=fetch_policy["allow_homepage_extractors"],
                 local_cfg=local_cfg,
                 regional_cfg=regional_cfg,
+                national_cfg=national_cfg,
                 seen_source_keys=seen_source_keys,
             )
             for index, source in enumerate(sources)

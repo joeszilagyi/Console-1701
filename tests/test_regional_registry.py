@@ -116,3 +116,36 @@ def test_regional_registry_is_persisted_in_sqlite_news_scan(tmp_path):
     assert storage_summary["regional_registry"]["source_count"] >= len(
         list_regional_source_registry()
     )
+
+
+def test_regional_registry_scan_replaces_stale_keys(tmp_path):
+    config_path = _write_config(
+        tmp_path / "config.yml",
+        """
+        paths: {repo_roots: [], explicit_repos: []}
+        news:
+          scopes:
+            REGIONAL:
+              sources:
+                - id: nws_active_alerts_wa
+        """,
+    )
+    assert run_news_scan(config_path)["status"] == "disabled"
+    config = load_config(config_path)
+
+    with connect_db(config["_db_path"]) as conn:
+        conn.execute(
+            "UPDATE news_source_registry SET source_key = ? WHERE source_key = ?",
+            ("obsolete_regional_source", "nws_active_alerts_wa"),
+        )
+
+    assert run_news_scan(config_path)["status"] == "disabled"
+    with connect_db(config["_db_path"]) as conn:
+        keys = {
+            str(row["source_key"])
+            for row in conn.execute(
+                "SELECT source_key FROM news_source_registry WHERE scope = 'REGIONAL'"
+            ).fetchall()
+        }
+
+    assert keys == {str(entry["source_key"]) for entry in list_regional_source_registry()}

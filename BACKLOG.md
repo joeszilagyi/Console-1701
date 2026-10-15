@@ -319,7 +319,8 @@ columns and indexes for latest-by-scope, source health, event ranking, source fa
 Current state: `news_source_registry` persists canonical LOCAL registry entries on each scan. Fetch
 runs/items/health/purge evidence and ranking data already persist via existing news tables. `local_events`
 (or equivalent local-event correlation table) and source-specific ranking explanation partitions remain
-pending.
+pending. Configured `news_sources` now uses `(scope, source_key)` uniqueness, with existing IDs and
+dependent fetch/item rows preserved by the migration.
 
 ### LOCAL Fixture Pack
 
@@ -629,11 +630,12 @@ enum values and keep all REGIONAL sources disabled until explicitly configured.
 Current state: `console1701/news/regional_registry.py` now seeds disabled REGIONAL source metadata
 for NWS, WSDOT, USGS, county emergency, and regional-news candidates. The config layer now applies
 regional defaults and validates REGIONAL source metadata before a source can be enabled. Dedicated
-regional event, ranking, and live-ingest work still remains.
+regional event, ranking, and live-ingest work still remains. SQLite registry sync now removes stale
+REGIONAL source keys without deleting current entries; a repeat-scan regression covers this path.
 
 ### Disabled-By-Default REGIONAL Config
 
-Status: partially implemented.
+Status: implemented.
 
 Add a `regional_sources:` or equivalent REGIONAL config tree that defaults to disabled. Include
 geography flags for Washington, Puget Sound, Cascadia hazards, Oregon relevance, BC relevance,
@@ -641,10 +643,13 @@ transport corridors, wildfire/smoke, seismic/volcano, public health, state gover
 news, and social sources. Reject social sources unless explicitly allowed and reject homepage
 extraction unless a future `allow_homepage_extractors` flag is true.
 
-Current state: the top-level `regional` config tree now defaults to disabled and carries the
-regional geography, social, and homepage-extraction flags needed for later REGIONAL source
-planning. Source normalization rejects REGIONAL social sources unless the local configuration
-explicitly allows them, and homepage extraction stays blocked by default.
+Current state: the top-level `regional` config tree defaults to disabled and carries validated
+Washington, Puget Sound/Cascadia, Oregon/BC relevance, transport, wildfire/smoke, seismic,
+public-health, state-government, regional-news, social, and homepage-extraction settings. Source
+normalization rejects REGIONAL social sources unless `regional.allow_social_sources` is true and
+rejects homepage extraction unless both the regional and shared fetch-policy gates are true. A
+config matrix verifies defaults, type validation, and the two explicit gates. All registry sources
+remain disabled unless individually configured.
 
 ### REGIONAL SQLite Schema Or Extension
 
@@ -660,7 +665,8 @@ Current state: the shared `news_source_registry` table persists REGIONAL registr
 `get_news_storage_summary()` exposes a regional registry summary. REGIONAL official-ID events now
 use scoped `news_clusters` with member, family, geography, confidence, and ranking evidence, so a
 separate `regional_events` table is not required for this slice. Dedicated geography indexes and
-broader event-query/purge evidence remain pending.
+broader event-query/purge evidence remain pending. Configured `news_sources` now supports the same
+scoped key identity as the registry.
 
 ### REGIONAL Fixture Pack
 
@@ -854,17 +860,18 @@ facility, or regional labels unless official public-impact evidence requires mor
 
 ### REGIONAL UI Disabled States
 
-Status: partially implemented.
+Status: implemented.
 
 Replace REGIONAL placeholders only after storage/config support exists. Show honest states for
 disabled, not configured, configured but disabled, never scanned, stale, policy blocked, parser
 failed, social disabled, homepage extraction disabled, and manual-review-only sources. Do not show
 fake headlines.
 
-Current state: the shared REGIONAL page and SQLite-backed API render honest source state, items,
-clusters, and evidence drawers. A REGIONAL regression covers disabled, never-run, stale,
-parser-failed, policy-blocked, and manual-review states without fetching. The full state matrix and
-scope-specific presentation remain pending.
+Current state: the shared REGIONAL page and SQLite-backed API render source state, items, clusters,
+and evidence drawers without fetching. Page regressions cover disabled, not configured, configured
+but disabled, never run, stale, parser failure, policy blocking, social disabled, homepage disabled,
+and manual-review states. REGIONAL social sources receive a scope-specific blocked message. Empty
+states show no fabricated headline.
 
 ### REGIONAL Source Health States
 
@@ -973,16 +980,23 @@ Architecture reference:
 
 ### NATIONAL Source Registry Design Implementation
 
-Status: not implemented.
+Status: implemented.
 
 Implement the NATIONAL source registry from the design document with explicit `source_key`,
 `source_family`, `source_class`, adapter, scope, priority, official status, policy risk, parser
 risk, privacy risk, retention sensitivity, verification status, and future phase fields. Validate
 enum values and keep all NATIONAL sources disabled until explicitly configured.
 
+Current state: the checked-in NATIONAL registry contains all 227 source targets from the design
+inventory, with their original provenance, risk, verification, priority, phase, and access fields.
+The loader validates required enum values and scope/URL shape. Config defaults for known source IDs
+remain disabled and reject invalid metadata. The registry is persisted by explicit `news-scan`
+and summarized from SQLite. Candidate adapter/kind assignments are inert planning metadata;
+they do not authorize live requests.
+
 ### Disabled-By-Default NATIONAL Config
 
-Status: not implemented.
+Status: implemented.
 
 Add a `national_sources:` or equivalent NATIONAL config tree that defaults to disabled. Include
 flags for federal alerts, weather hazards, disasters, public health, recalls, transportation,
@@ -991,15 +1005,30 @@ national news, social sources, and state events with national impact. Reject soc
 explicitly allowed and reject homepage extraction unless a future `allow_homepage_extractors` flag
 is true.
 
+Current state: `national:` now has disabled defaults, type and threshold validation, explicit
+social-source gating, and a separate scope switch. Source policy and the live-source gate require
+the national policy switch before any future exact-allowlisted official HTTP source can run. The
+repository example config documents the defaults. No NATIONAL live source is allowlisted or
+enabled by this config work; homepage extraction remains blocked by the shared fetch policy.
+
 ### NATIONAL SQLite Schema Or Extension
 
-Status: not implemented.
+Status: partially implemented.
 
 Add or extend SQLite storage for NATIONAL source registry state, fetch runs, normalized items,
 `national_events` or scoped clusters, source health, ranking explanations, agency/sector/state
 labels, and retention purge evidence. Use JSON-heavy columns and indexes for latest-by-scope, event
 ranking, source health, source family, agency/sector/state filters, and `expires_at` purge. Do not
 store full article bodies by default.
+
+Current state: the shared `news_source_registry` now supports `(scope, source_key)` uniqueness so
+LOCAL and NATIONAL can retain their documented overlapping IDs. Existing SQLite databases migrate
+in place while preserving registry rows. NATIONAL registry rows and summaries are stored by
+`news-scan`. Scoped items, fetch runs, source health, and cluster tables already support NATIONAL.
+Configured `news_sources` now has the same scoped uniqueness; its migration preserves source IDs
+and dependent fetch/item rows. A fixture scan verifies independent LOCAL and NATIONAL ingest with
+the same documented source key. Dedicated agency/sector/state query indexes and retention/purge
+evidence remain to be verified.
 
 ### NATIONAL Fixture Pack
 
@@ -1011,8 +1040,9 @@ CISA KEV, FAA NAS status, Federal Register API, BLS releases, and national news 
 must not perform network calls and must be safe for pytest.
 
 Current state: `tests/fixtures/news/national_nws_alerts.json` covers two official active-alert
-features, including a U.S. territory and an untrusted instruction-link candidate. The other
-NATIONAL source-family fixtures listed above remain pending.
+features, including a U.S. territory and an untrusted instruction-link candidate.
+`national_usgs_earthquakes.json` covers California, Alaska, Puerto Rico, an out-of-region event,
+and a below-threshold event. The other NATIONAL source-family fixtures listed above remain pending.
 
 ### NWS Active Alert Parser
 
@@ -1030,20 +1060,34 @@ nonofficial instruction links remain absent. This does not enable NATIONAL live 
 
 ### NHC Advisory/Feed Verification
 
-Status: not implemented.
+Status: partially implemented.
 
 Verify National Hurricane Center advisory/feed endpoints before implementation. Record feed/API
 ownership, advisory cycle fields, storm name/id handling, watch/warning fields, parser shape,
 policy notes, refresh interval, and source-health behavior. Keep sources disabled until verified.
 
+Current state: `docs/project/NATIONAL_NHC_SOURCE_VERIFICATION.md` records NHC/CPHC ownership,
+official basin RSS URLs, the regular/intermediate advisory cycles, storm/wallet identity limits,
+watch/warning product distinctions, a proposed disabled polling policy, and source-health behavior.
+An actual bounded basin-feed XML capture and item-field check are still needed before parser or
+live-source admission. No NHC endpoint is allowlisted or enabled.
+
 ### USGS Earthquake GeoJSON Parser
 
-Status: not implemented.
+Status: partially implemented.
 
 Build a fixture-first parser for USGS earthquake GeoJSON filtered to U.S. national relevance,
 configured magnitude thresholds, territories, and felt/multi-state impact rules. Preserve event id,
 magnitude, depth, place, time, felt/intensity fields where present, source URL, bounding basis, and
 seismic ranking evidence.
+
+Current state: NATIONAL fixture parsing reuses the strict official-event URL and USGS GeoJSON
+contract, with a configurable magnitude threshold defaulting to `national.earthquake_min_magnitude`
+and coarse coordinate regions for the contiguous U.S., Alaska, Hawaii, Puerto Rico/U.S. Virgin
+Islands, Guam/Northern Mariana Islands, and American Samoa. It stores the region/bounding basis,
+event ID, magnitude, depth, place, time, felt/intensity, official URL, and seismic ranking terms.
+The coarse regions are a first-pass relevance filter, not a U.S. boundary determination; nuanced
+cross-border and multi-state felt-impact routing remains pending.
 
 ### FEMA/OpenFEMA Disaster Declarations Research
 
@@ -1195,21 +1239,33 @@ federal disaster declarations, and public-health warnings with action guidance.
 
 ### NATIONAL UI Disabled States
 
-Status: not implemented.
+Status: implemented.
 
 Replace NATIONAL placeholders only after storage/config support exists. Show honest states for
 disabled, not configured, configured but disabled, never scanned, stale, policy blocked, parser
 failed, auth required, rate limited, social disabled, homepage extraction disabled, and
 manual-review-only sources. Do not show fake headlines.
 
+Current state: NATIONAL uses the shared scope page and source-health readout. Page regressions now
+cover disabled, not configured, configured but disabled, never scanned, stale, policy blocked,
+parser failed, auth required, rate limited, social disabled, homepage extraction disabled, and
+manual-review-only states without ingest or fabricated items. NATIONAL social sources receive a
+scope-specific disabled message when the national social allowance is off.
+
 ### NATIONAL Source Health States
 
-Status: not implemented.
+Status: implemented.
 
 Implement source health states for NATIONAL: `disabled`, `not_configured`,
 `configured_never_run`, `healthy`, `stale`, `failing`, `parser_failed`, `policy_blocked`,
 `robots_blocked`, `auth_required`, `rate_limited`, `unsupported`, and `manual_review_only`. Surface
 these states in SYSTEM later and summarize them on NATIONAL.
+
+Current state: the shared source-health calculation covers NATIONAL and the NATIONAL page/API
+expose its scope summary without fetching. The REGIONAL/NATIONAL matrix regression verifies stale,
+parser-failed, policy-blocked, configured-never-run, disabled, manual-review-only, robots-blocked,
+rate-limited, unsupported, and auth-required source states on both scopes. Shared scope-state tests
+also cover disabled, not-configured, and healthy outcomes.
 
 ### NATIONAL Evidence Drawer Contract
 

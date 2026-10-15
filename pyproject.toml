@@ -30,7 +30,7 @@ console-1701 = "console1701.cli:main"
 include = ["console1701*"]
 
 [tool.setuptools.package-data]
-console1701 = ["schema.sql", "templates/*.html", "static/*.css", "static/*.js", "static/*.png"]
+console1701 = ["schema.sql", "news/*.json", "templates/*.html", "static/*.css", "static/*.js", "static/*.png"]
 
 [tool.ruff]
 line-length = 100

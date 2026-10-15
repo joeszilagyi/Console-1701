@@ -283,6 +283,52 @@ def test_news_scope_states_report_enabled_source_never_run(tmp_path):
     assert state["enabled_source_count"] == 1
 
 
+def test_national_scope_health_baseline_states(tmp_path):
+    conn = connect_db(tmp_path / "console.sqlite")
+    init_db(conn)
+    disabled = load_config(_write_config(tmp_path / "disabled.yml", "news: {enabled: false}"))
+    empty = load_config(_write_config(tmp_path / "empty.yml", "news: {enabled: true}"))
+    configured = load_config(
+        _write_config(
+            tmp_path / "configured.yml",
+            """
+            news:
+              enabled: true
+              scopes:
+                NATIONAL:
+                  enabled: true
+                  sources:
+                    - {id: national_fixture, name: National fixture,
+                       kind: local_file_json, enabled: true,
+                       url: 'file:///tmp/national-fixture.json'}
+            """,
+        )
+    )
+
+    assert get_news_scope_states(conn, disabled)["NATIONAL"]["state"] == "disabled"
+    assert get_news_scope_states(conn, empty)["NATIONAL"]["state"] == "not_configured"
+    assert get_news_scope_states(conn, configured)["NATIONAL"]["state"] == "configured_never_run"
+
+    source_id = _insert_news_source(
+        conn,
+        "national_fixture",
+        scope="NATIONAL",
+        name="National fixture",
+        url="file:///tmp/national-fixture.json",
+    )
+    _insert_news_source_health(
+        conn,
+        source_id,
+        observed_at="2026-10-15T00:00:00+00:00",
+        state="healthy",
+        last_success_at="2026-10-15T00:00:00+00:00",
+        stale_after="2099-01-01T00:00:00+00:00",
+    )
+    national = get_news_scope_states(conn, configured)["NATIONAL"]
+    assert national["state"] == "healthy"
+    assert national["source_state_counts"] == {"healthy": 1}
+
+
 def test_news_scope_states_report_stale_source_state_when_health_is_stale(tmp_path):
     config_path = _write_config(
         tmp_path / "config.yml",
