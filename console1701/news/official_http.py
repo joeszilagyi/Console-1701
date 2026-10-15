@@ -82,6 +82,14 @@ OFFICIAL_SOURCES = {
         "https://www.nasa.gov/blogs/kennedy/feed/", "rss", "nasa_orbital_rss",
         "application/rss+xml"
     ),
+    ("ORBITAL", "esa_rss"): (
+        "https://www.esa.int/rssfeed/Our_Activities/Space_News", "rss", "esa_orbital_rss",
+        "application/rss+xml"
+    ),
+    ("ORBITAL", "esa_iss"): (
+        "https://www.esa.int/rssfeed/Our_Activities/Human_Spaceflight", "rss",
+        "esa_orbital_rss", "application/rss+xml"
+    ),
 }
 MAX_HTTP_BYTES = 4 * 1024 * 1024
 MAX_HTTP_TIMEOUT_SECONDS = 30

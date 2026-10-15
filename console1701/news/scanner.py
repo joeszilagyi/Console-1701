@@ -559,6 +559,7 @@ def _fresh_live_orbital_items(
         "swpc_aurora_json",
         "nasa_rss_feeds", "nasa_iss_page", "nasa_spacestation_blog",
         "nasa_artemis", "nasa_artemis_blog", "nasa_kennedy_blog",
+        "esa_rss", "esa_iss",
     }:
         return items
     fresh: list[dict[str, Any]] = []
@@ -593,7 +594,7 @@ def _fresh_live_orbital_items(
                 now - timedelta(hours=2) <= published <= now + timedelta(minutes=10)
                 and now - timedelta(hours=1) <= forecast <= now + timedelta(hours=3)
             )
-        elif source_key.startswith("nasa_"):
+        elif source_key.startswith("nasa_") or source_key in {"esa_rss", "esa_iss"}:
             keep = now - timedelta(days=7) <= published <= now + timedelta(hours=1)
         else:
             max_age = 6 if source_key == "swpc_kp_summary_json" else 1
