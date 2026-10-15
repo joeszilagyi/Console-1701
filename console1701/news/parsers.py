@@ -177,6 +177,10 @@ def parse_fixture_items(
         from console1701.news.science_gcn import parse_gcn_notice_fixture
 
         return parse_gcn_notice_fixture(source, payload_text)
+    if parser_name == "cpsc_recalls_json":
+        from console1701.news.cpsc_recalls import parse_cpsc_recalls_json
+
+        return parse_cpsc_recalls_json(source, payload_text)
 
     if parser_name == "nws_alerts_json":
         return _parse_nws_alerts_json(source, payload_text)

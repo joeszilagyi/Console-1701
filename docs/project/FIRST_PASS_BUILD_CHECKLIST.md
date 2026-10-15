@@ -70,7 +70,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-039** [CDC HAN Parser](../../BACKLOG.md#L1046) — not implemented.
 - [x] **RS-040** [FDA Recall Endpoint/Feed Verification](../../BACKLOG.md#L1055) — official RSS shapes and openFDA enforcement limits verified; no live source enabled.
 - [ ] **RS-041** [FSIS Recall API Parser](../../BACKLOG.md#L1064) — not implemented.
-- [ ] **RS-042** [CPSC Recalls API Parser](../../BACKLOG.md#L1072) — not implemented.
+- [x] **RS-042** [CPSC Recalls API Parser](../../BACKLOG.md#L1072) — completed 2026-10-15; official bounded JSON response fixture, identity/hazard/remedy contract and tests; live remains disabled.
 - [x] **RS-043** [NHTSA Recalls API Parser](../../BACKLOG.md#L1080) — official lookup-envelope fixture parser, grouped campaign evidence, safety ranking, facets and offline scan verified; live discovery remains disabled.
 - [x] **RS-044** [FAA NAS Status Fixture Parser](../../BACKLOG.md#L1088) — verified XML structure, filtered airport event grouping, cautious time/closure evidence, ranking, facets and offline scan; live disabled.
 - [ ] **RS-045** [CISA Advisory Parser](../../BACKLOG.md#L1097) — not implemented.
