@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0" xml:base="https://www.ecdc.europa.eu/en">
+  <channel>
+    <title>News</title>
+    <link>https://www.ecdc.europa.eu/en</link>
+    <language>en</language>
+    <item>
+      <title>ECDC updates regional mosquito-borne disease surveillance</title>
+      <link>https://www.ecdc.europa.eu/en/news-events/synthetic-mosquito-surveillance-update</link>
+      <description>&lt;p&gt;A bounded synthetic summary for a regional surveillance update.&lt;/p&gt;</description>
+      <pubDate>Thu, 15 Oct 2026 13:59:43 +0200</pubDate>
+      <category>Surveillance</category>
+      <dc:creator>ECDC</dc:creator>
+      <guid isPermaLink="true">https://www.ecdc.europa.eu/en/news-events/synthetic-mosquito-surveillance-update</guid>
+    </item>
+    <item>
+      <title>ECDC publishes a public health update</title>
+      <link>https://www.ecdc.europa.eu/en/news-events/synthetic-public-health-update</link>
+      <description>&lt;p&gt;A second synthetic summary with no category field.&lt;/p&gt;</description>
+      <pubDate>Wed, 14 Oct 2026 17:36:21 +0200</pubDate>
+      <dc:creator>ECDC</dc:creator>
+      <guid isPermaLink="true">https://www.ecdc.europa.eu/en/news-events/synthetic-public-health-update</guid>
+    </item>
+  </channel>
+</rss>

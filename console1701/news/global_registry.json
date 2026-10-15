@@ -1125,8 +1125,8 @@
     "source_family": "ecdc",
     "source_class": "official_public_health",
     "scope": "GLOBAL",
-    "raw_url": "https://www.ecdc.europa.eu/en/rss-feeds",
-    "expected_access_kind": "public RSS index",
+    "raw_url": "https://www.ecdc.europa.eu/en/taxonomy/term/1307/feed",
+    "expected_access_kind": "official RSS news feed",
     "adapter": "ecdc_rss",
     "refresh_interval": "2 h",
     "priority": "50",
@@ -1135,8 +1135,8 @@
     "policy_risk": "low",
     "parser_risk": "medium",
     "retention_sensitivity": "medium",
-    "verification_status": "candidate_needs_verification",
-    "why_it_matters": "Preferred ECDC metadata path.",
+    "verification_status": "official_feed_seen",
+    "why_it_matters": "Verified ECDC news/press metadata feed.",
     "future_phase": "G7"
   },
   {
