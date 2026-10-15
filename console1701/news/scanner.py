@@ -231,9 +231,6 @@ def _sync_local_source_registry(conn: sqlite3.Connection, synced_at: str) -> int
     if not entries:
         return 0
 
-    source_keys = [str(entry["source_key"]) for entry in entries]
-
-    placeholder = ",".join(["?"] * len(entries))
     rows = conn.execute(
         "SELECT source_key FROM news_source_registry WHERE scope = ?",
         ("LOCAL",),
@@ -315,12 +312,11 @@ def _sync_local_source_registry(conn: sqlite3.Connection, synced_at: str) -> int
         updated += 1
 
     if existing:
+        stale_keys = sorted(existing)
+        placeholder = ",".join(["?"] * len(stale_keys))
         conn.execute(
-            (
-                "DELETE FROM news_source_registry WHERE scope = ? "
-                f"AND source_key NOT IN ({placeholder})"
-            ),
-            ("LOCAL", *source_keys),
+            f"DELETE FROM news_source_registry WHERE scope = ? AND source_key IN ({placeholder})",
+            ("LOCAL", *stale_keys),
         )
 
     return updated
@@ -331,9 +327,6 @@ def _sync_regional_source_registry(conn: sqlite3.Connection, synced_at: str) -> 
     if not entries:
         return 0
 
-    source_keys = [str(entry["source_key"]) for entry in entries]
-
-    placeholder = ",".join(["?"] * len(entries))
     rows = conn.execute(
         "SELECT source_key FROM news_source_registry WHERE scope = ?",
         ("REGIONAL",),
@@ -415,11 +408,13 @@ def _sync_regional_source_registry(conn: sqlite3.Connection, synced_at: str) -> 
         updated += 1
 
     if existing:
+        stale_keys = sorted(existing)
+        placeholder = ",".join(["?"] * len(stale_keys))
         conn.execute(
             f"DELETE FROM news_source_registry WHERE scope = ? AND source_key IN ({placeholder})",
-            ("REGIONAL", *source_keys),
+            ("REGIONAL", *stale_keys),
         )
-        updated += len(existing)
+        updated += len(stale_keys)
 
     return updated
 

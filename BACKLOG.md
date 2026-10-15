@@ -629,7 +629,8 @@ enum values and keep all REGIONAL sources disabled until explicitly configured.
 Current state: `console1701/news/regional_registry.py` now seeds disabled REGIONAL source metadata
 for NWS, WSDOT, USGS, county emergency, and regional-news candidates. The config layer now applies
 regional defaults and validates REGIONAL source metadata before a source can be enabled. Dedicated
-regional event, ranking, and live-ingest work still remains.
+regional event, ranking, and live-ingest work still remains. SQLite registry sync now removes stale
+REGIONAL source keys without deleting current entries; a repeat-scan regression covers this path.
 
 ### Disabled-By-Default REGIONAL Config
 
