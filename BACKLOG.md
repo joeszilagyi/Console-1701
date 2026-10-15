@@ -3033,7 +3033,7 @@ never treat social as primary evidence.
 
 ### Documentation For Source Verification
 
-Status: partially implemented.
+Status: completed 2026-10-15 for first-pass science verification workflow.
 
 Document the later Solar System and Beyond source verification workflow: confirm endpoint
 ownership, access method, source terms, robots/policy notes, parser shape, auth/key requirements,
@@ -3041,10 +3041,11 @@ rate limits, retention sensitivity, privacy risk, verification status, object/mi
 filters, source-health behavior, and whether the source is official, archive, alert network,
 publisher, public media, social, auth-required, heavy archive, or manual review only.
 
-Current state: `docs/project/SYSTEM_SOLAR_SYSTEM_BEYOND_SOURCE_VERIFICATION_WORKFLOW.md` now
-captures the shared verification checklist, required registry fields, and source-health states
-with Solar System and Beyond scope filters. Per-source signoff templates and endpoint-specific
-walkthroughs still need a dedicated follow-up.
+Current state: `docs/project/SYSTEM_SOLAR_SYSTEM_BEYOND_SOURCE_VERIFICATION_WORKFLOW.md`
+captures the shared checklist, registry fields, scope filters, source-health states, per-endpoint
+signoff record, exact live promotion gates, and walkthroughs for NASA Science RSS, JPL direct and
+NASA-hosted RSS, ESA RSS, and NASA Photojournal. It records malformed XML/403 blockers honestly
+and separates ORBITAL parser approval from future science routing.
 
 ### Tests For No Page-Load External Fetches
 

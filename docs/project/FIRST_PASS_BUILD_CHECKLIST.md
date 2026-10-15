@@ -182,7 +182,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-142** [Official RSS Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L2242) — not implemented.
 - [ ] **RS-143** [Official Small API Live Ingest Phase, Disabled By Default](../../BACKLOG.md#L2250) — not implemented.
 - [ ] **RS-144** [Transient Alert Ingest Phase, Disabled By Default](../../BACKLOG.md#L2259) — not implemented.
-- [ ] **RS-145** [Documentation For Source Verification](../../BACKLOG.md#L2292) — partially implemented.
+- [x] **RS-145** [Documentation For Source Verification](../../BACKLOG.md#L2292) — science endpoint signoff template, exact promotion gates, and NASA/JPL/ESA walkthroughs with observed blockers complete.
 - [ ] **RS-146** [Tests For No Page-Load External Fetches](../../BACKLOG.md#L2307) — not implemented.
 - [ ] **RS-147** [Tests For No Heavy Archive Source Running Without Explicit Config](../../BACKLOG.md#L2316) — not implemented.
 - [ ] **RS-148** [Tests For No Auth Source Running Without Config](../../BACKLOG.md#L2325) — not implemented.
