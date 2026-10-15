@@ -744,7 +744,10 @@ local fixture corpus also now exercises REGIONAL NWS and WSDOT ingest paths. Ded
 USGS earthquake GeoJSON fixture and parser now cover Washington-area coordinate and magnitude
 filtering, event evidence, and a capped seismic ranking factor. A dedicated REGIONAL NWS fixture
 now covers King/Spokane WA alerts and an out-of-region Oregon alert, including official county/zone
-codes and configured filter behavior. Dedicated WSF, wildfire, hydrology, county emergency, AQI,
+codes and configured filter behavior. A synthetic WSDOT JSON fixture now follows the official
+documented `Alert`/`RoadwayLocation` REST schema, including corridor, pass, border, WCF timestamp,
+and closed-alert cases; it is not an observed authenticated response. Dedicated WSF, wildfire,
+hydrology, county emergency, AQI,
 outage, and other regional fixture shapes remain pending endpoint verification; do not invent
 live API shapes to close this pack.
 
@@ -770,7 +773,7 @@ end-to-end scan test cover filtering and retained evidence; out-of-region Oregon
 
 ### WSDOT Traveler API Fixture Parser
 
-Status: partially implemented.
+Status: implemented (documented JSON fixture parser; live JSON remains disabled).
 
 Build a fixture parser for WSDOT traveler information affecting regional corridors, mountain
 passes, bridges, border crossings, and major Washington routes. Preserve route, direction, milepost
@@ -778,11 +781,18 @@ or facility tokens, closure/delay severity, source update time, source URL, and 
 ranking evidence.
 
 Current state: the existing WSDOT travel-alert parser now runs in REGIONAL scope through the
-registry-backed ingest path, and the regional regression exercises the shared local travel-alert
-fixture corpus. A separate public official Highway Alerts RSS parser now reads statewide active
-alerts and preserves numeric alert IDs, route/impact evidence, and update times. The RSS source is
-live behind exact-url opt-ins; the access-code JSON API remains disabled. Dedicated Washington
-corridor fixture files and broader route coverage are still pending.
+registry-backed ingest path. A dedicated synthetic REGIONAL fixture now follows WSDOT's official
+REST `Alert`/`RoadwayLocation` JSON example: numeric ID, `HeadlineDescription`,
+`ExtendedDescription`, category/status/priority, county/region, start/end roadway direction and
+milepost, and `/Date(milliseconds-offset)/` timestamps. The parser preserves these fields as
+bounded evidence, strips embedded markup, rejects duplicate IDs or invalid times, and records
+official route/facility/transport ranking. A closed alert receives zero public-impact score. When
+the documented JSON has no item URL, the parser uses WSDOT's RSS `refnum` link as an auditable
+identity and notes its basis; that legacy link may redirect to the general alerts page.
+`docs/project/REGIONAL_WSDOT_TRAVELER_JSON_VERIFICATION.md` records the access-code requirement,
+unverified HTTPS/live behavior, retention, and release gate. The separate public Highway Alerts
+RSS source remains the only live-capable WSDOT adapter, behind exact-url opt-ins. No JSON access
+code or authenticated live path was added.
 
 ### WSF Bulletin/API Fixture Parser
 

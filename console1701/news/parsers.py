@@ -1539,19 +1539,27 @@ def _parse_wsdot_travel_alerts_json(
     except json.JSONDecodeError as exc:
         raise NewsParserError(f"Malformed WSDOT JSON fixture: {exc}") from exc
     if isinstance(payload, dict):
-        rows = payload.get("alerts") or payload.get("items") or payload.get("data")
+        rows = next(
+            (payload[key] for key in ("alerts", "items", "data") if key in payload), None
+        )
     else:
         rows = payload
     if not isinstance(rows, list):
         raise NewsParserError("WSDOT fixture must be a list or object with alert list.")
 
     normalized: list[dict[str, Any]] = []
+    seen_ids: set[str] = set()
     for index, row in enumerate(rows):
         if not isinstance(row, dict):
             raise NewsParserError(f"WSDOT alert row {index} must be an object.")
         if not _wsdot_alert_matches_scope(source, row):
             continue
-        normalized.append(_normalize_wsdot_alert(source, row, index=index))
+        item = _normalize_wsdot_alert(source, row, index=index)
+        alert_id = item["evidence"]["wsdot_alert"]["alert_id"]
+        if alert_id in seen_ids:
+            raise NewsParserError(f"WSDOT JSON alert row {index} duplicates alert ID {alert_id}.")
+        seen_ids.add(alert_id)
+        normalized.append(item)
     return normalized
 
 
@@ -1635,29 +1643,32 @@ def _normalize_wsdot_alert(
     index: int,
 ) -> dict[str, Any]:
     alert_id = bounded_text(_first_value(row, "alert_id", "AlertID", "id", "ID"), max_chars=120)
-    title = bounded_text(
-        _first_value(row, "headline", "Headline", "title", "Title"),
-        max_chars=MAX_TITLE_LENGTH,
+    raw_title = _first_value(row, "headline", "Headline", "HeadlineDescription", "title", "Title")
+    title = bounded_text(_wsdot_plain_text(str(raw_title or "")), max_chars=MAX_TITLE_LENGTH)
+    raw_description = _first_value(
+        row,
+        "description",
+        "Description",
+        "ExtendedDescription",
+        "extended_description",
     )
     description = bounded_text(
-        _first_value(
-            row,
-            "description",
-            "Description",
-            "extended_description",
-            "ExtendedDescription",
-        ),
+        _wsdot_plain_text(str(raw_description or "")),
         max_chars=MAX_DESCRIPTION_LENGTH,
     )
-    published_at = normalize_timestamp(
+    published_at = _wsdot_timestamp(
         _first_value(row, "last_updated", "LastUpdatedTime", "published_at", "StartTime")
     )
-    if not title or not published_at:
-        raise NewsParserError(f"WSDOT alert row {index} is missing title or timestamp.")
+    if not alert_id or not alert_id.isdigit() or not title or not published_at:
+        raise NewsParserError(
+            f"WSDOT alert row {index} is missing numeric ID, title, or timestamp."
+        )
     source_url = _wsdot_source_url(source, alert_id or str(index), row)
     route_tokens = _wsdot_route_tokens(row)
     facility_tokens = _wsdot_facility_tokens(source, row)
     impact = _wsdot_impact(row)
+    start_location = _wsdot_roadway_location(row.get("StartRoadwayLocation"))
+    end_location = _wsdot_roadway_location(row.get("EndRoadwayLocation"))
     tags = _unique_texts(
         [
             "official",
@@ -1686,20 +1697,63 @@ def _normalize_wsdot_alert(
         "facility_tokens": facility_tokens,
         "impact": impact["label"],
         "impact_weight": impact["weight"],
+        "event_category": bounded_text(row.get("EventCategory"), max_chars=100),
+        "event_status": bounded_text(row.get("EventStatus"), max_chars=64),
+        "start_time": _wsdot_timestamp(row.get("StartTime")),
+        "end_time": _wsdot_timestamp(row.get("EndTime")),
+        "start_roadway_location": start_location,
+        "end_roadway_location": end_location,
         "priority": bounded_text(_first_value(row, "priority", "Priority"), max_chars=64),
         "county": bounded_text(_first_value(row, "county", "County"), max_chars=120),
         "region": bounded_text(_first_value(row, "region", "Region"), max_chars=120),
         "published_at": published_at,
         "source_url": source_url,
+        "source_url_basis": (
+            "payload_url" if _first_value(row, "url", "Url", "link", "Link")
+            else "official_rss_refnum_link"
+        ),
         "ranking": {
             "route_token_count": len(route_tokens),
             "facility_token_count": len(facility_tokens),
             "impact_weight": impact["weight"],
-            "public_impact_score": min(60, impact["weight"] + len(route_tokens) * 6),
+            "public_impact_score": (
+                0 if impact["label"] == "resolved"
+                else min(60, impact["weight"] + len(route_tokens) * 6)
+            ),
         },
         "filter": _wsdot_filter_evidence(source, row),
     }
     return item
+
+
+_WSDOT_DOTNET_DATE_RE = re.compile(r"^/Date\((-?\d{1,15})(?:[+-]\d{4})?\)/$")
+
+
+def _wsdot_timestamp(value: Any) -> str | None:
+    normalized = normalize_timestamp(value)
+    if normalized:
+        return normalized
+    match = _WSDOT_DOTNET_DATE_RE.fullmatch(str(value or ""))
+    if match is None:
+        return None
+    try:
+        return datetime.fromtimestamp(int(match.group(1)) / 1000, tz=UTC).isoformat(
+            timespec="seconds"
+        )
+    except (ValueError, OverflowError, OSError):
+        return None
+
+
+def _wsdot_roadway_location(value: Any) -> dict[str, Any] | None:
+    if not isinstance(value, dict):
+        return None
+    milepost = _usgs_number(value.get("MilePost"))
+    return {
+        "description": bounded_text(value.get("Description"), max_chars=120),
+        "direction": bounded_text(value.get("Direction"), max_chars=40),
+        "milepost": milepost if milepost is not None and 0 <= milepost <= 1000 else None,
+        "road_name": bounded_text(value.get("RoadName"), max_chars=80),
+    }
 
 
 def _wsdot_alert_matches_scope(source: dict[str, Any], row: dict[str, Any]) -> bool:
@@ -1756,6 +1810,10 @@ def _wsdot_route_tokens(row: dict[str, Any]) -> list[str]:
     else:
         values.append(affected)
     values.append(_wsdot_row_text(row))
+    for key in ("StartRoadwayLocation", "EndRoadwayLocation"):
+        location = row.get(key)
+        if isinstance(location, dict):
+            values.extend([location.get("RoadName"), location.get("Description")])
     tokens: list[str] = []
     for value in values:
         text = str(value or "")
@@ -1776,9 +1834,14 @@ def _wsdot_facility_tokens(source: dict[str, Any], row: dict[str, Any]) -> list[
 
 
 def _wsdot_impact(row: dict[str, Any]) -> dict[str, Any]:
+    if str(row.get("EventStatus") or "").strip().lower() == "closed":
+        return {"label": "resolved", "weight": 0}
     text = _wsdot_row_text(row).lower()
+    priority = str(row.get("Priority") or row.get("priority") or "").lower()
     if any(word in text for word in ("closed", "closure", "blocked all lanes")):
         return {"label": "closure", "weight": 32}
+    if priority == "highest":
+        return {"label": "highest_impact", "weight": 30}
     if any(word in text for word in ("blocked", "lane closed", "lane closure")):
         return {"label": "lane_blocked", "weight": 22}
     if any(word in text for word in ("delay", "delayed", "backup")):
@@ -1792,11 +1855,9 @@ def _wsdot_source_url(source: dict[str, Any], row_key: str, row: dict[str, Any])
     explicit = _first_value(row, "url", "Url", "link", "Link")
     if explicit:
         return normalize_url(explicit)
-    base_url = str(source.get("homepage_url") or source.get("url") or "").strip()
-    if not base_url:
-        base_url = "https://wsdot.wa.gov/traffic/api/"
-    separator = "&" if "?" in base_url else "?"
-    return normalize_url(f"{base_url}{separator}alert_id={quote(str(row_key))}")
+    return normalize_url(
+        f"https://www.wsdot.wa.gov/traffic/trafficalerts/default.aspx?refnum={quote(str(row_key))}"
+    )
 
 
 def _wsdot_row_text(row: dict[str, Any]) -> str:
@@ -1805,6 +1866,7 @@ def _wsdot_row_text(row: dict[str, Any]) -> str:
         for key in (
             "headline",
             "Headline",
+            "HeadlineDescription",
             "title",
             "Title",
             "description",
@@ -1817,8 +1879,13 @@ def _wsdot_row_text(row: dict[str, Any]) -> str:
             "County",
             "region",
             "Region",
+            "EventCategory",
         )
     ]
+    for key in ("StartRoadwayLocation", "EndRoadwayLocation"):
+        location = row.get(key)
+        if isinstance(location, dict):
+            values.extend([location.get("RoadName"), location.get("Description")])
     return " ".join(str(value) for value in values if value)
 
 

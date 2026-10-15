@@ -116,7 +116,7 @@ REGIONAL_SOURCE_REGISTRY: tuple[RegionalSourceRegistryEntry, ...] = (
         retention_sensitivity="medium",
         verification_status="official_page_seen",
         future_phase="R1",
-        expected_access_kind="public official API documentation",
+        expected_access_kind="documented JSON REST; assigned access code required",
         why_it_matters=(
             "Regional corridor, pass, and border-crossing impacts need transport context."
         ),

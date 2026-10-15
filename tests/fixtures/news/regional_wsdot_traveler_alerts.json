@@ -1,0 +1,64 @@
+[
+  {
+    "AlertID": 81001,
+    "County": "King",
+    "Region": "NW",
+    "EventCategory": "Closure",
+    "EventStatus": "Open",
+    "HeadlineDescription": "I-90 eastbound closed near Snoqualmie Pass",
+    "ExtendedDescription": "All eastbound lanes closed for avalanche control.",
+    "Priority": "Highest",
+    "StartTime": "/Date(1792058400000-0700)/",
+    "EndTime": "/Date(1792108800000-0700)/",
+    "LastUpdatedTime": "/Date(1792062000000-0700)/",
+    "StartRoadwayLocation": {
+      "Description": "Snoqualmie Pass",
+      "Direction": "Eastbound",
+      "MilePost": 52.0,
+      "RoadName": "I-90"
+    },
+    "EndRoadwayLocation": {
+      "Description": "East of the pass",
+      "Direction": "Eastbound",
+      "MilePost": 60.0,
+      "RoadName": "I-90"
+    }
+  },
+  {
+    "AlertID": 81002,
+    "County": "Whatcom",
+    "Region": "NW",
+    "EventCategory": "Collision",
+    "EventStatus": "Open",
+    "HeadlineDescription": "I-5 northbound delay near the Canadian border",
+    "ExtendedDescription": "Traffic is delayed near the border crossing.",
+    "Priority": "High",
+    "StartTime": "/Date(1792062000000-0700)/",
+    "LastUpdatedTime": "/Date(1792065600000-0700)/",
+    "StartRoadwayLocation": {
+      "Description": "Blaine",
+      "Direction": "Northbound",
+      "MilePost": 275.0,
+      "RoadName": "I-5"
+    }
+  },
+  {
+    "AlertID": 81003,
+    "County": "Skagit",
+    "Region": "NW",
+    "EventCategory": "Maintenance",
+    "EventStatus": "Closed",
+    "HeadlineDescription": "SR 20 roadside maintenance near Concrete",
+    "ExtendedDescription": "Shoulder work is complete; alert is closed.",
+    "Priority": "Low",
+    "StartTime": "/Date(1792058400000-0700)/",
+    "EndTime": "/Date(1792065600000-0700)/",
+    "LastUpdatedTime": "/Date(1792065600000-0700)/",
+    "StartRoadwayLocation": {
+      "Description": "Near Concrete",
+      "Direction": "Westbound",
+      "MilePost": 91.5,
+      "RoadName": "SR 20"
+    }
+  }
+]

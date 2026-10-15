@@ -1105,9 +1105,7 @@ def test_run_news_scan_ingests_regional_wsdot_alert_fixture(tmp_path):
               sources:
                 - id: wsdot_traveler_api
                   enabled: true
-                  url: "{_file_url(FIXTURE_DIR / "local_wsdot_alerts.json")}"
-                  route_keywords: ["I-5", "SR 99"]
-                  area_keywords: ["Seattle", "Downtown"]
+                  url: "{_file_url(FIXTURE_DIR / "regional_wsdot_traveler_alerts.json")}"
         """,
     )
 
@@ -1136,15 +1134,20 @@ def test_run_news_scan_ingests_regional_wsdot_alert_fixture(tmp_path):
     policy = json_loads(str(source["policy_json"]), {})
 
     assert result["status"] == "complete"
-    assert result["item_count"] == 2
+    assert result["item_count"] == 3
     assert [str(row["title"]) for row in rows] == [
-        "I-5 northbound lane blocked near Downtown Seattle",
-        "US 2 maintenance near Leavenworth",
+        "I-5 northbound delay near the Canadian border",
+        "I-90 eastbound closed near Snoqualmie Pass",
+        "SR 20 roadside maintenance near Concrete",
     ]
     assert source["name"] == "WSDOT traveler information API"
     assert policy["parser"] == "wsdot_travel_alerts_json"
     assert any(
-        evidence["wsdot_alert"]["ranking"]["public_impact_score"] == 28
+        evidence["wsdot_alert"]["ranking"]["public_impact_score"] == 38
+        for evidence in evidence_rows
+    )
+    assert any(
+        evidence["wsdot_alert"]["start_roadway_location"]["milepost"] == 52.0
         for evidence in evidence_rows
     )
     assert any(
