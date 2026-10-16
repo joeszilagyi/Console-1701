@@ -73,3 +73,7 @@ scan now joins those three incident identities across the `wa_dnr` and
 date and DNR discovery date need not be within 48 hours for that exact
 source-backed identity match. Neither the DNR layer nor this correlation proves
 that any fire is active now or that people are affected.
+
+## Source date zone correction
+
+The [ArcGIS layer JSON](https://gis.dnr.wa.gov/site3/rest/services/Public_Wildfire/WADNR_PUBLIC_WD_WildFire_Data/MapServer/1?f=json) explicitly declares `dateFieldsTimeReference.timeZoneIANA=America/Los_Angeles` and daylight-saving behavior. The fixture parser now converts `DSCVR_DT`, `CONTROL_DT`, and `FIRE_OUT_DT` from ArcGIS epoch milliseconds into that source calendar day. Pearl Hill's reported control time is 2026-08-02 02:08 UTC, which is August 1 in Washington; the stored control date is now `2026-08-01`. The parser records the source date zone in item evidence.
