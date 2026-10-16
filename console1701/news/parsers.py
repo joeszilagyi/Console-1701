@@ -247,6 +247,10 @@ def parse_fixture_items(
         from console1701.news.cpsc_recalls import parse_cpsc_recalls_json
 
         return parse_cpsc_recalls_json(source, payload_text)
+    if parser_name == "fsis_recalls_json":
+        from console1701.news.fsis_recalls import parse_fsis_recalls_json
+
+        return parse_fsis_recalls_json(source, payload_text)
     if parser_name == "openfema_declarations_fixture":
         from console1701.news.openfema_declarations import parse_openfema_declarations_fixture
 
