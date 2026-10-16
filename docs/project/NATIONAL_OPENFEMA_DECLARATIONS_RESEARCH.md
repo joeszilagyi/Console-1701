@@ -1,7 +1,7 @@
 # OpenFEMA Disaster Declarations Research
 
-Reviewed 2026-10-15 for RS-038. Decision: **documented public API suitable for a future
-fixture parser; no NATIONAL live ingest enabled**.
+Reviewed 2026-10-15 for RS-038 and the NATIONAL fixture pack. Decision: **documented public
+API with a fixture-only parser; no NATIONAL live ingest enabled**.
 
 ## Ownership, access and bounded observation
 
@@ -49,7 +49,7 @@ Store only `disasterNumber`, `placeCode`, `femaDeclarationString`, state, FEMA r
 start/end, selected declared-assistance flags, designated area, and `lastRefresh`. Treat state and
 region as official labels; do not infer an exact incident footprint from designated counties or
 turn tribal records into false state-only claims. Do not store full API responses or personal
-data. A future fixture should cover multiple place rows for one declaration, an amended row,
+data. Fixture coverage includes multiple place rows for one declaration, an amended row,
 DR/EM/FM types, a tribal designation, an older historical row and an empty valid result.
 
 Ranking should value a **recent declaration** and documented assistance/impact fields, while
@@ -75,6 +75,17 @@ must produce distinct parser/rate-limit/failing health. Do not infer safety from
 declarations. A live release requires a fixture parser, scope and ranking tests, attribution,
 an exact URL/query allowlist and an explicit `news-scan` opt-in. Page loads, host scans and tests
 remain offline.
+
+An additional bounded read on 2026-10-15 selected eighteen public fields from the exact v2
+API, ordered by `lastRefresh desc` with `$top=2`, and returned HTTP 200, 2,073 bytes and two
+rows. It confirmed the assistance field names are `ihProgramDeclared`, `iaProgramDeclared`,
+`paProgramDeclared` and `hmProgramDeclared`, and that `tribalRequest` is Boolean. The curated
+local fixture retains these observed rows; synthetic place revisions and EM/FM variants test
+coalescing and declaration type handling. The fixture parser enforces the official v2 envelope,
+twenty-row/64 KiB limits, stable declaration/place identities, dates and flags. It stores one
+item per declaration and uses `declarationDate` for event recency. A newly refreshed September
+declaration remains background; the Zuni Pueblo tribal row is not mislabeled as a New Mexico
+state-only impact. The parser is fixture-only, and no OpenFEMA HTTP URL is in the app allowlist.
 
 The separate [FEMA declaration listings](https://www.fema.gov/disaster/declarations) and
 [FEMA Web Disaster Declarations v1](https://www.fema.gov/openfema-data-page/fema-web-disaster-declarations-v1)
