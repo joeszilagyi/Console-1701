@@ -1876,6 +1876,9 @@ remaining health/failure variants are pending. A bounded read of the BBC World R
 terms, and [BBC's published terms](https://downloads.bbc.co.uk/usingthebbc/bbc_terms_of_use_31March2022english.pdf)
 restrict extracting metadata from RSS feeds. Keep `bbc_world_rss` disabled and do not build a
 metadata extraction parser without a suitable permission or a different verified source.
+The separate WMO-hosted BoM CAP 1.2 fixture now exercises a verified sender/envelope, an active
+area and a cancelled area, bounded metadata-only parsing, current severe-warning ranking, expiry,
+and a same-family RSS/CAP identifier join. No linked-document or live HTTP fetching was added.
 
 ### GDACS Feed Parser
 
@@ -1979,9 +1982,11 @@ RSS channel was reachable but had no current items. The SWIC dashboard and direc
 reference-only health entries, never alert adapters, with an offline scan regression proving no
 file or HTTP ingest. The [verification notes](docs/project/GLOBAL_WMO_CAP_SOURCE_VERIFICATION.md)
 record issuer attribution, parser fields, tentative feed-specific cadence, and policy/health gates.
-A separate fixture-only `wmo_bom_rss` parser now accepts the exact BoM channel and stores bounded
-headline metadata/CAP links with no linked-document fetch. Direct CAP parsing and exact-feed live
-ingest remain open; no CAP or RSS URL is live-allowlisted by the app.
+A separate fixture-only `wmo_bom_rss` parser accepts the exact BoM channel and stores bounded
+headline metadata/CAP links. A new fixture-only CAP 1.2 parser preserves public issuer/envelope,
+per-info area cancellation, severity, urgency, certainty, effective/expiry, and no narrative body.
+Only a current high-severity public info block can elevate ranking; no impact is inferred. Exact
+feed/linked-document live ingest remains open; no CAP or RSS URL is live-allowlisted by the app.
 
 ### USGS Global Earthquake GeoJSON Parser
 
@@ -2189,6 +2194,9 @@ earthquake IDs, volcano names, disease, institution, transport, cyber, and impac
 USGS event IDs are recognized from parsed evidence. Remaining work: populate and validate those
 fields in the relevant future source parsers and fixtures, test convergence with their actual
 records, and broaden GLOBAL versus domestic scope-routing coverage.
+The WMO-hosted BoM RSS GUID and linked CAP identifier now form one same-family event in direct
+parser-backed correlation. Conflicting CAP identifiers do not converge by broad title/context;
+the RSS and CAP copies add no independent-family credit. Linked CAP transport remains disabled.
 
 ### GLOBAL Deterministic Ranking
 
@@ -2255,6 +2263,13 @@ Official WHO Disease Outbreak News items now receive an eight-point source-conte
 verified parser evidence. A WHO notice alone no longer supplies an inferred severity score;
 severity, public impact, and active-alert factors stay zero without specific source-backed
 evidence. Direct and stored offline tests cover that boundary.
+The fixture-only BoM CAP parser supplies a source-backed official weather-warning rule. An
+`Actual`/`Public` Severe or Extreme info block contributes severity and active-alert factors only
+while effective, unexpired, uncancelled, and paired with Expected/Immediate urgency and
+Likely/Observed certainty. Moderate/unknown, Test, Cancel and expired cases receive no alert
+boost (`Test` messages emit no item); warning severity is not treated as observed public impact.
+An offline scan persists the
+rank and caps item expiry at the earliest active-area expiration.
 
 ### GLOBAL UI Disabled States
 

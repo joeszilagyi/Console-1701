@@ -252,6 +252,10 @@ def parse_fixture_items(
         from console1701.news.national_pbs import parse_pbs_newshour_rss
 
         return parse_pbs_newshour_rss(source, payload_text)
+    if parser_name == "wmo_bom_cap_xml":
+        from console1701.news.wmo_bom_cap import parse_wmo_bom_cap_xml
+
+        return parse_wmo_bom_cap_xml(source, payload_text)
     if parser_name == "swpc_xray_flares_json":
         from console1701.news.orbital_flares import parse_swpc_xray_flares_json
 
@@ -601,6 +605,7 @@ def _parse_wmo_bom_rss(source: dict[str, Any], payload_text: str) -> list[dict[s
             "ranking": {"official_feed": True, "active_warning_unverified": True},
         }
         item["evidence"]["global_identity"] = {
+            "cap_identifier": guid,
             "public_value_class": "background",
             "public_value_basis": (
                 "cancellation_headline" if cancelled else "cap_status_and_expiry_unverified"

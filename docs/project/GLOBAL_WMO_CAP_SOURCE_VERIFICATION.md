@@ -44,7 +44,23 @@ publication time. A linked 3,983-byte CAP document returned HTTP 200 and contain
 marks CAP status/severity/expiry/area unverified, and keeps items at background attention. It
 does not fetch or parse the linked CAP documents; direct WMO HTTP remains disabled in the app.
 
-## Local policy for the future parser
+A follow-up bounded read of the exact linked CAP document returned HTTP 200 and 3,983 bytes.
+Its `Actual`/`Update`/`Public` envelope contained two `info` blocks: a Moderate warning for one
+New South Wales forecast district and a Minor cancellation for three other district codes. The
+new fixture-only `wmo_bom_cap_xml` parser accepts a separately configured exact CAP URL; it does
+not follow RSS links or add WMO to the live HTTP allowlist. The reduced fixture keeps the observed
+envelope, fields and two-area-state structure, with paraphrased headlines and no narrative body.
+It bounds XML and info/area counts, verifies the BoM sender and CAP namespace, preserves each
+info block's severity, urgency, certainty, effective/expiry time and area descriptions, and
+separates cancelled areas. A current `Actual`/`Public` Severe or Extreme info block contributes
+alert/severity rank only when urgency and certainty are source-backed; Moderate/unknown, Test,
+Cancel, and expired cases receive no alert boost; `Test` documents emit no item. No observed impact
+or global reach is inferred.
+The item expires at the earliest active-info expiry. The RSS GUID and CAP identifier may join as
+one WMO-family event, without independent corroboration. This is fixture-only source validation,
+not approval for linked-document or live-feed fetching.
+
+## Local policy for future live promotion
 
 The SWIC dashboard and source-directory registry entries are `source_health_probe_only` with a
 24-hour review cadence. They are not CAP adapters and must not be scraped. A future CAP source
@@ -53,9 +69,10 @@ and explicit local configuration. A tentative 15-minute polling interval is appr
 after feed-specific rate and update behavior is checked; use a payload cap, timeout, backoff, and
 conditional requests. Page loads and tests may never fetch it.
 
-The parser should first bound item count and XML size, verify the CAP namespace and issuer,
-retain metadata rather than full warning bodies, and distinguish `Actual`/`Test`,
-`Alert`/`Update`/`Cancel`, `Public`/restricted scope, expiry, and the source-provided
-urgency/severity/certainty. It should preserve area labels and codes without claiming global
-impact from a local warning. Source health must expose disabled, never run, stale, inaccessible,
+The fixture parser bounds item count and XML size, verifies the CAP namespace and issuer, and
+retains metadata rather than full warning bodies. A future live adapter must preserve its
+distinction between `Actual`/`Test`, `Alert`/`Update`/`Cancel`, public/restricted scope, expiry,
+and source-provided urgency/severity/certainty. It should preserve area labels and codes without
+claiming global impact from a local warning. Source health must expose disabled, never run, stale,
+inaccessible,
 parser failure, policy block, and successful states with the issuer and exact feed URL visible.
