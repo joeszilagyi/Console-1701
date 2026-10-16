@@ -152,6 +152,10 @@ def parse_fixture_items(
         from console1701.news.cneos_parsers import parse_jpl_fireball_json
 
         return parse_jpl_fireball_json(source, payload_text)
+    if parser_name == "jpl_scout_json":
+        from console1701.news.scout_parser import parse_jpl_scout_json
+
+        return parse_jpl_scout_json(source, payload_text)
     if parser_name == "nasa_orbital_rss":
         from console1701.news.orbital_rss import parse_nasa_orbital_rss
 

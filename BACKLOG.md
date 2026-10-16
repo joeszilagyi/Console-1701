@@ -2400,7 +2400,8 @@ must be safe for pytest.
 Current state: small official-shape SWPC alerts, NOAA scales, planetary and Boulder K-index, and
 OVATION aurora and JPL CAD JSON fixtures cover warning, cancelled watch, incomplete row, current
 and forecast scale, zero state, K-index thresholds, a tiny aurora grid, close-approach thresholds,
-and fireball energy/location variants, plus NASA and ESA RSS relevance cases. The former SWPC
+fireball energy/location variants, and a Scout v1.3 provisional-object summary with no impact
+inference, plus NASA and ESA RSS relevance cases. The former SWPC
 X-ray summary URL returned 404; an observed seven-day GOES flare event list now supplies an
 offline M/X-class fixture parser with bounded identity, timing, class, flux and cautious ranking.
 Their parsers and offline scans are tested. Remaining ORBITAL products and source-health variants
@@ -2490,10 +2491,14 @@ The candidate remains disabled with no live HTTP allowlist entry. See
 
 ### JPL Sentry And Scout Source Verification
 
-Status: not implemented.
+Status: partially implemented; Scout summary verified and fixture parser added 2026-10-15.
 
 Verify JPL Sentry and Scout endpoint ownership, query shape, rate limits, policy notes, parser
-fields, source-health behavior, and risk-language rules before implementation. Store official
+fields, source-health behavior, and risk-language rules before implementation. Scout's official
+v1.3 summary endpoint, identity, count/data shape, and fair-use policy are verified; a bounded,
+background-only fixture parser stores provisional identity and observation count without
+interpreting source risk fields. Sentry verification, Scout live query/response sizing and
+admission remain open. See `docs/project/ORBITAL_JPL_SCOUT_SOURCE_VERIFICATION.md`. Store official
 source framing only and avoid panic language or inferred impact claims.
 
 ### MPC MPEC And NEOCP Source Verification

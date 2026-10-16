@@ -882,8 +882,8 @@
     "policy_risk": "low",
     "parser_risk": "medium",
     "retention_sensitivity": "medium",
-    "verification_status": "candidate_needs_verification",
-    "why_it_matters": "NEO candidate/risk context, verified later.",
+    "verification_status": "official_page_seen",
+    "why_it_matters": "Provisional NEOCP metadata; fixture-only, with no inferred impact risk.",
     "future_phase": "O6"
   },
   {
