@@ -1646,6 +1646,7 @@ def _parse_usgs_earthquake_geojson(
     geo_filter = _usgs_filter(source)
     global_scope = str(source.get("scope") or "").upper() == "GLOBAL"
     normalized: list[dict[str, Any]] = []
+    seen_event_ids: set[str] = set()
     for index, feature in enumerate(features):
         if not isinstance(feature, dict) or feature.get("type") != "Feature":
             raise NewsParserError(f"USGS feature {index} must be a GeoJSON Feature.")
@@ -1690,8 +1691,11 @@ def _parse_usgs_earthquake_geojson(
         if not matches_geography or magnitude < geo_filter["min_magnitude"]:
             continue
         event_id = bounded_text(feature.get("id"), max_chars=120)
-        if global_scope and not event_id:
-            raise NewsParserError(f"GLOBAL USGS feature {index} has no event id.")
+        if not event_id or not re.fullmatch(r"[A-Za-z0-9_-]{1,120}", event_id):
+            raise NewsParserError(f"USGS feature {index} has no valid event id.")
+        if event_id in seen_event_ids:
+            raise NewsParserError(f"USGS feature {index} repeats an event id.")
+        seen_event_ids.add(event_id)
         published_at = _usgs_timestamp(properties.get("time"))
         if published_at is None:
             raise NewsParserError(f"USGS feature {index} has no valid event time.")
@@ -1700,8 +1704,10 @@ def _parse_usgs_earthquake_geojson(
             parts = urlsplit(url)
         except ValueError as exc:
             raise NewsParserError(f"USGS feature {index} has an invalid event URL.") from exc
-        if parts.scheme != "https" or parts.hostname != "earthquake.usgs.gov":
-            raise NewsParserError(f"USGS feature {index} has no official HTTPS event URL.")
+        if (parts.scheme != "https" or parts.netloc != "earthquake.usgs.gov"
+                or parts.query or parts.fragment
+                or parts.path != f"/earthquakes/eventpage/{event_id}"):
+            raise NewsParserError(f"USGS feature {index} has no matching official event URL.")
         place = bounded_text(source_place, max_chars=180) or (
             "World" if global_scope else "U.S. region" if national else "Washington region"
         )

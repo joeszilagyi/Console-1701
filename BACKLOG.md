@@ -1362,6 +1362,10 @@ now excludes clearly labeled Canada, Mexico, Caribbean, and Central American eve
 inside those broad boxes; the fixture includes high-felt foreign events and a U.S. place-name
 regression. This guard cannot decide border-near epicenters from a nearest-place label. Nuanced
 cross-border routing and verified multi-state felt-impact evidence remain pending.
+Accepted USGS records now require a bounded feature ID, a matching exact USGS event-page URL,
+and a unique ID within the response. This closes an identity gap in NATIONAL correlation without
+using an event-page hostname alone as proof of ownership; the same parser serves REGIONAL and
+GLOBAL. A bounded current feed check found 43 features and no ID/URL mismatches.
 USGS's published summary schema provides no state distribution or country code; GeoServe's
 separate point-admin endpoint can classify an epicenter but cannot establish felt geography.
 Dynamic per-event GeoServe calls require their own exact-request design and signoff before use.

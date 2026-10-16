@@ -44,3 +44,11 @@ fetch, so the isolated scan was repeated with a corrected evidence query. Only t
 full storage/health result is reported above. Mocked tests cover default blocking, parent/HTTP
 and magnitude gates, accepted fixture ingest, interval skip, conditional 304, and scope evidence.
 A live 304 and future cross-source NATIONAL correlation remain unobserved.
+
+Identity follow-up on 2026-10-15: a bounded direct read of the exact M2.5+ past-day
+GeoJSON returned HTTP 200, 30,956 bytes and 43 features. All 43 had a bounded
+feature ID and a matching `https://earthquake.usgs.gov/earthquakes/eventpage/<id>`
+URL. The shared parser now rejects missing/invalid IDs, mismatched event URLs,
+query/fragment variants, and duplicate accepted IDs before storage. Fixture tests
+cover these rejections; this does not establish epicenter jurisdiction or felt
+geography.
