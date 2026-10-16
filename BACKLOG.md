@@ -2207,6 +2207,9 @@ descriptions now receive the same pre-storage policy check as titles; a neutral 
 graphic/private-person description is redacted before SQLite persistence. Routine institutional,
 opinion, and domestic-politics phrases in a bounded description now also mark an item background
 before storage; official alert metadata prevents that low-value rule from masking a verified alert.
+Explicit doxxing language in a title or bounded description now sets the existing hard
+sensitivity flag before storage, redacts title/description, and suppresses its cluster;
+the offline regression verifies the stored flag without retaining the source text.
 An offline scan verifies the stored 40-point low-value penalty and zero-score cluster. Remaining
 work: source-specific coverage for broader public-impact categories and additional low-value
 variants. Official IAEA urgent nuclear-safety titles now receive only a modest context factor
