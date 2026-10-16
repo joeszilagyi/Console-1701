@@ -83,17 +83,21 @@ def classify_global_item(source: dict[str, Any], item: dict[str, Any]) -> dict[s
     if family in _SOCIAL_FAMILIES and not official_alert:
         identity.setdefault("public_value_class", "background")
         reasons.append("single social source has no verified public impact")
-    if not official_alert and not identity.get("public_value_class"):
-        if _ROUTINE_RE.search(content_text):
-            identity["public_value_class"] = "routine"
-            reasons.append("routine institutional or economic metadata")
-        elif _OPINION_RE.search(content_text):
-            identity["public_value_class"] = "opinion"
-            reasons.append("opinion or punditry metadata")
-        elif _DOMESTIC_RE.search(content_text) and not identity.get("international_impact"):
+    if not official_alert:
+        if _DOMESTIC_RE.search(content_text):
             identity["public_value_class"] = "generic_politics"
             identity["out_of_scope"] = True
-            reasons.append("domestic politics without international impact evidence")
+            reasons.append("domestic politics without source-verified international impact")
+        elif identity.get("public_value_class") in (None, "", "background") and (
+            _ROUTINE_RE.search(content_text)
+        ):
+            identity["public_value_class"] = "routine"
+            reasons.append("routine institutional or economic metadata")
+        elif identity.get("public_value_class") in (None, "", "background") and (
+            _OPINION_RE.search(content_text)
+        ):
+            identity["public_value_class"] = "opinion"
+            reasons.append("opinion or punditry metadata")
     evidence["global_identity"] = identity
     evidence["sensitivity"] = sensitivity
     evidence["global_attention_policy"] = {
