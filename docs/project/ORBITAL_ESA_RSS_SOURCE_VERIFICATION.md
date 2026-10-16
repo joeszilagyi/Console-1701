@@ -15,6 +15,17 @@ path. It filters routine media and unrelated titles. Reentry and debris headline
 of this parser pending their own source and policy review; no safety classification is inferred
 from a generic ESA RSS item.
 
+For ORBITAL correlation, an ESA article is typed as `iss_update` only when its own title
+or official article path identifies ISS; the Human Spaceflight feed name alone does not
+establish that identity. NASA station articles and these ESA ISS articles share that event
+type and a normalized `ISS` mission label. The parsers also retain a narrow action from
+each article title (for example, docking or launch). Cross-agency title/context matching
+requires the same nonempty action, a 96-hour publication window, shared title tokens,
+and independent NASA/ESA families. Generic station updates without an action stay
+separate. A parser-backed two-feed offline scan verifies a docking match and a
+same-mission launch mismatch; it does not imply that the two fixture headlines were
+observed together in live feeds.
+
 Both registry candidates remain disabled by default. The two exact feeds are now in the live
 HTTP allowlist, subject to an explicit source opt-in, `verification_status: verified`, and the
 parent `allow_official_http` gate. Live items must be published within seven days (with one hour
