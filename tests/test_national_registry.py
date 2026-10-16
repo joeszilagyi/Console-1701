@@ -13,6 +13,7 @@ from console1701.news.national_registry import (
     list_national_source_registry,
     national_source_registry_summary,
 )
+from console1701.news.parsers import NWS_NATIONAL_SEVERE_ALERTS_URL
 from console1701.news.scanner import run_news_scan
 from console1701.news.storage import get_news_sources_status, get_news_storage_summary
 
@@ -54,10 +55,10 @@ def test_national_registry_defaults_seed_minimal_config(tmp_path):
 
     assert source["scope"] == "NATIONAL"
     assert source["enabled"] is False
-    assert source["url"] == "https://api.weather.gov/alerts/active"
+    assert source["url"] == NWS_NATIONAL_SEVERE_ALERTS_URL
     assert source["parser"] == "nws_alerts_json"
     assert source["source_class"] == "official_weather_hazard"
-    assert source["verification_status"] == "official_page_seen"
+    assert source["verification_status"] == "verified"
 
 
 def test_national_registry_metadata_rejects_unknown_enum(tmp_path):

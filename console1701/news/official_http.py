@@ -12,7 +12,12 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import HTTPRedirectHandler, HTTPSHandler, ProxyHandler, Request, build_opener
 
-from console1701.news.parsers import NewsIngestError, PayloadTooLargeError, UnsupportedSourceError
+from console1701.news.parsers import (
+    NWS_NATIONAL_SEVERE_ALERTS_URL,
+    NewsIngestError,
+    PayloadTooLargeError,
+    UnsupportedSourceError,
+)
 
 NWS_WASHINGTON_ALERTS_URL = "https://api.weather.gov/alerts/active?area=WA"
 USGS_REGIONAL_EARTHQUAKES_URL = (
@@ -34,6 +39,10 @@ OFFICIAL_SOURCES = {
     ),
     ("REGIONAL", "nws_active_alerts_wa"): (
         NWS_WASHINGTON_ALERTS_URL, "api_json", "nws_alerts_json", "application/geo+json"
+    ),
+    ("NATIONAL", "nws_active_alerts_api"): (
+        NWS_NATIONAL_SEVERE_ALERTS_URL, "api_json", "nws_alerts_json",
+        "application/geo+json"
     ),
     ("REGIONAL", "usgs_eq_geojson"): (
         USGS_REGIONAL_EARTHQUAKES_URL, "api_json", "usgs_earthquake_geojson",
@@ -171,6 +180,14 @@ def is_supported_official_source(source: dict[str, Any]) -> bool:
         and (
             source.get("id") != "usgs_eq_geojson"
             or _usgs_feed_covers_threshold(source.get("min_magnitude", 3.0))
+        )
+        and (
+            (source.get("scope"), source.get("id")) !=
+            ("NATIONAL", "nws_active_alerts_api")
+            or (
+                type(source.get("interval_minutes")) is int
+                and source["interval_minutes"] >= 5
+            )
         )
         and (
             (source.get("scope"), source.get("id")) != ("GLOBAL", "usgs_eq_geojson_global")
