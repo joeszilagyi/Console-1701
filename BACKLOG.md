@@ -2329,6 +2329,13 @@ An official NHC Public Advisory's explicit watch/warning term supplies bounded G
 and public-warning context only for 12 hours after its source publication. The source provides
 no watch expiry or verified country geography, so an older stored advisory does not remain
 an active alert or retain that watch-derived public-impact factor.
+GLOBAL pre-storage policy and ranking now accept GDACS, ReliefWeb disaster/report, and USGS
+earthquake impact fields only when the stored source family matches and its status is `official`.
+Mismatched or `official_candidate` metadata cannot create an official-alert exemption, severity,
+public-impact, humanitarian, or active-alert boost from those fields. The public-impact basis is
+derived from the same qualified signals, so the drawer cannot cite a rejected field. Direct
+tests cover each family and both rejection paths. Broader source-specific impact and low-value
+coverage remains open.
 
 ### GLOBAL UI Disabled States
 
