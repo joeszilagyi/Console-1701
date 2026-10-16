@@ -2554,8 +2554,10 @@ The pre-storage domestic-politics rule now ignores a free-standing
 `global_identity.international_impact` flag: no current GLOBAL parser supplies a verified
 international-impact exception. It also applies when a parser has already set the generic
 `background` class, recording `generic_politics` and `out_of_scope` rather than letting that
-weaker label mask the rule. A source-backed official alert still keeps its existing exemption.
-Direct regressions cover the unsupported flag and preexisting background label; an
+weaker label mask the rule. Routine institutional and opinion labels likewise replace only
+generic `background`, preserving stronger existing classes. A source-backed official alert
+still keeps its existing exemption. Direct regressions cover the unsupported flag and label
+precedence; an
 international-impact exception needs its own reviewed parser field and policy rule.
 
 ### GLOBAL UI Disabled States

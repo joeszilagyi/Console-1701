@@ -88,10 +88,14 @@ def classify_global_item(source: dict[str, Any], item: dict[str, Any]) -> dict[s
             identity["public_value_class"] = "generic_politics"
             identity["out_of_scope"] = True
             reasons.append("domestic politics without source-verified international impact")
-        elif not identity.get("public_value_class") and _ROUTINE_RE.search(content_text):
+        elif identity.get("public_value_class") in (None, "", "background") and (
+            _ROUTINE_RE.search(content_text)
+        ):
             identity["public_value_class"] = "routine"
             reasons.append("routine institutional or economic metadata")
-        elif not identity.get("public_value_class") and _OPINION_RE.search(content_text):
+        elif identity.get("public_value_class") in (None, "", "background") and (
+            _OPINION_RE.search(content_text)
+        ):
             identity["public_value_class"] = "opinion"
             reasons.append("opinion or punditry metadata")
     evidence["global_identity"] = identity

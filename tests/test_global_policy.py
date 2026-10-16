@@ -63,6 +63,25 @@ def test_generic_international_impact_flag_does_not_exempt_domestic_politics():
     assert "out_of_scope" not in alert["evidence"]["global_identity"]
 
 
+def test_routine_and_opinion_override_only_generic_background_label():
+    source = {"scope": "GLOBAL", "source_family": "pbs_world"}
+    for title, expected in (
+        ("Routine diplomatic statement on courtesy call", "routine"),
+        ("Opinion: a commentator reviews the week", "opinion"),
+    ):
+        result = classify_global_item(source, _item(title, {
+            "global_identity": {"public_value_class": "background"},
+        }))
+        assert result["evidence"]["global_identity"]["public_value_class"] == expected
+        assert result["evidence"]["global_attention_policy"]["attention_state"] == (
+            "background"
+        )
+    stronger = classify_global_item(source, _item("Opinion: unverified speculation", {
+        "global_identity": {"public_value_class": "speculation"},
+    }))
+    assert stronger["evidence"]["global_identity"]["public_value_class"] == "speculation"
+
+
 def test_low_value_descriptions_are_classified_without_overriding_official_alerts():
     source = {"scope": "GLOBAL", "source_family": "un_press"}
     cases = (
