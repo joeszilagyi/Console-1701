@@ -179,3 +179,82 @@ def test_linked_launch_article_uses_source_launch_window_without_corroboration(
         assert event["corroborated"] is False
         assert event["families"] == ["launch_library"]
         assert event["matches"][0]["basis"][-1] == "launch_window"
+
+
+def test_linked_docking_article_joins_exact_event_near_source_time(tmp_path, monkeypatch):
+    orbital_fixtures = Path(__file__).parent / "fixtures/orbital"
+    event_path = orbital_fixtures / "launch_library_events.json"
+    article = {
+        "results": [{
+            "id": 40800, "title": "CRS-35 Dragon docking at ISS",
+            "url": "https://example.org/crs-35-docking", "news_site": "Space News",
+            "published_at": "2026-10-15T12:00:00Z", "summary": "Docking coverage.",
+            "launches": [], "events": [{"event_id": 1525}],
+        }],
+    }
+    article_path = tmp_path / "linked-event.json"
+    article_path.write_text(json.dumps(article))
+    event_source = {
+        "id": "launch_library_events", "scope": "ORBITAL",
+        "parser": "launch_library_json", "source_family": "launch_library",
+    }
+    article_source = {
+        "id": "spaceflight_news_articles", "scope": "ORBITAL",
+        "parser": "spaceflight_news_json", "source_family": "spaceflight_news_api",
+    }
+    event_item, = parse_fixture_items(event_source, event_path.read_text())
+    article_item, = parse_fixture_items(article_source, article_path.read_text())
+    assert event_item["evidence"]["orbital_identity"]["launch_library_event_id"] == "1525"
+    assert article_item["evidence"]["orbital_identity"]["launch_library_event_id"] == "1525"
+    for item_id, item, key, family in (
+        (1, event_item, "launch_library_events", "launch_library"),
+        (2, article_item, "spaceflight_news_articles", "spaceflight_news_api"),
+    ):
+        item["id"] = item_id
+        item["evidence"]["source"] = {"source_key": key, "source_family": family}
+    groups = correlate_orbital_items([event_item, article_item])
+    assert len(groups) == 1
+    assert groups[0]["matches"][0]["basis"] == [
+        "linked_launch_library_event_id", "event_window",
+    ]
+    assert groups[0]["corroborated"] is False
+
+    article_item["source_published_at"] = "2026-11-01T12:00:00Z"
+    assert len(correlate_orbital_items([event_item, article_item])) == 2
+    article_item["source_published_at"] = "2026-10-15T12:00:00Z"
+    article_item["evidence"]["orbital_identity"]["launch_library_event_id"] = "1526"
+    assert len(correlate_orbital_items([event_item, article_item])) == 2
+
+    monkeypatch.setattr(
+        "console1701.news.scanner.fetch_official_text",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("no HTTP")),
+    )
+    path = tmp_path / "config.yml"
+    path.write_text(dedent(f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        orbital: {{enabled: true}}
+        news:
+          enabled: true
+          scopes:
+            ORBITAL:
+              enabled: true
+              sources:
+                - id: launch_library_events
+                  enabled: true
+                  url: "file://{event_path}"
+                - id: spaceflight_news_articles
+                  enabled: true
+                  url: "file://{article_path}"
+    """).strip() + "\n")
+    assert run_news_scan(path)["item_count"] == 2
+    config = load_config(path)
+    with connect_db(config["_db_path"]) as conn:
+        rows = conn.execute(
+            "SELECT evidence_json FROM news_clusters WHERE scope='ORBITAL'"
+        ).fetchall()
+        assert len(rows) == 1
+        event = json_loads(rows[0]["evidence_json"], {})["orbital_event"]
+        assert event["corroborated"] is False
+        assert event["matches"][0]["basis"] == [
+            "linked_launch_library_event_id", "event_window",
+        ]

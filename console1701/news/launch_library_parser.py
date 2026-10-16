@@ -174,6 +174,7 @@ def parse_launch_library_json(source: dict[str, Any], payload_text: str) -> list
         item["evidence"]["orbital_identity"] = {
             "event_type": event_type,
             "launch_id" if is_launch else "object_id": identifier,
+            **({} if is_launch else {"launch_library_event_id": identifier}),
             "public_value_class": "background",
             **({
                 "mission_name": mission_name,

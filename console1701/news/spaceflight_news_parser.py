@@ -72,7 +72,10 @@ def parse_spaceflight_news_json(
         if len(linked_launches) == 1 and not linked_events:
             identity.update(event_type="launch_update", launch_id=linked_launches[0])
         elif len(linked_events) == 1 and not linked_launches:
-            identity.update(event_type="mission_update", object_id=str(linked_events[0]))
+            identity.update(
+                event_type="mission_update",
+                launch_library_event_id=str(linked_events[0]),
+            )
         else:
             identity["event_type"] = "spaceflight_article"
         seen.add(article_id)
