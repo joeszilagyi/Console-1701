@@ -681,8 +681,9 @@ risk, privacy risk, retention sensitivity, verification status, and future phase
 enum values and keep all REGIONAL sources disabled until explicitly configured.
 
 The REGIONAL registry now contains all 224 design-table entries plus six pre-existing reviewed
-operational candidates, one Pierce Road Alert RSS candidate, and NIFC current IMSR plus NWCC
-large-fire Washington fixture candidates. All 233 rows are disabled by default. At load time it validates unique
+operational candidates, one Pierce Road Alert RSS candidate, and NIFC current IMSR, NWCC
+large-fire Washington, and WA DNR fire-statistics fixture candidates. All 234 rows are disabled
+by default. At load time it validates unique
 keys, classes/adapters/kinds, official and verification status, risks, HTTPS URLs, priority,
 interval, and future phase. The config layer inherits metadata, and SQLite sync persists the full
 inventory. Reference-only pages and documentation cannot trigger fixture or HTTP ingest when
@@ -718,7 +719,7 @@ retention purge evidence. Use JSON-heavy columns and indexes for latest-by-scope
 source health, source family, geographic filters, and `expires_at` purge. Do not store full article
 bodies by default.
 
-The shared schema persists all 233 REGIONAL registry rows, configured sources, fetch runs, items,
+The shared schema persists all 234 REGIONAL registry rows, configured sources, fetch runs, items,
 source health, and scoped `news_clusters` with member, family, geography, confidence, and ranking
 evidence. `news_item_facets` now indexes source-provided REGIONAL zone, route, facility, county, and
 region labels, plus event type and source family. It excludes free-text USGS place labels from
@@ -773,6 +774,13 @@ fixture-only pending live freshness and source-policy decisions; see
 `docs/project/REGIONAL_NWCC_LARGE_FIRE_SOURCE_VERIFICATION.md`. Dedicated WA DNR incident, other county
 emergency, outage, and other regional fixture shapes remain pending endpoint verification; do not
 invent live API shapes to close this pack.
+
+WA DNR's separate fire-statistics ArcGIS layer now has an observed four-record fixture and
+fixture-only parser for official fire-event ID, county, acres, discovery date, and reported
+control/out dates. The layer has no positive active-status or update-time field; the parser
+does not make active-fire, evacuation, or public-impact claims. Its live path remains blocked,
+and the existing `wa_dnr_current_wildfire` reference source remains unsupported. See
+`docs/project/REGIONAL_WA_DNR_WILDFIRE_ENDPOINT_REVIEW.md`.
 
 ### NWS Alert Parser For Washington
 
@@ -1024,6 +1032,11 @@ same keys as two NIFC incidents. A combined offline scan yields two incident pai
 unpaired older NWCC records; both views share one interagency family, so the pairs are deduped
 but not independently corroborated. Independent wildfire correlation still needs a truly
 separate source family with source-backed incident identity, geography and time.
+
+The DNR statistics fixture adds a separate official `wa_dnr` family with stable fire-event
+identity and county, but bounded name checks found no overlap with the current NIFC/NWCC
+samples. A combined offline scan keeps the four DNR and two NIFC incidents separate;
+no independent wildfire corroboration is claimed from these records.
 
 ### REGIONAL Deterministic Ranking
 

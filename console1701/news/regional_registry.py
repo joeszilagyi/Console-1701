@@ -14,6 +14,12 @@ from console1701.config import (
     REGIONAL_SOURCE_CLASSES,
     REGIONAL_VERIFICATION_STATUSES,
 )
+from console1701.news.regional_wa_dnr import (
+    LAYER_URL as WA_DNR_FIRE_STATISTICS_LAYER_URL,
+)
+from console1701.news.regional_wa_dnr import (
+    QUERY_URL as WA_DNR_FIRE_STATISTICS_QUERY_URL,
+)
 
 
 @dataclass(frozen=True)
@@ -254,6 +260,31 @@ REGIONAL_SOURCE_REGISTRY: tuple[RegionalSourceRegistryEntry, ...] = (
         why_it_matters=(
             "Source-backed WA management-unit fire identity, edit time and containment "
             "without current-activity inference."
+        ),
+    ),
+    RegionalSourceRegistryEntry(
+        source_key="wa_dnr_fire_statistics",
+        source_name="WA DNR fire statistics, active state unknown",
+        source_family="wa_dnr",
+        source_class="official_wildfire",
+        adapter="arcgis_feature_service_candidate",
+        kind="api_json",
+        raw_url=WA_DNR_FIRE_STATISTICS_QUERY_URL,
+        homepage_url=WA_DNR_FIRE_STATISTICS_LAYER_URL,
+        parser="wa_dnr_fire_statistics_fixture",
+        priority=65,
+        interval_minutes=1440,
+        official_status="official",
+        privacy_risk="low",
+        policy_risk="low",
+        parser_risk="medium",
+        retention_sensitivity="medium",
+        verification_status="verified",
+        future_phase="R7",
+        expected_access_kind="observed bounded ArcGIS fire statistics; fixture only",
+        why_it_matters=(
+            "Official WA fire identity, county, acreage and reported dates "
+            "without an active-incident claim."
         ),
     ),
     RegionalSourceRegistryEntry(
