@@ -160,6 +160,7 @@ def _load_registry() -> tuple[dict[str, Any], ...]:
             "nws_active_alerts_api": "nws_alerts_json",
             "usgs_eq_geojson": "usgs_earthquake_geojson",
             "cisa_advisories": "cisa_advisories_rss",
+            "openfema_disaster_declarations": "openfema_declarations_fixture",
             "bls_employment_situation_atom": "bls_release_atom",
             "bls_cpi_atom": "bls_release_atom",
             **{key: "nhc_basin_rss" for key in NATIONAL_NHC_RSS_KEYS},
@@ -212,7 +213,10 @@ def national_registry_config_defaults(source_key: str) -> dict[str, Any] | None:
         source["parser"] = entry["parser"]
     if entry.get("economic_release_terms"):
         source["economic_release_terms"] = entry["economic_release_terms"]
-    if source_key in {"bls_employment_situation_atom", "bls_cpi_atom"}:
+    if source_key in {
+        "bls_employment_situation_atom", "bls_cpi_atom",
+        "openfema_disaster_declarations",
+    }:
         source["official_url"] = entry["raw_url"]
     if source_key in NATIONAL_NHC_RSS_KEYS:
         source["official_url"] = entry["raw_url"]

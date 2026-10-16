@@ -228,6 +228,10 @@ def parse_fixture_items(
         from console1701.news.cpsc_recalls import parse_cpsc_recalls_json
 
         return parse_cpsc_recalls_json(source, payload_text)
+    if parser_name == "openfema_declarations_fixture":
+        from console1701.news.openfema_declarations import parse_openfema_declarations_fixture
+
+        return parse_openfema_declarations_fixture(source, payload_text)
     if parser_name == "cisa_advisories_rss":
         from console1701.news.cisa_advisories import parse_cisa_advisories_rss
 

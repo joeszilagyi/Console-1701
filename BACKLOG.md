@@ -1263,6 +1263,11 @@ advisory numbers are retained without inferring U.S. watch geography, multi-stat
 or article body. NATIONAL attention suppresses these basin reports until a product provides
 source-verified U.S. watch geography; the stored metadata remains available for audit. The
 three exact basin registry entries remain fixture-only; live URLs are blocked before fetch.
+An observed two-row OpenFEMA Disaster Declarations Summaries v2 fixture now exercises a
+bounded declaration parser and offline scan. It groups place rows by declaration, dates the
+signal from `declarationDate` rather than `lastRefresh`, preserves assistance flags and tribal
+scope, and makes no active-hazard or exact-footprint claim. The source stays disabled by
+default and outside the live HTTP allowlist.
 The other NATIONAL source-family fixtures listed above remain pending.
 
 ### NWS Active Alert Parser
@@ -1337,7 +1342,8 @@ the documented v2 JSON API, bounded response shape, query controls, twenty-minut
 frequency, FEMA's `disasterNumber` plus `placeCode` primary key, nonpersistent generated IDs,
 `lastRefresh` semantics, declaration and state/region fields, policy/attribution requirements,
 privacy, retention, source-health behavior, ranking limits and a later exact-source release gate.
-The separate NATIONAL fixture parser and live adapter remain unimplemented and disabled.
+The separate NATIONAL fixture parser is now implemented and tested. Live ingest remains
+disabled pending bounded incremental-query design, attribution display and release signoff.
 
 ### CDC HAN Parser
 
@@ -1358,6 +1364,8 @@ current public endpoint.
 CDC's documented Content Services media API returned zero records for both an exact HAN notice
 path filter and a Health Alert Network query in bounded 2026-10-15 checks; it does not unblock
 this parser.
+Further bounded searches for a current HAN ID and three current notice-title terms also
+returned HTTP 200 with zero results. Direct archive and notice reads returned HTTP 403 here.
 
 ### FDA Recall Endpoint/Feed Verification
 

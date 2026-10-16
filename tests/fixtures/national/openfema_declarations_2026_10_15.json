@@ -1,0 +1,50 @@
+{
+  "metadata": {
+    "entityname": "DisasterDeclarationsSummaries",
+    "version": "v2",
+    "top": 2,
+    "orderby": "lastRefresh DESC"
+  },
+  "DisasterDeclarationsSummaries": [
+    {
+      "disasterNumber": 4943,
+      "placeCode": "99101",
+      "femaDeclarationString": "DR-4943-KS",
+      "state": "KS",
+      "region": 7,
+      "declarationType": "DR",
+      "declarationDate": "2026-09-01T00:00:00.000Z",
+      "incidentType": "Severe Storm",
+      "declarationTitle": "SEVERE STORMS, STRAIGHT-LINE WINDS, TORNADOES, AND FLOODING",
+      "incidentBeginDate": "2026-06-18T00:00:00.000Z",
+      "incidentEndDate": "2026-06-30T00:00:00.000Z",
+      "designatedArea": "Lane (County)",
+      "lastRefresh": "2026-10-14T11:04:54.155Z",
+      "ihProgramDeclared": false,
+      "iaProgramDeclared": false,
+      "paProgramDeclared": true,
+      "hmProgramDeclared": false,
+      "tribalRequest": false
+    },
+    {
+      "disasterNumber": 4954,
+      "placeCode": "86585",
+      "femaDeclarationString": "DR-4954-NM",
+      "state": "NM",
+      "region": 6,
+      "declarationType": "DR",
+      "declarationDate": "2026-10-07T00:00:00.000Z",
+      "incidentType": "Flood",
+      "declarationTitle": "SEVERE STORMS AND FLOODING",
+      "incidentBeginDate": "2026-07-16T00:00:00.000Z",
+      "incidentEndDate": "2026-07-21T00:00:00.000Z",
+      "designatedArea": "Zuni Pueblo (Indian Reservation)",
+      "lastRefresh": "2026-10-13T19:06:36.566Z",
+      "ihProgramDeclared": true,
+      "iaProgramDeclared": false,
+      "paProgramDeclared": true,
+      "hmProgramDeclared": false,
+      "tribalRequest": true
+    }
+  ]
+}

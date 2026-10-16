@@ -65,8 +65,8 @@
     "source_family": "fema",
     "source_class": "official_disaster",
     "scope": "NATIONAL",
-    "raw_url": "https://www.fema.gov/openfema-data-page/disaster-declarations-summaries-v2",
-    "expected_access_kind": "public official dataset/API docs",
+    "raw_url": "https://www.fema.gov/api/open/v2/DisasterDeclarationsSummaries",
+    "expected_access_kind": "observed bounded official v2 JSON API; fixture only",
     "adapter": "official_api_json",
     "refresh_interval": "6 h",
     "priority": "90",
@@ -75,8 +75,8 @@
     "policy_risk": "low",
     "parser_risk": "medium",
     "retention_sensitivity": "medium",
-    "verification_status": "official_page_seen",
-    "why_it_matters": "Strong candidate for federal disaster declarations.",
+    "verification_status": "verified",
+    "why_it_matters": "Federal declaration metadata; declaration date, not refresh date, drives recency.",
     "future_phase": "U7"
   },
   {
