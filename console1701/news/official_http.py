@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from http.client import HTTPException
@@ -191,6 +192,14 @@ def is_supported_official_source(source: dict[str, Any]) -> bool:
             )
         )
         and (
+            (source.get("scope"), source.get("id")) != ("NATIONAL", "usgs_eq_geojson")
+            or source.get("dyfi_state_enrichment") is not True
+            or (
+                type(source.get("interval_minutes")) is int
+                and source["interval_minutes"] >= 60
+            )
+        )
+        and (
             (source.get("scope"), source.get("id")) !=
             ("NATIONAL", "nws_active_alerts_api")
             or (
@@ -332,6 +341,106 @@ def fetch_national_usgs_geoserve_admin(
         raise NewsIngestError(f"GeoServe returned HTTP {exc.code}.") from exc
     except (URLError, TimeoutError, OSError, HTTPException) as exc:
         raise NewsIngestError(f"GeoServe transport failed: {type(exc).__name__}.") from exc
+
+
+def _usgs_dyfi_get(url: str, *, user_agent: str, accept: str,
+                   allowed_types: set[str], max_bytes: int) -> tuple[bytes, int]:
+    request = Request(url, headers={"Accept": accept, "User-Agent": user_agent}, method="GET")
+    opener = build_opener(ProxyHandler({}), HTTPSHandler(), _NoRedirect())
+    try:
+        with opener.open(request, timeout=8) as response:
+            if int(response.status) != 200:
+                raise NewsIngestError(f"USGS DYFI returned HTTP {response.status}.")
+            content_type = str(response.headers.get("Content-Type") or "").lower()
+            if content_type.split(";", 1)[0].strip() not in allowed_types:
+                raise NewsIngestError("USGS DYFI returned an unexpected content type.")
+            raw = response.read(max_bytes + 1)
+            if len(raw) > max_bytes:
+                raise PayloadTooLargeError("USGS DYFI response exceeds its byte cap.")
+            return raw, len(raw)
+    except HTTPError as exc:
+        if exc.code == 429:
+            raise RateLimitedError("USGS DYFI returned HTTP 429; enrichment paused.") from exc
+        raise NewsIngestError(f"USGS DYFI returned HTTP {exc.code}.") from exc
+    except (URLError, TimeoutError, OSError, HTTPException) as exc:
+        raise NewsIngestError(f"USGS DYFI transport failed: {type(exc).__name__}.") from exc
+
+
+def fetch_national_usgs_dyfi(
+    source: dict[str, Any], *, event_id: str, detail_url: str,
+    user_agent: str, cached: dict[str, Any] | None = None,
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None, int, str]:
+    """Read one exact event detail and its preferred bounded USGS DYFI ZIP product."""
+    if (source.get("scope") != "NATIONAL" or source.get("id") != "usgs_eq_geojson"
+            or source.get("dyfi_state_enrichment") is not True
+            or not is_supported_official_source(source)
+            or not isinstance(event_id, str)
+            or not re.fullmatch(r"[A-Za-z0-9_-]{1,120}", event_id)
+            or detail_url != (
+                "https://earthquake.usgs.gov/earthquakes/feed/v1.0/detail/"
+                f"{event_id}.geojson"
+            )):
+        raise UnsupportedSourceError("DYFI requires an opted-in exact NATIONAL USGS detail URL.")
+    raw, detail_bytes = _usgs_dyfi_get(
+        detail_url, user_agent=user_agent, accept="application/json",
+        allowed_types={"application/json", "application/geo+json"}, max_bytes=262_144,
+    )
+    try:
+        detail = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise NewsIngestError("USGS DYFI detail is invalid JSON.") from exc
+    properties = detail.get("properties") if isinstance(detail, dict) else None
+    if (not isinstance(detail, dict) or detail.get("type") != "Feature"
+            or detail.get("id") != event_id or not isinstance(properties, dict)
+            or properties.get("url") != (
+                f"https://earthquake.usgs.gov/earthquakes/eventpage/{event_id}"
+            )):
+        raise NewsIngestError("USGS DYFI detail does not match the summary event.")
+    products = properties.get("products")
+    dyfi = products.get("dyfi") if isinstance(products, dict) else None
+    if dyfi is None:
+        return None, None, detail_bytes, "no_product"
+    if (not isinstance(dyfi, list) or len(dyfi) > 20
+            or any(not isinstance(row, dict)
+                   or type(row.get("preferredWeight")) is not int
+                   or type(row.get("updateTime")) is not int for row in dyfi)):
+        raise NewsIngestError("USGS DYFI detail has invalid product metadata.")
+    if not dyfi:
+        return None, None, detail_bytes, "no_product"
+    preferred = max(dyfi, key=lambda row: (row["preferredWeight"], row["updateTime"]))
+    if preferred.get("source") != "us" or preferred.get("status") != "UPDATE":
+        return None, None, detail_bytes, "no_supported_product"
+    updated = preferred["updateTime"]
+    contents = preferred.get("contents")
+    zip_info = contents.get("cdi_zip.xml") if isinstance(contents, dict) else None
+    if not isinstance(zip_info, dict):
+        return None, None, detail_bytes, "no_zip_product"
+    product_url = (
+        f"https://earthquake.usgs.gov/product/dyfi/{event_id}/us/{updated}/cdi_zip.xml"
+    )
+    if (not 1_000_000_000_000 <= updated <= 9_999_999_999_999
+            or zip_info.get("url") != product_url
+            or zip_info.get("contentType") != "application/xml"
+            or type(zip_info.get("length")) is not int
+            or not 1 <= zip_info["length"] <= 131_072):
+        return None, None, detail_bytes, "unsupported_zip_product"
+    if (isinstance(cached, dict) and cached.get("event_id") == event_id
+            and cached.get("product_url") == product_url
+            and cached.get("fixture_only") is False):
+        return None, cached, detail_bytes, "cached_product"
+    xml, product_bytes = _usgs_dyfi_get(
+        product_url, user_agent=user_agent, accept="application/xml",
+        allowed_types={"application/xml", "text/xml"}, max_bytes=131_072,
+    )
+    if len(xml) != zip_info["length"]:
+        raise NewsIngestError("USGS DYFI ZIP product size differs from event detail.")
+    try:
+        xml_text = xml.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise NewsIngestError("USGS DYFI ZIP product is not UTF-8.") from exc
+    return {
+        "event_id": event_id, "product_url": product_url, "xml": xml_text,
+    }, None, detail_bytes + product_bytes, "downloaded_product"
 
 
 def _fetch_gracedb_public_alerts(
