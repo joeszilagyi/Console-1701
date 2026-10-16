@@ -489,6 +489,17 @@ def test_linked_launch_article_uses_source_launch_window_without_corroboration(
         "event_type", "shared_event_id", "launch_window",
     ]
     assert groups[0]["corroborated"] is False
+    launch_item["evidence"]["orbital_identity"]["launch_id"] = "untrusted-alias"
+    assert len(correlate_orbital_items([launch_item, article_item])) == 1
+    article_item["evidence"]["orbital_identity"]["launch_id"] = "untrusted-alias"
+    assert len(correlate_orbital_items([launch_item, article_item])) == 1
+    article_item["evidence"]["spaceflight_news"]["linked_launch_ids"] = [
+        "6df38990-c890-4c50-ae6d-53f0c49adf10"
+    ]
+    assert len(correlate_orbital_items([launch_item, article_item])) == 2
+    article_item["evidence"]["spaceflight_news"]["linked_launch_ids"] = [
+        launch_item["evidence"]["launch_library"]["launch_id"]
+    ]
     article_item["source_published_at"] = "2026-09-01T12:00:00Z"
     assert len(correlate_orbital_items([launch_item, article_item])) == 2
 
@@ -568,6 +579,8 @@ def test_linked_docking_article_joins_exact_event_near_source_time(tmp_path, mon
     assert len(correlate_orbital_items([event_item, article_item])) == 2
     article_item["source_published_at"] = "2026-10-15T12:00:00Z"
     article_item["evidence"]["orbital_identity"]["launch_library_event_id"] = "1526"
+    assert len(correlate_orbital_items([event_item, article_item])) == 1
+    article_item["evidence"]["spaceflight_news"]["linked_event_ids"] = [1526]
     assert len(correlate_orbital_items([event_item, article_item])) == 2
 
     monkeypatch.setattr(

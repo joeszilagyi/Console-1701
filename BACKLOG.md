@@ -3109,6 +3109,12 @@ source event time, including docking/EVA rows whose specific `iss_update` type d
 the article's generic `mission_update` type. This uses the exact event ID, source keys and
 96-hour event window; it does not treat the aggregator as corroboration. Parsed fixtures,
 wrong-ID/time cases and a stored offline scan cover the join.
+Both launch UUID and Launch Library event-ID joins now recover their IDs from matching
+`launch_library` or `spaceflight_news` parser evidence. A changed or copied generic
+`orbital_identity` alias cannot split or manufacture these joins; changing the underlying
+single linked article ID separates the event. Ambiguous articles linked to multiple launches
+or events do not supply an exact join. Parser-backed regressions preserve the source event
+window and non-independent aggregator rules.
 NASA station RSS and ESA ISS article paths now produce a common `iss_update` identity
 with source-title action context. A cross-agency ISS join requires the same nonempty
 action, shared title tokens and a 96-hour publication window; generic station items

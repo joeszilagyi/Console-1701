@@ -63,6 +63,28 @@ def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     mpec = (evidence.get("mpc_mpec") or {}) if source_family == "mpc" else {}
     scout = (evidence.get("jpl_scout") or {}) if source_family == "jpl_cneos" else {}
     celestrak = (evidence.get("celestrak_iss") or {}) if source_family == "celestrak" else {}
+    launch_library = (
+        evidence.get("launch_library") or {}
+    ) if source_family == "launch_library" else {}
+    article = (
+        evidence.get("spaceflight_news") or {}
+    ) if source_family == "spaceflight_news_api" else {}
+    linked_launches = article.get("linked_launch_ids")
+    linked_events = article.get("linked_event_ids")
+    source_launch_id = (
+        launch_library.get("launch_id") if launch_library.get("source_kind") == "launch"
+        else linked_launches[0] if (
+            isinstance(linked_launches, list) and len(linked_launches) == 1
+            and isinstance(linked_events, list) and not linked_events
+        ) else None
+    )
+    source_event_id = (
+        launch_library.get("event_id") if launch_library.get("source_kind") == "event"
+        else linked_events[0] if (
+            isinstance(linked_events, list) and len(linked_events) == 1
+            and isinstance(linked_launches, list) and not linked_launches
+        ) else None
+    )
     identifiers: set[str] = set()
     # The object's identity is scoped by event type. A designation alone is not
     # enough to merge distinct close approaches on different dates.
@@ -70,6 +92,7 @@ def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         mpec.get("mpec_id") if event_type == "minor_planet_notice" and source_family == "mpc"
         else scout.get("provisional_designation") if event_type == "neo_candidate"
         else celestrak.get("catalog_id") if event_type == "iss_catalog_status"
+        else source_event_id if source_family == "launch_library"
         else identity.get("object_id")
     )
     if object_id and event_type and event_type != "neo_close_approach":
@@ -78,7 +101,17 @@ def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         "product_id", "launch_id", "cneos_event_id", "mpc_designation",
         "reentry_object_id", "safe_satellite_id", "launch_library_event_id",
     ):
-        value = _normalized(identity.get(field))
+        if field == "launch_id" and source_family in {
+            "launch_library", "spaceflight_news_api"
+        }:
+            raw_value = source_launch_id
+        elif field == "launch_library_event_id" and source_family in {
+            "launch_library", "spaceflight_news_api"
+        }:
+            raw_value = source_event_id
+        else:
+            raw_value = identity.get(field)
+        value = _normalized(raw_value)
         if value:
             identifiers.add(f"{field}:{value}")
     cad = (evidence.get("jpl_close_approach") or {}) if source_family == "jpl_cneos" else {}
@@ -116,9 +149,6 @@ def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     swpc = (evidence.get("swpc_alert") or {}) if source_family == "swpc" else {}
     swpc_scale = (evidence.get("swpc_noaa_scale") or {}) if source_family == "swpc" else {}
     swpc_kp = (evidence.get("swpc_k_index") or {}) if source_family == "swpc" else {}
-    launch_library = (
-        evidence.get("launch_library") or {}
-    ) if source_family == "launch_library" else {}
     if swpc.get("noaa_scale"):
         context["noaa_scale"] = _normalized(swpc["noaa_scale"])
     if swpc_scale.get("scale"):
