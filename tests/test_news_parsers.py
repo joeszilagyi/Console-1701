@@ -374,6 +374,33 @@ def test_national_usgs_country_suffix_guard_keeps_us_place_names() -> None:
     assert items[0]["evidence"]["national_identity"]["multi_state_impact"] is False
 
 
+def test_national_usgs_requires_matching_unique_event_identity() -> None:
+    source = {"id": "usgs_national_fixture", "scope": "NATIONAL",
+              "kind": "api_json", "parser": "usgs_earthquake_geojson"}
+    fixture = json.loads((Path(__file__).parent /
+                          "fixtures/news/national_usgs_earthquakes.json").read_text())
+    fixture["features"] = fixture["features"][:2]
+    first, second = fixture["features"]
+    for bad_id in (None, "../other-event"):
+        changed = json.loads(json.dumps(fixture))
+        changed["features"][0]["id"] = bad_id
+        with pytest.raises(NewsParserError, match="valid event id"):
+            parse_fixture_items(source, json.dumps(changed))
+    for bad_url in (
+        "https://earthquake.usgs.gov/earthquakes/eventpage/other-event",
+        first["properties"]["url"] + "?source=other",
+        "https://earthquake.usgs.gov.evil.test/earthquakes/eventpage/national-ca-001",
+    ):
+        changed = json.loads(json.dumps(fixture))
+        changed["features"][0]["properties"]["url"] = bad_url
+        with pytest.raises(NewsParserError, match="matching official event URL"):
+            parse_fixture_items(source, json.dumps(changed))
+    second["id"] = first["id"]
+    second["properties"]["url"] = first["properties"]["url"]
+    with pytest.raises(NewsParserError, match="repeats an event id"):
+        parse_fixture_items(source, json.dumps(fixture))
+
+
 def test_wsdot_official_rss_preserves_ids_and_strips_embedded_markup() -> None:
     source = {
         "id": "wsdot_highway_alerts_rss",

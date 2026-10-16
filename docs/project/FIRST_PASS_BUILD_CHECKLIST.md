@@ -65,7 +65,7 @@ Each selected row needs working implementation, relevant verification, and a mat
 - [ ] **RS-034** [NATIONAL Fixture Pack](../../BACKLOG.md#L1003) — partial: NWS, NHC basin RSS with unverified-U.S.-watch suppression, USGS, NHTSA, CISA advisories and KEV, FAA NAS, Federal Register, GovInfo, FDA RSS, CPSC, BLS release Atom, OpenFEMA declarations and PBS NewsHour nation-section RSS fixtures; CDC HAN and FSIS source gates remain.
 - [x] **RS-035** [NWS Active Alert Parser](../../BACKLOG.md#L1012) — fixture parser preserves national alert geography, timing, instruction, and ranking evidence; focused tests pass.
 - [x] **RS-036** [NHC Advisory/Feed Verification](../../BACKLOG.md#L1020) — official basin XML, summary/advisory fields, identity limits and empty-basin sentinel observed; live disabled.
-- [ ] **RS-037** [USGS Earthquake GeoJSON Parser](../../BACKLOG.md#L1028) — partial: national coordinate regions, threshold, foreign country-suffix guard, and fixture ingest work; nuanced cross-border and multi-state impact routing remains.
+- [ ] **RS-037** [USGS Earthquake GeoJSON Parser](../../BACKLOG.md#L1028) — partial: national coordinate regions, threshold, foreign country-suffix guard, strict unique USGS ID/event-URL contract, and fixture ingest work; nuanced cross-border and multi-state impact routing remains.
 - [x] **RS-038** [FEMA/OpenFEMA Disaster Declarations Research](../../BACKLOG.md#L1037) — official v2 API shape, stable composite identity, update semantics, policy and future adapter gate documented.
 - [ ] **RS-039** [CDC HAN Parser](../../BACKLOG.md#L1046) — not implemented.
 - [x] **RS-040** [FDA Recall Endpoint/Feed Verification](../../BACKLOG.md#L1055) — official RSS shapes and openFDA enforcement limits verified; no live source enabled.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Advanced RS-037 by requiring accepted USGS GeoJSON rows to have a bounded unique feature ID and a matching exact official event-page URL. A bounded read of the signed-off M2.5+ feed returned 43 rows with no identity mismatches; fixture regressions reject missing, duplicate, mismatched, and query-variant identities. Geography and felt-impact claims remain unchanged. Progress: 137/150.
 - **2026-10-15:** Advanced RS-104 by separating MPC MPEC publication identity from object designation. Two parser-backed circulars about the same object now stay separate; a revision of one circular still joins. No circular body is fetched or stored. Progress: 137/150.
 - **2026-10-15:** Advanced RS-104 by rejecting ORBITAL mission/title-context joins when both records carry different explicit IDs in the same launch, Launch Library event, CNEOS, MPC, reentry-object or safe-satellite namespace. A same-title regression also checks that one matching ID cannot override a second conflicting ID. Progress: 137/150.
 - **2026-10-15:** Advanced RS-049 with an official CISA advisory/KEV CVE join. Both source records must name CISA and be within 72 hours; an older advisory with the same CVE stays separate. The fixture-backed offline scan stores exactly one same-family pair without independent corroboration and keeps unrelated advisories/KEV rows separate. Progress: 137/150.
