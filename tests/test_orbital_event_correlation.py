@@ -91,6 +91,48 @@ def test_orbital_parser_fields_require_matching_source_family():
     )["identifiers"])
 
 
+def test_scout_and_celestrak_revisions_use_adapter_identity():
+    scout_source = {
+        "id": "jpl_scout_api", "scope": "ORBITAL", "kind": "api_json",
+        "parser": "jpl_scout_json", "source_family": "jpl_cneos",
+    }
+    scout, other_scout = parse_fixture_items(
+        scout_source, (ORBITAL_FIXTURES / "jpl_scout.json").read_text()
+    )
+    scout_revision = deepcopy(scout)
+    scout_revision["evidence"]["orbital_identity"]["object_id"] = "untrusted-alias"
+    celestrak_source = {
+        "id": "celestrak_iss_gp", "scope": "ORBITAL", "kind": "api_json",
+        "parser": "celestrak_iss_gp_json", "source_family": "celestrak",
+        "source_class": "official_iss",
+    }
+    iss, = parse_fixture_items(
+        celestrak_source, (ORBITAL_FIXTURES / "celestrak_iss_gp.json").read_text()
+    )
+    iss_revision = deepcopy(iss)
+    iss_revision["evidence"]["orbital_identity"]["object_id"] = "untrusted-alias"
+    for item_id, item, family in (
+        (1, scout, "jpl_cneos"), (2, scout_revision, "jpl_cneos"),
+        (3, other_scout, "jpl_cneos"), (4, iss, "celestrak"),
+        (5, iss_revision, "celestrak"),
+    ):
+        item["id"] = item_id
+        item["first_seen_at"] = "2026-10-15T12:00:00+00:00"
+        item["evidence"]["source"] = {"source_family": family}
+    assert [group["item_ids"] for group in correlate_orbital_items([
+        scout, scout_revision, other_scout, iss, iss_revision,
+    ])] == [[1, 2], [3], [4, 5]]
+
+    foreign = deepcopy(scout)
+    foreign["id"] = 6
+    foreign["title"] = "Unrelated article about astronomy"
+    foreign["evidence"]["source"]["source_family"] = "public_media"
+    assert not orbital_item_signature(foreign)["identifiers"]
+    assert [group["item_ids"] for group in correlate_orbital_items([
+        scout, foreign,
+    ])] == [[1], [6]]
+
+
 def test_orbital_swpc_and_launch_windows_require_matching_source_family():
     row = _item(1, "public_media", "Space weather", event_type="space_weather_alert")
     row["evidence"].update({
