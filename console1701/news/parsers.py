@@ -263,6 +263,10 @@ def parse_fixture_items(
         from console1701.news.national_pbs import parse_pbs_newshour_rss
 
         return parse_pbs_newshour_rss(source, payload_text)
+    if parser_name == "pbs_world_rss":
+        from console1701.news.global_pbs import parse_pbs_world_rss
+
+        return parse_pbs_world_rss(source, payload_text)
     if parser_name == "wmo_bom_cap_xml":
         from console1701.news.wmo_bom_cap import parse_wmo_bom_cap_xml
 
