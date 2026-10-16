@@ -2187,7 +2187,10 @@ opinion, and domestic-politics phrases in a bounded description now also mark an
 before storage; official alert metadata prevents that low-value rule from masking a verified alert.
 An offline scan verifies the stored 40-point low-value penalty and zero-score cluster. Remaining
 work: source-specific coverage for broader public-impact categories and additional low-value
-variants.
+variants. Official IAEA urgent nuclear-safety titles now receive only a modest context factor
+from parser evidence; routine IAEA situation updates receive none. Severity, public impact, and
+active-alert scores remain zero without separate source confirmation, as verified in direct and
+stored-cluster tests.
 
 ### GLOBAL UI Disabled States
 

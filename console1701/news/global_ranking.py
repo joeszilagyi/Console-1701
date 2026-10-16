@@ -32,7 +32,16 @@ def _source_signals(member: dict[str, Any]) -> dict[str, Any]:
     who = evidence.get("who_don") or {}
     usgs = evidence.get("usgs_earthquake") or {}
     nhc = evidence.get("nhc_rss") or {}
+    iaea = evidence.get("iaea") or {}
     identity = evidence.get("global_identity") or {}
+    source = evidence.get("source") or {}
+    iaea_urgent = bool(
+        source.get("source_family") == "iaea"
+        and source.get("official_status") == "official"
+        and (iaea.get("ranking") or {}).get("official_nuclear_safety_source") is True
+        and iaea.get("urgent_title_phrase") is True
+        and iaea.get("severity_confirmed") is False
+    )
     level = str(gdacs.get("alert_level") or "").lower()
     official_severity = {"red": 50, "orange": 35, "green": 12}.get(level, 0)
     if who:
@@ -71,9 +80,10 @@ def _source_signals(member: dict[str, Any]) -> dict[str, Any]:
         "public_impact": public_impact,
         "humanitarian": humanitarian,
         "active_alert": alert,
-        "source": evidence.get("source") or {},
+        "source": source,
         "ingest": evidence.get("ingest") or {},
         "identity": identity,
+        "iaea_urgent": iaea_urgent,
     }
 
 
@@ -137,6 +147,7 @@ def rank_global_event(
         }) * 3,
     )
     active_alert = 20 if any(signal["active_alert"] for signal in signals) else 0
+    nuclear_safety_context = 8 if any(signal["iaea_urgent"] for signal in signals) else 0
     humanitarian = max((signal["humanitarian"] for signal in signals), default=0)
     domestic_impact = min(20, 10 * len(impact_tags & {
         "us", "national", "regional", "local"
@@ -193,6 +204,7 @@ def rank_global_event(
         "public_impact_score": public_impact,
         "geographic_reach_score": geography,
         "active_alert_score": active_alert,
+        "nuclear_safety_context_score": nuclear_safety_context,
         "humanitarian_impact_score": humanitarian,
         "us_or_local_impact_score": domestic_impact,
         "source_priority_score": priority,
