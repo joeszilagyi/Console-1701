@@ -13,6 +13,10 @@ _STOPWORDS = {
     "to", "with", "nasa", "esa", "swpc", "space", "new", "update", "latest",
 }
 MATCH_WINDOW_HOURS = 96
+_EXCLUSIVE_EVENT_ID_FIELDS = (
+    "launch_id", "launch_library_event_id", "cneos_event_id", "mpc_designation",
+    "reentry_object_id", "safe_satellite_id",
+)
 
 
 def _normalized(value: Any) -> str:
@@ -142,6 +146,28 @@ def orbital_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str
     if not left["published_at"] or not right["published_at"]:
         return []
     hours = abs((left["published_at"] - right["published_at"]).total_seconds()) / 3600
+    same_mpec_notice = False
+    if left["event_type"] == right["event_type"] == "minor_planet_notice":
+        # The MPEC designation names an object, while each circular has its
+        # own publication ID. A corrected title can retain one circular ID.
+        prefix = "minor_planet_notice:"
+        left_notices = {value for value in left["identifiers"] if value.startswith(prefix)}
+        right_notices = {value for value in right["identifiers"] if value.startswith(prefix)}
+        if left_notices and right_notices:
+            if not left_notices & right_notices:
+                return []
+            same_mpec_notice = True
+    # Two reports can share a mission name and headline while referring to
+    # distinct launches, objects, or Launch Library events. Explicit IDs from
+    # the same namespace take precedence over broad context convergence.
+    for field in _EXCLUSIVE_EVENT_ID_FIELDS:
+        if field == "mpc_designation" and same_mpec_notice:
+            continue
+        prefix = f"{field}:"
+        left_ids = {value for value in left["identifiers"] if value.startswith(prefix)}
+        right_ids = {value for value in right["identifiers"] if value.startswith(prefix)}
+        if left_ids and right_ids and not left_ids & right_ids:
+            return []
     shared_ids = left["identifiers"] & right["identifiers"]
     shared_launch_id = any(value.startswith("launch_id:") for value in shared_ids)
     shared_ll_event_id = any(
