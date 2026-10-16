@@ -1128,6 +1128,11 @@ def _normalize_news_source(
             source_cfg.setdefault(
                 "min_magnitude", national_cfg["earthquake_min_magnitude"]
             )
+            if ("geoserve_admin_fixture" in source_cfg
+                    and not str(source_cfg.get("url") or "").startswith("file://")):
+                raise ConfigError(
+                    f"{path}.geoserve_admin_fixture requires a local USGS fixture"
+                )
         source_family = str(source_cfg.get("source_family") or "").strip().lower()
         source_class = str(source_cfg.get("source_class") or "").strip().lower()
         if (

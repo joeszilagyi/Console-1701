@@ -1,0 +1,57 @@
+{
+  "border-wa": {
+    "metadata": {
+      "request": "https://earthquake.usgs.gov/ws/geoserve/regions.json?latitude=48.5&longitude=-122.3&type=admin",
+      "types": ["admin"]
+    },
+    "admin": {
+      "type": "FeatureCollection", "count": 1,
+      "features": [{"type": "Feature", "geometry": null, "properties": {
+        "iso": "USA", "country": "United States", "region": "Washington"
+      }}]
+    }
+  },
+  "border-bc": {
+    "metadata": {
+      "request": "https://earthquake.usgs.gov/ws/geoserve/regions.json?latitude=49.25&longitude=-122.9&type=admin",
+      "types": ["admin"]
+    },
+    "admin": {
+      "type": "FeatureCollection", "count": 1,
+      "features": [{"type": "Feature", "geometry": null, "properties": {
+        "iso": "CAN", "country": "Canada", "region": "British Columbia"
+      }}]
+    }
+  },
+  "border-mx": {
+    "metadata": {
+      "request": "https://earthquake.usgs.gov/ws/geoserve/regions.json?latitude=31.2&longitude=-110.95&type=admin",
+      "types": ["admin"]
+    },
+    "admin": {
+      "type": "FeatureCollection", "count": 1,
+      "features": [{"type": "Feature", "geometry": null, "properties": {
+        "iso": "MEX", "country": "Mexico", "region": "Sonora"
+      }}]
+    }
+  },
+  "border-sea": {
+    "metadata": {
+      "request": "https://earthquake.usgs.gov/ws/geoserve/regions.json?latitude=49.0&longitude=-123.0&type=admin",
+      "types": ["admin"]
+    },
+    "admin": {"type": "FeatureCollection", "count": 0, "features": []}
+  },
+  "border-pr": {
+    "metadata": {
+      "request": "https://earthquake.usgs.gov/ws/geoserve/regions.json?latitude=18.2&longitude=-66.3&type=admin",
+      "types": ["admin"]
+    },
+    "admin": {
+      "type": "FeatureCollection", "count": 1,
+      "features": [{"type": "Feature", "geometry": null, "properties": {
+        "iso": "PRI", "country": "Puerto Rico", "region": "Barranquitas"
+      }}]
+    }
+  }
+}

@@ -91,6 +91,7 @@ _FOREIGN_USGS_PLACE_SUFFIX = re.compile(
     r",\s*(?:Canada|Mexico|Cuba|The Bahamas|Bahamas|Guatemala|Belize|Honduras|"
     r"Haiti|Dominican Republic|Jamaica)\s*$", re.I
 )
+_US_GEOSERVE_ISOS = {"USA", "PRI", "VIR", "GUM", "MNP", "ASM"}
 
 
 def resolve_file_url(url: str, *, config_dir: Path) -> Path:
@@ -1621,6 +1622,63 @@ def _national_usgs_region(longitude: float, latitude: float) -> str | None:
     return None
 
 
+def _usgs_geoserve_admin_fixture(
+    source: dict[str, Any], event_id: str, latitude: float, longitude: float
+) -> dict[str, str] | None:
+    fixtures = source.get("geoserve_admin_fixture")
+    if fixtures is None:
+        return None
+    if (source.get("scope") != "NATIONAL"
+            or not str(source.get("url") or "").startswith("file://")
+            or not isinstance(fixtures, dict) or len(fixtures) > 50
+            or len(json.dumps(fixtures).encode("utf-8")) > 65_536):
+        raise NewsParserError("USGS GeoServe sidecar requires a bounded NATIONAL fixture")
+    response = fixtures.get(event_id)
+    if response is None:
+        return None
+    metadata = response.get("metadata") if isinstance(response, dict) else None
+    admin = response.get("admin") if isinstance(response, dict) else None
+    request = metadata.get("request") if isinstance(metadata, dict) else None
+    try:
+        parts = urlsplit(request or "")
+        query = parse_qs(parts.query, strict_parsing=True)
+        request_lat = float(query["latitude"][0])
+        request_lon = float(query["longitude"][0])
+    except (ValueError, KeyError, IndexError, TypeError) as exc:
+        raise NewsParserError("USGS GeoServe sidecar has an invalid point request") from exc
+    if (parts.scheme != "https" or parts.netloc != "earthquake.usgs.gov"
+            or parts.path != "/ws/geoserve/regions.json" or parts.fragment
+            or set(query) != {"latitude", "longitude", "type"}
+            or any(len(values) != 1 for values in query.values())
+            or query["type"] != ["admin"]
+            or not math.isclose(request_lat, latitude, abs_tol=1e-6)
+            or not math.isclose(request_lon, longitude, abs_tol=1e-6)
+            or metadata.get("types") != ["admin"]
+            or not isinstance(admin, dict) or admin.get("type") != "FeatureCollection"
+            or not isinstance(admin.get("features"), list)
+            or admin.get("count") != len(admin["features"])
+            or len(admin["features"]) > 1):
+        raise NewsParserError("USGS GeoServe sidecar does not match the earthquake point")
+    if not admin["features"]:
+        return {"request_url": request, "status": "no_admin_polygon"}
+    feature = admin["features"][0]
+    properties = feature.get("properties") if isinstance(feature, dict) else None
+    if (not isinstance(feature, dict) or feature.get("type") != "Feature"
+            or feature.get("geometry") is not None
+            or not isinstance(properties, dict)
+            or not isinstance(properties.get("iso"), str)
+            or not re.fullmatch(r"[A-Z]{3}", properties["iso"])
+            or not bounded_text(properties.get("country"), max_chars=80)
+            or not bounded_text(properties.get("region"), max_chars=100)):
+        raise NewsParserError("USGS GeoServe sidecar has invalid admin properties")
+    return {
+        "request_url": request, "status": "admin_polygon",
+        "iso": properties["iso"],
+        "country": bounded_text(properties["country"], max_chars=80),
+        "region": bounded_text(properties["region"], max_chars=100),
+    }
+
+
 def _usgs_timestamp(value: Any) -> str | None:
     milliseconds = _usgs_number(value)
     if milliseconds is None:
@@ -1647,6 +1705,10 @@ def _parse_usgs_earthquake_geojson(
         raise NewsParserError("USGS fixture must contain a features list.")
     geo_filter = _usgs_filter(source)
     global_scope = str(source.get("scope") or "").upper() == "GLOBAL"
+    if ("geoserve_admin_fixture" in source
+            and (source.get("scope") != "NATIONAL"
+                 or not str(source.get("url") or "").startswith("file://"))):
+        raise NewsParserError("USGS GeoServe sidecar is NATIONAL fixture-only")
     normalized: list[dict[str, Any]] = []
     seen_event_ids: set[str] = set()
     for index, feature in enumerate(features):
@@ -1670,11 +1732,20 @@ def _parse_usgs_earthquake_geojson(
             continue
         national = str(source.get("scope") or "").upper() == "NATIONAL"
         national_region = _national_usgs_region(longitude, latitude) if national else None
+        admin = (
+            _usgs_geoserve_admin_fixture(
+                source, str(feature.get("id") or ""), latitude, longitude
+            ) if national else None
+        )
         source_place = str(properties.get("place") or "").strip()
         # The broad U.S. coordinate boxes include foreign land. A country suffix
         # in USGS's own place label is a useful exclusion, not proof of a U.S.
         # epicenter or a multi-state impact for labels that remain.
         foreign_place_label = bool(_FOREIGN_USGS_PLACE_SUFFIX.search(source_place))
+        foreign_admin_polygon = bool(
+            admin and admin["status"] == "admin_polygon"
+            and admin["iso"] not in _US_GEOSERVE_ISOS
+        )
         radius_distance = (
             _distance_km(
                 geo_filter["center_latitude"], geo_filter["center_longitude"],
@@ -1684,6 +1755,7 @@ def _parse_usgs_earthquake_geojson(
         matches_geography = (
             True if global_scope else (
                 national_region is not None and not foreign_place_label
+                and not foreign_admin_polygon
             ) if national else
             geo_filter["min_longitude"] <= longitude <= geo_filter["max_longitude"]
             and geo_filter["min_latitude"] <= latitude <= geo_filter["max_latitude"]
@@ -1795,6 +1867,8 @@ def _parse_usgs_earthquake_geojson(
                 "matched": True,
                 "geography_basis": (
                     "source_place_label" if global_scope else
+                    "usgs_geoserve_admin_fixture" if national and admin
+                    and admin["status"] == "admin_polygon" else
                     "coarse_us_region_coordinates" if national else
                     "configured_radius_and_bounds" if radius_distance is not None else
                     "configured_bounds"
@@ -1802,6 +1876,7 @@ def _parse_usgs_earthquake_geojson(
                 "distance_km": round(radius_distance, 1) if radius_distance is not None else None,
                 "region": national_region,
                 "foreign_place_label_guard": bool(national),
+                **({"geoserve_admin": admin} if admin else {}),
                 "place_label": place if global_scope else None,
             },
             "ranking": {

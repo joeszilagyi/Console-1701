@@ -1384,6 +1384,14 @@ GLOBAL. A bounded current feed check found 43 features and no ID/URL mismatches.
 USGS's published summary schema provides no state distribution or country code; GeoServe's
 separate point-admin endpoint can classify an epicenter but cannot establish felt geography.
 Dynamic per-event GeoServe calls require their own exact-request design and signoff before use.
+An official GeoServe `type=admin` point response is now verified for U.S., Canadian, Mexican,
+territory, and zero-polygon cases. A bounded NATIONAL `file://` sidecar fixture validates the
+exact GeoServe point request against each earthquake and rejects a positively identified
+foreign-land epicenter while retaining U.S./territory and unknown-offshore candidates. It
+stores the admin result as epicenter evidence only; no affected-state or multi-state impact
+claim follows. Offline scan tests trap HTTP. Live per-event GeoServe access and source-backed
+felt-state distribution remain open; see
+`docs/project/NATIONAL_USGS_GEOSERVE_ADMIN_FIXTURE_VERIFICATION.md`.
 
 ### FEMA/OpenFEMA Disaster Declarations Research
 
