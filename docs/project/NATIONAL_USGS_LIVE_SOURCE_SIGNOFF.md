@@ -24,6 +24,17 @@ The later first-pass country-suffix guard excludes feed events explicitly labele
 foreign countries even when their epicenters land within a coarse U.S. box. It does not infer
 jurisdiction from a U.S. place label or the unlocated felt-report total.
 
+Follow-up boundary check on 2026-10-15: the [USGS summary schema](https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php)
+exposes a point epicenter and aggregate `felt`, `cdi`, and `mmi` fields, but no affected-state
+distribution or country code. The separate [USGS GeoServe regions endpoint](https://earthquake.usgs.gov/ws/geoserve/regions.php)
+can classify an individual point with an `admin` query, returning country, ISO code, and region;
+it does not measure where shaking was felt. Its latitude/longitude-dependent request cannot be
+added to the current exact-URL, one-feed live transport without a separately designed and
+reviewed request gate. Do not convert a GeoServe epicenter classification, place label, or total
+felt count into multi-state impact. Cross-border routing needs either a verified local boundary
+dataset or a bounded explicit GeoServe enrichment design, and multi-state impact needs separate
+source-backed geographic observations.
+
 An isolated temporary-config/state explicit smoke scan on 2026-10-15 returned HTTP 200 and
 31,049 bytes. SQLite recorded one successful fetch, `healthy` source health, one NATIONAL item
 passing the 5.0 threshold and geography filter, and a `Last-Modified` validator. The temporary
