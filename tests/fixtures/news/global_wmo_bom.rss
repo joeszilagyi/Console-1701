@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Latest Official Public alerts in English for Bureau of Meteorology</title>
+    <link>https://severeweather.wmo.int/v2/cap-alerts/au-bom-en/rss.xml</link>
+    <description>This feed lists the most recent Official Public alerts in English for Bureau of Meteorology</description>
+    <language>en</language>
+    <atom:link href="https://severeweather.wmo.int/v2/cap-alerts/au-bom-en/rss.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Warning to Sheep Graziers for Northern Tablelands forecast district</title>
+      <description>Sheep graziers are warned that cold temperatures, showers and easterly winds are expected during Saturday. Areas likely to be affected include parts of the Northern Tablelands forecast district. There is a risk of losses of lambs and sheep exposed to these conditions.</description>
+      <link>https://severeweather.wmo.int/v2/cap-alerts/au-bom-en/2026/10/15/23/20/53-6e7317681378adeb0300cf6cad39545b.xml</link>
+      <pubDate>Thu, 15 Oct 2026 23:28:21 +0000</pubDate>
+      <guid>AusBoM-IDN29000-2026-10-15T23:20:53+00:00</guid>
+    </item>
+    <item>
+      <title>Cancellation of Severe Thunderstorm Warning for North West Pastoral forecast district</title>
+      <description>This warning is now cancelled.</description>
+      <link>https://severeweather.wmo.int/v2/cap-alerts/au-bom-en/2026/10/15/17/26/26-17fc09a364fe3ea47bf87a19a2a6fb51.xml</link>
+      <pubDate>Thu, 15 Oct 2026 17:34:21 +0000</pubDate>
+      <guid>AusBoM-IDS21033-2026-10-15T17:26:26+00:00</guid>
+    </item>
+    <item>
+      <title>Severe Thunderstorm Warning for North West Pastoral forecast district</title>
+      <description>Severe thunderstorms are likely to produce damaging winds in the warning area over the next several hours. Locations which may be affected include Marla, Ernabella and parts of the Great Victoria Desert.</description>
+      <link>https://severeweather.wmo.int/v2/cap-alerts/au-bom-en/2026/10/15/14/42/16-c278ac78430fb6e0c051f39ea1ef5474.xml</link>
+      <pubDate>Thu, 15 Oct 2026 14:49:22 +0000</pubDate>
+      <guid>AusBoM-IDS21033-2026-10-15T14:42:16+00:00</guid>
+    </item>
+  </channel>
+</rss>
