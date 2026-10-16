@@ -41,7 +41,7 @@ For each source record, resolve these fields rather than filling them from a hea
 | Sensitivity | Individual/private locations, health details, article bodies, legal/market implications, retention and attribution | Store bounded metadata only; no investment advice or private detail |
 | Health | Published cadence or conservative interval, 200/304/empty behavior, 429/backoff, schema failure and stale threshold | A successful zero-filter-match fetch is healthy, not an invented event |
 
-The first-pass NATIONAL source-specific admission boundary is one verified USGS feed. Other
+The first-pass NATIONAL source-specific admission boundary is verified USGS and NWS feeds. Other
 candidate URLs remain disabled while endpoint behavior or filters are unresolved. Source status
 must describe the actual evidence: `verified` only after the exact feed, parser, policy gates,
 fixture and live-path checks are recorded; `official_page_seen` remains a research status.
@@ -51,6 +51,11 @@ fixture and live-path checks are recorded; `official_page_seen` remains a resear
 - [USGS M2.5+ day live signoff](NATIONAL_USGS_LIVE_SOURCE_SIGNOFF.md): exact official feed,
   M5.0 NATIONAL default, coarse U.S./territory coordinate filter, isolated HTTP 200 smoke check,
   and disabled-by-default opt-in.
+- [NWS severe alert live signoff](NATIONAL_NWS_LIVE_SOURCE_SIGNOFF.md): exact Actual,
+  Severe/Extreme query, parser backstop, five-minute minimum, bounded live smoke and disabled
+  default.
+- [BLS release Atom fixture verification](NATIONAL_BLS_RELEASE_ATOM_FIXTURE_VERIFICATION.md):
+  two exact official feed shapes and metadata-only offline scans; no live admission.
 - [NHTSA recall lookup verification](NATIONAL_NHTSA_RECALL_API_VERIFICATION.md): official
   campaign lookup and high-risk fields are fixture-tested; lookup is not a recent recall discovery
   feed, so live admission is still closed.
@@ -67,8 +72,9 @@ fixture and live-path checks are recorded; `official_page_seen` remains a resear
   [Federal Register filtered API](NATIONAL_FEDERAL_REGISTER_API_FIXTURE_VERIFICATION.md), and
   [GovInfo RSS collections](NATIONAL_GOVINFO_RSS_FIXTURE_VERIFICATION.md): official shapes have
   offline adapters; source-specific live admission and filters remain separate.
-- FSIS and CPSC direct endpoint probes were blocked (HTTP 403 and timeout, respectively) in the
-  RS-041/RS-042 work. Their parser shape and live access remain unresolved in `BACKLOG.md`.
+- [CPSC recall API fixture verification](NATIONAL_NHTSA_RECALL_API_VERIFICATION.md): a later
+  bounded direct query and offline parser succeeded; live admission remains separate. FSIS
+  documentation and candidate API access remain blocked by HTTP 403.
 
 Before changing a candidate to live, link its record from this list and verify the exact tuple,
 registry status, disabled config, policy gate, no-fetch GET/host-scan tests, source health, bounded

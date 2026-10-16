@@ -1647,7 +1647,7 @@ policy notes, low-public-value penalty, and out-of-scope penalty.
 
 ### NATIONAL Official-Source Live Ingest Phase
 
-Status: implemented at the first-source boundary; other candidates remain disabled.
+Status: implemented for two exact opt-in sources; other candidates remain disabled.
 
 The exact official USGS M2.5+ past-day GeoJSON feed is now allowlisted for NATIONAL
 `usgs_eq_geojson` only after every parent, source, verification, magnitude, and HTTP opt-in gate.
@@ -1656,8 +1656,14 @@ regions and at/above its configured threshold; it does not infer cross-border or
 impact. A bounded isolated explicit live scan returned HTTP 200, healthy source state, and one
 stored NATIONAL item at the default 5.0 threshold. Mocked tests cover default blocking, gate
 rejection, conditional refresh, and no test HTTP. The standing config remains disabled. See
-`docs/project/NATIONAL_USGS_LIVE_SOURCE_SIGNOFF.md`. NWS, CISA, FSIS, FAA and other live candidates
-require their own source-specific verification and admission.
+`docs/project/NATIONAL_USGS_LIVE_SOURCE_SIGNOFF.md`. The exact official NWS active-alert query
+for Actual, Severe/Extreme products is also allowlisted after the same parent/source/HTTP gates.
+The official OpenAPI schema documents its comma-separated severity/status filters. A bounded
+filtered read returned HTTP 200, 136 Actual/Severe features, and 756,698 bytes. The parser
+rejects out-of-contract live rows and snapshots over 1,000 features. An isolated temporary-state
+`news-scan` stored 136 items with healthy source state and no missing UGC-derived state; standing
+config remains disabled. See `docs/project/NATIONAL_NWS_LIVE_SOURCE_SIGNOFF.md`. CISA, FSIS,
+FAA and other live candidates require their own source-specific verification and admission.
 
 After fixtures, correlation, ranking, retention, source health, and tests exist, add opt-in live
 ingest for one safe official source at a time. First candidates are NWS active alerts, USGS

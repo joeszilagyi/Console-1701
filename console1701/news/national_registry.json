@@ -285,8 +285,8 @@
     "source_family": "nws",
     "source_class": "official_weather_hazard",
     "scope": "NATIONAL",
-    "raw_url": "https://api.weather.gov/alerts/active",
-    "expected_access_kind": "documented official JSON API",
+    "raw_url": "https://api.weather.gov/alerts/active?status=actual&severity=Extreme,Severe",
+    "expected_access_kind": "verified filtered official GeoJSON API",
     "adapter": "official_api_json",
     "refresh_interval": "5 min",
     "priority": "100",
@@ -295,8 +295,8 @@
     "policy_risk": "low",
     "parser_risk": "medium",
     "retention_sensitivity": "medium",
-    "verification_status": "official_page_seen",
-    "why_it_matters": "Best first candidate for national active alerts.",
+    "verification_status": "verified",
+    "why_it_matters": "Exact actual Severe/Extreme active-alert feed; opt-in live source.",
     "future_phase": "U6"
   },
   {

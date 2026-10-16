@@ -75,6 +75,9 @@ _SDOT_BLOG_IMPACT_RE = re.compile(
     re.IGNORECASE,
 )
 _NWS_US_ZONE_RE = re.compile(r"\b([A-Z]{2})[ZC]\d{3}\b")
+NWS_NATIONAL_SEVERE_ALERTS_URL = (
+    "https://api.weather.gov/alerts/active?status=actual&severity=Extreme,Severe"
+)
 _NATIONAL_USGS_REGIONS = (
     ("contiguous_us", -125.0, -66.0, 24.0, 50.0),
     ("alaska", -180.0, -129.0, 50.0, 72.0),
@@ -3492,6 +3495,13 @@ def _parse_nws_alerts_json(source: dict[str, Any], payload_text: str) -> list[di
     features = payload.get("features")
     if not isinstance(features, list):
         raise NewsParserError("NWS alert fixture must contain a features list.")
+    national_live = (
+        source.get("scope") == "NATIONAL"
+        and source.get("id") == "nws_active_alerts_api"
+        and source.get("url") == NWS_NATIONAL_SEVERE_ALERTS_URL
+    )
+    if national_live and len(features) > 1000:
+        raise NewsParserError("NATIONAL NWS severe alert feed exceeds the 1000-feature cap.")
 
     normalized: list[dict[str, Any]] = []
     for index, feature in enumerate(features):
@@ -3500,6 +3510,13 @@ def _parse_nws_alerts_json(source: dict[str, Any], payload_text: str) -> list[di
         properties = feature.get("properties")
         if not isinstance(properties, dict):
             raise NewsParserError(f"NWS alert feature {index} is missing properties.")
+        if national_live and (
+            properties.get("status") != "Actual"
+            or properties.get("severity") not in {"Extreme", "Severe"}
+        ):
+            raise NewsParserError(
+                f"NATIONAL NWS live alert {index} violates the severity/status filter."
+            )
         if not _nws_alert_matches_scope(source, properties):
             continue
         normalized.append(_normalize_nws_alert(source, feature, properties, index=index))
