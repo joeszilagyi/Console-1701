@@ -42,11 +42,21 @@ def classify_global_item(source: dict[str, Any], item: dict[str, Any]) -> dict[s
     description = str(item.get("description") or "")
     content_text = f"{title} {description}"
     family = str(source.get("source_family") or "").casefold()
+    official = source.get("official_status") == "official"
     official_alert = bool(
-        (evidence.get("gdacs") or {}).get("alert_level") in {"Red", "Orange"}
-        or (evidence.get("usgs_earthquake") or {}).get("tsunami") is True
-        or (evidence.get("nhc_rss") or {}).get("watch_warning_terms")
-        or (evidence.get("reliefweb_disaster") or {}).get("status") in {"current", "alert"}
+        official and (
+            family == "gdacs" and (evidence.get("gdacs") or {}).get("alert_level")
+            in {"Red", "Orange"}
+            or family == "usgs" and (evidence.get("usgs_earthquake") or {}).get(
+                "tsunami"
+            ) is True
+            or family == "noaa_nhc" and (evidence.get("nhc_rss") or {}).get(
+                "watch_warning_terms"
+            )
+            or family == "reliefweb" and (evidence.get("reliefweb_disaster") or {}).get(
+                "status"
+            ) in {"current", "alert"}
+        )
     )
     reasons: list[str] = []
     if _GRAPHIC_RE.search(content_text):

@@ -26,16 +26,22 @@ def _int(value: Any, default: int = 0) -> int:
 
 def _source_signals(member: dict[str, Any], *, observed: datetime | None) -> dict[str, Any]:
     evidence = member.get("evidence") or {}
-    gdacs = evidence.get("gdacs") or {}
-    reliefweb = evidence.get("reliefweb_disaster") or {}
-    report = evidence.get("reliefweb_report") or {}
+    source = evidence.get("source") or {}
+    family = source.get("source_family")
+    official = source.get("official_status") == "official"
+    gdacs = (evidence.get("gdacs") or {}) if official and family == "gdacs" else {}
+    reliefweb = (
+        evidence.get("reliefweb_disaster") or {}
+    ) if official and family == "reliefweb" else {}
+    report = (
+        evidence.get("reliefweb_report") or {}
+    ) if official and family == "reliefweb" else {}
     who = evidence.get("who_don") or {}
-    usgs = evidence.get("usgs_earthquake") or {}
+    usgs = (evidence.get("usgs_earthquake") or {}) if official and family == "usgs" else {}
     nhc = evidence.get("nhc_rss") or {}
     iaea = evidence.get("iaea") or {}
     cap = evidence.get("wmo_bom_cap") or {}
     identity = evidence.get("global_identity") or {}
-    source = evidence.get("source") or {}
     cap_level = 0
     if (observed and source.get("source_family") == "wmo"
             and source.get("official_status") == "official"
@@ -121,6 +127,12 @@ def _source_signals(member: dict[str, Any], *, observed: datetime | None) -> dic
         "who_don_context": who_don_context,
         "cap_level": cap_level,
         "nhc_watch_current": nhc_watch,
+        "gdacs_impact": level in {"red", "orange"},
+        "usgs_impact": bool(
+            isinstance(magnitude, (int, float)) and magnitude >= 7
+            or usgs.get("tsunami") is True
+        ),
+        "reliefweb_impact": reliefweb.get("status") in {"current", "alert"},
     }
 
 
@@ -268,18 +280,13 @@ def rank_global_event(
     score = score_before_sensitivity - sensitivity_penalty
     impact_basis = [
         "GDACS alert level" if any(
-            str(((member.get("evidence") or {}).get("gdacs") or {}).get("alert_level") or "")
-            .lower() in {"red", "orange"} for member in members
+            signal["gdacs_impact"] for signal in signals
         ) else None,
         "USGS magnitude or tsunami flag" if any(
-            signal["public_impact"] > 0 and
-            (member.get("evidence") or {}).get("usgs_earthquake")
-            for member, signal in zip(members, signals, strict=True)
+            signal["usgs_impact"] for signal in signals
         ) else None,
         "ReliefWeb active disaster" if any(
-            ((member.get("evidence") or {}).get("reliefweb_disaster") or {}).get(
-                "status"
-            ) in {"current", "alert"} for member in members
+            signal["reliefweb_impact"] for signal in signals
         ) else None,
         "NHC advisory watch/warning terms (geography unverified)" if any(
             signal["nhc_watch_current"] for signal in signals

@@ -66,6 +66,40 @@ def test_global_rank_elevates_official_alert_and_independent_convergence():
     assert convergent_score["score"] > duplicate_score["score"]
 
 
+def test_global_rank_ignores_impact_fields_on_wrong_or_unverified_source():
+    cases = (
+        ("gdacs", {"alert_level": "Red"}, "GDACS alert level"),
+        ("reliefweb_disaster", {"status": "current"}, "ReliefWeb active disaster"),
+        ("usgs_earthquake", {"magnitude": 7.2, "tsunami": True},
+         "USGS magnitude or tsunami flag"),
+    )
+    for key, value, basis in cases:
+        member = _member(1, family="un_press")
+        member["evidence"].pop("gdacs")
+        member["evidence"][key] = value
+        wrong_family = rank_global_event(_group("un_press"), [member], now=NOW)
+        assert wrong_family["factors"]["official_severity_score"] == 0
+        assert wrong_family["factors"]["public_impact_score"] == 0
+        assert wrong_family["factors"]["active_alert_score"] == 0
+        assert basis not in wrong_family["public_impact_basis"]
+
+        member["evidence"]["source"]["source_family"] = {
+            "gdacs": "gdacs", "reliefweb_disaster": "reliefweb",
+            "usgs_earthquake": "usgs",
+        }[key]
+        member["evidence"]["source"]["official_status"] = "official_candidate"
+        unverified = rank_global_event(_group("un_press"), [member], now=NOW)
+        assert unverified["factors"]["official_severity_score"] == 0
+        assert unverified["factors"]["public_impact_score"] == 0
+        assert basis not in unverified["public_impact_basis"]
+
+        member["evidence"]["source"]["official_status"] = "official"
+        verified = rank_global_event(_group("un_press"), [member], now=NOW)
+        assert verified["factors"]["official_severity_score"] > 0
+        assert verified["factors"]["public_impact_score"] > 0
+        assert basis in verified["public_impact_basis"]
+
+
 def test_global_rank_penalizes_stale_low_value_rumor_and_out_of_scope():
     base = _member(1)
     normal = rank_global_event(_group("gdacs"), [base], now=NOW)

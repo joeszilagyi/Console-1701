@@ -30,8 +30,10 @@ def test_routine_opinion_domestic_and_social_content_get_explicit_low_value_labe
 
 
 def test_official_alert_metadata_prevents_routine_suppression():
-    item = _item("Routine update on cyclone", {"gdacs": {"alert_level": "Red"}})
-    result = classify_global_item({"scope": "GLOBAL", "source_family": "gdacs"}, item)
+    item = _item("Routine diplomatic statement on cyclone", {"gdacs": {"alert_level": "Red"}})
+    result = classify_global_item(
+        {"scope": "GLOBAL", "source_family": "gdacs", "official_status": "official"}, item
+    )
     assert result["evidence"]["global_attention_policy"]["official_alert_evidence"] is True
     assert result["evidence"]["global_attention_policy"]["attention_state"] == "eligible"
     assert "public_value_class" not in result["evidence"]["global_identity"]
@@ -49,11 +51,21 @@ def test_low_value_descriptions_are_classified_without_overriding_official_alert
         assert result["evidence"]["global_identity"]["public_value_class"] == expected
         assert result["evidence"]["global_attention_policy"]["attention_state"] == "background"
     alert = classify_global_item(
-        {"scope": "GLOBAL", "source_family": "gdacs"},
+        {"scope": "GLOBAL", "source_family": "gdacs", "official_status": "official"},
         _item("Cyclone warning", {"gdacs": {"alert_level": "Red"}},
               description="Routine economic release mentioned in context."),
     )
     assert alert["evidence"]["global_attention_policy"]["attention_state"] == "eligible"
+
+
+def test_mismatched_or_unverified_source_cannot_claim_official_alert():
+    item = _item("Routine diplomatic statement on cyclone", {"gdacs": {"alert_level": "Red"}})
+    for family, status in (("un_press", "official"), ("gdacs", "official_candidate")):
+        result = classify_global_item(
+            {"scope": "GLOBAL", "source_family": family, "official_status": status}, item
+        )
+        assert result["evidence"]["global_attention_policy"]["official_alert_evidence"] is False
+        assert result["evidence"]["global_identity"]["public_value_class"] == "routine"
 
 
 def test_explicit_rumor_and_graphic_headline_are_labeled_without_impact_inference():
