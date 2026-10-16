@@ -5,6 +5,9 @@ Implemented 2026-10-15 for RS-077. GLOBAL sources can declare a validated
 `official_conflict_humanitarian` source class defaults to conflict-sensitive. These controls
 are metadata policy decisions, not headline keyword guesses. The existing source policy review
 gate still applies to high-risk enabled conflict sources.
+The separate pre-storage GLOBAL attention classifier also recognizes explicit doxxing and
+named/private-person tracking phrases in bounded titles and descriptions. It sets the same hard
+flags before persistence; generic tracking of storms or other events does not trigger this rule.
 
 ## Supported flags and behavior
 

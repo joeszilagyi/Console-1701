@@ -2235,6 +2235,10 @@ before storage; official alert metadata prevents that low-value rule from maskin
 Explicit doxxing language in a title or bounded description now sets the existing hard
 sensitivity flag before storage, redacts title/description, and suppresses its cluster;
 the offline regression verifies the stored flag without retaining the source text.
+Explicit live-location or named/private-person tracking language in a title or bounded
+description now sets `targeted_person_tracking` before storage and takes the same redaction and
+cluster-suppression path. A storm-tracking headline remains unaffected. The rule is deliberately
+narrow; broader person-safety and impact variants still require source-specific evidence.
 An offline scan verifies the stored 40-point low-value penalty and zero-score cluster. Remaining
 work: source-specific coverage for broader public-impact categories and additional low-value
 variants. Official IAEA urgent nuclear-safety titles now receive only a modest context factor
