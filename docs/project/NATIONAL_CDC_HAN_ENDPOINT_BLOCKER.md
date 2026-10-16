@@ -75,11 +75,14 @@ permalink to the search-index response. It does not include or persist complete 
 
 The fixture parser requires agreement among page URL, `CDCHAN` ID, badge alt, Summary lead,
 and any index badge hint. It stores a date-only distribution field and a verified type for those
-three notices. No hour or timezone is present in the observed distribution block, so the
+three notices. CDCHAN-00533 also has an exact `Recommendations for the Public` section anchor;
+the parser validates that source fragment and stores a link to it as that notice's public
+instruction URL. The other two observed pages have no such section in their snapshots, so their
+instruction URLs remain unknown. No hour or timezone is present in the distribution block, so the
 distribution time remains unknown; the general index last-reviewed timestamp remains the
 item timestamp with its explicit basis. The other eleven notice records remain index-only with
-unknown type and distribution date. No jurisdiction, public instructions, active-alert state,
-or public impact is inferred from the prose or badge. The search JSON itself does not contain
+unknown type and distribution date. No jurisdiction, active-alert state, or public impact is
+inferred from the prose or badge. The search JSON itself does not contain
 the page snippets: the test fixture pairs two separately observed source shapes for offline
 verification. There is no live notice-page fetch path or source admission.
 

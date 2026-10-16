@@ -49,7 +49,11 @@ def test_cdc_han_current_search_snapshot_preserves_notice_identity_without_impac
     assert "page_summary_html" not in json.dumps(advisory["evidence"])
     assert "summary_lead_html" not in json.dumps(advisory["evidence"])
     assert advisory["evidence"]["cdc_han"]["public_impact_verified"] is False
-    assert advisory["evidence"]["cdc_han"]["public_instruction_url"] is None
+    assert advisory["evidence"]["cdc_han"]["public_instruction_url"] == (
+        "https://www.cdc.gov/han/php/notices/han00533.html"
+        "#cdc_health_alert_section_5-recommendations-for-the-public"
+    )
+    assert update["evidence"]["cdc_han"]["public_instruction_url"] is None
     assert advisory["evidence"]["national_identity"]["official_event_ids"] == [
         "cdc_han:cdchan-00533"
     ]
@@ -102,6 +106,14 @@ def test_cdc_han_rejects_wrong_contract_or_poisoned_notice_metadata():
         "notice_summaries"
     ][0]["summary_lead_html"].replace("Health Advisory", "Health Update")
     with pytest.raises(NewsParserError, match="lead conflicts"):
+        parse_fixture_items(_source(), json.dumps(payload))
+    payload = json.loads(raw)
+    payload["notice_summaries"][0]["recommendation_anchor_html"] = payload[
+        "notice_summaries"
+    ][0]["recommendation_anchor_html"].replace(
+        "Recommendations for the Public", "Recommendations for Clinicians"
+    )
+    with pytest.raises(NewsParserError, match="recommendation anchor"):
         parse_fixture_items(_source(), json.dumps(payload))
     payload = json.loads(raw)
     payload["notice_summaries"][0]["permalink"] = (

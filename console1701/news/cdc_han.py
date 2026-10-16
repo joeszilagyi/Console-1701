@@ -43,6 +43,7 @@ class _NoticeSummary(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.text: list[str] = []
         self.badges: list[tuple[str, str]] = []
+        self.anchors: list[dict[str, str | None]] = []
 
     def handle_data(self, data: str) -> None:
         value = data.strip()
@@ -53,9 +54,12 @@ class _NoticeSummary(HTMLParser):
         if tag == "img":
             attributes = dict(attrs)
             self.badges.append((attributes.get("src") or "", attributes.get("alt") or ""))
+        elif tag == "a":
+            self.anchors.append(dict(attrs))
 
 
-def _page_summary(summary: Any, lead: Any, notice_id: str) -> tuple[str, str]:
+def _page_summary(summary: Any, lead: Any, anchor: Any,
+                  notice_id: str) -> tuple[str, str, str | None]:
     if (not isinstance(summary, str) or len(summary.encode("utf-8")) > 4096
             or summary.count('data-section="cdc_health_alert_summary"') != 1):
         raise NewsParserError("CDC HAN notice summary lacks bounded page provenance")
@@ -83,7 +87,23 @@ def _page_summary(summary: Any, lead: Any, notice_id: str) -> tuple[str, str]:
             or ("The Centers for Disease Control and Prevention (CDC) is issuing this "
                 f"Health Alert Network (HAN) {badge_type}") not in lead_text):
         raise NewsParserError("CDC HAN notice lead conflicts with message type")
-    return distribution_date, badge_type
+    public_anchor = None
+    if anchor is not None:
+        if (not isinstance(anchor, str) or len(anchor.encode("utf-8")) > 512
+                or not anchor.lstrip().startswith("<a ")
+                or not anchor.rstrip().endswith("</a>")):
+            raise NewsParserError("CDC HAN public recommendation anchor is invalid")
+        parsed_anchor = _NoticeSummary()
+        parsed_anchor.feed(anchor)
+        if (len(parsed_anchor.anchors) != 1 or parsed_anchor.text or parsed_anchor.badges
+                or parsed_anchor.anchors[0].get("class") != "onThisPageAnchor"
+                or parsed_anchor.anchors[0].get("id") !=
+                "cdc_health_alert_section_5-recommendations-for-the-public"
+                or parsed_anchor.anchors[0].get("title") != "Recommendations for the Public"
+                or parsed_anchor.anchors[0].get("href")):
+            raise NewsParserError("CDC HAN public recommendation anchor is invalid")
+        public_anchor = "cdc_health_alert_section_5-recommendations-for-the-public"
+    return distribution_date, badge_type, public_anchor
 
 
 def _plain(value: Any, *, max_chars: int) -> str | None:
@@ -124,7 +144,7 @@ def parse_cdc_han_search_fixture(source: dict[str, Any], payload_text: str) -> l
     summaries = payload.get("notice_summaries", [])
     if not isinstance(summaries, list) or len(summaries) > 20:
         raise NewsParserError("CDC HAN fixture has unbounded notice summaries")
-    by_url: dict[str, tuple[str, str]] = {}
+    by_url: dict[str, tuple[str, str, str | None]] = {}
     for summary in summaries:
         if not isinstance(summary, dict) or not isinstance(summary.get("permalink"), str):
             raise NewsParserError("CDC HAN notice summary lacks a permalink")
@@ -141,6 +161,7 @@ def parse_cdc_han_search_fixture(source: dict[str, Any], payload_text: str) -> l
             raise NewsParserError("CDC HAN notice summary has invalid or duplicate URL")
         by_url[summary_url] = _page_summary(
             summary.get("page_summary_html"), summary.get("summary_lead_html"),
+            summary.get("recommendation_anchor_html"),
             f"CDCHAN-{match.group(1)}"
         )
     items: list[dict[str, Any]] = []
@@ -203,7 +224,10 @@ def parse_cdc_han_search_fixture(source: dict[str, Any], payload_text: str) -> l
             "distribution_time": None,
             "distribution_date_basis": "official_notice_page_at_a_glance" if detail else None,
             "affected_population": None, "jurisdiction": None,
-            "public_instruction_url": None, "preliminary_status": "unverified",
+            "public_instruction_url": (
+                f"{url}#{detail[2]}" if detail and detail[2] else None
+            ),
+            "preliminary_status": "unverified",
             "active_alert_verified": False, "public_impact_verified": False,
             "body_stored": False,
         }
