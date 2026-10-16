@@ -712,10 +712,10 @@ def _parse_nhc_basin_rss(source: dict[str, Any], payload_text: str) -> list[dict
         or not str(source.get("url") or "").startswith("file://")
     ):
         raise NewsParserError("NATIONAL NHC parser requires its exact fixture source identity.")
-    if scope == "NATIONAL" and len(payload_text.encode("utf-8")) > 65_536:
-        raise PayloadTooLargeError("NATIONAL NHC fixture exceeds 64 KiB.")
-    if scope == "NATIONAL" and re.search(r"<!\s*(?:DOCTYPE|ENTITY)\b", payload_text, re.I):
-        raise NewsParserError("NATIONAL NHC fixture cannot contain DTD or entities.")
+    if len(payload_text.encode("utf-8")) > 65_536:
+        raise PayloadTooLargeError("NHC fixture exceeds 64 KiB.")
+    if re.search(r"<!\s*(?:DOCTYPE|ENTITY)\b", payload_text, re.I):
+        raise NewsParserError("NHC fixture cannot contain DTD or entities.")
     try:
         root = ET.fromstring(payload_text)
     except ET.ParseError as exc:
@@ -727,8 +727,8 @@ def _parse_nhc_basin_rss(source: dict[str, Any], payload_text: str) -> list[dict
     if expected and basin != expected[1]:
         raise NewsParserError("NATIONAL NHC fixture basin does not match its source identity.")
     rows = channel.findall("./item")
-    if scope == "NATIONAL" and len(rows) > 50:
-        raise NewsParserError("NATIONAL NHC fixture exceeds 50 entries.")
+    if len(rows) > 50:
+        raise NewsParserError("NHC fixture exceeds 50 entries.")
     summaries: dict[str, dict[str, str | None]] = {}
     for row in rows:
         title = _element_text(row.find("./title")) or ""
@@ -755,13 +755,12 @@ def _parse_nhc_basin_rss(source: dict[str, Any], payload_text: str) -> list[dict
         url = _element_text(row.find("./link"))
         try:
             parts = urlsplit(url or "")
+            port = parts.port
         except ValueError as exc:
             raise NewsParserError(f"NHC advisory {index} has an invalid URL.") from exc
         if (parts.scheme != "https" or parts.hostname != "www.nhc.noaa.gov"
-                or (scope == "NATIONAL" and (
-                    not parts.path.startswith("/text/") or parts.query or parts.fragment
-                    or parts.username or parts.password or parts.port
-                ))):
+                or not parts.path.startswith("/text/") or parts.query or parts.fragment
+                or parts.username or parts.password or port is not None):
             raise NewsParserError(f"NHC advisory {index} lacks an official HTTPS URL.")
         published = normalize_timestamp(_element_text(row.find("./pubDate")))
         if not published:
@@ -819,14 +818,13 @@ def _parse_nhc_basin_rss(source: dict[str, Any], payload_text: str) -> list[dict
             continue
         try:
             parts = urlsplit(url)
+            port = parts.port
         except ValueError as exc:
             raise NewsParserError(f"NHC summary {index} has an invalid URL.") from exc
         published = normalize_timestamp(_element_text(row.find("./pubDate")))
         if (parts.scheme != "https" or parts.hostname != "www.nhc.noaa.gov" or not published
-                or (scope == "NATIONAL" and (
-                    not parts.path.startswith("/text/") or parts.query or parts.fragment
-                    or parts.username or parts.password or parts.port
-                ))):
+                or not parts.path.startswith("/text/") or parts.query or parts.fragment
+                or parts.username or parts.password or port is not None):
             raise NewsParserError(f"NHC summary {index} lacks an official URL or time.")
         item = _normalize_item(source, {
             "title": title,

@@ -33,6 +33,9 @@ advisory number/type, source time, GUID, and bounded plain-text description. A w
 not a permanent storm ID. Watch/warning terms are recorded only from explicit Public Advisory
 text, with affected geography left unverified; a basin title alone never proves impact in a
 country. Outlooks, graphics, and inactive placeholders are not event items in this first pass.
+Both GLOBAL and NATIONAL parser paths reject payloads over 64 KiB, more than 50 RSS entries,
+DTD/entity declarations, and item links outside NHC's HTTPS text-product path or containing
+credentials, a query, fragment, or custom port.
 
 The source's 10-minute interval is a tentative local policy for future opt-in scans, not an NHC
 issuance guarantee. Keep the feed disabled by default, bounded by response size and timeout, and

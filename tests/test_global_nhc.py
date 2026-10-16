@@ -12,7 +12,7 @@ from console1701.config import load_config
 from console1701.db import connect_db, json_loads
 from console1701.news.global_ranking import rank_global_event
 from console1701.news.global_registry import get_global_source_registry_entry
-from console1701.news.parsers import NewsParserError, parse_fixture_items
+from console1701.news.parsers import NewsParserError, PayloadTooLargeError, parse_fixture_items
 from console1701.news.scanner import run_news_scan
 from console1701.news.storage import get_news_sources_status
 
@@ -89,6 +89,37 @@ def test_nhc_basin_feed_empty_and_invalid_cases():
     with pytest.raises(NewsParserError, match="official HTTPS URL"):
         parse_fixture_items(SOURCE, FIXTURE.read_text().replace(
             "www.nhc.noaa.gov/text/refresh/MIATCPEP1", "example.org/text/refresh/MIATCPEP1"
+        ))
+
+
+def test_global_nhc_feed_rejects_unbounded_or_non_article_input():
+    feed = FIXTURE.read_text()
+    with pytest.raises(PayloadTooLargeError, match="64 KiB"):
+        parse_fixture_items(SOURCE, feed + " " * 65_536)
+    with pytest.raises(NewsParserError, match="DTD or entities"):
+        parse_fixture_items(SOURCE, "<!DOCTYPE rss>" + feed)
+    filler = "<item><title>There are no tropical cyclones at this time.</title></item>"
+    with pytest.raises(NewsParserError, match="50 entries"):
+        parse_fixture_items(SOURCE, feed.replace("</channel>", filler * 46 + "</channel>"))
+    with pytest.raises(NewsParserError, match="official HTTPS URL"):
+        parse_fixture_items(SOURCE, feed.replace(
+            "/text/refresh/MIATCPEP1+shtml/151739.shtml", "/news/151739.shtml"
+        ))
+    with pytest.raises(NewsParserError, match="official HTTPS URL"):
+        parse_fixture_items(SOURCE, feed.replace(
+            "https://www.nhc.noaa.gov/text/refresh/MIATCPEP1",
+            "https://user@www.nhc.noaa.gov/text/refresh/MIATCPEP1",
+        ))
+    for port, error in (("0", "official HTTPS URL"), ("abc", "invalid URL")):
+        with pytest.raises(NewsParserError, match=error):
+            parse_fixture_items(SOURCE, feed.replace(
+                "https://www.nhc.noaa.gov/text/refresh/MIATCPEP1",
+                f"https://www.nhc.noaa.gov:{port}/text/refresh/MIATCPEP1",
+            ))
+    with pytest.raises(NewsParserError, match="official URL or time"):
+        parse_fixture_items(SOURCE, feed.replace(
+            "/text/refresh/MIATCPEP5+shtml/151442.shtml",
+            "/news/151442.shtml",
         ))
 
 
