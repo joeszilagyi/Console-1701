@@ -85,6 +85,22 @@ def test_global_correlation_shared_official_id_and_unverified_location_rules():
     ])] == [[1], [2]]
 
 
+def test_global_shared_source_id_requires_both_sources_official():
+    first = _item(1, family="gdacs", title="Orange alert for cyclone Ana")
+    second = _item(2, family="gdacs", title="New title for same cyclone")
+    for item in (first, second):
+        item["evidence"]["gdacs"] = {"event_type": "TC", "event_id": "12345"}
+        item["evidence"]["global"]["geography_basis"] = "unverified"
+    assert correlate_global_items([first, second])[0]["matches"][0]["basis"] == [
+        "shared_event_id"
+    ]
+
+    second["evidence"]["source"]["official_status"] = "official_candidate"
+    assert [group["item_ids"] for group in correlate_global_items([
+        first, second
+    ])] == [[1], [2]]
+
+
 def test_global_correlation_rejects_conflicting_source_ids_across_families():
     first = _item(1, family="usgs", event_type="earthquake",
                   title="Strong earthquake near Example Island")
@@ -274,10 +290,12 @@ def test_global_scan_stores_shared_id_event_without_duplicate_family_score(tmp_p
             GLOBAL:
               enabled: true
               sources:
-                - {{id: gdacs_a, name: GDACS A, kind: api_json, parser: gdacs_geojson,
-                   source_family: gdacs, enabled: true, url: "file://{fixture}"}}
-                - {{id: gdacs_b, name: GDACS B, kind: api_json, parser: gdacs_geojson,
-                   source_family: gdacs, enabled: true, url: "file://{fixture}"}}
+                    - {{id: gdacs_a, name: GDACS A, kind: api_json, parser: gdacs_geojson,
+                       source_family: gdacs, official_status: official,
+                       enabled: true, url: "file://{fixture}"}}
+                    - {{id: gdacs_b, name: GDACS B, kind: api_json, parser: gdacs_geojson,
+                       source_family: gdacs, official_status: official,
+                       enabled: true, url: "file://{fixture}"}}
     """).strip() + "\n")
     assert run_news_scan(config_path)["item_count"] == 2
     config = load_config(config_path)

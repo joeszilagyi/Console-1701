@@ -2439,6 +2439,10 @@ Shared article URLs and syndication IDs now require both publication timestamps 
 GLOBAL 96-hour window. The same URL or syndication marker across distant reports cannot bypass
 the event-time gate; nearby copies still dedupe without independent-source credit, and an exact
 source event ID can still join a long-lived revision. Direct regressions cover all three paths.
+Shared source event IDs now require both stored sources to have `official` status. A candidate
+source may retain its parsed identifier for inspection, but cannot use it as a verified identity
+join. An offline GDACS duplicate scan now declares the official status it requires, and a direct
+candidate-status regression proves the gate. Other parser-backed identity paths remain open.
 
 ### GLOBAL Deterministic Ranking
 
