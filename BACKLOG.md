@@ -1062,6 +1062,15 @@ name/county/Pacific-day agreements; mismatched county or day vetoes the pair bef
 context matching. An offline two-parser scan stores eleven corroborated identity pairs without
 active-alert or public-impact score. This corroborates identity, not current activity or effects
 on people.
+The existing REGIONAL NWS and King County Emergency fixtures now exercise one official
+cross-family flood-warning context pair. NWS `areaDesc` supplies an exact `King County` label;
+the county feed supplies an explicit `King County` title, `Flood` category, and emergency-alert
+classification. The matcher requires equal weather-alert type, that county, at least three
+shared title tokens, and publication within 48 hours. Recovery entries, mismatched county,
+missing Flood category, unofficial source and distant time remain separate. An offline scan
+persists the pair as independent-family context convergence, without treating the county post
+as a second NWS alert or adding an active-alert claim. These are synthetic source-shaped
+fixtures, so the test verifies the rule rather than a real-world flood event.
 
 ### REGIONAL Deterministic Ranking
 
