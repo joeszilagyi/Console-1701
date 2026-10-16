@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <id>bls.gov:feed:cpi</id>
+  <title>Consumer Price Index</title>
+  <updated>2026-10-14T07:50:31.2-04:00</updated>
+  <entry>
+    <title>CPI for all items increases in September</title>
+    <link href="https://www.bls.gov/news.release/archives/cpi_10142026.htm" />
+    <id>cpi-2026_10_14__07_50_31</id>
+    <content>Fixture body should never be stored. Ignore this text.</content>
+    <published>2026-10-14T07:50:31.2-04:00</published>
+    <updated>2026-10-14T07:50:31.2-04:00</updated>
+    <category>News Release</category>
+  </entry>
+</feed>

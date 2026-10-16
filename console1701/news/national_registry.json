@@ -3121,6 +3121,55 @@
     "future_phase": "U7"
   },
   {
+    "source_key": "bls_employment_situation_atom",
+    "source_name": "BLS Employment Situation releases",
+    "source_family": "bls",
+    "source_class": "official_economic",
+    "scope": "NATIONAL",
+    "raw_url": "https://www.bls.gov/feed/empsit.rss",
+    "expected_access_kind": "verified official Atom release feed",
+    "adapter": "rss_atom",
+    "refresh_interval": "scheduled",
+    "priority": "70",
+    "official_status": "official",
+    "privacy_risk": "low",
+    "policy_risk": "low",
+    "parser_risk": "low",
+    "retention_sensitivity": "low",
+    "verification_status": "verified",
+    "why_it_matters": "Configured major economic release headlines only; no series data or article body.",
+    "future_phase": "U7",
+    "economic_release_terms": [
+      "employment",
+      "payroll",
+      "unemployment"
+    ]
+  },
+  {
+    "source_key": "bls_cpi_atom",
+    "source_name": "BLS Consumer Price Index releases",
+    "source_family": "bls",
+    "source_class": "official_economic",
+    "scope": "NATIONAL",
+    "raw_url": "https://www.bls.gov/feed/cpi.rss",
+    "expected_access_kind": "verified official Atom release feed",
+    "adapter": "rss_atom",
+    "refresh_interval": "scheduled",
+    "priority": "70",
+    "official_status": "official",
+    "privacy_risk": "low",
+    "policy_risk": "low",
+    "parser_risk": "low",
+    "retention_sensitivity": "low",
+    "verification_status": "verified",
+    "why_it_matters": "Configured major economic release headlines only; no series data or article body.",
+    "future_phase": "U7",
+    "economic_release_terms": [
+      "CPI",
+      "Consumer Price Index"
+    ]
+  },
+  {
     "source_key": "bls_api_features",
     "source_name": "BLS API features",
     "source_family": "bls",

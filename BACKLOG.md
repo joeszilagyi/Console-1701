@@ -1181,7 +1181,8 @@ risk, privacy risk, retention sensitivity, verification status, and future phase
 enum values and keep all NATIONAL sources disabled until explicitly configured.
 
 Current state: the checked-in NATIONAL registry contains all 227 source targets from the design
-inventory plus three verified, fixture-only NHC basin RSS entries (230 total), with their
+inventory plus three verified, fixture-only NHC basin RSS entries and two verified BLS
+release Atom feed entries (232 total), with their
 provenance, risk, verification, priority, phase, and access fields.
 The loader validates required enum values and scope/URL shape. Config defaults for known source IDs
 remain disabled and reject invalid metadata. The registry is persisted by explicit `news-scan`
@@ -1253,6 +1254,9 @@ covers bounded FDA-hosted notice metadata, translated-notice uncertainty and off
 `tests/fixtures/national/cpsc_recalls_2026_10_01.json` sample covers the CPSC recall API parser
 and offline scan. `national_cisa_advisories.rss` covers the verified mixed CISA feed shape,
 advisory classes, CVE/CVSS/sector metadata, KEV announcement suppression, and offline scan.
+Synthetic Employment Situation and CPI Atom fixtures cover verified BLS feed identity,
+release IDs/URLs/times, configured headline terms, metadata-only storage, and offline scan.
+The two feed registry rows remain disabled, and live BLS fetch has no allowlist admission.
 The synthetic Eastern Pacific NHC RSS fixture now runs through NATIONAL; separate Atlantic
 and Central Pacific empty-basin fixtures prove healthy zero-event scans. Storm ATCF IDs and
 advisory numbers are retained without inferring U.S. watch geography, multi-state impact,
