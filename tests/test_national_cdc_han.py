@@ -40,9 +40,20 @@ def test_cdc_han_current_search_snapshot_preserves_notice_identity_without_impac
     update = by_id["CDCHAN-00529"]
     assert advisory["evidence"]["cdc_han"]["message_type_hint"] == "Health Advisory"
     assert update["evidence"]["cdc_han"]["message_type_hint"] == "Health Update"
-    assert advisory["evidence"]["cdc_han"]["message_type"] is None
+    assert advisory["evidence"]["cdc_han"]["message_type"] == "Health Advisory"
+    assert advisory["evidence"]["cdc_han"]["distribution_date"] == "2026-09-10"
+    assert advisory["evidence"]["cdc_han"]["distribution_time"] is None
+    assert update["evidence"]["cdc_han"]["message_type"] == "Health Update"
+    assert update["evidence"]["cdc_han"]["distribution_date"] == "2026-05-18"
+    assert by_id["CDCHAN-00527"]["evidence"]["cdc_han"]["message_type"] is None
+    assert "page_summary_html" not in json.dumps(advisory["evidence"])
+    assert "summary_lead_html" not in json.dumps(advisory["evidence"])
     assert advisory["evidence"]["cdc_han"]["public_impact_verified"] is False
-    assert advisory["evidence"]["cdc_han"]["public_instruction_url"] is None
+    assert advisory["evidence"]["cdc_han"]["public_instruction_url"] == (
+        "https://www.cdc.gov/han/php/notices/han00533.html"
+        "#cdc_health_alert_section_5-recommendations-for-the-public"
+    )
+    assert update["evidence"]["cdc_han"]["public_instruction_url"] is None
     assert advisory["evidence"]["national_identity"]["official_event_ids"] == [
         "cdc_han:cdchan-00533"
     ]
@@ -53,6 +64,11 @@ def test_cdc_han_current_search_snapshot_preserves_notice_identity_without_impac
 
 def test_cdc_han_rejects_wrong_contract_or_poisoned_notice_metadata():
     raw = FIXTURE.read_text()
+    index_only = json.loads(raw)
+    index_only.pop("notice_summaries")
+    assert all(item["evidence"]["cdc_han"]["message_type"] is None for item in (
+        parse_fixture_items(_source(), json.dumps(index_only))
+    ))
     with pytest.raises(NewsParserError, match="exact official search contract"):
         parse_fixture_items({**_source(), "official_url": "https://example.org/search"}, raw)
     with pytest.raises(NewsParserError, match="exact official search contract"):
@@ -72,6 +88,38 @@ def test_cdc_han_rejects_wrong_contract_or_poisoned_notice_metadata():
         "permalink"
     ]
     with pytest.raises(NewsParserError, match="stable notice metadata"):
+        parse_fixture_items(_source(), json.dumps(payload))
+    payload = json.loads(raw)
+    payload["notice_summaries"][0]["page_summary_html"] = payload[
+        "notice_summaries"
+    ][0]["page_summary_html"].replace("CDCHAN-00533", "CDCHAN-00529")
+    with pytest.raises(NewsParserError, match="distribution fields"):
+        parse_fixture_items(_source(), json.dumps(payload))
+    payload = json.loads(raw)
+    payload["notice_summaries"][0]["page_summary_html"] = payload[
+        "notice_summaries"
+    ][0]["page_summary_html"].replace("CDC Health Advisory", "CDC Health Alert")
+    with pytest.raises(NewsParserError, match="unverified message type"):
+        parse_fixture_items(_source(), json.dumps(payload))
+    payload = json.loads(raw)
+    payload["notice_summaries"][0]["summary_lead_html"] = payload[
+        "notice_summaries"
+    ][0]["summary_lead_html"].replace("Health Advisory", "Health Update")
+    with pytest.raises(NewsParserError, match="lead conflicts"):
+        parse_fixture_items(_source(), json.dumps(payload))
+    payload = json.loads(raw)
+    payload["notice_summaries"][0]["recommendation_anchor_html"] = payload[
+        "notice_summaries"
+    ][0]["recommendation_anchor_html"].replace(
+        "Recommendations for the Public", "Recommendations for Clinicians"
+    )
+    with pytest.raises(NewsParserError, match="recommendation anchor"):
+        parse_fixture_items(_source(), json.dumps(payload))
+    payload = json.loads(raw)
+    payload["notice_summaries"][0]["permalink"] = (
+        "https://www.cdc.gov/han/php/notices/han99999.html"
+    )
+    with pytest.raises(NewsParserError, match="distribution fields"):
         parse_fixture_items(_source(), json.dumps(payload))
     with pytest.raises(PayloadTooLargeError, match="64 KiB"):
         parse_fixture_items(_source(), raw + " " * 65_536)
@@ -103,6 +151,7 @@ def test_cdc_han_offline_scan_stores_metadata_without_fetch_or_alert_claim(tmp_p
     evidence = [json_loads(row["evidence_json"], {}) for row in rows]
     assert all(row["ingest"]["fixture_only"] for row in evidence)
     assert all(row["cdc_han"]["active_alert_verified"] is False for row in evidence)
+    assert sum(row["cdc_han"]["message_type"] is not None for row in evidence) == 3
     assert all(row["national_policy"]["official_impact_score"] == 0 for row in evidence)
     assert all(json_loads(row["evidence_json"], {})["national_event"]["ranking"][
         "factors"

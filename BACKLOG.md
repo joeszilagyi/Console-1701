@@ -1370,8 +1370,10 @@ bounded recent-discovery query has not been signed off. See
 `docs/project/NATIONAL_FSIS_RECALL_API_FIXTURE_VERIFICATION.md`. An observed CDC HAN search
 snapshot now supplies 14 notice metadata rows from the official archive's first-party JSON
 view; the fixture parser and offline scan retain identity/date/badge hints without alert or
-impact claims. Message type, distribution time and jurisdiction still require notice-level
-verification before RS-039 is complete. Other NATIONAL source-family fixtures remain pending.
+impact claims. Three bounded official notice-page summary and lead excerpts now verify their
+message type and distribution date, while the other eleven notices retain unknown fields.
+Distribution time, jurisdiction, broader instructions, active-alert semantics and live source policy
+remain open before RS-039 is complete. Other NATIONAL source-family fixtures remain pending.
 
 ### NWS Active Alert Parser
 
@@ -1489,8 +1491,12 @@ permalinks, including eight 2026 notices. `cdc_han_search_fixture` parses that o
 offline with an exact query echo, 20-row/64-KiB caps, CDC notice URLs and unique IDs. It stores
 the index's last-reviewed date as a labeled date basis, an image-derived message-type hint,
 bounded excerpt, and explicit unknown distribution time, affected population, jurisdiction,
-instruction URL, current-alert status and impact. No headline or badge inference earns public
-impact or active-alert rank. Offline scanning performs no HTTP. See
+instruction URL, current-alert status and impact. The local fixture additionally pairs three
+observed notice-page `At a glance` and first-summary-paragraph excerpts with exact notice IDs.
+The parser verifies each page's distribution date and message type from its badge and lead text,
+without storing the HTML or conferring alert/impact rank. One page also provides an exact public
+recommendations section anchor, stored only for that notice as its instruction URL. Eleven
+notices still have unverified type and distribution date. Offline scanning performs no HTTP. See
 `docs/project/NATIONAL_CDC_HAN_ENDPOINT_BLOCKER.md` for source evidence and remaining gate.
 
 CDC's documented Content Services media API returned zero records for both an exact HAN notice

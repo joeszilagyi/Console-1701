@@ -61,3 +61,32 @@ HAN feed. The earlier prohibition on inventing a fixture shape is superseded by 
 JSON shape above; the earlier live-source decision remains. No live URL is in the allowlist and the
 registry source stays disabled. Finish RS-039 after a notice-level type/date contract and
 source use policy are verified, then seek a separate exact live-query release decision.
+
+## Follow-up: bounded notice-page summaries, 2026-10-15
+
+Three exact official notice pages—[CDCHAN-00533](https://www.cdc.gov/han/php/notices/han00533.html),
+[CDCHAN-00529](https://www.cdc.gov/han/php/notices/han00529.html), and
+[CDCHAN-00528](https://www.cdc.gov/han/php/notices/han00528.html)—returned public HTML in
+bounded read-only checks. Each exposes an `At a glance` section with distribution date and
+`CDCHAN` ID plus a message-type image alt; the first Summary paragraph names the same message
+type. The page template uses list items for 00533/00529 and paragraphs for 00528. The fixture
+now includes only these three short observed sections and lead paragraphs, linked by exact CDC
+permalink to the search-index response. It does not include or persist complete notice bodies.
+
+The fixture parser requires agreement among page URL, `CDCHAN` ID, badge alt, Summary lead,
+and any index badge hint. It stores a date-only distribution field and a verified type for those
+three notices. CDCHAN-00533 also has an exact `Recommendations for the Public` section anchor;
+the parser validates that source fragment and stores a link to it as that notice's public
+instruction URL. The other two observed pages have no such section in their snapshots, so their
+instruction URLs remain unknown. No hour or timezone is present in the distribution block, so the
+distribution time remains unknown; the general index last-reviewed timestamp remains the
+item timestamp with its explicit basis. The other eleven notice records remain index-only with
+unknown type and distribution date. No jurisdiction, active-alert state, or public impact is
+inferred from the prose or badge. The search JSON itself does not contain
+the page snippets: the test fixture pairs two separately observed source shapes for offline
+verification. There is no live notice-page fetch path or source admission.
+
+Remaining gate: establish an approved bounded current-notice discovery and page/metadata
+transport, review source use and refresh cadence, verify distribution time or date-only UI
+semantics, and add source-backed jurisdiction/instruction/alert rules where the notice supplies
+them. Until then, this remains fixture-only evidence rather than current alert ingest.
