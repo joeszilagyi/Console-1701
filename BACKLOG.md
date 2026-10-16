@@ -1370,14 +1370,15 @@ bounded recent-discovery query has not been signed off. See
 `docs/project/NATIONAL_FSIS_RECALL_API_FIXTURE_VERIFICATION.md`. An observed CDC HAN search
 snapshot now supplies 14 notice metadata rows from the official archive's first-party JSON
 view; the fixture parser and offline scan retain identity/date/badge hints without alert or
-impact claims. Three bounded official notice-page summary and lead excerpts now verify their
-message type and distribution date. Eleven bounded rendered-page observations supply message type
-for the remaining rows and distribution date for ten of them; HAN-00522 has no visible
-At-a-glance distribution date. Five pages print a date and ET time, which the parser converts
+impact claims. Bounded raw HTML reads of all 14 exact notice URLs now supply short At-a-glance
+and first-Summary-paragraph snippets. They verify message type for every row and distribution
+date for 13; HAN-00522's raw At-a-glance block omits date and notice ID. Ten notices have exact
+Recommendations for the Public section anchors. Five pages print a date and ET time, which the
+parser converts
 to UTC for the item publication timestamp while retaining the source label and index review
 timestamp. Unknown times, jurisdiction, broader instructions, active-alert semantics and live
 source policy remain open before RS-039 is complete. Other NATIONAL source-family fixtures remain
-pending. See `docs/project/NATIONAL_CDC_HAN_RENDERED_PAGE_OBSERVATIONS.md`.
+pending. See `docs/project/NATIONAL_CDC_HAN_ENDPOINT_BLOCKER.md`.
 
 ### NWS Active Alert Parser
 
@@ -1505,22 +1506,19 @@ permalinks, including eight 2026 notices. `cdc_han_search_fixture` parses that o
 offline with an exact query echo, 20-row/64-KiB caps, CDC notice URLs and unique IDs. It stores
 the index's last-reviewed date as a labeled date basis, an image-derived message-type hint,
 bounded excerpt, and explicit unknown distribution time, affected population, jurisdiction,
-instruction URL, current-alert status and impact. The local fixture additionally pairs three
-observed notice-page `At a glance` and first-summary-paragraph excerpts with exact notice IDs.
-The parser verifies each page's distribution date and message type from its badge and lead text,
-without storing the HTML or conferring alert/impact rank. One page also provides an exact public
-recommendations section anchor, stored only for that notice as its instruction URL. Eleven
-additional official notice pages were checked through a rendered browser view after direct HTML
-requests again returned HTTP 403. Their bounded, manually transcribed At-a-glance and Summary
-observations now verify message type for all 14 index notices and distribution date for 13;
-HAN-00522 shows no date or notice ID in its rendered At-a-glance section, so its distribution
-date remains unknown. Five notices have source-printed ET time labels. The parser interprets
-those labels with `America/New_York` daylight rules and uses the calculated UTC distribution
-instant as their item publication timestamp; the index review time stays separate. This is
-explicitly a rendered-page observation fixture, not a verified raw HTML shape or live parser.
-Date-only pages still use the labeled index last-reviewed timestamp; none of
-the page observations prove a current alert, affected geography, public instruction URL, or
-impact. Offline scanning performs no HTTP. See
+instruction URL, current-alert status and impact. Direct bounded reads now returned raw public
+HTML for all 14 exact notice URLs. The fixture pairs only each page's At-a-glance block and first
+Summary paragraph with its search-index row; no complete page or body is stored. Badge alt and
+lead text verify all 14 message types, with the source of each type labeled separately. The raw
+At-a-glance blocks verify 13 distribution dates and five printed ET times. HAN-00522's raw block
+omits both its date and notice ID, so its distribution date remains unknown. Ten pages expose an
+exact `Recommendations for the Public` section anchor; only those get a public instruction URL.
+The parser interprets the five time labels with `America/New_York` daylight rules and uses the
+calculated UTC distribution instant as their item publication timestamp; the index review time
+stays separate. Date-only pages still use the labeled index last-reviewed timestamp. The short
+raw page snippets do not prove a current alert, affected geography, or public impact. Offline
+scanning performs no HTTP. Earlier rendered-page observations are preserved as historical
+research, not the active fixture. See
 `docs/project/NATIONAL_CDC_HAN_ENDPOINT_BLOCKER.md` for source evidence and remaining gate.
 See `docs/project/NATIONAL_CDC_HAN_RENDERED_PAGE_OBSERVATIONS.md` for each observed page.
 

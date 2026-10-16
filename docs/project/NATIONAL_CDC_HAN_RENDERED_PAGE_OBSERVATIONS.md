@@ -1,11 +1,12 @@
 # CDC HAN rendered notice-page observations
 
 Observed 2026-10-15 through the official CDC notice pages linked below. The local
-machine's direct HTML requests returned HTTP 403; a browser reader displayed the
-official page text. This is a manually transcribed, bounded observation of the
-“At a glance” and “Summary” sections, not a raw HTML response or a live parser.
-The separate three-notice HTML-fragment fixture remains the only verified raw
-page-summary shape. The CDC search-index JSON is the ingest fixture.
+machine's initial direct HTML requests returned HTTP 403; a browser reader displayed
+the official page text. This file records those earlier manually transcribed,
+bounded observations of the “At a glance” and “Summary” sections. Later direct
+requests returned HTTP 200 for all 14 notice pages. The active fixture now retains
+short raw HTML fragments from all 14 pages; see
+`NATIONAL_CDC_HAN_ENDPOINT_BLOCKER.md` for the verified shape and remaining gates.
 
 | Notice | Summary type | At-a-glance distribution label |
 | --- | --- | --- |
@@ -21,13 +22,13 @@ page-summary shape. The CDC search-index JSON is the ingest fixture.
 | [00521](https://www.cdc.gov/han/php/notices/han00521.html) | Health Advisory | February 06, 2025, 11:15 AM ET |
 | [00520](https://www.cdc.gov/han/php/notices/han00520.html) | Health Advisory | January 16, 2025 |
 
-The fixture retains only the short type phrase from each Summary section, the
-At-a-glance labels, notice URL, and observation date. The parser checks the
-notice ID, official URL, date format, type phrase, and search-index badge
-agreement before joining them. Time labels remain available exactly as printed
-in ET. For the five pages that print both a date and time, the parser interprets
-ET with the `America/New_York` daylight rules and records the calculated UTC
-distribution instant as `source_published_at`. This is an explicit time-zone
+The active fixture pairs the raw At-a-glance block, first Summary paragraph and
+any exact public-recommendations anchor with the index permalink. The parser checks
+the notice ID where printed, official URL, date and type evidence, and search-index
+badge agreement before joining them. Time labels remain available exactly as
+printed in ET. For the five pages that print both a date and time, the parser
+interprets ET with the `America/New_York` daylight rules and records the calculated
+UTC distribution instant as `source_published_at`. This is an explicit time-zone
 conversion, not a separately printed UTC time. The search index's last-reviewed
 timestamp remains separately stored. Date-only pages continue to use that index
 timestamp as their item time, labeled as such; no distribution hour is inferred.
@@ -36,6 +37,5 @@ rendered At-a-glance section omitted its distribution date and notice ID, so
 the distribution date remains null. None of these observations establish a
 current active alert, affected geography, recommendation URL, or public impact.
 
-Next: obtain a legitimate raw page or approved machine-readable notice feed
-for the remaining eleven notices; verify page structure, distribution time,
-recommendation anchors, and source policy before considering live ingestion.
+Next: establish an approved bounded discovery and page transport, source-use policy,
+refresh cadence, and current-alert semantics before considering live ingestion.
