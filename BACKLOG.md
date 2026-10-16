@@ -1297,6 +1297,12 @@ bounded declaration parser and offline scan. It groups place rows by declaration
 signal from `declarationDate` rather than `lastRefresh`, preserves assistance flags and tribal
 scope, and makes no active-hazard or exact-footprint claim. The source stays disabled by
 default and outside the live HTTP allowlist.
+The observed PBS NewsHour headlines RSS shape now has a synthetic NATIONAL fixture and an
+exact-source parser for nation-section article metadata. It discards descriptions and article
+bodies, records optional creator without claiming original reporting, and treats publisher
+section as background context rather than verified national impact. An offline scan traps HTTP;
+the disabled registry entry has no live publisher allowlist. See
+`docs/project/NATIONAL_PBS_NEWSHOUR_RSS_FIXTURE_VERIFICATION.md`.
 The other NATIONAL source-family fixtures listed above remain pending.
 
 ### NWS Active Alert Parser
