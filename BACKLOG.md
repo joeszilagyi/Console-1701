@@ -1327,6 +1327,9 @@ now excludes clearly labeled Canada, Mexico, Caribbean, and Central American eve
 inside those broad boxes; the fixture includes high-felt foreign events and a U.S. place-name
 regression. This guard cannot decide border-near epicenters from a nearest-place label. Nuanced
 cross-border routing and verified multi-state felt-impact evidence remain pending.
+USGS's published summary schema provides no state distribution or country code; GeoServe's
+separate point-admin endpoint can classify an epicenter but cannot establish felt geography.
+Dynamic per-event GeoServe calls require their own exact-request design and signoff before use.
 
 ### FEMA/OpenFEMA Disaster Declarations Research
 
@@ -3521,6 +3524,9 @@ retraction item expires, while an unrelated event stays active. Expired withdraw
 records are purged without changing the shared purge-summary contract. GCN live
 transport and TNS auth/policy work remain open. The COSMIC evidence drawer labels
 whether the withdrawal comes from a current source item or a retained source retraction.
+NASA now offers account-managed JSON Notice email as well as Kafka and distributes Circular
+corrections over Kafka. Neither is a bounded public HTTP feed for the present `news-scan` gate;
+GCN live transport remains blocked pending an explicit account/transport design.
 
 ### Heavy Archive Phase, Disabled By Default
 

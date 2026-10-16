@@ -30,6 +30,16 @@ email/Kafka subscriptions; Kafka client credentials and a streaming dependency w
 separate explicit policy and architecture decision. No guessed private web API, archive scraping,
 or full-archive download is permitted by this signoff.
 
+Follow-up on 2026-10-15: NASA's [Circular subscription guide](https://gcn.nasa.gov/docs/circulars/subscribing)
+confirms that automated Circular distribution uses Kafka, including corrected versions, and
+requires a GCN account/client setup. NASA's [Notices guide](https://gcn.nasa.gov/docs/notices)
+likewise describes Kafka distribution; its [2026-10-07 announcement](https://gcn.nasa.gov/news)
+also says public JSON Notices can now arrive by account-managed email. Email delivery does not
+provide a bounded public HTTP discovery endpoint for the existing `news-scan` transport.
+The [Circular archive guide](https://gcn.nasa.gov/docs/circulars/archive) documents browser
+search, pagination, event groups, and date filters, but no stable metadata API contract or
+rate limit for automated polling. These additions leave the fixture-only decision in place.
+
 Before any live adapter, verify a supported narrow discovery method, account and reuse terms,
 rate and retention limits, pagination/time bounds, current schema version, and
 correction/retraction semantics. Expand fixtures for aliases and multi-circular revisions.
