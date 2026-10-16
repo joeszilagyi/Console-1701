@@ -6,6 +6,17 @@ from collections import Counter
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+_US_ISO3 = {"USA", "PRI", "GUM", "VIR", "ASM", "MNP"}
+_US_COUNTRY_NAMES = {
+    "united states", "united states of america", "puerto rico", "guam",
+    "u s virgin islands", "us virgin islands", "american samoa",
+    "northern mariana islands",
+}
+
+
+def _us_country(value: Any) -> bool:
+    return isinstance(value, str) and value.strip().casefold() in _US_COUNTRY_NAMES
+
 
 def _time(value: Any) -> datetime | None:
     if not value:
@@ -74,6 +85,21 @@ def _source_signals(member: dict[str, Any], *, observed: datetime | None) -> dic
         and (who.get("ranking") or {}).get("official_public_health") is True
     )
     level = str(gdacs.get("alert_level") or "").lower()
+    gdacs_us = bool(
+        level in {"red", "orange"}
+        and (str(gdacs.get("iso3") or "").upper() in _US_ISO3
+             or _us_country(gdacs.get("country"))
+             or any(_us_country(value) for value in gdacs.get("affected_countries") or []))
+    )
+    reliefweb_us = bool(
+        reliefweb.get("status") in {"current", "alert"}
+        and any(_us_country(value) for value in reliefweb.get("countries") or [])
+    )
+    domestic_impact_basis = (
+        "GDACS alert for source-reported U.S. jurisdiction" if gdacs_us else
+        "ReliefWeb active disaster in source-reported U.S. jurisdiction"
+        if reliefweb_us else None
+    )
     official_severity = {"red": 50, "orange": 35, "green": 12}.get(level, 0)
     official_severity = max(official_severity, cap_level)
     if reliefweb.get("status") in {"current", "alert"}:
@@ -131,6 +157,8 @@ def _source_signals(member: dict[str, Any], *, observed: datetime | None) -> dic
             or usgs.get("tsunami") is True
         ),
         "reliefweb_impact": reliefweb.get("status") in {"current", "alert"},
+        "domestic_impact_basis": domestic_impact_basis,
+        "impact_tags": ["us"] if domestic_impact_basis else [],
     }
 
 
@@ -168,8 +196,7 @@ def rank_global_event(
     )
     identities = [signal["identity"] for signal in signals]
     impact_tags = {
-        str(tag).lower() for identity in identities
-        for tag in identity.get("impact_tags") or []
+        tag for signal in signals for tag in signal["impact_tags"]
     }
     recency = max(0, 20 - min(20, age_hours // 4))
     severity = max((signal["official_severity"] for signal in signals), default=0)
@@ -289,6 +316,8 @@ def rank_global_event(
         "ReliefWeb active disaster" if any(
             signal["reliefweb_impact"] for signal in signals
         ) else None,
+        *(signal["domestic_impact_basis"] for signal in signals
+          if signal["domestic_impact_basis"]),
         "NHC advisory watch/warning terms (geography unverified)" if any(
             signal["nhc_watch_current"] for signal in signals
         ) else None,
@@ -305,7 +334,7 @@ def rank_global_event(
         "reasons": reasons,
         "age_hours": age_hours,
         "span_hours": span_hours,
-        "public_impact_basis": [value for value in impact_basis if value],
+        "public_impact_basis": list(dict.fromkeys(value for value in impact_basis if value)),
         "official_alert_basis": [
             "BoM CAP Actual/Public high-severity area warning within effective window"
         ] if any(signal["cap_level"] for signal in signals) else [],

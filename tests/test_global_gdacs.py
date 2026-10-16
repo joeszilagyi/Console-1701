@@ -7,6 +7,7 @@ import pytest
 
 from console1701.config import load_config
 from console1701.db import connect_db, json_loads
+from console1701.news.global_ranking import rank_global_event
 from console1701.news.parsers import NewsParserError, parse_fixture_items
 from console1701.news.scanner import run_news_scan
 
@@ -59,6 +60,25 @@ def test_gdacs_fixture_parser_rejects_unofficial_url_and_wrong_scope():
         parse_fixture_items({**source, "scope": "LOCAL"}, fixture)
 
 
+def test_gdacs_guam_alert_supplies_source_backed_us_relevance():
+    source = {"scope": "GLOBAL", "kind": "rss", "parser": "gdacs_rss"}
+    item, = parse_fixture_items(source, (FIXTURES / "global_gdacs.rss").read_text())
+    item["id"] = 1
+    item["evidence"]["source"] = {
+        "source_family": "gdacs", "official_status": "official", "priority": 70,
+    }
+    ranking = rank_global_event(
+        {"families": ["gdacs"], "countries": ["Guam"], "identifiers": [],
+         "corroborated": False},
+        [item], now="2026-10-15T20:00:00+00:00",
+    )
+    assert ranking["impact_tags"] == ["us"]
+    assert ranking["factors"]["us_or_local_impact_score"] == 10
+    assert "GDACS alert for source-reported U.S. jurisdiction" in (
+        ranking["public_impact_basis"]
+    )
+
+
 def test_gdacs_fixtures_ingest_into_global_without_http(tmp_path, monkeypatch):
     def unexpected_fetch(*args, **kwargs):
         raise AssertionError("fixture scan must not fetch HTTP")
@@ -97,8 +117,17 @@ def test_gdacs_fixtures_ingest_into_global_without_http(tmp_path, monkeypatch):
         rows = conn.execute(
             "SELECT evidence_json FROM news_items WHERE scope = 'GLOBAL' ORDER BY id"
         ).fetchall()
+        clusters = conn.execute(
+            "SELECT evidence_json FROM news_clusters WHERE scope = 'GLOBAL'"
+        ).fetchall()
     assert result["status"] == "complete"
     assert result["item_count"] == 2
     assert {json_loads(row["evidence_json"], {})["gdacs"]["event_id"] for row in rows} == {
         "1001338", "1571782"
     }
+    rankings = [json_loads(row["evidence_json"], {})["global_event"]["ranking"]
+                for row in clusters]
+    assert len(rankings) == 2
+    assert sorted(ranking["factors"]["us_or_local_impact_score"]
+                  for ranking in rankings) == [0, 10]
+    assert sorted(tuple(ranking["impact_tags"]) for ranking in rankings) == [(), ("us",)]
