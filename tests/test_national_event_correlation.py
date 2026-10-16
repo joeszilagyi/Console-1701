@@ -6,7 +6,7 @@ from textwrap import dedent
 
 from console1701.config import load_config
 from console1701.db import connect_db, json_loads
-from console1701.news.national_events import correlate_national_items
+from console1701.news.national_events import correlate_national_items, national_item_signature
 from console1701.news.parsers import parse_fixture_items
 from console1701.news.scanner import run_news_scan
 
@@ -63,6 +63,56 @@ def test_national_correlation_shared_official_id_does_not_fake_diversity():
     assert [group["item_ids"] for group in groups] == [[1, 2]]
     assert groups[0]["matches"][0]["basis"] == ["shared_official_event_id"]
     assert groups[0]["corroborated"] is False
+
+
+def test_national_source_ids_require_matching_source_family():
+    cases = (
+        ("usgs_earthquake", "usgs", {"id": "us1001"}, "usgs:us1001"),
+        ("nws_alert", "nws", {"id": "urn:alert:one"}, "nws:urn:alert:one"),
+        ("nhtsa_recall", "nhtsa", {"campaign_number": "26V123"},
+         "nhtsa_campaign:26v123"),
+        ("cpsc_recall", "cpsc", {"recall_id": "1234"}, "cpsc:1234"),
+        ("openfema_declaration", "fema", {"declaration": "DR-4943-KS"},
+         "fema:dr-4943-ks"),
+        ("cisa_kev", "cisa", {"cve_id": "CVE-2026-1234"}, "cve:cve-2026-1234"),
+        ("federal_register", "federal_register", {"document_number": "2026-00001"},
+         "fr_document:2026-00001"),
+        ("govinfo_publication", "govinfo", {"document_id": "BILLS-119hr1enr"},
+         "govinfo_document:bills-119hr1enr"),
+    )
+    for field, family, value, identifier in cases:
+        first = _item(1, "public_media")
+        second = _item(2, "public_media")
+        for item in (first, second):
+            item["evidence"][field] = value
+        assert identifier not in national_item_signature(first)["identifiers"]
+        assert [group["item_ids"] for group in correlate_national_items([
+            first, second
+        ])] == [[1], [2]]
+        first["evidence"]["source"]["source_family"] = family
+        assert identifier in national_item_signature(first)["identifiers"]
+
+
+def test_national_nws_and_faa_geography_require_matching_source_family():
+    row = _item(1, "public_media")
+    row["evidence"]["national_identity"].update({
+        "event_type": "", "affected_states": [], "affected_airports": [],
+    })
+    row["evidence"]["nws_alert"] = {"geocode": {"UGC": ["WAC033"]}}
+    row["evidence"]["faa_nas_status"] = {"airport_code": "SEA"}
+    signature = national_item_signature(row)
+    assert signature["event_type"] == ""
+    assert signature["affected_states"] == set()
+    assert signature["affected_airports"] == set()
+
+    row["evidence"]["source"]["source_family"] = "nws"
+    signature = national_item_signature(row)
+    assert signature["affected_states"] == {"wa"}
+    assert signature["affected_airports"] == set()
+    row["evidence"]["source"]["source_family"] = "faa"
+    signature = national_item_signature(row)
+    assert signature["affected_states"] == set()
+    assert signature["affected_airports"] == {"sea"}
 
 
 def test_cpsc_official_recall_id_correlates_url_revision_without_impact_inference():
