@@ -2371,6 +2371,10 @@ records, and broaden GLOBAL versus domestic scope-routing coverage.
 The WMO-hosted BoM RSS GUID and linked CAP identifier now form one same-family event in direct
 parser-backed correlation. Conflicting CAP identifiers do not converge by broad title/context;
 the RSS and CAP copies add no independent-family credit. Linked CAP transport remains disabled.
+The matcher now derives that CAP event ID from the WMO-family RSS GUID or CAP parser field, not
+from an unqualified `global_identity` claim. A mismatched stored source family or missing parser
+field cannot force a shared-ID join; a changed generic claim cannot override matching source
+fields, and conflicting source IDs still veto a shared URL. Offline parser-backed regressions pass.
 An observed GDACS/USGS Costa Rica M4.5 earthquake pair now joins by a tightly bounded
 official origin fingerprint: five-second origin time, two-kilometer epicenter and 0.1 magnitude
 tolerances. Both agencies' IDs remain separate. The pair is one upstream observation for
