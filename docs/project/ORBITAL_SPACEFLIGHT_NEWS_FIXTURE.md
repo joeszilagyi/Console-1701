@@ -1,0 +1,7 @@
+# ORBITAL Spaceflight News API Fixture
+
+Checked 2026-10-15 against [The Space Devs' Spaceflight News API repository](https://github.com/TheSpaceDevs/spaceflightnewsapi) and its [v4 articles API](https://api.spaceflightnewsapi.net/v4/articles/). A bounded three-row current read returned HTTP 200, 2,387 bytes and an article envelope with `count`, `next`, and `results`. A separate ten-row search returned a CRS-35 article with a `launches` relation containing a Launch Library 2 `launch_id` UUID. The API is an aggregation of publishers' metadata; a `news_site` label does not make the aggregator an independent agency report.
+
+The fixture preserves one linked article with source publisher, title, HTTPS URL, bounded summary, publication/update times, and exact Launch Library ID. It also exercises an image item, sensitive classified-payload headline, and unlinked routine item, all suppressed. The parser caps rows at 30, validates IDs/URLs, and stores no article body or image. All records are background class. A linked UUID can provide exact contextual grouping with a launch, but the `spaceflight_news_api` family maps to `unknown` for independent-family corroboration; it cannot elevate a primary official item as a second source.
+
+The candidate remains disabled with no live app HTTP allowlist entry. Before live admission, verify query bounds, publisher attribution, duplicate story behavior, current response cadence and size, and source-health handling. Blogs and reports remain separate candidates.

@@ -1262,7 +1262,7 @@
     "policy_risk": "medium",
     "parser_risk": "medium",
     "retention_sensitivity": "low",
-    "verification_status": "candidate_needs_verification",
+    "verification_status": "official_page_seen",
     "why_it_matters": "Headline metadata source, not primary authority.",
     "future_phase": "O7"
   },
