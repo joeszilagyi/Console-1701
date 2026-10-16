@@ -3741,6 +3741,11 @@ Stored transient correlation now rejects two GCN Circular records with conflicti
 GCN event IDs even when they share a Circular publication ID. A separate Circular about the
 same event still joins; a parser-backed correction regression covers both cases so a
 reassigned publication cannot bridge distinct transient events.
+COSMIC correlation now reads GCN Notice/Circular, NASA Exoplanet Archive, MAST CAOM, and NASA
+PDS parser identities only from their matching stored source families. Foreign-family parser
+fields cannot turn a science item into a transient or create a shared product/event ID join;
+explicit reviewed `science_identity` fields remain available for cross-source matches. Direct
+and offline fixture regressions pass. GCN live transport and authenticated TNS remain gated.
 
 ### Heavy Archive Phase, Disabled By Default
 

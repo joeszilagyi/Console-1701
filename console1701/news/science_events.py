@@ -38,12 +38,17 @@ def _family(value: Any) -> str:
 
 def science_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     evidence = item.get("evidence") or {}
+    source = evidence.get("source") or {}
+    source_family = _value(source.get("source_family")).replace(" ", "_")
     rss = evidence.get("science_rss") or {}
-    planet = evidence.get("exoplanet_archive") or {}
-    mast = evidence.get("mast_caom") or {}
-    pds = evidence.get("pds_collection") or {}
-    gcn = evidence.get("gcn_notice") or {}
-    circular = evidence.get("gcn_circular") or {}
+    planet = (
+        evidence.get("exoplanet_archive") or {}
+    ) if source_family == "nasa_exoplanet_archive" else {}
+    mast = (evidence.get("mast_caom") or {}) if source_family == "mast" else {}
+    pds = (evidence.get("pds_collection") or {}) if source_family == "nasa_pds" else {}
+    gcn_family = source_family in {"gcn", "nasa_gcn"}
+    gcn = (evidence.get("gcn_notice") or {}) if gcn_family else {}
+    circular = (evidence.get("gcn_circular") or {}) if gcn_family else {}
     identity = evidence.get("science_identity") or {}
     if gcn or circular:
         kind = "transient"
@@ -94,13 +99,12 @@ def science_item_signature(item: dict[str, Any]) -> dict[str, Any]:
              or gcn.get("coordinates_icrs_deg")),
         ) if value
     }
-    source = evidence.get("source") or {}
     return {
         "id": int(item["id"]), "kind": kind, "identifiers": identifiers,
         "context": context,
         "tokens": set(_TOKENS.findall(str(item.get("title") or "").casefold())) - _STOP,
         "published_at": _time(item.get("source_published_at") or item.get("first_seen_at")),
-        "family": _family(source.get("source_family")),
+        "family": _family(source_family),
         "source_key": str(source.get("source_key") or ""),
     }
 
