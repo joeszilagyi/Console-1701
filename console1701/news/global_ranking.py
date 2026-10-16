@@ -205,7 +205,10 @@ def rank_global_event(
     priority = min(10, max(
         (_int(signal["source"].get("priority"), 50) for signal in signals), default=0
     ) // 10)
-    cluster_size = min(10, len({member["id"] for member in members}))
+    cluster_size = min(10, max(
+        0, len({member["id"] for member in members})
+        - int(group.get("dependent_duplicate_count") or 0),
+    ))
     duplicate_family = min(30, sum(max(0, count - 1) for count in family_counts.values()) * 2)
     duplicate_syndication = min(30, int(group.get("syndicated_duplicate_count") or 0) * 5)
     stale_source = min(25, sum(

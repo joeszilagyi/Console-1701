@@ -2259,6 +2259,14 @@ records, and broaden GLOBAL versus domestic scope-routing coverage.
 The WMO-hosted BoM RSS GUID and linked CAP identifier now form one same-family event in direct
 parser-backed correlation. Conflicting CAP identifiers do not converge by broad title/context;
 the RSS and CAP copies add no independent-family credit. Linked CAP transport remains disabled.
+An observed GDACS/USGS Costa Rica M4.5 earthquake pair now joins by a tightly bounded
+official origin fingerprint: five-second origin time, two-kilometer epicenter and 0.1 magnitude
+tolerances. Both agencies' IDs remain separate. The pair is one upstream observation for
+diversity and cluster-size credit, not independent corroboration; GDACS alert severity still
+contributes separately. Changed origin fields, authority and a two-USGS bridge fail matching.
+An offline two-source fixture scan verifies stored rank/evidence without HTTP. The usual
+GLOBAL M6 threshold and live source gates are unchanged. See
+`docs/project/GLOBAL_GDACS_USGS_ORIGIN_CORRELATION_VERIFICATION.md`.
 GLOBAL correlation now reads GDACS, ReliefWeb disaster/report, WHO DON, and USGS earthquake
 source IDs only from matching stored source families. A foreign-family field cannot create a
 shared-ID join or conflicting-ID veto; explicit parser-supplied `global_identity` identifiers

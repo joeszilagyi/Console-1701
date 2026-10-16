@@ -1,0 +1,30 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "title": "Reduced observed USGS M4.5+ past-week feature, 2026-10-15"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "us6000u2i9",
+      "properties": {
+        "type": "earthquake",
+        "mag": 4.5,
+        "place": "22 km W of Tamarindo, Costa Rica",
+        "time": 1792078838840,
+        "updated": 1792085029001,
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000u2i9",
+        "felt": 1,
+        "cdi": 1,
+        "status": "reviewed",
+        "tsunami": 0,
+        "sig": 312,
+        "magType": "mb"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-86.049, 10.3031, 22.782]
+      }
+    }
+  ]
+}
