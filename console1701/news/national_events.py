@@ -10,6 +10,7 @@ _TOKEN_RE = re.compile(r"[a-z0-9]+")
 _STOPWORDS = {"a", "an", "and", "at", "by", "for", "from", "in", "of", "on",
               "the", "to", "with", "after", "new", "update", "reports", "national"}
 _WINDOW_HOURS = 72
+_FSIS_RECALL_NUMBER = re.compile(r"\d{3}(?:-\d{3})?-\d{4}(?:-exp)?\Z")
 
 
 def _tokens(value: Any) -> set[str]:
@@ -48,6 +49,7 @@ def national_item_signature(item: dict[str, Any]) -> dict[str, Any]:
             ("govinfo_publication", "govinfo"),
             ("fda_recall_notice", "fda"),
             ("faa_nas_status", "faa"),
+            ("fsis_recall", "fsis"),
         ) if family == expected_family
     }
     identifiers: set[str] = set()
@@ -60,6 +62,7 @@ def national_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         ("cisa_kev", "cve_id", "cve"),
         ("federal_register", "document_number", "fr_document"),
         ("govinfo_publication", "document_id", "govinfo_document"),
+        ("fsis_recall", "recall_number", "fsis"),
     ):
         payload = source_fields.get(evidence_key) or {}
         if payload.get(field):
@@ -73,6 +76,11 @@ def national_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     states = _values(identity.get("affected_states"))
     states.update(zone[:2] for zone in zones if re.fullmatch(r"[a-z]{2}[cz]\d{3}", zone))
     faa = source_fields.get("faa_nas_status") or {}
+    fsis = source_fields.get("fsis_recall") or {}
+    fsis_number = str(fsis.get("recall_number") or "").strip().casefold()
+    if (not _FSIS_RECALL_NUMBER.fullmatch(fsis_number)
+            or source.get("official_status") != "official"):
+        fsis_number = ""
     airports = _values(identity.get("affected_airports"))
     if faa.get("airport_code"):
         airports.add(str(faa["airport_code"]).casefold())
@@ -113,6 +121,7 @@ def national_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         "source_key": str(source.get("source_key") or "").strip(),
         "article_url": str(item.get("canonical_url") or item.get("url") or "").strip(),
         "syndication_id": str(identity.get("syndication_id") or "").strip().casefold(),
+        "fsis_recall_number": fsis_number,
     }
 
 
@@ -124,6 +133,21 @@ _CONTEXT_FIELDS = (
 
 
 def national_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str]:
+    # FSIS gives an expansion its own notice number and URL. The explicit
+    # -EXP suffix links that notice to the numbered original recall only.
+    fsis_original = left["fsis_recall_number"]
+    fsis_expansion = right["fsis_recall_number"]
+    fsis_series_match = (
+        left["family"] == right["family"] == "fsis"
+        and left["official"] and right["official"]
+        and bool(fsis_original) and bool(fsis_expansion)
+        and (fsis_original + "-exp" == fsis_expansion
+             or fsis_expansion + "-exp" == fsis_original)
+        and {value for value in left["identifiers"] if value.startswith("fsis:")}
+            == {f"fsis:{fsis_original}"}
+        and {value for value in right["identifiers"] if value.startswith("fsis:")}
+            == {f"fsis:{fsis_expansion}"}
+    )
     # An article or broad title may mention several official events. When both
     # items carry IDs from the same authority, disjoint IDs rule out a match.
     namespaces = {
@@ -135,7 +159,7 @@ def national_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[st
         prefix = f"{namespace}:"
         left_ids = {value for value in left["identifiers"] if value.startswith(prefix)}
         right_ids = {value for value in right["identifiers"] if value.startswith(prefix)}
-        if not left_ids & right_ids:
+        if not left_ids & right_ids and not (namespace == "fsis" and fsis_series_match):
             return []
     shared_ids = left["identifiers"] & right["identifiers"]
     if shared_ids and all(value.startswith("cve:") for value in shared_ids):
@@ -149,6 +173,8 @@ def national_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[st
         return ["shared_cve", "same_authority", "time_window"]
     if shared_ids:
         return ["shared_official_event_id"]
+    if fsis_series_match:
+        return ["same_fsis_recall_series"]
     compatible_type = (
         not left["event_type"] or not right["event_type"]
         or left["event_type"] == right["event_type"]
