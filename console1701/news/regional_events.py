@@ -26,6 +26,11 @@ def _values(value: Any) -> set[str]:
     return {_value(entry) for entry in entries[:40] if _value(entry)}
 
 
+def _county_values(value: Any) -> set[str]:
+    return {county.removesuffix(" county") for county in _values(value)
+            if county.removesuffix(" county")}
+
+
 def _time(value: Any) -> datetime | None:
     try:
         parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
@@ -46,8 +51,11 @@ def regional_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     if (event.get("confidence") == "high" and geography.get("matched")
             and source.get("official_status") == "official"):
         for field in _GEO_FIELDS:
-            fields[field] = _values(identity.get(field))
-        fields["county"].update(_values(geography.get("county")))
+            fields[field] = (
+                _county_values(identity.get(field)) if field == "county"
+                else _values(identity.get(field))
+            )
+        fields["county"].update(_county_values(geography.get("county")))
         fields["route"].update(_values(geography.get("routes")))
         fields["weather_zone"].update(_values(geography.get("zone_ids")))
         # Facility names are not assumed to identify an airport, port, or pass.

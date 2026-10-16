@@ -998,6 +998,10 @@ source families. Pierce County road-alert AIDs survive headline revisions as off
 identities and can match a separate official road report only with shared Pierce geography,
 title context, and time. The remaining regional token families await source parsers; see
 `docs/project/REGIONAL_EVENT_CONTRACT.md`.
+An offline two-parser scan now verifies a Pierce County RSS road alert against a
+documented-shape WSDOT JSON record. The matcher equates `Pierce` and `Pierce County`,
+persists the independent-family county/title/time basis, and rejects a different county.
+The WSDOT JSON remains synthetic and fixture-only because API access requires a code.
 
 ### REGIONAL Deterministic Ranking
 
@@ -1369,6 +1373,9 @@ path filter and a Health Alert Network query in bounded 2026-10-15 checks; it do
 this parser.
 Further bounded searches for a current HAN ID and three current notice-title terms also
 returned HTTP 200 with zero results. Direct archive and notice reads returned HTTP 403 here.
+CDC Stacks exposes machine-readable HAN archive metadata, but its collection expressly
+says entries are past alerts that may be superseded or expired, not current notices;
+it does not unblock Recent Signal ingest. See the updated blocker note.
 
 ### FDA Recall Endpoint/Feed Verification
 

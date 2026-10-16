@@ -109,6 +109,95 @@ def test_pierce_road_id_survives_revisions_and_matches_only_pierce_road_context(
     assert len(correlate_regional_items([pierce_row, wsdot_row])) == 2
 
 
+def test_pierce_and_wsdot_parsed_road_reports_correlate_offline(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        "console1701.news.scanner.fetch_official_text",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("no HTTP")),
+    )
+    pierce_source = regional_registry_config_defaults("pierce_road_alert_rss")
+    pierce_source["official_url"] = pierce_source["url"]
+    pierce_source["url"] = _file_url("regional_pierce_road_alerts.rss")
+    pierce = next(
+        item for item in parse_fixture_items(
+            pierce_source, (FIXTURES / "regional_pierce_road_alerts.rss").read_text()
+        ) if item["evidence"]["pierce_road_alert"]["alert_id"] == "2892"
+    )
+    wsdot_source = regional_registry_config_defaults("wsdot_traveler_api")
+    wsdot_payload = json.loads((FIXTURES / "regional_wsdot_traveler_alerts.json").read_text())
+    road_report = wsdot_payload[0]
+    road_report.update({
+        "AlertID": 81992, "County": "Pierce County",
+        "HeadlineDescription": pierce["title"],
+        "ExtendedDescription": "Sidewalk repairs causing travel delays.",
+        "LastUpdatedTime": pierce["source_published_at"],
+    })
+    wsdot_path = tmp_path / "wsdot-pierce.json"
+    wsdot_path.write_text(json.dumps([road_report]))
+    wsdot, = parse_fixture_items(wsdot_source, wsdot_path.read_text())
+    for item_id, item, source in (
+        (1, pierce, pierce_source), (2, wsdot, wsdot_source),
+    ):
+        item["id"] = item_id
+        item["evidence"]["regional_event"] = build_regional_event_contract(
+            source, item, hashed_url=str(item_id) * 64
+        )
+        item["evidence"]["source"] = {
+            "source_key": source["id"], "source_family": source["source_family"],
+            "official_status": "official",
+        }
+    groups = correlate_regional_items([pierce, wsdot])
+    assert [group["item_ids"] for group in groups] == [[1, 2]]
+    assert groups[0]["corroborated"] is True
+    assert "county" in groups[0]["matches"][0]["basis"]
+    assert "independent_family" in groups[0]["matches"][0]["basis"]
+
+    wrong_county = json.loads(json.dumps(road_report))
+    wrong_county["County"] = "King"
+    wrong, = parse_fixture_items(wsdot_source, json.dumps([wrong_county]))
+    wrong["id"] = 3
+    wrong["evidence"]["regional_event"] = build_regional_event_contract(
+        wsdot_source, wrong, hashed_url="3" * 64
+    )
+    wrong["evidence"]["source"] = {
+        "source_key": wsdot_source["id"], "source_family": wsdot_source["source_family"],
+        "official_status": "official",
+    }
+    assert [group["item_ids"] for group in correlate_regional_items([pierce, wrong])] == [
+        [1], [3],
+    ]
+
+    config_path = tmp_path / "regional.yml"
+    config_path.write_text(dedent(f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        news:
+          enabled: true
+          scopes:
+            REGIONAL:
+              enabled: true
+              sources:
+                - id: pierce_road_alert_rss
+                  enabled: true
+                  url: "{_file_url('regional_pierce_road_alerts.rss')}"
+                  official_url: "{pierce_source['official_url']}"
+                - id: wsdot_traveler_api
+                  enabled: true
+                  url: "{wsdot_path.as_uri()}"
+    """).strip() + "\n")
+    assert run_news_scan(config_path)["item_count"] == 3
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        clusters = conn.execute(
+            "SELECT evidence_json FROM news_clusters WHERE scope='REGIONAL'"
+        ).fetchall()
+    correlated = [
+        json_loads(row["evidence_json"], {}) for row in clusters
+        if json_loads(row["evidence_json"], {}).get("corroborated")
+    ]
+    assert len(correlated) == 1
+    assert correlated[0]["family_count"] == 2
+    assert "county" in correlated[0]["correlation"]["matches"][0]["basis"]
+
+
 def _file_url(name: str) -> str:
     return f"file://{(FIXTURES / name).resolve()}"
 

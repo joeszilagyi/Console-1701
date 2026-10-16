@@ -23,8 +23,12 @@ different official source families when event type, one verified geographic fiel
 normalized title tokens, and publication times within 48 hours all agree. Current parser-backed
 geographic fields include WSDOT route/county, NWS weather zone, Pierce County jurisdiction,
 WSF route IDs, USGS water basin/county, and Ecology station/city. Event type still has to match;
-the Pierce and WSDOT road reports can converge on a shared county and title. Future official
-parsers can supply the other named REGIONAL identity fields. Every pair in a multi-item group must
+the Pierce and WSDOT road reports can converge on a shared county and title. County comparison
+normalizes an optional terminal `County` suffix (for example, `Pierce` and `Pierce County`)
+without treating distinct counties as the same place. A two-parser offline scan persists this
+cross-family match and a different-county negative case. The WSDOT record in that regression
+uses the documented synthetic API shape; it is not an observed authenticated response.
+Future official parsers can supply the other named REGIONAL identity fields. Every pair in a multi-item group must
 match; a general middle report cannot bridge two unrelated incidents. Unverified headlines remain
 isolated even when their title and place resemble an official report. REGIONAL NWS fixture parsing excludes alerts without
 Washington zone evidence or an explicit Washington area description; the disabled registry seed

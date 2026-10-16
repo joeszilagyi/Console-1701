@@ -19,6 +19,13 @@ checked with bounded five-row media queries for `sourceUrlContains=/han/php/noti
 `q=Health Alert Network`. Both returned HTTP 200 JSON with `meta.pagination.total=0`. This API
 does not currently provide a verified HAN notice shape or a replacement for the archive feed.
 
+CDC's [Stacks help](https://stacks.cdc.gov/help) documents machine-readable OAI-PMH and
+collection exports, and Stacks has a [HAN collection](https://stacks.cdc.gov/cbrowse?parentId=cdc%3A24915).
+The collection explicitly describes its entries as archived past alerts, says they may be
+superseded or expired, and directs readers to CDC HAN or email for current notices. Its
+machine-readable metadata is therefore an archive path, not a current-alert discovery feed
+for this Recent Signal parser. It does not clear the RS-039 gate.
+
 Decision: keep `cdc_han` and `cdc_han_notices` disabled; treat their official pages as manual
 references, not working ingest sources. Do not scrape the notice archive,
 automate email signup, or invent a fixture schema. To resume RS-039, find an official current
