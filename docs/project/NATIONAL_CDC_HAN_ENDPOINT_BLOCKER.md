@@ -62,7 +62,7 @@ JSON shape above; the earlier live-source decision remains. No live URL is in th
 registry source stays disabled. Finish RS-039 after a notice-level type/date contract and
 source use policy are verified, then seek a separate exact live-query release decision.
 
-## Follow-up: bounded notice-page summaries, 2026-10-15
+## Historical follow-up: three bounded notice-page summaries, 2026-10-15
 
 Three exact official notice pages—[CDCHAN-00533](https://www.cdc.gov/han/php/notices/han00533.html),
 [CDCHAN-00529](https://www.cdc.gov/han/php/notices/han00529.html), and
@@ -86,7 +86,32 @@ inferred from the prose or badge. The search JSON itself does not contain
 the page snippets: the test fixture pairs two separately observed source shapes for offline
 verification. There is no live notice-page fetch path or source admission.
 
-Remaining gate: establish an approved bounded current-notice discovery and page/metadata
+Remaining gate at that point: establish an approved bounded current-notice discovery and page/metadata
 transport, review source use and refresh cadence, verify distribution time or date-only UI
 semantics, and add source-backed jurisdiction/instruction/alert rules where the notice supplies
 them. Until then, this remains fixture-only evidence rather than current alert ingest.
+
+## Follow-up: raw notice snippets for all 14 index rows, 2026-10-15
+
+Bounded direct GETs of the 14 exact official notice URLs linked by the existing CDC search
+snapshot returned HTTP 200 `text/html` with individual responses from 51,803 to 87,201 bytes.
+The prior HTTP 403 result was transient for these requests. Only each page's short raw
+At-a-glance block, first Summary paragraph, observation date, and any exact
+`Recommendations for the Public` section anchor were retained in the fixture. The resulting
+combined JSON is 44,401 bytes, under the existing 64 KiB parser cap; complete pages and article
+bodies were discarded. Offline tests still trap HTTP.
+
+All 14 raw page snippets verify message type against the index badge hint. Some page badges are
+generic, so the parser labels whether type came from badge, Summary lead, or agreement between
+both. Thirteen At-a-glance blocks contain a distribution date and ID; five also print an ET
+time. The raw [HAN-00522 page](https://www.cdc.gov/han/php/notices/han00522.html) confirms that
+its At-a-glance block actually omits both date and ID, so its distribution date stays null.
+Ten pages contain an exact `Recommendations for the Public` section anchor, recorded as a link
+without ingesting the recommendation text or inferring affected geography or impact. The
+manually transcribed rendered observations are now historical evidence only; the active fixture
+uses the raw fragments.
+
+This source-shape verification does not approve live fetching. The CDC search service remains
+an archive-widget index rather than a documented HAN alert feed. Current-alert state, affected
+jurisdiction, broader public instructions, source use policy, request cadence, and a bounded
+live discovery/page request design remain open.

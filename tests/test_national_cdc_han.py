@@ -46,6 +46,8 @@ def test_cdc_han_current_search_snapshot_preserves_notice_identity_without_impac
     assert update["evidence"]["cdc_han"]["message_type"] == "Health Update"
     assert update["evidence"]["cdc_han"]["distribution_date"] == "2026-05-18"
     assert all(item["evidence"]["cdc_han"]["message_type"] for item in items)
+    assert sum(bool(item["evidence"]["cdc_han"]["public_instruction_url"])
+               for item in items) == 10
     assert sum(item["evidence"]["cdc_han"]["distribution_date"] is not None
                for item in items) == 13
     assert by_id["CDCHAN-00527"]["evidence"]["cdc_han"]["distribution_time"] == (
@@ -72,8 +74,17 @@ def test_cdc_han_current_search_snapshot_preserves_notice_identity_without_impac
     assert by_id["CDCHAN-00527"]["evidence"]["cdc_han"][
         "notice_page_observed_at"
     ] == "2026-10-15"
+    assert by_id["CDCHAN-00527"]["evidence"]["cdc_han"][
+        "distribution_time_basis"
+    ] == "official_notice_page_at_a_glance_ET"
     assert by_id["CDCHAN-00523"]["evidence"]["cdc_han"]["message_type"] == (
         "Health Update"
+    )
+    assert by_id["CDCHAN-00532"]["evidence"]["cdc_han"]["message_type_basis"] == (
+        "official_notice_page_summary_lead"
+    )
+    assert by_id["CDCHAN-00531"]["evidence"]["cdc_han"]["message_type_basis"] == (
+        "official_notice_page_badge"
     )
     assert by_id["CDCHAN-00522"]["evidence"]["cdc_han"]["distribution_date"] is None
     assert by_id["CDCHAN-00522"]["evidence"]["cdc_han"]["message_type"] == (
@@ -99,7 +110,6 @@ def test_cdc_han_rejects_wrong_contract_or_poisoned_notice_metadata():
     raw = FIXTURE.read_text()
     index_only = json.loads(raw)
     index_only.pop("notice_summaries")
-    index_only.pop("notice_observations")
     assert all(item["evidence"]["cdc_han"]["message_type"] is None for item in (
         parse_fixture_items(_source(), json.dumps(index_only))
     ))
@@ -156,15 +166,20 @@ def test_cdc_han_rejects_wrong_contract_or_poisoned_notice_metadata():
     with pytest.raises(NewsParserError, match="distribution fields"):
         parse_fixture_items(_source(), json.dumps(payload))
     payload = json.loads(raw)
-    payload["notice_observations"][0]["at_a_glance"][2] = "CDCHAN-00531"
+    no_date = next(row for row in payload["notice_summaries"]
+                   if row["permalink"].endswith("han00522.html"))
+    no_date["page_summary_html"] = no_date["page_summary_html"].replace(
+        "Distributed via the CDC Health Alert Network</p>",
+        "Distributed via the CDC Health Alert Network</p><p>CDCHAN-00522</p>",
+    )
     with pytest.raises(NewsParserError, match="distribution fields"):
         parse_fixture_items(_source(), json.dumps(payload))
     payload = json.loads(raw)
-    payload["notice_observations"][0]["summary_type_phrase"] = "Health Alert"
-    with pytest.raises(NewsParserError, match="summary message type"):
-        parse_fixture_items(_source(), json.dumps(payload))
-    payload = json.loads(raw)
-    payload["notice_observations"][0]["at_a_glance"][1] = "August 32, 2026"
+    timed = next(row for row in payload["notice_summaries"]
+                 if row["permalink"].endswith("han00527.html"))
+    timed["page_summary_html"] = timed["page_summary_html"].replace(
+        "10:00 AM ET", "25:00 AM ET"
+    )
     with pytest.raises(NewsParserError, match="distribution date"):
         parse_fixture_items(_source(), json.dumps(payload))
     with pytest.raises(PayloadTooLargeError, match="64 KiB"):

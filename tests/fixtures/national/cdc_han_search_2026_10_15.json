@@ -1,181 +1,328 @@
 {
-  "responseHeader":{
-    "zkConnected":true,
-    "status":0,
-    "QTime":71,
-    "params":{
-      "q":"*:*",
-      "fl":"id,title_txt,permalink,cdc_last_reviewed_date_dt,cdc_article_date_dt,cdc_dfe_template_str,excerpt_txt,cdc_related_image_str",
-      "fq":"permalink:*han/php/notices/*",
-      "sort":"cdc_last_reviewed_date_dt desc",
-      "rows":"20",
-      "wt":"json"}},
-  "response":{"numFound":15,"start":0,"numFoundExact":true,"docs":[
+  "responseHeader": {
+    "zkConnected": true,
+    "status": 0,
+    "QTime": 71,
+    "params": {
+      "q": "*:*",
+      "fl": "id,title_txt,permalink,cdc_last_reviewed_date_dt,cdc_article_date_dt,cdc_dfe_template_str,excerpt_txt,cdc_related_image_str",
+      "fq": "permalink:*han/php/notices/*",
+      "sort": "cdc_last_reviewed_date_dt desc",
+      "rows": "20",
+      "wt": "json"
+    }
+  },
+  "response": {
+    "numFound": 15,
+    "start": 0,
+    "numFoundExact": true,
+    "docs": [
       {
-        "id":"1984_575",
-        "title_txt":"Nationwide Increase in Reported Human Rabies Exposures: Rabies Post-exposure Prophylaxis Administration",
-        "permalink":"https://www.cdc.gov/han/php/notices/han00533.html",
-        "cdc_dfe_template_str":["cdc_health_alert"],
-        "cdc_article_date_dt":"2026-09-10T13:45:59Z",
-        "cdc_last_reviewed_date_dt":"2026-09-10T04:00:00Z",
-        "cdc_related_image_str":["https://www.cdc.gov/han/media/images/2025/03/HAN-Health-Advisory.png"],
-        "excerpt_txt":"Nationwide Increase in Reported Human Rabies Exposures: Rabies Post-exposure Prophylaxis Administrat"},
+        "id": "1984_575",
+        "title_txt": "Nationwide Increase in Reported Human Rabies Exposures: Rabies Post-exposure Prophylaxis Administration",
+        "permalink": "https://www.cdc.gov/han/php/notices/han00533.html",
+        "cdc_dfe_template_str": [
+          "cdc_health_alert"
+        ],
+        "cdc_article_date_dt": "2026-09-10T13:45:59Z",
+        "cdc_last_reviewed_date_dt": "2026-09-10T04:00:00Z",
+        "cdc_related_image_str": [
+          "https://www.cdc.gov/han/media/images/2025/03/HAN-Health-Advisory.png"
+        ],
+        "excerpt_txt": "Nationwide Increase in Reported Human Rabies Exposures: Rabies Post-exposure Prophylaxis Administrat"
+      },
       {
-        "id":"1984_574",
-        "title_txt":"Risk of Severe Arboviral Disease in Patients Receiving B Cell-Depleting or Modulating Medications",
-        "permalink":"https://www.cdc.gov/han/php/notices/han00532.html",
-        "cdc_dfe_template_str":["cdc_health_alert"],
-        "cdc_article_date_dt":"2026-08-11T18:10:24Z",
-        "cdc_last_reviewed_date_dt":"2026-08-11T04:00:00Z",
-        "cdc_related_image_str":["https://www.cdc.gov/han/media/images/2025/03/HAN-Health-Advisory.png"],
-        "excerpt_txt":"Risk of Severe Arboviral Disease in Patients Receiving B Cell-Depleting or Modulating Medications"},
+        "id": "1984_574",
+        "title_txt": "Risk of Severe Arboviral Disease in Patients Receiving B Cell-Depleting or Modulating Medications",
+        "permalink": "https://www.cdc.gov/han/php/notices/han00532.html",
+        "cdc_dfe_template_str": [
+          "cdc_health_alert"
+        ],
+        "cdc_article_date_dt": "2026-08-11T18:10:24Z",
+        "cdc_last_reviewed_date_dt": "2026-08-11T04:00:00Z",
+        "cdc_related_image_str": [
+          "https://www.cdc.gov/han/media/images/2025/03/HAN-Health-Advisory.png"
+        ],
+        "excerpt_txt": "Risk of Severe Arboviral Disease in Patients Receiving B Cell-Depleting or Modulating Medications"
+      },
       {
-        "id":"1984_570",
-        "title_txt":"Domestically Acquired Cyclosporiasis Cases in Multiple U.S. States, 2026",
-        "permalink":"https://www.cdc.gov/han/php/notices/han00531.html",
-        "cdc_dfe_template_str":["cdc_health_alert"],
-        "cdc_article_date_dt":"2026-07-14T13:49:33Z",
-        "cdc_last_reviewed_date_dt":"2026-07-14T04:00:00Z",
-        "cdc_related_image_str":["https://www.cdc.gov/han/media/images/2025/03/HAN-Health-Advisory.png"],
-        "excerpt_txt":"Domestically-Acquired Cyclosporiasis Cases in Multiple U.S. States, 2026"},
+        "id": "1984_570",
+        "title_txt": "Domestically Acquired Cyclosporiasis Cases in Multiple U.S. States, 2026",
+        "permalink": "https://www.cdc.gov/han/php/notices/han00531.html",
+        "cdc_dfe_template_str": [
+          "cdc_health_alert"
+        ],
+        "cdc_article_date_dt": "2026-07-14T13:49:33Z",
+        "cdc_last_reviewed_date_dt": "2026-07-14T04:00:00Z",
+        "cdc_related_image_str": [
+          "https://www.cdc.gov/han/media/images/2025/03/HAN-Health-Advisory.png"
+        ],
+        "excerpt_txt": "Domestically-Acquired Cyclosporiasis Cases in Multiple U.S. States, 2026"
+      },
       {
-        "id":"1984_560",
-        "title_txt":"Ebola Disease Outbreak in the Democratic Republic of the Congo and Uganda",
-        "permalink":"https://www.cdc.gov/han/php/notices/han00530.html",
-        "cdc_dfe_template_str":["cdc_health_alert"],
-        "cdc_article_date_dt":"2026-05-19T17:41:02Z",
-        "cdc_last_reviewed_date_dt":"2026-05-19T04:00:00Z",
-        "cdc_related_image_str":["https://www.cdc.gov/han/media/images/2025/03/HAN-Health-Advisory.png"],
-        "excerpt_txt":"Advisory to clinicians, public health practitioners, and travelers about a new outbreak of Ebola."},
+        "id": "1984_560",
+        "title_txt": "Ebola Disease Outbreak in the Democratic Republic of the Congo and Uganda",
+        "permalink": "https://www.cdc.gov/han/php/notices/han00530.html",
+        "cdc_dfe_template_str": [
+          "cdc_health_alert"
+        ],
+        "cdc_article_date_dt": "2026-05-19T17:41:02Z",
+        "cdc_last_reviewed_date_dt": "2026-05-19T04:00:00Z",
+        "cdc_related_image_str": [
+          "https://www.cdc.gov/han/media/images/2025/03/HAN-Health-Advisory.png"
+        ],
+        "excerpt_txt": "Advisory to clinicians, public health practitioners, and travelers about a new outbreak of Ebola."
+      },
       {
-        "id":"1984_558",
-        "title_txt":"2026 Hantavirus Outbreak: Testing for Potential Infection",
-        "permalink":"https://www.cdc.gov/han/php/notices/han00529.html",
-        "cdc_dfe_template_str":["cdc_health_alert"],
-        "cdc_article_date_dt":"2026-05-19T00:09:06Z",
-        "cdc_last_reviewed_date_dt":"2026-05-18T04:00:00Z",
-        "cdc_related_image_str":["https://www.cdc.gov/han/media/images/2025/03/logo-han-health-update.png"],
-        "excerpt_txt":"Testing available for patients with suspected hantavirus infection to include Andes virus."},
+        "id": "1984_558",
+        "title_txt": "2026 Hantavirus Outbreak: Testing for Potential Infection",
+        "permalink": "https://www.cdc.gov/han/php/notices/han00529.html",
+        "cdc_dfe_template_str": [
+          "cdc_health_alert"
+        ],
+        "cdc_article_date_dt": "2026-05-19T00:09:06Z",
+        "cdc_last_reviewed_date_dt": "2026-05-18T04:00:00Z",
+        "cdc_related_image_str": [
+          "https://www.cdc.gov/han/media/images/2025/03/logo-han-health-update.png"
+        ],
+        "excerpt_txt": "Testing available for patients with suspected hantavirus infection to include Andes virus."
+      },
       {
-        "id":"1984_557",
-        "title_txt":"2026 Multi-country Hantavirus Cluster Linked to Cruise Ship",
-        "permalink":"https://www.cdc.gov/han/php/notices/han00528.html",
-        "cdc_dfe_template_str":["cdc_health_alert"],
-        "cdc_article_date_dt":"2026-05-09T04:00:00Z",
-        "cdc_last_reviewed_date_dt":"2026-05-08T04:00:00Z",
-        "cdc_related_image_str":["https://www.cdc.gov/han/media/images/2025/03/HAN-Health-Advisory.png"],
-        "excerpt_txt":"The CDC is issuing this HAN Health Advisory about a new cluster of hantavirus disease cases"},
+        "id": "1984_557",
+        "title_txt": "2026 Multi-country Hantavirus Cluster Linked to Cruise Ship",
+        "permalink": "https://www.cdc.gov/han/php/notices/han00528.html",
+        "cdc_dfe_template_str": [
+          "cdc_health_alert"
+        ],
+        "cdc_article_date_dt": "2026-05-09T04:00:00Z",
+        "cdc_last_reviewed_date_dt": "2026-05-08T04:00:00Z",
+        "cdc_related_image_str": [
+          "https://www.cdc.gov/han/media/images/2025/03/HAN-Health-Advisory.png"
+        ],
+        "excerpt_txt": "The CDC is issuing this HAN Health Advisory about a new cluster of hantavirus disease cases"
+      },
       {
-        "id":"1984_545",
-        "title_txt":"Medetomidine in the U.S. Illegal Fentanyl Supply Increasing Risk for Overdose and Severe Withdrawal Syndrome",
-        "permalink":"https://www.cdc.gov/han/php/notices/han00527.html",
-        "cdc_dfe_template_str":["cdc_health_alert"],
-        "cdc_article_date_dt":"2026-01-20T05:00:00Z",
-        "cdc_last_reviewed_date_dt":"2026-04-02T04:00:00Z",
-        "cdc_related_image_str":["https://www.cdc.gov/han/media/images/2025/03/HAN-Health-Advisory.png"],
-        "excerpt_txt":"HAN Health Advisory: Medetomidine in the U.S. Illegal Fentanyl Supply Increasing Risk for Overdose a"},
+        "id": "1984_545",
+        "title_txt": "Medetomidine in the U.S. Illegal Fentanyl Supply Increasing Risk for Overdose and Severe Withdrawal Syndrome",
+        "permalink": "https://www.cdc.gov/han/php/notices/han00527.html",
+        "cdc_dfe_template_str": [
+          "cdc_health_alert"
+        ],
+        "cdc_article_date_dt": "2026-01-20T05:00:00Z",
+        "cdc_last_reviewed_date_dt": "2026-04-02T04:00:00Z",
+        "cdc_related_image_str": [
+          "https://www.cdc.gov/han/media/images/2025/03/HAN-Health-Advisory.png"
+        ],
+        "excerpt_txt": "HAN Health Advisory: Medetomidine in the U.S. Illegal Fentanyl Supply Increasing Risk for Overdose a"
+      },
       {
-        "id":"1984_536",
-        "title_txt":"New World Screwworm: Outbreak Moves into Northern Mexico",
-        "permalink":"https://www.cdc.gov/han/php/notices/han00526.html",
-        "cdc_dfe_template_str":["cdc_health_alert"],
-        "cdc_article_date_dt":"2026-01-20T16:55:35Z",
-        "cdc_last_reviewed_date_dt":"2026-01-20T05:00:00Z",
-        "cdc_related_image_str":["https://www.cdc.gov/han/media/images/2025/03/HAN-Health-Advisory.png"],
-        "excerpt_txt":"HAN Health Advisory: New World Screwworm: Outbreak Moves into Northern Mexico"},
+        "id": "1984_536",
+        "title_txt": "New World Screwworm: Outbreak Moves into Northern Mexico",
+        "permalink": "https://www.cdc.gov/han/php/notices/han00526.html",
+        "cdc_dfe_template_str": [
+          "cdc_health_alert"
+        ],
+        "cdc_article_date_dt": "2026-01-20T16:55:35Z",
+        "cdc_last_reviewed_date_dt": "2026-01-20T05:00:00Z",
+        "cdc_related_image_str": [
+          "https://www.cdc.gov/han/media/images/2025/03/HAN-Health-Advisory.png"
+        ],
+        "excerpt_txt": "HAN Health Advisory: New World Screwworm: Outbreak Moves into Northern Mexico"
+      },
       {
-        "id":"1984_533",
-        "title_txt":"First Reported Outbreak Caused by Marburg Virus in Ethiopia",
-        "permalink":"https://www.cdc.gov/han/php/notices/han00525.html",
-        "cdc_dfe_template_str":["cdc_health_alert"],
-        "cdc_article_date_dt":"2025-12-03T17:21:47Z",
-        "cdc_last_reviewed_date_dt":"2025-12-04T05:00:00Z",
-        "cdc_related_image_str":["https://www.cdc.gov/han/media/images/2025/03/HAN-Health-Advisory.png"],
-        "excerpt_txt":"HAN Health Advisory: First Reported Outbreak Caused by Marburg Virus in Ethiopia"},
+        "id": "1984_533",
+        "title_txt": "First Reported Outbreak Caused by Marburg Virus in Ethiopia",
+        "permalink": "https://www.cdc.gov/han/php/notices/han00525.html",
+        "cdc_dfe_template_str": [
+          "cdc_health_alert"
+        ],
+        "cdc_article_date_dt": "2025-12-03T17:21:47Z",
+        "cdc_last_reviewed_date_dt": "2025-12-04T05:00:00Z",
+        "cdc_related_image_str": [
+          "https://www.cdc.gov/han/media/images/2025/03/HAN-Health-Advisory.png"
+        ],
+        "excerpt_txt": "HAN Health Advisory: First Reported Outbreak Caused by Marburg Virus in Ethiopia"
+      },
       {
-        "id":"1984_516",
-        "title_txt":"Ebola Outbreak in the Democratic Republic of the Congo",
-        "permalink":"https://www.cdc.gov/han/php/notices/han00524.html",
-        "cdc_dfe_template_str":["cdc_health_alert"],
-        "cdc_article_date_dt":"2025-09-18T00:00:00Z",
-        "cdc_last_reviewed_date_dt":"2025-09-18T04:00:00Z",
-        "cdc_related_image_str":["https://www.cdc.gov/han/media/images/2025/03/HAN-Health-Advisory.png"],
-        "excerpt_txt":"New outbreak of Ebola virus disease (EVD) in the Democratic Republic of the Congo (DRC)"},
+        "id": "1984_516",
+        "title_txt": "Ebola Outbreak in the Democratic Republic of the Congo",
+        "permalink": "https://www.cdc.gov/han/php/notices/han00524.html",
+        "cdc_dfe_template_str": [
+          "cdc_health_alert"
+        ],
+        "cdc_article_date_dt": "2025-09-18T00:00:00Z",
+        "cdc_last_reviewed_date_dt": "2025-09-18T04:00:00Z",
+        "cdc_related_image_str": [
+          "https://www.cdc.gov/han/media/images/2025/03/HAN-Health-Advisory.png"
+        ],
+        "excerpt_txt": "New outbreak of Ebola virus disease (EVD) in the Democratic Republic of the Congo (DRC)"
+      },
       {
-        "id":"1984_486",
-        "title_txt":"Health Alert Network (HAN) Archive",
-        "permalink":"https://www.cdc.gov/han/php/notices/index.html",
-        "cdc_dfe_template_str":["cdc_listing"],
-        "cdc_article_date_dt":"2025-03-27T14:53:00Z",
-        "cdc_related_image_str":["https://www.cdc.gov/han/media/images/2025/03/logo-health-alert-network.png"],
-        "cdc_last_reviewed_date_dt":"2025-04-15T04:00:00Z",
-        "excerpt_txt":"Health Alerts, Advisories, Updates, and Info Service Messages to over one million recipients."},
+        "id": "1984_486",
+        "title_txt": "Health Alert Network (HAN) Archive",
+        "permalink": "https://www.cdc.gov/han/php/notices/index.html",
+        "cdc_dfe_template_str": [
+          "cdc_listing"
+        ],
+        "cdc_article_date_dt": "2025-03-27T14:53:00Z",
+        "cdc_related_image_str": [
+          "https://www.cdc.gov/han/media/images/2025/03/logo-health-alert-network.png"
+        ],
+        "cdc_last_reviewed_date_dt": "2025-04-15T04:00:00Z",
+        "excerpt_txt": "Health Alerts, Advisories, Updates, and Info Service Messages to over one million recipients."
+      },
       {
-        "id":"1984_480",
-        "title_txt":"Ongoing Risk of Dengue Virus Infections and Updated Testing Recommendations in the United States",
-        "permalink":"https://www.cdc.gov/han/php/notices/han00523.html",
-        "cdc_dfe_template_str":["cdc_health_alert"],
-        "cdc_article_date_dt":"2025-03-26T18:06:22Z",
-        "cdc_related_image_str":["https://www.cdc.gov/han/media/images/2025/03/logo-han-health-update.png"],
-        "cdc_last_reviewed_date_dt":"2025-03-18T04:00:00Z",
-        "excerpt_txt":"Dengue activity remains high in some parts of the United States and globally."},
+        "id": "1984_480",
+        "title_txt": "Ongoing Risk of Dengue Virus Infections and Updated Testing Recommendations in the United States",
+        "permalink": "https://www.cdc.gov/han/php/notices/han00523.html",
+        "cdc_dfe_template_str": [
+          "cdc_health_alert"
+        ],
+        "cdc_article_date_dt": "2025-03-26T18:06:22Z",
+        "cdc_related_image_str": [
+          "https://www.cdc.gov/han/media/images/2025/03/logo-han-health-update.png"
+        ],
+        "cdc_last_reviewed_date_dt": "2025-03-18T04:00:00Z",
+        "excerpt_txt": "Dengue activity remains high in some parts of the United States and globally."
+      },
       {
-        "id":"1984_487",
-        "title_txt":"Expanding Measles Outbreak in the United States and Guidance for the Upcoming Travel Season",
-        "permalink":"https://www.cdc.gov/han/php/notices/han00522.html",
-        "cdc_dfe_template_str":["cdc_health_alert"],
-        "cdc_article_date_dt":"2025-03-27T14:57:42Z",
-        "cdc_related_image_str":["https://www.cdc.gov/han/media/images/2025/03/HAN-Health-Advisory.png"],
-        "cdc_last_reviewed_date_dt":"2025-03-07T05:00:00Z",
-        "excerpt_txt":"Information about a measles outbreak in Texas and New Mexico"},
+        "id": "1984_487",
+        "title_txt": "Expanding Measles Outbreak in the United States and Guidance for the Upcoming Travel Season",
+        "permalink": "https://www.cdc.gov/han/php/notices/han00522.html",
+        "cdc_dfe_template_str": [
+          "cdc_health_alert"
+        ],
+        "cdc_article_date_dt": "2025-03-27T14:57:42Z",
+        "cdc_related_image_str": [
+          "https://www.cdc.gov/han/media/images/2025/03/HAN-Health-Advisory.png"
+        ],
+        "cdc_last_reviewed_date_dt": "2025-03-07T05:00:00Z",
+        "excerpt_txt": "Information about a measles outbreak in Texas and New Mexico"
+      },
       {
-        "id":"1984_488",
-        "title_txt":"Ebola Outbreak Caused by Sudan virus in Uganda",
-        "permalink":"https://www.cdc.gov/han/php/notices/han00521.html",
-        "cdc_dfe_template_str":["cdc_health_alert"],
-        "cdc_article_date_dt":"2025-03-27T14:58:28Z",
-        "cdc_related_image_str":["https://www.cdc.gov/han/media/images/2025/03/HAN-Health-Advisory.png"],
-        "cdc_last_reviewed_date_dt":"2025-02-06T05:00:00Z",
-        "excerpt_txt":"Information about recently confirmed outbreak of Ebola disease in Uganda caused by the Sudan virus"},
+        "id": "1984_488",
+        "title_txt": "Ebola Outbreak Caused by Sudan virus in Uganda",
+        "permalink": "https://www.cdc.gov/han/php/notices/han00521.html",
+        "cdc_dfe_template_str": [
+          "cdc_health_alert"
+        ],
+        "cdc_article_date_dt": "2025-03-27T14:58:28Z",
+        "cdc_related_image_str": [
+          "https://www.cdc.gov/han/media/images/2025/03/HAN-Health-Advisory.png"
+        ],
+        "cdc_last_reviewed_date_dt": "2025-02-06T05:00:00Z",
+        "excerpt_txt": "Information about recently confirmed outbreak of Ebola disease in Uganda caused by the Sudan virus"
+      },
       {
-        "id":"1984_489",
-        "title_txt":"Accelerated Subtyping of Influenza A in Hospitalized Patients",
-        "permalink":"https://www.cdc.gov/han/php/notices/han00520.html",
-        "cdc_dfe_template_str":["cdc_health_alert"],
-        "cdc_article_date_dt":"2025-03-27T14:59:06Z",
-        "cdc_related_image_str":["https://www.cdc.gov/han/media/images/2025/03/HAN-Health-Advisory.png"],
-        "cdc_last_reviewed_date_dt":"2025-01-16T05:00:00Z",
-        "excerpt_txt":"Information on sporadic human infections with avian influenza A(H5N1) viruses"}]
+        "id": "1984_489",
+        "title_txt": "Accelerated Subtyping of Influenza A in Hospitalized Patients",
+        "permalink": "https://www.cdc.gov/han/php/notices/han00520.html",
+        "cdc_dfe_template_str": [
+          "cdc_health_alert"
+        ],
+        "cdc_article_date_dt": "2025-03-27T14:59:06Z",
+        "cdc_related_image_str": [
+          "https://www.cdc.gov/han/media/images/2025/03/HAN-Health-Advisory.png"
+        ],
+        "cdc_last_reviewed_date_dt": "2025-01-16T05:00:00Z",
+        "excerpt_txt": "Information on sporadic human infections with avian influenza A(H5N1) viruses"
+      }
+    ]
   },
   "notice_summaries": [
     {
       "permalink": "https://www.cdc.gov/han/php/notices/han00533.html",
-      "page_summary_html": "<div class=\"dfe-section dfe-section--page-summary summary-blurb summary-list\" data-section=\"cdc_health_alert_summary\">\n\t\t\t<div class=\"dfe-section__header\">\n\t\t<h2 class=\"editor-block--title\" id=\"heading-efxflxtzpx\">At a glance</h2>\n\t\t</div>\n\t\t<div class=\"dfe-section__content\">\n\t\t<ul class=\"nested-list\">\n<li class=\"level-1\">Distributed via the CDC Health Alert Network</li>\n<li class=\"level-1\">September 10, 2026</li>\n<li class=\"level-1\">CDCHAN-00533</li>\n</ul>\n\t\t<div class=\"dfe-section__nav hide\" id=\"dfe-section__nav\">\n\t\t\t<div class=\"dfe-section__nav__header\" id=\"dfe-section__nav__header\">\n\t\t\t\t\t\t\t</div>\n\t\t\t<div class=\"dfe-section__nav-links\" id=\"dfe-section__nav-links\">\n\t\t\t\t\t\t\t</div>\n\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"dfe-section__image\" id=\"page-summary-image\">\n\t\t\t<figure class=\"dfe-image dfe-image__large\"><div class=\"image-container calculated-ratio-16-9 aspect-ratio-16-9 stretch\"><img src=\"/han/media/images/2025/03/HAN-Health-Advisory.png\" alt=\"CDC Health Advisory\"></div></figure>\n\t\t</div>\n\t\n\t</div>\n\t</div>\n\t\t",
-      "recommendation_anchor_html": "<a class=\"onThisPageAnchor\" id=\"cdc_health_alert_section_5-recommendations-for-the-public\" name=\"Recommendations%20for%20the%20Public\" title=\"Recommendations for the Public\"><!-- --></a>",
-      "summary_lead_html": "<p>The Centers for Disease Control and Prevention (CDC) is issuing this Health Alert Network (HAN) Health Advisory in response to recent reports of increases in human exposures to rabid or possibly rabid animals and rabies post-exposure prophylaxis (PEP) administration errors. Since July 2026, multiple United States jurisdictions have reported local increases in human rabies exposures involving known rabies vectors or animals in which rabies is less commonly reported. Several high-profile rabies outbreaks and mass rabies exposure events have highlighted the importance of performing careful rabies risk assessments and following evidence-based recommendations for administering PEP. Health departments can help clinicians who provide rabies vaccination in their jurisdictions stay aware of the importance of rabies risk assessments before administering PEP. Clinicians and healthcare facilities can work to make sure that PEP is administered only when appropriate and that human rabies immune globulin (HRIG) and rabies vaccines are administered according to Advisory Committee on Immunization Practices (ACIP) recommendations. </p>"
+      "page_summary_html": "<div class=\"dfe-section dfe-section--page-summary summary-blurb summary-list\" data-section=\"cdc_health_alert_summary\">\r\n\t\t\t<div class=\"dfe-section__header\">\r\n\t\t<h2 class=\"editor-block--title\" id=\"heading-efxflxtzpx\">At a glance</h2>\r\n\t\t</div>\r\n\t\t<div class=\"dfe-section__content\">\r\n\t\t<ul class=\"nested-list\">\n<li class=\"level-1\">Distributed via the CDC Health Alert Network</li>\n<li class=\"level-1\">September 10, 2026</li>\n<li class=\"level-1\">CDCHAN-00533</li>\n</ul>\n\t\t<div class=\"dfe-section__nav hide\" id=\"dfe-section__nav\">\r\n\t\t\t<div class=\"dfe-section__nav__header\" id=\"dfe-section__nav__header\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__nav-links\" id=\"dfe-section__nav-links\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t</div>\r\n\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__image\" id=\"page-summary-image\">\r\n\t\t\t<figure class=\"dfe-image dfe-image__large\"><div class=\"image-container calculated-ratio-16-9 aspect-ratio-16-9 stretch\"><img src=\"/han/media/images/2025/03/HAN-Health-Advisory.png\" alt=\"CDC Health Advisory\"></div></figure>\r\n\t\t</div>\r\n\t\r\n\t</div>",
+      "summary_lead_html": "<p>The Centers for Disease Control and Prevention (CDC) is issuing this Health Alert Network (HAN) Health Advisory in response to recent reports of increases in human exposures to rabid or possibly rabid animals and rabies post-exposure prophylaxis (PEP) administration errors. Since July 2026, multiple United States jurisdictions have reported local increases in human rabies exposures involving known rabies vectors or animals in which rabies is less commonly reported. Several high-profile rabies outbreaks and mass rabies exposure events have highlighted the importance of performing careful rabies risk assessments and following evidence-based recommendations for administering PEP. Health departments can help clinicians who provide rabies vaccination in their jurisdictions stay aware of the importance of rabies risk assessments before administering PEP. Clinicians and healthcare facilities can work to make sure that PEP is administered only when appropriate and that human rabies immune globulin (HRIG) and rabies vaccines are administered according to Advisory Committee on Immunization Practices (ACIP) recommendations. </p>",
+      "observed_at": "2026-10-15",
+      "recommendation_anchor_html": "<a class=\"onThisPageAnchor\" id=\"cdc_health_alert_section_5-recommendations-for-the-public\" name=\"Recommendations%20for%20the%20Public\" title=\"Recommendations for the Public\"><!-- --></a>"
+    },
+    {
+      "permalink": "https://www.cdc.gov/han/php/notices/han00532.html",
+      "page_summary_html": "<div class=\"dfe-section dfe-section--page-summary summary-blurb summary-list\" data-section=\"cdc_health_alert_summary\">\r\n\t\t\t<div class=\"dfe-section__header\">\r\n\t\t<h2 class=\"editor-block--title\" id=\"heading-cupijeg_8w\">At a glance</h2>\r\n\t\t</div>\r\n\t\t<div class=\"dfe-section__content\">\r\n\t\t<ul class=\"nested-list\">\n<li class=\"level-1\">Distributed via the CDC Health Alert Network</li>\n<li class=\"level-1\">August 11, 2026</li>\n<li class=\"level-1\">CDCHAN-00532</li>\n</ul>\n\t\t<div class=\"dfe-section__nav hide\" id=\"dfe-section__nav\">\r\n\t\t\t<div class=\"dfe-section__nav__header\" id=\"dfe-section__nav__header\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__nav-links\" id=\"dfe-section__nav-links\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t</div>\r\n\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__image\" id=\"page-summary-image\">\r\n\t\t\t<figure class=\"dfe-image dfe-image__large\"><div class=\"image-container calculated-ratio-16-9 aspect-ratio-16-9 stretch\"><img src=\"/han/media/images/2025/03/HAN-Health-Advisory.png\" alt=\"CDC Health Alert Network\"></div></figure>\r\n\t\t</div>\r\n\t\r\n\t</div>",
+      "summary_lead_html": "<p>The Centers for Disease Control and Prevention (CDC) is issuing this Health Alert Network (HAN) Health Advisory to share information and notify clinicians, public health authorities, and the public about the risk of severe arboviral neuroinvasive disease among patients who are receiving B cell-depleting or B cell-modulating medications, particularly anti-CD20 monoclonal antibodies (mAbs). Patients and their providers should be aware of this risk to help patients <a href=\"https://www.cdc.gov/vector-borne-diseases/prevention/index.html\">protect themselves against the bites of mosquitoes and ticks</a>, which can increase patients' risk of arboviral disease.</p>",
+      "observed_at": "2026-10-15",
+      "recommendation_anchor_html": "<a class=\"onThisPageAnchor\" id=\"cdc_health_alert_section_5-recommendations-for-the-public\" name=\"Recommendations%20for%20the%20Public\" title=\"Recommendations for the Public\"><!-- --></a>"
+    },
+    {
+      "permalink": "https://www.cdc.gov/han/php/notices/han00531.html",
+      "page_summary_html": "<div class=\"dfe-section dfe-section--page-summary summary-blurb summary-list\" data-section=\"cdc_health_alert_summary\">\r\n\t\t\t<div class=\"dfe-section__header\">\r\n\t\t<h2 class=\"editor-block--title\" id=\"heading-ibet8ttv8e\">At a glance</h2>\r\n\t\t</div>\r\n\t\t<div class=\"dfe-section__content\">\r\n\t\t<ul class=\"nested-list\">\n<li class=\"level-1\">Distributed via the CDC Health Alert Network</li>\n<li class=\"level-1\">July 14, 2026</li>\n<li class=\"level-1\">CDCHAN-00531</li>\n</ul>\n\t\t<div class=\"dfe-section__nav hide\" id=\"dfe-section__nav\">\r\n\t\t\t<div class=\"dfe-section__nav__header\" id=\"dfe-section__nav__header\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__nav-links\" id=\"dfe-section__nav-links\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t</div>\r\n\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__image\" id=\"page-summary-image\">\r\n\t\t\t<figure class=\"dfe-image dfe-image__large\"><div class=\"image-container calculated-ratio-16-9 aspect-ratio-16-9\"><img src=\"/han/media/images/2025/03/HAN-Health-Advisory.png\" alt=\"This is an official CDC Health Advisory\"></div></figure>\r\n\t\t</div>\r\n\t\r\n\t</div>",
+      "summary_lead_html": "<p>The Centers for Disease Control and Prevention (CDC) is notifying clinicians, public health practitioners, and laboratorians of cases of domestically acquired cyclosporiasis in multiple U.S. states. Since May 1, 2026, CDC has received reports of 1,645 confirmed domestic cases of cyclosporiasis and is aware of more than 5,100 cases that require further analysis to confirm the illness as domestically acquired cyclosporiasis. This is substantially higher than the 249 cases reported nationally by this same time last year. Of the 1,645 case-patients with available information, 141 (9%) were hospitalized, and none have died. CDC, the <a href=\"https://www.fda.gov/food/foodborne-pathogens/cyclospora\" class=\"tp-link-policy\" rel=\"noreferrer\" data-domain-ext=\"gov\">U.S. Food and Drug Administration (FDA)<span class=\"visually-hidden sr-only\" aria-label=\" external icon\" role=\"img\"></span><span class=\"cdc-icon-external \" aria-hidden=\"true\" alt=\"external icon\"></span></a>, and state and local health departments are working together to investigate multistate outbreaks of <em>Cyclospora </em>infections and to identify the sources of illness. Because cyclosporiasis is often underdiagnosed and underreported, the true number of illnesses is likely higher than what has been reported to CDC. This Health Advisory provides background information about cyclosporiasis, current U.S. surveillance data, and recommendations for clinicians, laboratorians, and public health departments to support recognition, diagnosis, and reporting.</p>",
+      "observed_at": "2026-10-15",
+      "recommendation_anchor_html": "<a class=\"onThisPageAnchor\" id=\"cdc_health_alert_section_7-recommendations-for-the-public\" name=\"Recommendations%20for%20the%20Public\" title=\"Recommendations for the Public\"><!-- --></a>"
+    },
+    {
+      "permalink": "https://www.cdc.gov/han/php/notices/han00530.html",
+      "page_summary_html": "<div class=\"dfe-section dfe-section--page-summary summary-blurb summary-list\" data-section=\"cdc_health_alert_summary\">\r\n\t\t\t<div class=\"dfe-section__header\">\r\n\t\t<h2 class=\"editor-block--title\" id=\"heading-kv7sd0gipa\">At a glance</h2>\r\n\t\t</div>\r\n\t\t<div class=\"dfe-section__content\">\r\n\t\t<ul class=\"nested-list\">\n<li class=\"level-1\">Distributed via the CDC Health Alert Network</li>\n<li class=\"level-1\">May 19, 2026</li>\n<li class=\"level-1\">CDCHAN-00530</li>\n</ul>\n\t\t<div class=\"dfe-section__nav hide\" id=\"dfe-section__nav\">\r\n\t\t\t<div class=\"dfe-section__nav__header\" id=\"dfe-section__nav__header\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__nav-links\" id=\"dfe-section__nav-links\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t</div>\r\n\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__image\" id=\"page-summary-image\">\r\n\t\t\t<figure class=\"dfe-image dfe-image__large\"><div class=\"image-container calculated-ratio-16-9 aspect-ratio-16-9\"><img src=\"/han/media/images/2025/03/HAN-Health-Advisory.png\" alt=\"Image with text 'this is an official CDC health advisory.\"></div></figure>\r\n\t\t</div>\r\n\t\r\n\t</div>",
+      "summary_lead_html": "<p>The Centers for Disease Control and Prevention (CDC) is issuing this Health Alert Network (HAN) Health Advisory to alert clinicians, public health practitioners, and travelers about a new outbreak of Ebola disease in the Democratic Republic of the Congo (DRC) and Uganda caused by the Bundibugyo virus (species <em>O</em><em>rthoebolavirus bundibugyoense</em>). The risk of spread to the United States is considered low at this time. As a precaution, this Health Advisory summarizes CDC recommendations for U.S. health departments, clinical laboratories, and healthcare workers about potential Ebola disease case identification, testing, and biosafety considerations in clinical laboratories.</p>",
+      "observed_at": "2026-10-15",
+      "recommendation_anchor_html": "<a class=\"onThisPageAnchor\" id=\"cdc_health_alert_section_7-recommendations-for-the-public\" name=\"Recommendations%20for%20the%20Public\" title=\"Recommendations for the Public\"><!-- --></a>"
     },
     {
       "permalink": "https://www.cdc.gov/han/php/notices/han00529.html",
-      "page_summary_html": "<div class=\"dfe-section dfe-section--page-summary summary-blurb summary-list\" data-section=\"cdc_health_alert_summary\">\n\t\t\t<div class=\"dfe-section__header\">\n\t\t<h2 class=\"editor-block--title\" id=\"heading-8cquj_gs37\">At a glance</h2>\n\t\t</div>\n\t\t<div class=\"dfe-section__content\">\n\t\t<ul class=\"nested-list\">\n<li class=\"level-1\">Distributed via the CDC Health Alert Network</li>\n<li class=\"level-1\">May 18, 2026</li>\n<li class=\"level-1\">CDCHAN-00529</li>\n</ul>\n\t\t<div class=\"dfe-section__nav hide\" id=\"dfe-section__nav\">\n\t\t\t<div class=\"dfe-section__nav__header\" id=\"dfe-section__nav__header\">\n\t\t\t\t\t\t\t</div>\n\t\t\t<div class=\"dfe-section__nav-links\" id=\"dfe-section__nav-links\">\n\t\t\t\t\t\t\t</div>\n\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"dfe-section__image\" id=\"page-summary-image\">\n\t\t\t<figure class=\"dfe-image dfe-image__large\"><div class=\"image-container calculated-ratio-16-9 aspect-ratio-16-9\"><img src=\"/han/media/images/2025/03/logo-han-health-update.png\" alt=\"This is an official CDC health update\"></div></figure>\n\t\t</div>\n\t\n\t</div>\n\t</div>\n\t\t",
-      "summary_lead_html": "<p>The Centers for Disease Control and Prevention (CDC) is issuing this Health Alert Network (HAN) Health Update to inform clinicians and health departments about testing available for patients with suspected hantavirus infection to include Andes virus. CDC first issued a <a href=\"https://www.cdc.gov/han/php/notices/han00528.html\">Health Advisory</a> (CDCHAN-00528) about this outbreak on May 8, 2026. Hantaviruses are a group of viruses that typically spread to people who come in contact with sylvatic rodents. These viruses can cause severe illness or death in humans. Andes virus, a type of hantavirus endemic in South America, is the only type of hantavirus that is known to spread from person to person. Several <a href=\"https://www.cdc.gov/hantavirus/data-research/cases/index.html\">other </a>New World hantaviruses are endemic to the United States and are not transmissible from person to person. New World hantaviruses can cause hantavirus pulmonary syndrome (HPS), a potentially serious disease that can cause damage to the lungs. </p>"
+      "page_summary_html": "<div class=\"dfe-section dfe-section--page-summary summary-blurb summary-list\" data-section=\"cdc_health_alert_summary\">\r\n\t\t\t<div class=\"dfe-section__header\">\r\n\t\t<h2 class=\"editor-block--title\" id=\"heading-8cquj_gs37\">At a glance</h2>\r\n\t\t</div>\r\n\t\t<div class=\"dfe-section__content\">\r\n\t\t<ul class=\"nested-list\">\n<li class=\"level-1\">Distributed via the CDC Health Alert Network</li>\n<li class=\"level-1\">May 18, 2026</li>\n<li class=\"level-1\">CDCHAN-00529</li>\n</ul>\n\t\t<div class=\"dfe-section__nav hide\" id=\"dfe-section__nav\">\r\n\t\t\t<div class=\"dfe-section__nav__header\" id=\"dfe-section__nav__header\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__nav-links\" id=\"dfe-section__nav-links\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t</div>\r\n\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__image\" id=\"page-summary-image\">\r\n\t\t\t<figure class=\"dfe-image dfe-image__large\"><div class=\"image-container calculated-ratio-16-9 aspect-ratio-16-9\"><img src=\"/han/media/images/2025/03/logo-han-health-update.png\" alt=\"This is an official CDC health update\"></div></figure>\r\n\t\t</div>\r\n\t\r\n\t</div>",
+      "summary_lead_html": "<p>The Centers for Disease Control and Prevention (CDC) is issuing this Health Alert Network (HAN) Health Update to inform clinicians and health departments about testing available for patients with suspected hantavirus infection to include Andes virus. CDC first issued a <a href=\"https://www.cdc.gov/han/php/notices/han00528.html\">Health Advisory</a> (CDCHAN-00528) about this outbreak on May 8, 2026. Hantaviruses are a group of viruses that typically spread to people who come in contact with sylvatic rodents. These viruses can cause severe illness or death in humans. Andes virus, a type of hantavirus endemic in South America, is the only type of hantavirus that is known to spread from person to person. Several <a href=\"https://www.cdc.gov/hantavirus/data-research/cases/index.html\">other </a>New World hantaviruses are endemic to the United States and are not transmissible from person to person. New World hantaviruses can cause hantavirus pulmonary syndrome (HPS), a potentially serious disease that can cause damage to the lungs. </p>",
+      "observed_at": "2026-10-15"
     },
     {
       "permalink": "https://www.cdc.gov/han/php/notices/han00528.html",
-      "page_summary_html": "<div class=\"dfe-section dfe-section--page-summary summary-blurb summary-paragraph\" data-section=\"cdc_health_alert_summary\">\n\t\t\t<div class=\"dfe-section__header\">\n\t\t<h2 class=\"editor-block--title\" id=\"heading-t-tw-gyeld\">At a glance</h2>\n\t\t</div>\n\t\t<div class=\"dfe-section__content\">\n\t\t<p>Distributed via the CDC Health Alert Network</p>\n<p>May 8, 2026</p>\n<p>CDCHAN-00528</p>\n\t\t<div class=\"dfe-section__nav hide\" id=\"dfe-section__nav\">\n\t\t\t<div class=\"dfe-section__nav__header\" id=\"dfe-section__nav__header\">\n\t\t\t\t\t\t\t</div>\n\t\t\t<div class=\"dfe-section__nav-links\" id=\"dfe-section__nav-links\">\n\t\t\t\t\t\t\t</div>\n\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"dfe-section__image\" id=\"page-summary-image\">\n\t\t\t<figure class=\"dfe-image dfe-image__large\"><div class=\"image-container calculated-ratio-16-9 aspect-ratio-16-9\"><img src=\"/han/media/images/2025/03/HAN-Health-Advisory.png\" alt=\"CDC Health Advisory\"></div></figure>\n\t\t</div>\n\t\n\t</div>\n\t</div>\n\t\t",
-      "summary_lead_html": "<p>The Centers for Disease Control and Prevention (CDC) is issuing this Health Alert Network (HAN) Health Advisory to inform clinicians and health departments about a new cluster of hantavirus disease cases caused by infection with Andes virus. Hantavirus disease can cause severe illness and can be fatal. Clinicians should be aware of the potential for imported cases, although the risk of broad spread to the United States is considered extremely unlikely at this time. As a precaution, this Health Advisory summarizes CDC's recommendations for U.S. public health departments, clinical laboratories, and healthcare workers about hantavirus disease case identi&#64257;cation, testing, and biosafety considerations in clinical laboratories.</p>"
+      "page_summary_html": "<div class=\"dfe-section dfe-section--page-summary summary-blurb summary-paragraph\" data-section=\"cdc_health_alert_summary\">\r\n\t\t\t<div class=\"dfe-section__header\">\r\n\t\t<h2 class=\"editor-block--title\" id=\"heading-t-tw-gyeld\">At a glance</h2>\r\n\t\t</div>\r\n\t\t<div class=\"dfe-section__content\">\r\n\t\t<p>Distributed via the CDC Health Alert Network</p>\r\n<p>May 8, 2026</p>\r\n<p>CDCHAN-00528</p>\r\n\t\t<div class=\"dfe-section__nav hide\" id=\"dfe-section__nav\">\r\n\t\t\t<div class=\"dfe-section__nav__header\" id=\"dfe-section__nav__header\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__nav-links\" id=\"dfe-section__nav-links\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t</div>\r\n\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__image\" id=\"page-summary-image\">\r\n\t\t\t<figure class=\"dfe-image dfe-image__large\"><div class=\"image-container calculated-ratio-16-9 aspect-ratio-16-9\"><img src=\"/han/media/images/2025/03/HAN-Health-Advisory.png\" alt=\"CDC Health Advisory\"></div></figure>\r\n\t\t</div>\r\n\t\r\n\t</div>",
+      "summary_lead_html": "<p>The Centers for Disease Control and Prevention (CDC) is issuing this Health Alert Network (HAN) Health Advisory to inform clinicians and health departments about a new cluster of hantavirus disease cases caused by infection with Andes virus. Hantavirus disease can cause severe illness and can be fatal. Clinicians should be aware of the potential for imported cases, although the risk of broad spread to the United States is considered extremely unlikely at this time. As a precaution, this Health Advisory summarizes CDC's recommendations for U.S. public health departments, clinical laboratories, and healthcare workers about hantavirus disease case identi&#64257;cation, testing, and biosafety considerations in clinical laboratories.</p>",
+      "observed_at": "2026-10-15"
+    },
+    {
+      "permalink": "https://www.cdc.gov/han/php/notices/han00527.html",
+      "page_summary_html": "<div class=\"dfe-section dfe-section--page-summary summary-blurb summary-list\" data-section=\"cdc_health_alert_summary\">\r\n\t\t\t<div class=\"dfe-section__header\">\r\n\t\t<h2 class=\"editor-block--title\" id=\"heading--3w2tmxsa2\">At a glance</h2>\r\n\t\t</div>\r\n\t\t<div class=\"dfe-section__content\">\r\n\t\t<ul class=\"nested-list\">\n<li class=\"level-1\">Distributed via the CDC Health Alert Network</li>\n<li class=\"level-1\">April 2, 2026, 10:00 AM ET</li>\n<li class=\"level-1\">CDCHAN-00527</li>\n</ul>\n\t\t<div class=\"dfe-section__nav hide\" id=\"dfe-section__nav\">\r\n\t\t\t<div class=\"dfe-section__nav__header\" id=\"dfe-section__nav__header\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__nav-links\" id=\"dfe-section__nav-links\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t</div>\r\n\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__image\" id=\"page-summary-image\">\r\n\t\t\t<figure class=\"dfe-image dfe-image__large\"><div class=\"image-container calculated-ratio-16-9 aspect-ratio-16-9\"><img src=\"/han/media/images/2025/03/HAN-Health-Advisory.png\" alt=\"This is an official Health Advisory\"></div></figure>\r\n\t\t</div>\r\n\t\r\n\t</div>",
+      "summary_lead_html": "<p>The Centers for Disease Control and Prevention (CDC), in conjunction with the White House Office of National Drug Control Policy (ONDCP), is issuing this Health Advisory to notify public health professionals, clinicians, laboratorians, and people at risk for overdose about increasing reports from U.S. jurisdictions detecting <a href=\"https://www.cdc.gov/overdose-prevention/situation-summary/medetomidine.html\">medetomidine</a> in the illegal drug supply and a severe withdrawal syndrome due to medetomidine exposure. Medetomidine (also known as 'rhino tranq,' 'mede,' or 'dex') is not approved for human use but is approved for sedation and analgesia in dogs. Its dextro-isomer, dexmedetomidine, is approved for procedural sedation in humans. Medetomidine has been increasingly detected in law enforcement drug seizures, drug product and paraphernalia samples, and in wastewater samples, with the highest concentrations in the Northeast region. Testing of illegal drug samples and clinical specimens has identified racemic mixtures of levomedetomidine and dexmedetomidine isomers without the preservatives commonly found in medical or veterinary formulations, making diversion of pharmaceutical products unlikely. Since pharmaceutical-grade products contain only dexmedetomidine, these findings suggest medetomidine is being synthesized in clandestine laboratories. </p>",
+      "observed_at": "2026-10-15"
+    },
+    {
+      "permalink": "https://www.cdc.gov/han/php/notices/han00526.html",
+      "page_summary_html": "<div class=\"dfe-section dfe-section--page-summary summary-blurb summary-list\" data-section=\"cdc_health_alert_summary\">\r\n\t\t\t<div class=\"dfe-section__header\">\r\n\t\t<h2 class=\"editor-block--title\" id=\"heading--3w2tmxsa2\">At a glance</h2>\r\n\t\t</div>\r\n\t\t<div class=\"dfe-section__content\">\r\n\t\t<ul class=\"nested-list\">\n<li class=\"level-1\">Distributed via the CDC Health Alert Network</li>\n<li class=\"level-1\">January 20, 2026, 12:30 PM ET</li>\n<li class=\"level-1\">CDCHAN-00526</li>\n</ul>\n\t\t<div class=\"dfe-section__nav hide\" id=\"dfe-section__nav\">\r\n\t\t\t<div class=\"dfe-section__nav__header\" id=\"dfe-section__nav__header\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__nav-links\" id=\"dfe-section__nav-links\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t</div>\r\n\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__image\" id=\"page-summary-image\">\r\n\t\t\t<figure class=\"dfe-image dfe-image__large\"><div class=\"image-container calculated-ratio-16-9 aspect-ratio-16-9\"><img src=\"/han/media/images/2025/03/HAN-Health-Advisory.png\" alt=\"This is an official Health Advisory\"></div></figure>\r\n\t\t</div>\r\n\t\r\n\t</div>",
+      "summary_lead_html": "<p>The Centers for Disease Control and Prevention (CDC) is issuing this Health Alert Network (HAN) Health Advisory to share information and notify clinicians, public health authorities, and the public about recent New World screwworm (NWS) animal cases in the Mexican state of Tamaulipas, which shares a border with the U.S. state of Texas. No NWS infestations related to this outbreak have been identified in people or animals in the United States as of January 20, 2026. However, given the potential for geographic spread, CDC is issuing this Health Advisory to increase awareness of the outbreak and to summarize CDC recommendations for clinicians and health departments in the United States on case identification and reporting, specimen collection, diagnosis, and treatment of NWS, as well as guidance for the public.</p>",
+      "observed_at": "2026-10-15",
+      "recommendation_anchor_html": "<a class=\"onThisPageAnchor\" id=\"cdc_health_alert_section_6-recommendations-for-the-public\" name=\"Recommendations%20for%20the%20Public\" title=\"Recommendations for the Public\"><!-- --></a>"
+    },
+    {
+      "permalink": "https://www.cdc.gov/han/php/notices/han00525.html",
+      "page_summary_html": "<div class=\"dfe-section dfe-section--page-summary summary-blurb summary-list\" data-section=\"cdc_health_alert_summary\">\r\n\t\t\t<div class=\"dfe-section__header\">\r\n\t\t<h2 class=\"editor-block--title\" id=\"heading--j73vfudrx\">At a glance</h2>\r\n\t\t</div>\r\n\t\t<div class=\"dfe-section__content\">\r\n\t\t<ul class=\"nested-list\">\n<li class=\"level-1\">Distributed via the CDC Health Alert Network</li>\n<li class=\"level-1\">December 3, 2025, 12:30 PM ET<br></li>\n<li class=\"level-1\">CDCHAN-00525</li>\n</ul>\n\t\t<div class=\"dfe-section__nav hide\" id=\"dfe-section__nav\">\r\n\t\t\t<div class=\"dfe-section__nav__header\" id=\"dfe-section__nav__header\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__nav-links\" id=\"dfe-section__nav-links\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t</div>\r\n\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__image\" id=\"page-summary-image\">\r\n\t\t\t<figure class=\"dfe-image dfe-image__large\"><div class=\"image-container calculated-ratio-16-9 aspect-ratio-16-9\"><img src=\"/han/media/images/2025/03/HAN-Health-Advisory.png\" alt=\"This is an official Health Advisory\"></div></figure>\r\n\t\t</div>\r\n\t\r\n\t</div>",
+      "summary_lead_html": "<p>The Centers for Disease Control and Prevention (CDC) is issuing this Health Alert Network (HAN) Health Advisory to inform clinicians and health departments about a new outbreak of Marburg virus disease (MVD) in Ethiopia's South Ethiopia and Sidama regions. MVD is a severe illness that can be fatal. </p>",
+      "observed_at": "2026-10-15",
+      "recommendation_anchor_html": "<a class=\"onThisPageAnchor\" id=\"cdc_health_alert_section_5-recommendations-for-the-public\" name=\"Recommendations%20for%20the%20Public\" title=\"Recommendations for the Public\"><!-- --></a>"
+    },
+    {
+      "permalink": "https://www.cdc.gov/han/php/notices/han00524.html",
+      "page_summary_html": "<div class=\"dfe-section dfe-section--page-summary summary-blurb summary-list\" data-section=\"cdc_health_alert_summary\">\r\n\t\t\t<div class=\"dfe-section__header\">\r\n\t\t<h2 class=\"editor-block--title\" id=\"heading-n7jje0zjre\">At a glance</h2>\r\n\t\t</div>\r\n\t\t<div class=\"dfe-section__content\">\r\n\t\t<ul class=\"nested-list\">\n<li class=\"level-1\">Distributed via the CDC Health Alert Network</li>\n<li class=\"level-1\">September 18, 2025, 12:00 PM ET</li>\n<li class=\"level-1\">CDCHAN-00524</li>\n</ul>\n\t\t<div class=\"dfe-section__nav hide\" id=\"dfe-section__nav\">\r\n\t\t\t<div class=\"dfe-section__nav__header\" id=\"dfe-section__nav__header\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__nav-links\" id=\"dfe-section__nav-links\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t</div>\r\n\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__image\" id=\"page-summary-image\">\r\n\t\t\t<figure class=\"dfe-image dfe-image__large\"><div class=\"image-container calculated-ratio-16-9 aspect-ratio-16-9\"><img src=\"/han/media/images/2025/03/HAN-Health-Advisory.png\" alt=\"This is an official Health Advisory\"></div></figure>\r\n\t\t</div>\r\n\t\r\n\t</div>",
+      "summary_lead_html": "<p>The Centers for Disease Control and Prevention (CDC) is issuing this Health Alert Network (HAN) Health Advisory about a new outbreak of Ebola virus disease (EVD) in the Democratic Republic of the Congo (DRC). EVD is a severe illness and is often fatal. </p>",
+      "observed_at": "2026-10-15",
+      "recommendation_anchor_html": "<a class=\"onThisPageAnchor\" id=\"cdc_health_alert_section_6-recommendations-for-the-public\" name=\"Recommendations%20for%20the%20Public\" title=\"Recommendations for the Public\"><!-- --></a>"
+    },
+    {
+      "permalink": "https://www.cdc.gov/han/php/notices/han00523.html",
+      "page_summary_html": "<div class=\"dfe-section dfe-section--page-summary summary-blurb summary-paragraph\" data-section=\"cdc_health_alert_summary\">\r\n\t\t\t<div class=\"dfe-section__header\">\r\n\t\t<h2 class=\"editor-block--title\" id=\"heading-emx_ojcez1\">At a glance</h2>\r\n\t\t</div>\r\n\t\t<div class=\"dfe-section__content\">\r\n\t\t<p>Distributed via the CDC Health Alert Network</p>\r\n<p>March 18, 2025</p>\r\n<p>CDCHAN-00523</p>\r\n\t\t<div class=\"dfe-section__nav hide\" id=\"dfe-section__nav\">\r\n\t\t\t<div class=\"dfe-section__nav__header\" id=\"dfe-section__nav__header\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__nav-links\" id=\"dfe-section__nav-links\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t</div>\r\n\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__image\" id=\"page-summary-image\">\r\n\t\t\t<figure class=\"dfe-image dfe-image__large\"><div class=\"image-container calculated-ratio-16-9 aspect-ratio-16-9\"><img src=\"/han/media/images/2025/03/logo-han-health-update.png\" alt=\"This is an official CDC health update\"></div></figure>\r\n\t\t</div>\r\n\t\r\n\t</div>",
+      "summary_lead_html": "<p>The Centers for Disease Control and Prevention (CDC) is issuing this Health Alert Network (HAN) Health Update to provide additional information to healthcare providers, public health departments, and the public about the ongoing risk of dengue virus (DENV) infections and updates to testing recommendations in the United States. <a href=\"https://www.cdc.gov/dengue/outbreaks/2024/index.html\">Dengue activity remains high in some parts of the United States</a> and globally, with many countries reporting higher-than-usual number of <a href=\"https://wwwnc.cdc.gov/travel/notices/level1/dengue-global\">dengue cases</a> in 2024 and 2025. Healthcare providers, public health departments, and the public are urged to continue to take steps to prevent, detect, diagnose, and respond to dengue as described in the June 2024 <a href=\"https://www.cdc.gov/han/2024/han00511.html\">HAN Health Advisory (CDCHAN-00511)</a> on dengue in the United States. Updates include:</p>",
+      "observed_at": "2026-10-15",
+      "recommendation_anchor_html": "<a class=\"onThisPageAnchor\" id=\"cdc_health_alert_section_5-recommendations-for-the-public\" name=\"Recommendations%20for%20the%20Public\" title=\"Recommendations for the Public\"><!-- --></a>"
+    },
+    {
+      "permalink": "https://www.cdc.gov/han/php/notices/han00522.html",
+      "page_summary_html": "<div class=\"dfe-section dfe-section--page-summary summary-blurb summary-paragraph\" data-section=\"cdc_health_alert_summary\">\r\n\t\t\t<div class=\"dfe-section__header\">\r\n\t\t<h2 class=\"editor-block--title\" id=\"heading-wmw5khd8_v\">At a glance</h2>\r\n\t\t</div>\r\n\t\t<div class=\"dfe-section__content\">\r\n\t\t<p>Distributed via the CDC Health Alert Network</p>\r\n\t\t<div class=\"dfe-section__nav hide\" id=\"dfe-section__nav\">\r\n\t\t\t<div class=\"dfe-section__nav__header\" id=\"dfe-section__nav__header\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__nav-links\" id=\"dfe-section__nav-links\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t</div>\r\n\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__image\" id=\"page-summary-image\">\r\n\t\t\t<figure class=\"dfe-image dfe-image__large\"><div class=\"image-container calculated-ratio-16-9 aspect-ratio-16-9\"><img src=\"/han/media/images/2025/03/HAN-Health-Advisory.png\" alt=\"This is an official CDC health advisory\"></div></figure>\r\n\t\t</div>\r\n\t\r\n\t</div>",
+      "summary_lead_html": "<p>The Centers for Disease Control and Prevention (CDC) is issuing this Health Alert Network (HAN) Health Advisory to notify clinicians, public health officials, and potential travelers about a measles outbreak in <a href=\"https://www.dshs.texas.gov/news-alerts/measles-outbreak-feb-25-2025\" class=\"tp-link-policy\" rel=\"noreferrer\" data-domain-ext=\"gov\">Texas<span class=\"visually-hidden sr-only\" aria-label=\" external icon\" role=\"img\"></span><span class=\"cdc-icon-external \" aria-hidden=\"true\" alt=\"external icon\"></span></a> and <a href=\"https://www.nmhealth.org/about/erd/ideb/mog/\" class=\"tp-link-policy\" rel=\"noreferrer\" data-domain-ext=\"org\">New Mexico<span class=\"visually-hidden sr-only\" aria-label=\" external icon\" role=\"img\"></span><span class=\"cdc-icon-external \" aria-hidden=\"true\" alt=\"external icon\"></span></a> and offer guidance for prevention and monitoring. As of March 7, 2025, Texas and New Mexico have reported 208 confirmed cases associated with this outbreak (198 in <a href=\"https://www.dshs.texas.gov/news-alerts/measles-outbreak-2025\" class=\"tp-link-policy\" rel=\"noreferrer\" data-domain-ext=\"gov\">Texas<span class=\"visually-hidden sr-only\" aria-label=\" external icon\" role=\"img\"></span><span class=\"cdc-icon-external \" aria-hidden=\"true\" alt=\"external icon\"></span></a> and 10 in <a href=\"https://www.nmhealth.org/about/erd/ideb/mog/\" class=\"tp-link-policy\" rel=\"noreferrer\" data-domain-ext=\"org\">New Mexico<span class=\"visually-hidden sr-only\" aria-label=\" external icon\" role=\"img\"></span><span class=\"cdc-icon-external \" aria-hidden=\"true\" alt=\"external icon\"></span></a>). As a part of this outbreak, two deaths have been reported: one in <a href=\"https://www.dshs.texas.gov/news-alerts/texas-announces-first-death-measles-outbreak\" class=\"tp-link-policy\" rel=\"noreferrer\" data-domain-ext=\"gov\">Texas<span class=\"visually-hidden sr-only\" aria-label=\" external icon\" role=\"img\"></span><span class=\"cdc-icon-external \" aria-hidden=\"true\" alt=\"external icon\"></span></a> and one in <a href=\"https://www.nmhealth.org/news/alert/2025/3/?view=2188\" class=\"tp-link-policy\" rel=\"noreferrer\" data-domain-ext=\"org\">New Mexico<span class=\"visually-hidden sr-only\" aria-label=\" external icon\" role=\"img\"></span><span class=\"cdc-icon-external \" aria-hidden=\"true\" alt=\"external icon\"></span></a>. More cases are expected as this outbreak continues to expand rapidly.</p>",
+      "observed_at": "2026-10-15"
+    },
+    {
+      "permalink": "https://www.cdc.gov/han/php/notices/han00521.html",
+      "page_summary_html": "<div class=\"dfe-section dfe-section--page-summary summary-blurb summary-paragraph\" data-section=\"cdc_health_alert_summary\">\r\n\t\t\t<div class=\"dfe-section__header\">\r\n\t\t<h2 class=\"editor-block--title\" id=\"heading-rvqhqj7rco\">At a glance</h2>\r\n\t\t</div>\r\n\t\t<div class=\"dfe-section__content\">\r\n\t\t<p>Distributed via the CDC Health Alert Network</p>\r\n<p>February 06, 2025, 11:15 AM ET</p>\r\n<p>CDCHAN-00521</p>\r\n\t\t<div class=\"dfe-section__nav hide\" id=\"dfe-section__nav\">\r\n\t\t\t<div class=\"dfe-section__nav__header\" id=\"dfe-section__nav__header\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__nav-links\" id=\"dfe-section__nav-links\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t</div>\r\n\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__image\" id=\"page-summary-image\">\r\n\t\t\t<figure class=\"dfe-image dfe-image__large\"><div class=\"image-container calculated-ratio-16-9 aspect-ratio-16-9\"><img src=\"/han/media/images/2025/03/HAN-Health-Advisory.png\" alt=\"This is an official CDC health advisory\"></div></figure>\r\n\t\t</div>\r\n\t\r\n\t</div>",
+      "summary_lead_html": "<p>The Centers for Disease Control and Prevention (CDC) is issuing this Health Alert Network (HAN) Health Advisory about a recently confirmed outbreak of Ebola disease in Uganda caused by the Sudan virus (species <em>Orthoebolavirus sudanense) </em>and to summarize CDC's recommendations for U.S. public health departments and clinicians about case identification, testing, and biosafety considerations in clinical laboratories.</p>",
+      "observed_at": "2026-10-15",
+      "recommendation_anchor_html": "<a class=\"onThisPageAnchor\" id=\"cdc_health_alert_section_8-recommendations-for-the-public\" name=\"Recommendations%20for%20the%20Public\" title=\"Recommendations for the Public\"><!-- --></a>"
+    },
+    {
+      "permalink": "https://www.cdc.gov/han/php/notices/han00520.html",
+      "page_summary_html": "<div class=\"dfe-section dfe-section--page-summary summary-blurb summary-paragraph\" data-section=\"cdc_health_alert_summary\">\r\n\t\t\t<div class=\"dfe-section__header\">\r\n\t\t<h2 class=\"editor-block--title\" id=\"heading-kiinzbvxnd\">At a glance</h2>\r\n\t\t</div>\r\n\t\t<div class=\"dfe-section__content\">\r\n\t\t<p>Distributed via the CDC Health Alert Network</p>\r\n<p>January 16, 2025</p>\r\n<p>CDCHAN-00520</p>\r\n\t\t<div class=\"dfe-section__nav hide\" id=\"dfe-section__nav\">\r\n\t\t\t<div class=\"dfe-section__nav__header\" id=\"dfe-section__nav__header\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__nav-links\" id=\"dfe-section__nav-links\">\r\n\t\t\t\t\t\t\t</div>\r\n\t\t</div>\r\n\t\t\t</div>\r\n\t\t\t<div class=\"dfe-section__image\" id=\"page-summary-image\">\r\n\t\t\t<figure class=\"dfe-image dfe-image__large\"><div class=\"image-container calculated-ratio-16-9 aspect-ratio-16-9\"><img src=\"/han/media/images/2025/03/HAN-Health-Advisory.png\" alt=\"This is an official CDC health advisory\"></div></figure>\r\n\t\t</div>\r\n\t\r\n\t</div>",
+      "summary_lead_html": "<p>The Centers for Disease Control and Prevention (CDC) is issuing this Health Alert Network (HAN) Health Advisory to clinicians and laboratories due to sporadic human infections with avian influenza A(H5N1) viruses amid high levels of seasonal influenza activity. CDC is recommending a shortened timeline for subtyping all influenza A specimens among hospitalized patients and increasing efforts at clinical laboratories to identify non-seasonal influenza. Clinicians and laboratorians are reminded to test for influenza in patients with suspected influenza and, going forward, to now expedite the subtyping of influenza A-positive specimens from hospitalized patients, particularly those in an intensive care unit (ICU). This approach can help prevent delays in identifying human infections with avian influenza A(H5N1) viruses, supporting optimal patient care and timely infection control and case investigation.</p>",
+      "observed_at": "2026-10-15",
+      "recommendation_anchor_html": "<a class=\"onThisPageAnchor\" id=\"cdc_health_alert_section_7-recommendations-for-the-public\" name=\"Recommendations%20for%20the%20Public\" title=\"Recommendations for the Public\"><!-- --></a>"
     }
-  ],
-  "notice_observations": [
-    {"permalink": "https://www.cdc.gov/han/php/notices/han00532.html", "at_a_glance": ["Distributed via the CDC Health Alert Network", "August 11, 2026", "CDCHAN-00532"], "summary_type_phrase": "Health Alert Network (HAN) Health Advisory", "observed_at": "2026-10-15"},
-    {"permalink": "https://www.cdc.gov/han/php/notices/han00531.html", "at_a_glance": ["Distributed via the CDC Health Alert Network", "July 14, 2026", "CDCHAN-00531"], "summary_type_phrase": "This Health Advisory", "observed_at": "2026-10-15"},
-    {"permalink": "https://www.cdc.gov/han/php/notices/han00530.html", "at_a_glance": ["Distributed via the CDC Health Alert Network", "May 19, 2026", "CDCHAN-00530"], "summary_type_phrase": "Health Alert Network (HAN) Health Advisory", "observed_at": "2026-10-15"},
-    {"permalink": "https://www.cdc.gov/han/php/notices/han00527.html", "at_a_glance": ["Distributed via the CDC Health Alert Network", "April 2, 2026, 10:00 AM ET", "CDCHAN-00527"], "summary_type_phrase": "is issuing this Health Advisory", "observed_at": "2026-10-15"},
-    {"permalink": "https://www.cdc.gov/han/php/notices/han00526.html", "at_a_glance": ["Distributed via the CDC Health Alert Network", "January 20, 2026, 12:30 PM ET", "CDCHAN-00526"], "summary_type_phrase": "Health Alert Network (HAN) Health Advisory", "observed_at": "2026-10-15"},
-    {"permalink": "https://www.cdc.gov/han/php/notices/han00525.html", "at_a_glance": ["Distributed via the CDC Health Alert Network", "December 3, 2025, 12:30 PM ET", "CDCHAN-00525"], "summary_type_phrase": "Health Alert Network (HAN) Health Advisory", "observed_at": "2026-10-15"},
-    {"permalink": "https://www.cdc.gov/han/php/notices/han00524.html", "at_a_glance": ["Distributed via the CDC Health Alert Network", "September 18, 2025, 12:00 PM ET", "CDCHAN-00524"], "summary_type_phrase": "Health Alert Network (HAN) Health Advisory", "observed_at": "2026-10-15"},
-    {"permalink": "https://www.cdc.gov/han/php/notices/han00523.html", "at_a_glance": ["Distributed via the CDC Health Alert Network", "March 18, 2025", "CDCHAN-00523"], "summary_type_phrase": "Health Alert Network (HAN) Health Update", "observed_at": "2026-10-15"},
-    {"permalink": "https://www.cdc.gov/han/php/notices/han00522.html", "at_a_glance": ["Distributed via the CDC Health Alert Network"], "summary_type_phrase": "Health Alert Network (HAN) Health Advisory", "observed_at": "2026-10-15"},
-    {"permalink": "https://www.cdc.gov/han/php/notices/han00521.html", "at_a_glance": ["Distributed via the CDC Health Alert Network", "February 06, 2025, 11:15 AM ET", "CDCHAN-00521"], "summary_type_phrase": "Health Alert Network (HAN) Health Advisory", "observed_at": "2026-10-15"},
-    {"permalink": "https://www.cdc.gov/han/php/notices/han00520.html", "at_a_glance": ["Distributed via the CDC Health Alert Network", "January 16, 2025", "CDCHAN-00520"], "summary_type_phrase": "Health Alert Network (HAN) Health Advisory", "observed_at": "2026-10-15"}
   ]
 }
