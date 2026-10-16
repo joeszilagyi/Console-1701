@@ -146,6 +146,36 @@ def test_conflicting_explicit_orbital_ids_veto_matching_mission_context():
     assert correlate_orbital_items([nasa, esa])[0]["item_ids"] == [1, 2]
 
 
+def test_mpc_designation_does_not_merge_distinct_circulars():
+    payload = json.loads((ORBITAL_FIXTURES / "mpc_mpec_2025_a18.json").read_text())
+    first = payload["results"]["2025-A18"][0]
+    second = {
+        **first, "fullname": "2025-A19",
+        "link": "https://www.minorplanetcenter.net/mpec/K25/K25A19.html",
+        "pubdate": "Thu, 02 Jan 2025 10:25:27 GMT",
+    }
+    payload["results"]["2025-A18"].append(second)
+    source = {
+        "id": "mpc_mpecs_api", "scope": "ORBITAL", "kind": "api_json",
+        "parser": "mpc_mpec_json", "source_family": "mpc",
+    }
+    circulars = parse_fixture_items(source, json.dumps(payload))
+    assert len(circulars) == 2
+    for item_id, item in enumerate(circulars, 1):
+        item["id"] = item_id
+        item["evidence"]["source"] = {"source_family": "mpc"}
+    assert all(item["evidence"]["orbital_identity"]["mpc_designation"] == "2025 AA"
+               for item in circulars)
+    assert [group["item_ids"] for group in correlate_orbital_items(circulars)] == [
+        [1], [2]
+    ]
+
+    revised = json.loads(json.dumps(circulars[0]))
+    revised["id"] = 3
+    revised["evidence"]["orbital_identity"]["mpc_designation"] = "2025 AB"
+    assert correlate_orbital_items([circulars[0], revised])[0]["item_ids"] == [1, 3]
+
+
 def test_nasa_esa_iss_articles_need_the_same_source_title_action(tmp_path, monkeypatch):
     nasa_path = ORBITAL_FIXTURES / "nasa_station_blog.rss"
     esa_text = (ORBITAL_FIXTURES / "esa_human_spaceflight.rss").read_text()

@@ -2841,6 +2841,10 @@ When both items carry explicit IDs from the same launch, Launch Library event, C
 MPC, reentry-object, or safe-satellite namespace, conflicting IDs now veto a broad
 title/mission-context join. A same-mission, same-title regression verifies that one
 matching ID cannot override a second conflicting event ID.
+For MPC MPECs, the publication ID has precedence over a shared object designation:
+two different circulars about the same object stay separate, while a revision of
+one circular retains its identity. The parser-backed regression uses two bounded
+MPEC metadata rows without downloading circular bodies.
 Other adapter identities, including reentry and safe satellite cases pending verified sources,
 remain open.
 JPL fireball correlation now uses reported UTC peak-brightness time plus coordinates when
