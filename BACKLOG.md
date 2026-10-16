@@ -1347,8 +1347,11 @@ parser stores bounded recall identity, class, risk, product/firm/reason, state l
 dates and lifecycle flags while dropping HTML summary and contact fields; offline scans trap
 HTTP. Its separate live source remains disabled because the unfiltered API body is 13 MB and a
 bounded recent-discovery query has not been signed off. See
-`docs/project/NATIONAL_FSIS_RECALL_API_FIXTURE_VERIFICATION.md`. CDC HAN and other NATIONAL
-source-family fixtures remain pending.
+`docs/project/NATIONAL_FSIS_RECALL_API_FIXTURE_VERIFICATION.md`. An observed CDC HAN search
+snapshot now supplies 14 notice metadata rows from the official archive's first-party JSON
+view; the fixture parser and offline scan retain identity/date/badge hints without alert or
+impact claims. Message type, distribution time and jurisdiction still require notice-level
+verification before RS-039 is complete. Other NATIONAL source-family fixtures remain pending.
 
 ### NWS Active Alert Parser
 
@@ -1452,28 +1455,35 @@ disabled pending bounded incremental-query design, attribution display and relea
 
 ### CDC HAN Parser
 
-Status: not implemented.
+Status: partially implemented for offline notice metadata; live ingest blocked.
 
 Build a fixture-first parser for CDC Health Alert Network notices after feed/page shape is verified.
 Preserve alert id or URL, title, published/update time, alert type, affected population or
 jurisdiction if provided, public instruction URL, preliminary status, bounded description, and
 public-health ranking evidence.
 
-Blocker reviewed 2026-10-15: official HAN pages expose notice IDs and alert types, but no
-current machine-readable HAN feed/API was verified. Former RSS addresses redirect to CDC's
-general emergency page, and candidate new XML paths return 404. See
-`docs/project/NATIONAL_CDC_HAN_ENDPOINT_BLOCKER.md`. Keep the sources disabled as manual references;
-do not scrape the notice list or invent a parser input shape. Continue when CDC documents a
-current public endpoint.
+Earlier blocker review found no current HAN RSS or Content Services endpoint. The official
+archive page now reveals a first-party JSON collection and a CDC search service used by that
+collection. A bounded exact query returned 15 current index records, 14 of them HAN notice
+permalinks, including eight 2026 notices. `cdc_han_search_fixture` parses that observed JSON
+offline with an exact query echo, 20-row/64-KiB caps, CDC notice URLs and unique IDs. It stores
+the index's last-reviewed date as a labeled date basis, an image-derived message-type hint,
+bounded excerpt, and explicit unknown distribution time, affected population, jurisdiction,
+instruction URL, current-alert status and impact. No headline or badge inference earns public
+impact or active-alert rank. Offline scanning performs no HTTP. See
+`docs/project/NATIONAL_CDC_HAN_ENDPOINT_BLOCKER.md` for source evidence and remaining gate.
 
 CDC's documented Content Services media API returned zero records for both an exact HAN notice
 path filter and a Health Alert Network query in bounded 2026-10-15 checks; it does not unblock
 this parser.
-Further bounded searches for a current HAN ID and three current notice-title terms also
-returned HTTP 200 with zero results. Direct archive and notice reads returned HTTP 403 here.
+Earlier bounded Content Services searches for a current HAN ID and three current notice-title
+terms also returned HTTP 200 with zero results. Earlier direct archive and notice reads
+returned HTTP 403; the later follow-up fetched the CDC archive and three notices successfully.
 CDC Stacks exposes machine-readable HAN archive metadata, but its collection expressly
 says entries are past alerts that may be superseded or expired, not current notices;
-it does not unblock Recent Signal ingest. See the updated blocker note.
+it does not unblock live Recent Signal ingest. The search service is an index used by CDC's
+archive widget, not a documented HAN alert feed. Keep live admission disabled until the query
+contract, notice-level alert type/date and use policy receive a separate release decision.
 
 ### FDA Recall Endpoint/Feed Verification
 

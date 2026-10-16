@@ -1,0 +1,109 @@
+"""CDC HAN's current first-party search view is fixture-only notice metadata."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import pytest
+import yaml
+
+from console1701.config import load_config
+from console1701.db import connect_db, json_loads
+from console1701.news.cdc_han import QUERY, SEARCH_URL
+from console1701.news.official_http import is_supported_official_source
+from console1701.news.parsers import NewsParserError, PayloadTooLargeError, parse_fixture_items
+from console1701.news.scanner import run_news_scan
+
+FIXTURE = Path(__file__).parent / "fixtures/national/cdc_han_search_2026_10_15.json"
+
+
+def _source(path: Path = FIXTURE) -> dict:
+    return {
+        "id": "cdc_han_notices", "name": "CDC HAN notice index",
+        "scope": "NATIONAL", "kind": "api_json", "parser": "cdc_han_search_fixture",
+        "source_family": "cdc", "official_status": "official",
+        "official_url": SEARCH_URL, "url": path.resolve().as_uri(),
+        "query_contract": QUERY, "enabled": True,
+    }
+
+
+def test_cdc_han_current_search_snapshot_preserves_notice_identity_without_impact():
+    source = _source()
+    assert is_supported_official_source({**source, "url": SEARCH_URL}) is False
+    items = parse_fixture_items(source, FIXTURE.read_text())
+    assert len(items) == 14  # The archive index page is not a HAN notice.
+    by_id = {item["evidence"]["cdc_han"]["notice_id"]: item for item in items}
+    assert "CDCHAN-00533" in by_id
+    assert "CDCHAN-00529" in by_id
+    advisory = by_id["CDCHAN-00533"]
+    update = by_id["CDCHAN-00529"]
+    assert advisory["evidence"]["cdc_han"]["message_type_hint"] == "Health Advisory"
+    assert update["evidence"]["cdc_han"]["message_type_hint"] == "Health Update"
+    assert advisory["evidence"]["cdc_han"]["message_type"] is None
+    assert advisory["evidence"]["cdc_han"]["public_impact_verified"] is False
+    assert advisory["evidence"]["cdc_han"]["public_instruction_url"] is None
+    assert advisory["evidence"]["national_identity"]["official_event_ids"] == [
+        "cdc_han:cdchan-00533"
+    ]
+    assert advisory["source_published_at"] == "2026-09-10T04:00:00+00:00"
+    assert all(item["url"].startswith("https://www.cdc.gov/han/php/notices/han")
+               for item in items)
+
+
+def test_cdc_han_rejects_wrong_contract_or_poisoned_notice_metadata():
+    raw = FIXTURE.read_text()
+    with pytest.raises(NewsParserError, match="exact official search contract"):
+        parse_fixture_items({**_source(), "official_url": "https://example.org/search"}, raw)
+    with pytest.raises(NewsParserError, match="exact official search contract"):
+        parse_fixture_items({**_source(), "url": SEARCH_URL}, raw)
+    with pytest.raises(NewsParserError, match="exact official search contract"):
+        parse_fixture_items({**_source(), "query_contract": {**QUERY, "rows": "200"}}, raw)
+    payload = json.loads(raw)
+    payload["responseHeader"]["params"]["fq"] = "permalink:*"
+    with pytest.raises(NewsParserError, match="bounded search response"):
+        parse_fixture_items(_source(), json.dumps(payload))
+    payload = json.loads(raw)
+    payload["response"]["docs"][0]["permalink"] = "https://evil.example/han00533.html"
+    with pytest.raises(NewsParserError, match="invalid CDC URL"):
+        parse_fixture_items(_source(), json.dumps(payload))
+    payload = json.loads(raw)
+    payload["response"]["docs"][1]["permalink"] = payload["response"]["docs"][0][
+        "permalink"
+    ]
+    with pytest.raises(NewsParserError, match="stable notice metadata"):
+        parse_fixture_items(_source(), json.dumps(payload))
+    with pytest.raises(PayloadTooLargeError, match="64 KiB"):
+        parse_fixture_items(_source(), raw + " " * 65_536)
+
+
+def test_cdc_han_offline_scan_stores_metadata_without_fetch_or_alert_claim(tmp_path, monkeypatch):
+    source = _source()
+    config_path = tmp_path / "config.yml"
+    config_path.write_text(yaml.safe_dump({
+        "paths": {"repo_roots": [], "explicit_repos": []},
+        "national": {"enabled": True},
+        "news": {"enabled": True, "scopes": {"NATIONAL": {
+            "enabled": True, "sources": [source],
+        }}},
+    }))
+    monkeypatch.setattr("console1701.news.scanner.fetch_official_text", lambda *a, **kw: (
+        (_ for _ in ()).throw(AssertionError("HAN fixture attempted HTTP"))
+    ))
+    assert run_news_scan(config_path)["item_count"] == 14
+    with connect_db(load_config(config_path)["_db_path"]) as conn:
+        rows = conn.execute(
+            "SELECT title, evidence_json FROM news_items WHERE scope='NATIONAL'"
+        ).fetchall()
+        clusters = conn.execute(
+            "SELECT evidence_json FROM news_clusters WHERE scope='NATIONAL'"
+        ).fetchall()
+    assert len(rows) == 14
+    assert len(clusters) == 14
+    evidence = [json_loads(row["evidence_json"], {}) for row in rows]
+    assert all(row["ingest"]["fixture_only"] for row in evidence)
+    assert all(row["cdc_han"]["active_alert_verified"] is False for row in evidence)
+    assert all(row["national_policy"]["official_impact_score"] == 0 for row in evidence)
+    assert all(json_loads(row["evidence_json"], {})["national_event"]["ranking"][
+        "factors"
+    ]["active_alert_score"] == 0 for row in clusters)

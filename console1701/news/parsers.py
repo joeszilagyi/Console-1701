@@ -267,6 +267,10 @@ def parse_fixture_items(
         from console1701.news.bls_releases import parse_bls_release_atom
 
         return parse_bls_release_atom(source, payload_text)
+    if parser_name == "cdc_han_search_fixture":
+        from console1701.news.cdc_han import parse_cdc_han_search_fixture
+
+        return parse_cdc_han_search_fixture(source, payload_text)
     if parser_name == "pbs_newshour_rss":
         from console1701.news.national_pbs import parse_pbs_newshour_rss
 
