@@ -1335,7 +1335,7 @@ to NATIONAL. No article body column was added.
 
 ### NATIONAL Fixture Pack
 
-Status: partially implemented.
+Status: implemented for the frozen first-pass fixture list.
 
 Create local-only fixtures for NWS active alert JSON, NHC advisory/RSS data, USGS earthquake
 GeoJSON, CDC HAN, FDA recalls, FSIS Recall API, CPSC Recalls API, NHTSA recalls, CISA advisories,
@@ -1392,8 +1392,10 @@ Recommendations for the Public section anchors. Five pages print a date and ET t
 parser converts
 to UTC for the item publication timestamp while retaining the source label and index review
 timestamp. Unknown times, jurisdiction, broader instructions, active-alert semantics and live
-source policy remain open before RS-039 is complete. Other NATIONAL source-family fixtures remain
-pending. See `docs/project/NATIONAL_CDC_HAN_ENDPOINT_BLOCKER.md`.
+source policy remain open under RS-039. The frozen first-pass list above has a local fixture and
+parser/scan coverage for every named family; the acceptance map is in
+`docs/project/NATIONAL_FIXTURE_PACK_AUDIT.md`. Further source families and live-source release
+are separate work. See `docs/project/NATIONAL_CDC_HAN_ENDPOINT_BLOCKER.md`.
 
 ### NWS Active Alert Parser
 
