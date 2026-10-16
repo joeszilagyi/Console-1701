@@ -775,7 +775,8 @@ fixture-only pending live freshness and source-policy decisions; see
 emergency, outage, and other regional fixture shapes remain pending endpoint verification; do not
 invent live API shapes to close this pack.
 
-WA DNR's separate fire-statistics ArcGIS layer now has an observed four-record fixture and
+WA DNR's separate fire-statistics ArcGIS layer now has observed 31-record large-fire and
+four-record smaller-fire fixtures with separate exact query contracts, and a
 fixture-only parser for official fire-event ID, county, acres, discovery date, and reported
 control/out dates. The layer has no positive active-status or update-time field; the parser
 does not make active-fire, evacuation, or public-impact claims. Its live path remains blocked,
@@ -1024,19 +1025,20 @@ persists the independent-family county/title/time basis, and rejects a different
 The WSDOT JSON remains synthetic and fixture-only because API access requires a code.
 NIFC's current IMSR fixture now adds an official unique fire identifier and source-backed WA
 incident name. A later report date retains the same event key; a bounded offline scan stores two
-separate WA incidents without claiming cross-family corroboration. A second official parser with
-independently sourced, matching fire-name evidence is still needed to exercise wildfire
-convergence across families.
+separate WA incidents without claiming cross-family corroboration.
 NWCC's public large-fire view now normalizes source start year, WA unit and fire number to the
 same keys as two NIFC incidents. A combined offline scan yields two incident pairs and two
 unpaired older NWCC records; both views share one interagency family, so the pairs are deduped
-but not independently corroborated. Independent wildfire correlation still needs a truly
-separate source family with source-backed incident identity, geography and time.
+but not independently corroborated.
 
-The DNR statistics fixture adds a separate official `wa_dnr` family with stable fire-event
-identity and county, but bounded name checks found no overlap with the current NIFC/NWCC
-samples. A combined offline scan keeps the four DNR and two NIFC incidents separate;
-no independent wildfire corroboration is claimed from these records.
+An expanded exact DNR statistics query now returns 31 source rows from July onward, including
+Sisi, Little Giant, and Sinlahekin in the NWCC fixture. The DNR and NWCC records each supply the
+same fire name and source-reported discovery/start date. A dedicated matcher joins only this
+official cross-family pair on those fields, even when the DNR discovery day and later NWCC edit
+time are more than 48 hours apart. The offline two-parser scan stores three paired incidents
+and leaves unmatched records separate; a changed start date vetoes the identity. This is
+cross-source corroboration of incident identity, not active status, evacuation, or public impact.
+Other partner-family correlation dimensions remain open.
 
 ### REGIONAL Deterministic Ranking
 
