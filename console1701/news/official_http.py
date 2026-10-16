@@ -26,6 +26,7 @@ USGS_REGIONAL_EARTHQUAKES_URL = (
 USGS_GLOBAL_EARTHQUAKES_URL = (
     "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.geojson"
 )
+USGS_GEOSERVE_ADMIN_URL = "https://earthquake.usgs.gov/ws/geoserve/regions.json"
 WSDOT_HIGHWAY_ALERTS_RSS_URL = "https://www.wsdot.wa.gov/traffic/api/HighwayAlerts/rss.aspx"
 SWPC_ALERTS_URL = "https://services.swpc.noaa.gov/products/alerts.json"
 SWPC_NOAA_SCALES_URL = "https://services.swpc.noaa.gov/products/noaa-scales.json"
@@ -182,6 +183,14 @@ def is_supported_official_source(source: dict[str, Any]) -> bool:
             or _usgs_feed_covers_threshold(source.get("min_magnitude", 3.0))
         )
         and (
+            (source.get("scope"), source.get("id")) != ("NATIONAL", "usgs_eq_geojson")
+            or source.get("geoserve_admin_enrichment") is not True
+            or (
+                type(source.get("interval_minutes")) is int
+                and source["interval_minutes"] >= 30
+            )
+        )
+        and (
             (source.get("scope"), source.get("id")) !=
             ("NATIONAL", "nws_active_alerts_api")
             or (
@@ -279,6 +288,50 @@ def _gracedb_json_get(url: str, *, user_agent: str, timeout: int, limit: int) ->
         raise NewsIngestError(f"GraceDB returned HTTP {exc.code}.") from exc
     except (URLError, TimeoutError, OSError, HTTPException) as exc:
         raise NewsIngestError(f"GraceDB transport failed: {type(exc).__name__}.") from exc
+
+
+def fetch_national_usgs_geoserve_admin(
+    source: dict[str, Any], *, latitude: float, longitude: float,
+    user_agent: str, timeout_seconds: int,
+) -> tuple[dict[str, Any], int]:
+    """Fetch one exact official point-admin response for an opted-in scan."""
+    if (source.get("scope") != "NATIONAL" or source.get("id") != "usgs_eq_geojson"
+            or source.get("geoserve_admin_enrichment") is not True
+            or not is_supported_official_source(source)
+            or not isfinite(latitude) or not -90 <= latitude <= 90
+            or not isfinite(longitude) or not -180 <= longitude <= 180):
+        raise UnsupportedSourceError("GeoServe requires an opted-in exact NATIONAL USGS source.")
+    url = USGS_GEOSERVE_ADMIN_URL + "?" + urlencode({
+        "latitude": f"{latitude:.6f}", "longitude": f"{longitude:.6f}",
+        "type": "admin",
+    })
+    request = Request(url, headers={
+        "Accept": "application/json", "User-Agent": user_agent,
+    }, method="GET")
+    opener = build_opener(ProxyHandler({}), HTTPSHandler(), _NoRedirect())
+    try:
+        with opener.open(request, timeout=min(5, max(1, int(timeout_seconds)))) as response:
+            if int(response.status) != 200:
+                raise NewsIngestError(f"GeoServe returned HTTP {response.status}.")
+            content_type = str(response.headers.get("Content-Type") or "").lower()
+            if content_type.split(";", 1)[0].strip() != "application/json":
+                raise NewsIngestError("GeoServe returned an unexpected content type.")
+            raw = response.read(2049)
+            if len(raw) > 2048:
+                raise PayloadTooLargeError("GeoServe point response exceeds 2 KiB.")
+            try:
+                value = json.loads(raw.decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+                raise NewsIngestError("GeoServe returned invalid JSON.") from exc
+            if not isinstance(value, dict):
+                raise NewsIngestError("GeoServe returned a non-object response.")
+            return value, len(raw)
+    except HTTPError as exc:
+        if exc.code == 429:
+            raise RateLimitedError("GeoServe returned HTTP 429; enrichment paused.") from exc
+        raise NewsIngestError(f"GeoServe returned HTTP {exc.code}.") from exc
+    except (URLError, TimeoutError, OSError, HTTPException) as exc:
+        raise NewsIngestError(f"GeoServe transport failed: {type(exc).__name__}.") from exc
 
 
 def _fetch_gracedb_public_alerts(

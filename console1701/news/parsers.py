@@ -1648,14 +1648,43 @@ def _national_usgs_region(longitude: float, latitude: float) -> str | None:
     return None
 
 
+_TRUSTED_GEOSERVE_LIVE = object()
+
+
+def parse_national_usgs_live_enriched(
+    source: dict[str, Any], payload_text: str, responses: dict[str, Any]
+) -> list[dict[str, Any]]:
+    """Parse scanner-fetched GeoServe responses without accepting config sidecars."""
+    from console1701.news.official_http import (
+        USGS_REGIONAL_EARTHQUAKES_URL,
+        is_supported_official_source,
+    )
+
+    if (source.get("scope") != "NATIONAL" or source.get("id") != "usgs_eq_geojson"
+            or source.get("url") != USGS_REGIONAL_EARTHQUAKES_URL
+            or source.get("geoserve_admin_enrichment") is not True
+            or not is_supported_official_source(source)
+            or not isinstance(responses, dict) or len(responses) > 5):
+        raise NewsParserError("USGS live GeoServe requires the exact scanner source")
+    trusted = dict(source)
+    trusted["_trusted_geoserve_admin"] = (_TRUSTED_GEOSERVE_LIVE, responses)
+    return _parse_usgs_earthquake_geojson(trusted, payload_text)
+
+
 def _usgs_geoserve_admin_fixture(
     source: dict[str, Any], event_id: str, latitude: float, longitude: float
 ) -> dict[str, str] | None:
     fixtures = source.get("geoserve_admin_fixture")
+    live = source.get("_trusted_geoserve_admin")
+    if (live is not None and isinstance(live, tuple) and len(live) == 2
+            and live[0] is _TRUSTED_GEOSERVE_LIVE):
+        fixtures = live[1]
+    elif live is not None:
+        raise NewsParserError("USGS GeoServe live responses are scanner-owned")
     if fixtures is None:
         return None
     if (source.get("scope") != "NATIONAL"
-            or not str(source.get("url") or "").startswith("file://")
+            or (live is None and not str(source.get("url") or "").startswith("file://"))
             or not isinstance(fixtures, dict) or len(fixtures) > 50
             or len(json.dumps(fixtures).encode("utf-8")) > 65_536):
         raise NewsParserError("USGS GeoServe sidecar requires a bounded NATIONAL fixture")
@@ -1980,6 +2009,9 @@ def _parse_usgs_earthquake_geojson(
                 "matched": True,
                 "geography_basis": (
                     "source_place_label" if global_scope else
+                    "usgs_geoserve_admin_live" if national and admin
+                    and "_trusted_geoserve_admin" in source
+                    and admin["status"] == "admin_polygon" else
                     "usgs_geoserve_admin_fixture" if national and admin
                     and admin["status"] == "admin_polygon" else
                     "coarse_us_region_coordinates" if national else
