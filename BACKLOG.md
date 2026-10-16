@@ -1376,7 +1376,8 @@ a first-pass relevance filter, not a U.S. boundary determination. A source-place
 now excludes clearly labeled Canada, Mexico, Caribbean, and Central American events that fall
 inside those broad boxes; the fixture includes high-felt foreign events and a U.S. place-name
 regression. This guard cannot decide border-near epicenters from a nearest-place label. Nuanced
-cross-border routing and verified multi-state felt-impact evidence remain pending.
+cross-border routing and verified multi-state felt-impact evidence remained pending after the
+summary-feed pass.
 Accepted USGS records now require a bounded feature ID, a matching exact USGS event-page URL,
 and a unique ID within the response. This closes an identity gap in NATIONAL correlation without
 using an event-page hostname alone as proof of ownership; the same parser serves REGIONAL and
@@ -1389,9 +1390,18 @@ territory, and zero-polygon cases. A bounded NATIONAL `file://` sidecar fixture 
 exact GeoServe point request against each earthquake and rejects a positively identified
 foreign-land epicenter while retaining U.S./territory and unknown-offshore candidates. It
 stores the admin result as epicenter evidence only; no affected-state or multi-state impact
-claim follows. Offline scan tests trap HTTP. Live per-event GeoServe access and source-backed
-felt-state distribution remain open; see
+claim follows from the point lookup. Offline scan tests trap HTTP. Live per-event GeoServe
+access and live felt-state distribution remain open; see
 `docs/project/NATIONAL_USGS_GEOSERVE_ADMIN_FIXTURE_VERIFICATION.md`.
+The official DYFI ZIP intensity product for a 2026 M5.6 California earthquake supplies
+source-reported state codes, ZIP-aggregated response counts and CDI. A bounded local
+NATIONAL fixture now parses its observed 84,498-byte XML, retains state totals only, and
+requires at least ten responses plus CDI 2.0 in each of two states before labeling
+multi-state **reported felt shaking**. California and Nevada qualify; Oregon's six responses
+do not. No ZIP or city rows enter SQLite, and no damage or observed footprint is inferred.
+The offline scan proves stored state/score evidence with HTTP trapped. Live DYFI product
+enrichment remains separately gated; see
+`docs/project/NATIONAL_USGS_DYFI_STATE_FIXTURE_VERIFICATION.md`.
 
 ### FEMA/OpenFEMA Disaster Declarations Research
 

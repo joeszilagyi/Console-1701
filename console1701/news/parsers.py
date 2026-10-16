@@ -92,6 +92,12 @@ _FOREIGN_USGS_PLACE_SUFFIX = re.compile(
     r"Haiti|Dominican Republic|Jamaica)\s*$", re.I
 )
 _US_GEOSERVE_ISOS = {"USA", "PRI", "VIR", "GUM", "MNP", "ASM"}
+_DYFI_US_CODES = set(
+    "AL AK AZ AR CA CO CT DE DC FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO "
+    "MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY "
+    "PR GU VI AS MP".split()
+)
+_DYFI_MIN_STATE_RESPONSES = 10
 
 
 def resolve_file_url(url: str, *, config_dir: Path) -> Path:
@@ -1679,6 +1685,92 @@ def _usgs_geoserve_admin_fixture(
     }
 
 
+def _usgs_dyfi_state_fixture(
+    payload: dict[str, Any], source: dict[str, Any]
+) -> dict[str, Any] | None:
+    sidecar = payload.get("fixture_dyfi")
+    if sidecar is None:
+        return None
+    if (source.get("scope") != "NATIONAL"
+            or not str(source.get("url") or "").startswith("file://")
+            or not isinstance(sidecar, dict)):
+        raise NewsParserError("USGS DYFI sidecar requires a NATIONAL local fixture")
+    event_id = sidecar.get("event_id")
+    product_url = sidecar.get("product_url")
+    xml = sidecar.get("xml")
+    if (not isinstance(event_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,120}", event_id)
+            or not any(feature.get("id") == event_id for feature in payload["features"]
+                       if isinstance(feature, dict))
+            or not isinstance(product_url, str) or not isinstance(xml, str)
+            or len(xml.encode("utf-8")) > 131_072
+            or "<!DOCTYPE" in xml.upper() or "<!ENTITY" in xml.upper()):
+        raise NewsParserError("USGS DYFI sidecar has invalid bounded product metadata")
+    try:
+        parts = urlsplit(product_url)
+    except ValueError as exc:
+        raise NewsParserError("USGS DYFI sidecar has an invalid product URL") from exc
+    if (parts.scheme != "https" or parts.netloc != "earthquake.usgs.gov"
+            or parts.query or parts.fragment
+            or not re.fullmatch(
+                rf"/product/dyfi/{re.escape(event_id)}/us/\d{{13}}/cdi_zip\.xml",
+                parts.path,
+            )):
+        raise NewsParserError("USGS DYFI sidecar lacks an exact official product URL")
+    try:
+        updated_at = datetime.fromtimestamp(
+            int(parts.path.split("/")[-2]) / 1000, tz=UTC
+        ).isoformat(timespec="seconds")
+    except (ValueError, OverflowError, OSError) as exc:
+        raise NewsParserError("USGS DYFI sidecar has an invalid product time") from exc
+    try:
+        root = ET.fromstring(xml)
+    except ET.ParseError as exc:
+        raise NewsParserError("USGS DYFI sidecar has malformed XML") from exc
+    cdi = root.find("./cdi") if root.tag == "cdidata" else None
+    if cdi is None or cdi.get("type") != "zip" or len(root.findall("./cdi")) != 1:
+        raise NewsParserError("USGS DYFI sidecar has no ZIP intensity summary")
+    locations = cdi.findall("./location")
+    if not locations or len(locations) > 1000:
+        raise NewsParserError("USGS DYFI sidecar has an invalid location count")
+    totals: dict[str, dict[str, float | int]] = {}
+    seen_zips: set[str] = set()
+    for location in locations:
+        zip_code = location.get("name") or ""
+        state = location.findtext("state") or ""
+        responses_text = location.findtext("nresp") or ""
+        intensity = _usgs_number(location.findtext("cdi"))
+        if (not re.fullmatch(r"\d{5}", zip_code) or zip_code in seen_zips
+                or not re.fullmatch(r"[A-Z]{2}", state)
+                or not re.fullmatch(r"\d{1,6}", responses_text)
+                or not 1 <= int(responses_text) <= 100_000
+                or intensity is None or not 0 <= intensity <= 10):
+            raise NewsParserError("USGS DYFI sidecar has an invalid ZIP aggregate")
+        seen_zips.add(zip_code)
+        if state not in _DYFI_US_CODES:
+            continue
+        summary = totals.setdefault(state, {"response_count": 0, "max_cdi": 0.0})
+        summary["response_count"] += int(responses_text)
+        summary["max_cdi"] = max(summary["max_cdi"], intensity)
+    reported_states = sorted(
+        state for state, summary in totals.items()
+        if summary["response_count"] >= _DYFI_MIN_STATE_RESPONSES
+        and summary["max_cdi"] >= 2.0
+    )
+    return {
+        "event_id": event_id, "product_url": product_url,
+        "product_updated_at": updated_at,
+        "state_summary": [
+            {"state": state, "response_count": summary["response_count"],
+             "max_cdi": summary["max_cdi"]}
+            for state, summary in sorted(totals.items())
+        ],
+        "reported_states_at_threshold": reported_states,
+        "minimum_responses_per_state": _DYFI_MIN_STATE_RESPONSES,
+        "source_basis": "USGS DYFI ZIP aggregates; self-reported shaking, not damage",
+        "fixture_only": True, "zip_locations_stored": False,
+    }
+
+
 def _usgs_timestamp(value: Any) -> str | None:
     milliseconds = _usgs_number(value)
     if milliseconds is None:
@@ -1703,6 +1795,7 @@ def _parse_usgs_earthquake_geojson(
     features = payload.get("features")
     if not isinstance(features, list):
         raise NewsParserError("USGS fixture must contain a features list.")
+    dyfi_fixture = _usgs_dyfi_state_fixture(payload, source)
     geo_filter = _usgs_filter(source)
     global_scope = str(source.get("scope") or "").upper() == "GLOBAL"
     if ("geoserve_admin_fixture" in source
@@ -1890,6 +1983,12 @@ def _parse_usgs_earthquake_geojson(
                 } if national else {}),
             },
         }
+        dyfi = (
+            dyfi_fixture if national and dyfi_fixture
+            and dyfi_fixture["event_id"] == event_id else None
+        )
+        if dyfi:
+            item["evidence"]["usgs_earthquake"]["dyfi_state_evidence"] = dyfi
         if national:
             item["evidence"]["national_identity"] = {
                 "event_type": "earthquake",
@@ -1898,8 +1997,13 @@ def _parse_usgs_earthquake_geojson(
                 "local_regional_impact_score": min(20, max(
                     magnitude_weight // 2, felt_weight * 2,
                 )),
-                "multi_state_impact": False,
+                **({"affected_states": dyfi["reported_states_at_threshold"]} if dyfi else {}),
+                "multi_state_impact": len(dyfi["reported_states_at_threshold"]) >= 2
+                if dyfi else False,
                 "impact_scope_basis": (
+                    "USGS DYFI ZIP aggregates report at least ten felt responses in each "
+                    "listed state; this is self-reported shaking, not observed damage"
+                    if dyfi else
                     "USGS summary felt count has no verified state distribution; "
                     "coarse epicenter region does not prove multi-state impact"
                 ),
