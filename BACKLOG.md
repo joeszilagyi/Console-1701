@@ -3539,6 +3539,12 @@ whether the withdrawal comes from a current source item or a retained source ret
 NASA now offers account-managed JSON Notice email as well as Kafka and distributes Circular
 corrections over Kafka. Neither is a bounded public HTTP feed for the present `news-scan` gate;
 GCN live transport remains blocked pending an explicit account/transport design.
+The GCN Circular fixture parser now distinguishes a withdrawn observation from a withdrawn
+transient candidate using bounded subject labels. An observation/counterpart retraction is
+background evidence, not an event-wide withdrawal; an ambiguous retraction is held for review.
+An explicit event/candidate retraction creates the retained withdrawal marker, including when
+it revises the same Circular ID after a component-only version. Event-prefixed corrections are
+recognized without a preliminary-report boost. Live GCN and TNS gates remain open.
 
 ### Heavy Archive Phase, Disabled By Default
 

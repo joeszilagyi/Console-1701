@@ -12,9 +12,25 @@ from console1701.news.parsers import NewsParserError, PayloadTooLargeError, _nor
 from console1701.news.science_sources import exact_science_endpoint
 
 _OFFICIAL_URL = "https://gcn.nasa.gov/circulars"
+_RETRACTION_RE = re.compile(r"\b(?:retraction|withdrawal)\b", re.I)
+_COMPONENT_RETRACTION_RE = re.compile(
+    r"\b(?:retraction|withdrawal)\s+of\b[^:]{0,80}\b"
+    r"(?:counterpart|afterglow|redshift|flux|photometry|spectrum|localization)\b",
+    re.I,
+)
+_EVENT_RETRACTION_RE = re.compile(
+    r"^(?:retraction|withdrawal)\s*:\s*|"
+    r"^[^:]{1,100}:\s*(?:retraction|withdrawal)\s*$|"
+    r"\b(?:retraction|withdrawal)\s+of\s+"
+    r"(?:GW compact binary merger candidate|gravitational[ -]wave signal|"
+    r"burst candidate|transient candidate)\b",
+    re.I,
+)
+_CORRECTION_RE = re.compile(
+    r"^(?:correction|erratum)\b|^[^:]{1,100}:\s*(?:correction|erratum)\b",
+    re.I,
+)
 _STATUS_PREFIXES = (
-    (re.compile(r"^(?:retraction|withdrawal)\b", re.I), "retracted"),
-    (re.compile(r"^(?:correction|erratum)\b", re.I), "correction"),
     (re.compile(r"^(?:follow[- ]?up|update)\b", re.I), "follow_up"),
     (re.compile(r"^(?:proposal|planned observations?)\b", re.I), "proposal"),
 )
@@ -59,8 +75,18 @@ def parse_gcn_circular_fixture(
     if event_id and ("@" in event_id or "<" in event_id or ">" in event_id):
         raise NewsParserError("GCN Circular eventId contains unsupported characters")
     published = _created_time(payload.get("createdOn"))
-    status = next((label for pattern, label in _STATUS_PREFIXES if pattern.search(subject)),
-                  "preliminary_report")
+    if _COMPONENT_RETRACTION_RE.search(subject):
+        status, status_basis = "component_retraction", "subject names withdrawn observation"
+    elif _EVENT_RETRACTION_RE.search(subject):
+        status, status_basis = "retracted", "subject explicitly withdraws event/candidate"
+    elif _RETRACTION_RE.search(subject):
+        status, status_basis = "retraction_review", "subject scope of withdrawal unverified"
+    elif _CORRECTION_RE.search(subject):
+        status, status_basis = "correction", "subject identifies corrected circular"
+    else:
+        status = next((label for pattern, label in _STATUS_PREFIXES
+                       if pattern.search(subject)), "preliminary_report")
+        status_basis = "subject prefix" if status != "preliminary_report" else "default preliminary"
     url = f"{_OFFICIAL_URL}/{circular_id}"
     item = _normalize_item(source, {
         "title": subject,
@@ -77,12 +103,16 @@ def parse_gcn_circular_fixture(
         "created_on": published,
         "permalink": url,
         "status": status,
-        "status_basis": (
-            "subject prefix" if status != "preliminary_report" else "default preliminary"
-        ),
+        "status_basis": status_basis,
+        "withdraws_event": status == "retracted",
         "fixture_only": True,
         "body_stored": False,
         "submitter_stored": False,
         "sky_map_downloaded": False,
     }
+    if status in {"component_retraction", "retraction_review"}:
+        item["evidence"]["science_identity"] = {
+            "public_value_class": "background",
+            "retraction_scope": status,
+        }
     return [item]
