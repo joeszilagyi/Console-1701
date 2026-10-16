@@ -3616,7 +3616,7 @@
     "source_class": "public_media",
     "scope": "NATIONAL",
     "raw_url": "https://www.pbs.org/newshour/feeds/rss/headlines",
-    "expected_access_kind": "public RSS feed",
+    "expected_access_kind": "verified public RSS feed; fixture only",
     "adapter": "rss_atom",
     "refresh_interval": "60 min",
     "priority": "40",
@@ -3625,8 +3625,8 @@
     "policy_risk": "medium",
     "parser_risk": "medium",
     "retention_sensitivity": "low",
-    "verification_status": "candidate_needs_verification",
-    "why_it_matters": "Preferred PBS metadata path.",
+    "verification_status": "verified",
+    "why_it_matters": "Nation-section publisher metadata only; no inferred impact or live admission.",
     "future_phase": "U8"
   },
   {

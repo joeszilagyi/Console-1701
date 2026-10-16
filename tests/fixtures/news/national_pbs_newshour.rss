@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0">
+  <channel>
+    <title>PBS News Hour - The Latest</title>
+    <link>https://www.pbs.org/newshour/</link>
+    <item>
+      <title>Transit agency announces regional service change</title>
+      <link>https://www.pbs.org/newshour/nation/transit-agency-announces-regional-service-change</link>
+      <description>Fixture article excerpt must never be stored.</description>
+      <pubDate>Thu, 15 Oct 2026 20:20:13 -0400</pubDate>
+      <guid isPermaLink="true">https://www.pbs.org/newshour/nation/transit-agency-announces-regional-service-change</guid>
+      <category domain="https://www.pbs.org/newshour/tag/transit">transit</category>
+      <dc:creator>Associated Press</dc:creator>
+    </item>
+    <item>
+      <title>Health agency issues routine background report</title>
+      <link>https://www.pbs.org/newshour/nation/health-agency-issues-routine-background-report</link>
+      <description>Another fixture excerpt that is not retained.</description>
+      <pubDate>Thu, 15 Oct 2026 19:57:09 -0400</pubDate>
+      <guid isPermaLink="true">https://www.pbs.org/newshour/nation/health-agency-issues-routine-background-report</guid>
+      <dc:creator>PBS NewsHour staff</dc:creator>
+    </item>
+    <item>
+      <title>World sports report outside NATIONAL fixture scope</title>
+      <link>https://www.pbs.org/newshour/world/world-sports-report</link>
+      <pubDate>Thu, 15 Oct 2026 18:00:00 -0400</pubDate>
+      <guid isPermaLink="true">https://www.pbs.org/newshour/world/world-sports-report</guid>
+    </item>
+  </channel>
+</rss>

@@ -163,6 +163,7 @@ def _load_registry() -> tuple[dict[str, Any], ...]:
             "openfema_disaster_declarations": "openfema_declarations_fixture",
             "bls_employment_situation_atom": "bls_release_atom",
             "bls_cpi_atom": "bls_release_atom",
+            "pbs_newshour_rss": "pbs_newshour_rss",
             **{key: "nhc_basin_rss" for key in NATIONAL_NHC_RSS_KEYS},
         }.get(key)
         entries.append(entry)
@@ -216,6 +217,7 @@ def national_registry_config_defaults(source_key: str) -> dict[str, Any] | None:
     if source_key in {
         "bls_employment_situation_atom", "bls_cpi_atom",
         "openfema_disaster_declarations",
+        "pbs_newshour_rss",
     }:
         source["official_url"] = entry["raw_url"]
     if source_key in NATIONAL_NHC_RSS_KEYS:

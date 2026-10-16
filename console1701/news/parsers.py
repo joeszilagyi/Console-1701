@@ -248,6 +248,10 @@ def parse_fixture_items(
         from console1701.news.bls_releases import parse_bls_release_atom
 
         return parse_bls_release_atom(source, payload_text)
+    if parser_name == "pbs_newshour_rss":
+        from console1701.news.national_pbs import parse_pbs_newshour_rss
+
+        return parse_pbs_newshour_rss(source, payload_text)
     if parser_name == "swpc_xray_flares_json":
         from console1701.news.orbital_flares import parse_swpc_xray_flares_json
 
