@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 
@@ -78,12 +78,22 @@ def _source_signals(member: dict[str, Any], *, observed: datetime | None) -> dic
             official_severity,
             45 if magnitude >= 7 else 35 if magnitude >= 6 else 20 if magnitude >= 5 else 0,
         )
-    storm_type = str(nhc.get("storm_type") or "").lower()
+    nhc_official = (
+        source.get("source_family") == "noaa_nhc"
+        and source.get("official_status") == "official"
+    )
+    storm_type = str(nhc.get("storm_type") or "").lower() if nhc_official else ""
     if storm_type == "hurricane":
         official_severity = max(official_severity, 30)
     elif storm_type == "tropical storm":
         official_severity = max(official_severity, 18)
-    nhc_watch = bool(nhc.get("watch_warning_terms"))
+    advisory_at = _time(member.get("source_published_at"))
+    nhc_watch = bool(
+        observed and advisory_at and timedelta(0) <= observed - advisory_at <= timedelta(hours=12)
+        and nhc_official
+        and nhc.get("advisory_type") == "public_advisory"
+        and nhc.get("watch_warning_terms")
+    )
     public_impact = max(
         30 if level == "red" else 18 if level == "orange" else 0,
         25 if isinstance(magnitude, (int, float)) and magnitude >= 7 else 0,
@@ -110,6 +120,7 @@ def _source_signals(member: dict[str, Any], *, observed: datetime | None) -> dic
         "iaea_urgent": iaea_urgent,
         "who_don_context": who_don_context,
         "cap_level": cap_level,
+        "nhc_watch_current": nhc_watch,
     }
 
 
@@ -271,9 +282,7 @@ def rank_global_event(
             ) in {"current", "alert"} for member in members
         ) else None,
         "NHC advisory watch/warning terms (geography unverified)" if any(
-            ((member.get("evidence") or {}).get("nhc_rss") or {}).get(
-                "watch_warning_terms"
-            ) for member in members
+            signal["nhc_watch_current"] for signal in signals
         ) else None,
         "parser-provided impact score" if any(
             identity.get("public_impact_score") for identity in identities

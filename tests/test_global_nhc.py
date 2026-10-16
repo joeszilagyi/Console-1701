@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import re
+from datetime import UTC, datetime, timedelta
+from email.utils import format_datetime
 from pathlib import Path
 from textwrap import dedent
 
@@ -7,6 +10,7 @@ import pytest
 
 from console1701.config import load_config
 from console1701.db import connect_db, json_loads
+from console1701.news.global_ranking import rank_global_event
 from console1701.news.global_registry import get_global_source_registry_entry
 from console1701.news.parsers import NewsParserError, parse_fixture_items
 from console1701.news.scanner import run_news_scan
@@ -40,6 +44,35 @@ def test_nhc_basin_feed_preserves_explicit_storm_evidence():
     assert items[1]["evidence"]["nhc_rss"]["storm_id"] == "EP202026"
 
 
+def test_nhc_watch_ranking_expires_without_a_fresh_official_public_advisory():
+    advisory = parse_fixture_items(SOURCE, FIXTURE.read_text())[0]
+    advisory["id"] = 1
+    advisory["evidence"]["source"] = {
+        "source_family": "noaa_nhc", "official_status": "official",
+    }
+    group = {
+        "families": ["noaa_nhc"], "countries": [], "identifiers": ["nhc:EP212026"],
+        "corroborated": False,
+    }
+    fresh = rank_global_event(group, [advisory], now="2026-10-16T02:00:00+00:00")
+    stale = rank_global_event(group, [advisory], now="2026-10-16T06:00:00+00:00")
+    assert fresh["factors"]["active_alert_score"] == 20
+    assert fresh["factors"]["public_impact_score"] == 12
+    assert "NHC advisory watch/warning terms (geography unverified)" in fresh[
+        "public_impact_basis"
+    ]
+    assert stale["factors"]["active_alert_score"] == 0
+    assert stale["factors"]["public_impact_score"] == 0
+    assert "NHC advisory watch/warning terms (geography unverified)" not in stale[
+        "public_impact_basis"
+    ]
+
+    advisory["evidence"]["source"]["official_status"] = "candidate"
+    unverified = rank_global_event(group, [advisory], now="2026-10-16T02:00:00+00:00")
+    assert unverified["factors"]["active_alert_score"] == 0
+    assert unverified["factors"]["official_severity_score"] == 0
+
+
 def test_nhc_basin_feed_empty_and_invalid_cases():
     empty = (
         "<rss><channel><title>NHC Atlantic</title><item><title>"
@@ -64,6 +97,12 @@ def test_nhc_fixture_scan_is_offline_and_does_not_infer_impact(tmp_path, monkeyp
         "console1701.news.scanner.fetch_official_text",
         lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("NHC HTTP fetch")),
     )
+    fresh_date = format_datetime(datetime.now(UTC) - timedelta(minutes=5), usegmt=True)
+    fresh_fixture = tmp_path / "current-nhc.rss"
+    fresh_fixture.write_text(re.sub(
+        r"<pubDate>[^<]+</pubDate>", f"<pubDate>{fresh_date}</pubDate>",
+        FIXTURE.read_text(),
+    ))
     config_path = tmp_path / "nhc.yml"
     config_path.write_text(dedent(f"""
         paths: {{repo_roots: [], explicit_repos: []}}
@@ -78,7 +117,7 @@ def test_nhc_fixture_scan_is_offline_and_does_not_infer_impact(tmp_path, monkeyp
                   kind: rss
                   parser: nhc_basin_rss
                   enabled: true
-                  url: "file://{FIXTURE}"
+                  url: "{fresh_fixture.as_uri()}"
     """).strip() + "\n")
     assert run_news_scan(config_path)["item_count"] == 2
     config = load_config(config_path)
