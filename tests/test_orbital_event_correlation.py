@@ -125,6 +125,27 @@ def test_orbital_mission_context_needs_title_and_complete_link():
     assert "mission_name" in groups[0]["matches"][0]["basis"]
 
 
+def test_conflicting_explicit_orbital_ids_veto_matching_mission_context():
+    title = "Artemis II mission launch update"
+    context = {"mission_name": "Artemis II", "launch_vehicle": "SLS"}
+    nasa = _item(1, "nasa", title, event_type="mission_update", context={
+        **context, "launch_id": "flight-one", "launch_library_event_id": "event-one",
+    })
+    esa = _item(2, "esa", title, event_type="mission_update", context={
+        **context, "launch_id": "flight-two", "launch_library_event_id": "event-two",
+    })
+    assert [group["item_ids"] for group in correlate_orbital_items([nasa, esa])] == [
+        [1], [2]
+    ]
+
+    esa["evidence"]["orbital_identity"]["launch_id"] = "flight-one"
+    assert [group["item_ids"] for group in correlate_orbital_items([nasa, esa])] == [
+        [1], [2]
+    ]  # The conflicting Launch Library event ID still vetoes the match.
+    esa["evidence"]["orbital_identity"]["launch_library_event_id"] = "event-one"
+    assert correlate_orbital_items([nasa, esa])[0]["item_ids"] == [1, 2]
+
+
 def test_nasa_esa_iss_articles_need_the_same_source_title_action(tmp_path, monkeypatch):
     nasa_path = ORBITAL_FIXTURES / "nasa_station_blog.rss"
     esa_text = (ORBITAL_FIXTURES / "esa_human_spaceflight.rss").read_text()

@@ -2837,6 +2837,10 @@ action, shared title tokens and a 96-hour publication window; generic station it
 and different actions remain separate. A parser-backed offline two-feed scan persists
 independent NASA/ESA corroboration, and a docking-versus-launch negative case guards
 against broad station-title matches.
+When both items carry explicit IDs from the same launch, Launch Library event, CNEOS,
+MPC, reentry-object, or safe-satellite namespace, conflicting IDs now veto a broad
+title/mission-context join. A same-mission, same-title regression verifies that one
+matching ID cannot override a second conflicting event ID.
 Other adapter identities, including reentry and safe satellite cases pending verified sources,
 remain open.
 JPL fireball correlation now uses reported UTC peak-brightness time plus coordinates when
