@@ -3047,7 +3047,13 @@ corroboration; unrelated event types and observations outside 96 hours stay sepa
 integration and matcher tests pass. Remaining work: populate mission, launch, reentry, safe
 satellite, and impact identities in verified future adapters; test their real parsed records; and
 extend cross-product space-weather correlation beyond verified SWPC warning/current-scale,
-warning/planetary-Kp, and current-scale/planetary-Kp cases. The SWPC matcher joins an active
+warning/planetary-Kp, and current-scale/planetary-Kp cases. JPL Scout provisional designations
+and the CelesTrak ISS catalog number now enter same-family
+correlation from matching parser evidence rather than a free-standing
+`orbital_identity.object_id`. Parsed revision fixtures join by those IDs despite a changed generic
+alias; a copied ID under an unrelated source family cannot create that official ID. These
+background records do not establish an impact prediction or live ISS position.
+The SWPC matcher joins an active
 warning/alert to an observed current NOAA scale of the same level only when the scale timestamp
 falls inside the alert's explicit valid
 window. Forecast scales, cancellations, different levels, and out-of-window observations
