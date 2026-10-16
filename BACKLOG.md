@@ -3278,7 +3278,13 @@ An isolated live `news-scan` returned HTTP 200, healthy state and ten COSMIC ite
 
 ### TNS Auth/Policy Design
 
-Status: not implemented.
+Status: implemented as a gate design; no TNS adapter or credentials enabled.
+
+`docs/project/SCIENCE_TNS_AUTH_POLICY_GATE.md` records the official bot-key and marker
+requirement, authenticated POST Search/Get contract, public-versus-proprietary risk, 60-second
+quota/429 behavior, daily/hourly delta versus full-catalog size, missing discovery time in the
+sampled Search list, metadata retention and the exact credential/transport/live-signoff gate.
+The full ZIP remains a blocked heavy archive and the delta/Get routes remain auth-required.
 
 Review Transient Name Server access, auth/account requirements, API terms, attribution,
 rate-limits, allowed fields, retention, and source-health behavior. Keep TNS disabled by default,
@@ -3539,6 +3545,10 @@ whether the withdrawal comes from a current source item or a retained source ret
 NASA now offers account-managed JSON Notice email as well as Kafka and distributes Circular
 corrections over Kafka. Neither is a bounded public HTTP feed for the present `news-scan` gate;
 GCN live transport remains blocked pending an explicit account/transport design.
+TNS's official Search/Get APIs require a bot key and POST; the public CSV deltas also need an
+account marker and a separate bounded request contract. The Search sample has no discovery time,
+and Get Object may expose proprietary group content. `SCIENCE_TNS_AUTH_POLICY_GATE.md` keeps TNS
+as `auth_required` until public-only metadata, credentials, and exact transport are signed off.
 The GCN Circular fixture parser now distinguishes a withdrawn observation from a withdrawn
 transient candidate using bounded subject labels. An observation/counterpart retraction is
 background evidence, not an event-wide withdrawal; an ambiguous retraction is held for review.
