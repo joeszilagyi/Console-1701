@@ -11,6 +11,7 @@ from console1701.news.parsers import parse_fixture_items
 from console1701.news.scanner import run_news_scan
 
 FIXTURE = Path(__file__).parent / "fixtures/orbital/swpc_alerts.json"
+ORBITAL_FIXTURES = Path(__file__).parent / "fixtures/orbital"
 
 
 def _item(item_id, family, title, *, event_type="iss_update", object_id=None,
@@ -28,10 +29,14 @@ def _item(item_id, family, title, *, event_type="iss_update", object_id=None,
 
 
 def test_orbital_correlation_requires_identity_or_independent_convergence():
-    nasa = _item(1, "nasa", "Crew Dragon docks with International Space Station")
-    esa = _item(2, "esa", "Crew Dragon docks with International Space Station")
-    nasa_duplicate = _item(3, "nasa", nasa["title"])
-    old = _item(4, "esa", esa["title"], stamp="2026-09-01T12:00:00+00:00")
+    context = {"mission_name": "ISS", "iss_action": "dock"}
+    nasa = _item(1, "nasa", "Crew Dragon docks with International Space Station",
+                 context=context)
+    esa = _item(2, "esa", "Crew Dragon docks with International Space Station",
+                context=context)
+    nasa_duplicate = _item(3, "nasa", nasa["title"], context=context)
+    old = _item(4, "esa", esa["title"], context=context,
+                stamp="2026-09-01T12:00:00+00:00")
     wrong_type = _item(5, "esa", esa["title"], event_type="launch_update")
     groups = correlate_orbital_items([nasa, esa, nasa_duplicate, old, wrong_type])
     assert [group["item_ids"] for group in groups] == [[1, 2], [3], [4], [5]]
@@ -70,14 +75,95 @@ def test_nasa_channel_variants_and_jpl_do_not_count_as_independent_sources():
 
 def test_orbital_mission_context_needs_title_and_complete_link():
     nasa = _item(1, "nasa", "Artemis II crew launches mission",
+                 event_type="mission_update",
                  context={"mission_name": "Artemis II"})
     esa = _item(2, "esa", "Artemis II crew aboard mission",
+                event_type="mission_update",
                 context={"mission_name": "Artemis II"})
     broad = _item(3, "agency", "Artemis II launches update",
+                  event_type="mission_update",
                   context={"mission_name": "Artemis II"})
     groups = correlate_orbital_items([nasa, esa, broad])
     assert [group["item_ids"] for group in groups] == [[1, 2], [3]]
     assert "mission_name" in groups[0]["matches"][0]["basis"]
+
+
+def test_nasa_esa_iss_articles_need_the_same_source_title_action(tmp_path, monkeypatch):
+    nasa_path = ORBITAL_FIXTURES / "nasa_station_blog.rss"
+    esa_text = (ORBITAL_FIXTURES / "esa_human_spaceflight.rss").read_text()
+    esa_text = esa_text.replace(
+        "ESA crew completes station mission",
+        "ESA reports SpaceX Dragon docks with supplies at International Space Station",
+    )
+    esa_path = tmp_path / "esa-iss.rss"
+    esa_path.write_text(esa_text)
+    nasa_source = {
+        "id": "nasa_spacestation_blog", "scope": "ORBITAL",
+        "kind": "rss", "parser": "nasa_orbital_rss",
+    }
+    esa_source = {
+        "id": "esa_iss", "scope": "ORBITAL", "kind": "rss", "parser": "esa_orbital_rss",
+    }
+    nasa, = parse_fixture_items(nasa_source, nasa_path.read_text())
+    esa, = parse_fixture_items(esa_source, esa_text)
+    assert nasa["evidence"]["orbital_identity"]["iss_action"] == "dock"
+    assert esa["evidence"]["orbital_identity"]["iss_action"] == "dock"
+    for item_id, item, family in ((1, nasa, "nasa"), (2, esa, "esa")):
+        item["id"] = item_id
+        item["evidence"]["source"] = {"source_family": family}
+    groups = correlate_orbital_items([nasa, esa])
+    assert [group["item_ids"] for group in groups] == [[1, 2]]
+    assert groups[0]["corroborated"] is True
+    assert "iss_action" in groups[0]["matches"][0]["basis"]
+
+    launch_text = esa_text.replace("Dragon docks", "Dragon launches")
+    launch, = parse_fixture_items(esa_source, launch_text)
+    launch["id"] = 3
+    launch["evidence"]["source"] = {"source_family": "esa"}
+    assert launch["evidence"]["orbital_identity"]["iss_action"] == "launch"
+    assert [group["item_ids"] for group in correlate_orbital_items([nasa, launch])] == [
+        [1], [3],
+    ]
+    generic_nasa = _item(4, "nasa", "International Space Station crew update",
+                         context={"mission_name": "ISS"})
+    generic_esa = _item(5, "esa", "International Space Station crew update",
+                        context={"mission_name": "ISS"})
+    assert [group["item_ids"] for group in correlate_orbital_items([
+        generic_nasa, generic_esa,
+    ])] == [[4], [5]]
+
+    monkeypatch.setattr(
+        "console1701.news.scanner.fetch_official_text",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("no HTTP")),
+    )
+    path = tmp_path / "config.yml"
+    path.write_text(dedent(f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        orbital: {{enabled: true}}
+        news:
+          enabled: true
+          scopes:
+            ORBITAL:
+              enabled: true
+              sources:
+                - id: nasa_spacestation_blog
+                  enabled: true
+                  url: "file://{nasa_path}"
+                - id: esa_iss
+                  enabled: true
+                  url: "file://{esa_path}"
+    """).strip() + "\n")
+    assert run_news_scan(path)["item_count"] == 2
+    config = load_config(path)
+    with connect_db(config["_db_path"]) as conn:
+        rows = conn.execute(
+            "SELECT evidence_json FROM news_clusters WHERE scope='ORBITAL'"
+        ).fetchall()
+    assert len(rows) == 1
+    event = json_loads(rows[0]["evidence_json"], {})["orbital_event"]
+    assert event["families"] == ["esa", "nasa"]
+    assert event["corroborated"] is True
+    assert "iss_action" in event["matches"][0]["basis"]
 
 
 def test_orbital_fixture_scan_persists_event_evidence_without_network(tmp_path, monkeypatch):

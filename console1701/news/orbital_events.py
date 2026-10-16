@@ -68,7 +68,7 @@ def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     context = {
         field: _normalized(identity.get(field)) for field in (
             "mission_name", "launch_vehicle", "payload", "provider", "neo_designation",
-            "reentry_object", "noaa_scale", "kp_window", "fireball_location",
+            "reentry_object", "noaa_scale", "kp_window", "fireball_location", "iss_action",
         )
     }
     swpc = evidence.get("swpc_alert") or {}
@@ -193,6 +193,11 @@ def orbital_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str
             "launch_window" if hours > MATCH_WINDOW_HOURS else "time_window",
         ]
     if left["family"] == "unknown" or left["family"] == right["family"]:
+        return []
+    if left["event_type"] == "iss_update" and (
+        not left["context"].get("iss_action")
+        or left["context"].get("iss_action") != right["context"].get("iss_action")
+    ):
         return []
     shared_context = [
         field for field, value in left["context"].items()

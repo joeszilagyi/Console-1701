@@ -2756,6 +2756,12 @@ source event time, including docking/EVA rows whose specific `iss_update` type d
 the article's generic `mission_update` type. This uses the exact event ID, source keys and
 96-hour event window; it does not treat the aggregator as corroboration. Parsed fixtures,
 wrong-ID/time cases and a stored offline scan cover the join.
+NASA station RSS and ESA ISS article paths now produce a common `iss_update` identity
+with source-title action context. A cross-agency ISS join requires the same nonempty
+action, shared title tokens and a 96-hour publication window; generic station items
+and different actions remain separate. A parser-backed offline two-feed scan persists
+independent NASA/ESA corroboration, and a docking-versus-launch negative case guards
+against broad station-title matches.
 Other adapter identities, including reentry and safe satellite cases pending verified sources,
 remain open.
 

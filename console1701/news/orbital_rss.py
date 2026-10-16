@@ -74,6 +74,21 @@ _ESA_ROUTINE_RE = re.compile(
     r"education|student|gallery|video)\b",
     re.I,
 )
+_ISS_ACTIONS = (
+    ("undock", re.compile(r"\bundock\w*\b", re.I)),
+    ("unberth", re.compile(r"\bunberth\w*\b", re.I)),
+    ("dock", re.compile(r"\bdock\w*\b", re.I)),
+    ("berth", re.compile(r"\bberth\w*\b", re.I)),
+    ("launch", re.compile(r"\b(?:launch|liftoff)\w*\b", re.I)),
+    ("return", re.compile(r"\breturn\w*\b", re.I)),
+    ("arrive", re.compile(r"\barriv\w*\b", re.I)),
+    ("depart", re.compile(r"\bdepart\w*\b", re.I)),
+    ("spacewalk", re.compile(r"\bspacewalk\w*\b", re.I)),
+)
+
+
+def _iss_action(title: str) -> str | None:
+    return next((name for name, pattern in _ISS_ACTIONS if pattern.search(title)), None)
 
 
 def _xml_text(element: ET.Element | None) -> str:
@@ -176,6 +191,8 @@ def parse_nasa_orbital_rss(source: dict[str, Any], payload_text: str) -> list[di
         item["evidence"]["orbital_identity"] = {
             "event_type": story_type,
             "object_id": path.rstrip("/").rsplit("/", 1)[-1][:100],
+            "mission_name": "ISS" if story_type == "iss_update" else None,
+            "iss_action": _iss_action(title) if story_type == "iss_update" else None,
         }
         items.append(item)
     return items
@@ -224,7 +241,7 @@ def parse_esa_orbital_rss(source: dict[str, Any], payload_text: str) -> list[dic
             "Artemis" if "artemis" in title.casefold() else None
         )
         story_type = (
-            "esa_iss_update" if source_key == "esa_iss" or mission == "ISS" else
+            "iss_update" if mission == "ISS" else
             "esa_launch_update" if "launch" in title.casefold() else
             "esa_mission_update"
         )
@@ -249,6 +266,8 @@ def parse_esa_orbital_rss(source: dict[str, Any], payload_text: str) -> list[dic
             "event_type": story_type,
             "object_id": path.rstrip("/").rsplit("/", 1)[-1][:100],
             "mission_id": mission,
+            "mission_name": mission,
+            "iss_action": _iss_action(title) if story_type == "iss_update" else None,
         }
         items.append(item)
     return items

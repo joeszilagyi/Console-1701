@@ -16,8 +16,8 @@ FIXTURES = Path(__file__).parent / "fixtures/orbital"
 
 
 @pytest.mark.parametrize(("key", "file", "event_type"), [
-    ("esa_rss", "esa_top_news.rss", "esa_iss_update"),
-    ("esa_iss", "esa_human_spaceflight.rss", "esa_iss_update"),
+    ("esa_rss", "esa_top_news.rss", "iss_update"),
+    ("esa_iss", "esa_human_spaceflight.rss", "iss_update"),
 ])
 def test_esa_rss_parser_preserves_official_metadata_and_filters_routine(key, file, event_type):
     registry = get_orbital_source_registry_entry(key)
