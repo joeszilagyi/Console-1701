@@ -56,6 +56,8 @@ def orbital_independent_family(value: Any) -> str:
 
 def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     evidence = item.get("evidence") or {}
+    source = evidence.get("source") or {}
+    source_family = _normalized(source.get("source_family")).replace(" ", "_")
     identity = evidence.get("orbital_identity") or {}
     event_type = _normalized(identity.get("event_type")).replace(" ", "_")
     identifiers: set[str] = set()
@@ -71,12 +73,12 @@ def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         value = _normalized(identity.get(field))
         if value:
             identifiers.add(f"{field}:{value}")
-    cad = evidence.get("jpl_close_approach") or {}
+    cad = (evidence.get("jpl_close_approach") or {}) if source_family == "jpl_cneos" else {}
     designation = _normalized(cad.get("designation"))
     approach = _normalized(cad.get("approach_time_tdb"))
     if designation and approach:
         identifiers.add(f"cad:{designation}:{approach}")
-    fireball = evidence.get("jpl_fireball") or {}
+    fireball = (evidence.get("jpl_fireball") or {}) if source_family == "jpl_cneos" else {}
     fireball_at = _time(fireball.get("event_time_utc"))
     fireball_location_identity = None
     fireball_energy_identity = None
@@ -103,10 +105,12 @@ def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
             "reentry_object", "noaa_scale", "kp_window", "fireball_location", "iss_action",
         )
     }
-    swpc = evidence.get("swpc_alert") or {}
-    swpc_scale = evidence.get("swpc_noaa_scale") or {}
-    swpc_kp = evidence.get("swpc_k_index") or {}
-    launch_library = evidence.get("launch_library") or {}
+    swpc = (evidence.get("swpc_alert") or {}) if source_family == "swpc" else {}
+    swpc_scale = (evidence.get("swpc_noaa_scale") or {}) if source_family == "swpc" else {}
+    swpc_kp = (evidence.get("swpc_k_index") or {}) if source_family == "swpc" else {}
+    launch_library = (
+        evidence.get("launch_library") or {}
+    ) if source_family == "launch_library" else {}
     if swpc.get("noaa_scale"):
         context["noaa_scale"] = _normalized(swpc["noaa_scale"])
     if swpc_scale.get("scale"):
@@ -119,9 +123,9 @@ def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         "tokens": set(_TOKEN_RE.findall(str(item.get("title") or "").lower())) - _STOPWORDS,
         "published_at": _time(item.get("source_published_at") or item.get("first_seen_at")),
         "family": orbital_independent_family(
-            (evidence.get("source") or {}).get("source_family")
+            source_family
         ),
-        "source_key": str((evidence.get("source") or {}).get("source_key") or ""),
+        "source_key": str(source.get("source_key") or ""),
         "swpc_alert": {
             "kind": swpc.get("message_type"),
             "cancelled": swpc.get("cancelled") is True,

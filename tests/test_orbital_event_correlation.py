@@ -7,7 +7,7 @@ from textwrap import dedent
 
 from console1701.config import load_config
 from console1701.db import connect_db, json_loads
-from console1701.news.orbital_events import correlate_orbital_items
+from console1701.news.orbital_events import correlate_orbital_items, orbital_item_signature
 from console1701.news.parsers import parse_fixture_items
 from console1701.news.scanner import run_news_scan
 
@@ -61,6 +61,68 @@ def test_orbital_identity_is_type_scoped_time_bounded_and_not_corroboration():
         "event_type", "shared_event_id", "time_window",
     ]
     assert groups[0]["corroborated"] is False
+
+
+def test_orbital_parser_fields_require_matching_source_family():
+    cad = _item(1, "public_media", "Close approach", event_type="neo_close_approach")
+    cad["evidence"]["jpl_close_approach"] = {
+        "designation": "2026 AB", "approach_time_tdb": "2026-Oct-15 12:00",
+    }
+    assert not any(value.startswith("cad:") for value in orbital_item_signature(cad)[
+        "identifiers"
+    ])
+    cad["evidence"]["source"]["source_family"] = "jpl_cneos"
+    assert any(value.startswith("cad:") for value in orbital_item_signature(cad)[
+        "identifiers"
+    ])
+
+    fireball = _item(2, "public_media", "Fireball", event_type="fireball")
+    fireball["evidence"]["jpl_fireball"] = {
+        "event_time_utc": "2026-10-15T12:00:00Z", "latitude": 40,
+        "longitude": -120, "radiated_energy_1e10_joules": 1.2,
+        "estimated_impact_energy_kt": 0.4,
+    }
+    assert not any(value.startswith("fireball:") for value in orbital_item_signature(
+        fireball
+    )["identifiers"])
+    fireball["evidence"]["source"]["source_family"] = "jpl_cneos"
+    assert any(value.startswith("fireball:") for value in orbital_item_signature(
+        fireball
+    )["identifiers"])
+
+
+def test_orbital_swpc_and_launch_windows_require_matching_source_family():
+    row = _item(1, "public_media", "Space weather", event_type="space_weather_alert")
+    row["evidence"].update({
+        "swpc_alert": {"noaa_scale": "G3", "message_type": "Warning",
+                       "valid_from": "2026-10-15T12:00:00Z",
+                       "valid_until": "2026-10-15T18:00:00Z"},
+        "swpc_noaa_scale": {"scale": "G3", "period_kind": "current",
+                            "timestamp": "2026-10-15T13:00:00Z"},
+        "swpc_k_index": {"source_kind": "planetary", "observation_type": "observed",
+                         "observed_at": "2026-10-15T13:00:00Z"},
+        "launch_library": {"net": "2026-10-15T16:00:00Z",
+                           "event_time": "2026-10-15T17:00:00Z"},
+    })
+    signature = orbital_item_signature(row)
+    assert signature["swpc_alert"] == {}
+    assert signature["swpc_scale"] == {}
+    assert signature["swpc_kp"] == {}
+    assert signature["launch_at"] is None
+    assert signature["ll_event_at"] is None
+    assert "noaa_scale" not in signature["context"]
+
+    row["evidence"]["source"]["source_family"] = "swpc"
+    signature = orbital_item_signature(row)
+    assert signature["swpc_alert"]["kind"] == "Warning"
+    assert signature["swpc_scale"]["period_kind"] == "current"
+    assert signature["swpc_kp"]["source_kind"] == "planetary"
+    assert signature["launch_at"] is None
+    row["evidence"]["source"]["source_family"] = "launch_library"
+    signature = orbital_item_signature(row)
+    assert signature["swpc_alert"] == {}
+    assert signature["launch_at"] is not None
+    assert signature["ll_event_at"] is not None
 
 
 def test_parsed_fireballs_need_time_and_location_or_energy_identity():
