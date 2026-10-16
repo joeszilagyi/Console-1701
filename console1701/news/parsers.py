@@ -168,6 +168,10 @@ def parse_fixture_items(
         from console1701.news.celestrak_iss_parser import parse_celestrak_iss_gp_json
 
         return parse_celestrak_iss_gp_json(source, payload_text)
+    if parser_name == "mpc_mpec_json":
+        from console1701.news.mpc_mpec_parser import parse_mpc_mpec_json
+
+        return parse_mpc_mpec_json(source, payload_text)
     if parser_name == "nasa_orbital_rss":
         from console1701.news.orbital_rss import parse_nasa_orbital_rss
 
