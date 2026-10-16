@@ -1,0 +1,9 @@
+{
+  "signature": {"source": "NASA/JPL Scout API", "version": "1.3"},
+  "count": "3",
+  "data": [
+    {"objectName": "6K72D21", "nObs": 24, "lastRun": "2026-10-15 11:22", "neoScore": 100, "phaScore": 0, "caDist": "6.7"},
+    {"objectName": "8NIN002", "nObs": 3, "lastRun": "2026-10-13 06:02", "neoScore": 100, "phaScore": 7, "caDist": "0.1"},
+    {"objectName": "../unsafe", "nObs": 8, "lastRun": "2026-10-15 12:00", "neoScore": 100}
+  ]
+}
