@@ -2245,6 +2245,10 @@ variants. Official IAEA urgent nuclear-safety titles now receive only a modest c
 from parser evidence; routine IAEA situation updates receive none. Severity, public impact, and
 active-alert scores remain zero without separate source confirmation, as verified in direct and
 stored-cluster tests.
+Official WHO Disease Outbreak News items now receive an eight-point source-context factor from
+verified parser evidence. A WHO notice alone no longer supplies an inferred severity score;
+severity, public impact, and active-alert factors stay zero without specific source-backed
+evidence. Direct and stored offline tests cover that boundary.
 
 ### GLOBAL UI Disabled States
 

@@ -65,7 +65,16 @@ def test_who_don_fixture_scan_has_no_http_and_persists_evidence(tmp_path, monkey
         rows = conn.execute(
             "SELECT description, evidence_json FROM news_items WHERE scope = 'GLOBAL'"
         ).fetchall()
+        cluster = conn.execute(
+            "SELECT evidence_json FROM news_clusters WHERE scope = 'GLOBAL'"
+        ).fetchone()
     assert result["status"] == "complete"
     assert result["item_count"] == len(rows) == 1
     assert "Full article body" not in str(dict(rows[0]))
     assert json_loads(rows[0]["evidence_json"], {})["who_don"]["don_id"] == "2026-DON620"
+    assert cluster is not None
+    factors = json_loads(cluster["evidence_json"], {})["global_event"]["ranking"]["factors"]
+    assert factors["public_health_context_score"] == 8
+    assert factors["official_severity_score"] == 0
+    assert factors["public_impact_score"] == 0
+    assert factors["active_alert_score"] == 0

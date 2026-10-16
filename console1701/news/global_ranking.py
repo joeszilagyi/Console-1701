@@ -42,10 +42,14 @@ def _source_signals(member: dict[str, Any]) -> dict[str, Any]:
         and iaea.get("urgent_title_phrase") is True
         and iaea.get("severity_confirmed") is False
     )
+    who_don_context = bool(
+        source.get("source_family") == "who"
+        and source.get("official_status") == "official"
+        and (who.get("ranking") or {}).get("who_don") is True
+        and (who.get("ranking") or {}).get("official_public_health") is True
+    )
     level = str(gdacs.get("alert_level") or "").lower()
     official_severity = {"red": 50, "orange": 35, "green": 12}.get(level, 0)
-    if who:
-        official_severity = max(official_severity, 20)
     if reliefweb.get("status") in {"current", "alert"}:
         official_severity = max(official_severity, 20)
     magnitude = usgs.get("magnitude")
@@ -84,6 +88,7 @@ def _source_signals(member: dict[str, Any]) -> dict[str, Any]:
         "ingest": evidence.get("ingest") or {},
         "identity": identity,
         "iaea_urgent": iaea_urgent,
+        "who_don_context": who_don_context,
     }
 
 
@@ -148,6 +153,7 @@ def rank_global_event(
     )
     active_alert = 20 if any(signal["active_alert"] for signal in signals) else 0
     nuclear_safety_context = 8 if any(signal["iaea_urgent"] for signal in signals) else 0
+    public_health_context = 8 if any(signal["who_don_context"] for signal in signals) else 0
     humanitarian = max((signal["humanitarian"] for signal in signals), default=0)
     domestic_impact = min(20, 10 * len(impact_tags & {
         "us", "national", "regional", "local"
@@ -205,6 +211,7 @@ def rank_global_event(
         "geographic_reach_score": geography,
         "active_alert_score": active_alert,
         "nuclear_safety_context_score": nuclear_safety_context,
+        "public_health_context_score": public_health_context,
         "humanitarian_impact_score": humanitarian,
         "us_or_local_impact_score": domestic_impact,
         "source_priority_score": priority,

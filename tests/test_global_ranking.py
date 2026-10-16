@@ -127,6 +127,28 @@ def test_global_rank_does_not_infer_severity_from_headline_or_unverified_region(
     assert result["public_impact_basis"] == []
 
 
+def test_who_don_source_context_does_not_infer_outbreak_severity_or_impact():
+    item = _member(1, family="who")
+    item["evidence"].pop("gdacs")
+    item["evidence"]["who_don"] = {
+        "ranking": {"who_don": True, "official_public_health": True},
+    }
+    ranked = rank_global_event(
+        {**_group("who"), "countries": []}, [item], now=NOW
+    )
+    assert ranked["factors"]["public_health_context_score"] == 8
+    assert ranked["factors"]["official_severity_score"] == 0
+    assert ranked["factors"]["public_impact_score"] == 0
+    assert ranked["factors"]["active_alert_score"] == 0
+    assert ranked["public_impact_basis"] == []
+
+    unverified = deepcopy(item)
+    unverified["evidence"]["source"]["official_status"] = "candidate"
+    assert rank_global_event(
+        {**_group("who"), "countries": []}, [unverified], now=NOW
+    )["factors"]["public_health_context_score"] == 0
+
+
 def test_global_rank_humanitarian_age_priority_cluster_size_and_confidence():
     disaster = _member(1, family="reliefweb")
     disaster["evidence"].pop("gdacs")
