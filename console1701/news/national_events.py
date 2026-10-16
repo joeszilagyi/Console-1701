@@ -93,6 +93,7 @@ def national_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         "tokens": _tokens(item.get("title")) - _STOPWORDS,
         "published_at": _time(item.get("source_published_at") or item.get("first_seen_at")),
         "family": str(source.get("source_family") or "unknown").strip().casefold(),
+        "official": source.get("official_status") == "official",
         "source_key": str(source.get("source_key") or "").strip(),
         "article_url": str(item.get("canonical_url") or item.get("url") or "").strip(),
         "syndication_id": str(identity.get("syndication_id") or "").strip().casefold(),
@@ -120,7 +121,17 @@ def national_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[st
         right_ids = {value for value in right["identifiers"] if value.startswith(prefix)}
         if not left_ids & right_ids:
             return []
-    if left["identifiers"] & right["identifiers"]:
+    shared_ids = left["identifiers"] & right["identifiers"]
+    if shared_ids and all(value.startswith("cve:") for value in shared_ids):
+        if (left["family"] != "cisa" or right["family"] != "cisa"
+                or not left["official"] or not right["official"]
+                or left["agency"] != "cisa" or right["agency"] != "cisa"
+                or not left["published_at"] or not right["published_at"]
+                or abs((left["published_at"] - right["published_at"]).total_seconds())
+                > _WINDOW_HOURS * 3600):
+            return []
+        return ["shared_cve", "same_authority", "time_window"]
+    if shared_ids:
         return ["shared_official_event_id"]
     compatible_type = (
         not left["event_type"] or not right["event_type"]

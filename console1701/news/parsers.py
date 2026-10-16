@@ -2331,6 +2331,11 @@ def _parse_cisa_kev_json(
             "ranking": {"cyber_score": score},
             "body_stored": False,
         }
+        item["evidence"]["national_identity"] = {
+            "event_type": "cyber_vulnerability",
+            "agency": "CISA",
+            "official_event_ids": [f"cve:{cve.lower()}"],
+        }
         normalized.append(item)
     return normalized
 

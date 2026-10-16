@@ -1606,6 +1606,10 @@ API response fail parsing. NHC basin fixtures contribute official ATCF storm ide
 context without claiming U.S. watch geography. The currently verified fixture parsers supply only some dimensions,
 so source-specific coverage remains open. Offline duplicate-campaign, CPSC URL-revision and
 synthetic context tests pass.
+Official CISA advisory and KEV fixture rows can now join on a shared CVE only when both identify
+CISA, both are official CISA-family sources, and their publication dates are within 72 hours.
+The shared CVE does not count as independent corroboration. An older advisory with the same CVE
+stays a separate event; the offline scan verifies the stored pair and unrelated entries.
 
 Implement deterministic NATIONAL event matching by source family, time window, normalized title
 tokens, event type, agency, affected states, affected territories, FEMA region, NWS region, storm
