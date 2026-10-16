@@ -2435,6 +2435,10 @@ source IDs only from matching stored source families. A foreign-family field can
 shared-ID join or conflicting-ID veto; explicit parser-supplied `global_identity` identifiers
 remain available for cross-family matches. Direct regressions cover all five field groups and
 cross-family earthquake ID conflicts. Other parser-backed identity paths remain open.
+Shared article URLs and syndication IDs now require both publication timestamps inside the
+GLOBAL 96-hour window. The same URL or syndication marker across distant reports cannot bypass
+the event-time gate; nearby copies still dedupe without independent-source credit, and an exact
+source event ID can still join a long-lived revision. Direct regressions cover all three paths.
 
 ### GLOBAL Deterministic Ranking
 

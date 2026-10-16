@@ -168,6 +168,38 @@ def test_global_syndicated_article_does_not_create_independent_credit():
     ])] == [[1], [4]]
 
 
+def test_global_shared_url_and_syndication_require_nearby_publication():
+    article = _item(1, family="un_news")
+    old_copy = _item(2, family="pbs", published_at="2026-10-01T12:00:00+00:00")
+    nearby_copy = _item(3, family="pbs", published_at="2026-10-14T12:00:00+00:00")
+    for item in (article, old_copy, nearby_copy):
+        item["canonical_url"] = "https://publisher.example/cyclone-ana"
+    assert [group["item_ids"] for group in correlate_global_items([
+        article, old_copy
+    ])] == [[1], [2]]
+    assert correlate_global_items([article, nearby_copy])[0]["matches"][0][
+        "basis"
+    ] == ["same_article_url"]
+
+    for item in (article, old_copy, nearby_copy):
+        item["canonical_url"] = f"https://publisher.example/reprint/{item['id']}"
+        item["evidence"]["global_identity"] = {"syndication_id": "wire-ana"}
+    assert [group["item_ids"] for group in correlate_global_items([
+        article, old_copy
+    ])] == [[1], [2]]
+    assert correlate_global_items([article, nearby_copy])[0]["matches"][0][
+        "basis"
+    ] == ["same_syndication_id"]
+
+    alert = _item(4, family="gdacs")
+    old_alert = _item(5, family="gdacs", published_at="2026-10-01T12:00:00+00:00")
+    for item in (alert, old_alert):
+        item["evidence"]["gdacs"] = {"event_type": "TC", "event_id": "12345"}
+    assert correlate_global_items([alert, old_alert])[0]["matches"][0][
+        "basis"
+    ] == ["shared_event_id"]
+
+
 def test_global_correlation_uses_structured_ids_and_verified_region_context():
     storm_a = _item(1, family="nhc", country="")
     storm_b = _item(2, family="wmo", country="")
