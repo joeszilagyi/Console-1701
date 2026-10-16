@@ -1735,6 +1735,15 @@ Mismatched fields cannot create an official-ID join or geographic context; expli
 `national_identity` fields remain available for cross-family matches. Direct regressions cover
 each official-ID field group and the NWS/FAA geography fallback. Other source-specific
 dimension coverage remains open.
+The matcher now derives every admitted official ID from the matching parser evidence rather than
+copying arbitrary `national_identity.official_event_ids`. This adds exact CDC HAN notice IDs,
+BLS release IDs, NHC storm IDs and CISA advisory/node/single-CVE IDs to the previously qualified
+source set. An official source whose identity list contradicts its parser fields is isolated;
+a publisher citing an official ID cannot assert that authority's identity. Shared official-ID
+matches require both sources to be marked official. A parser-backed CDC fixture regression joins
+a same-ID revision, separates another notice despite a shared URL/title, and rejects a foreign
+publisher claim. Context fields remain available for bounded cross-family matching. Future
+official-ID namespaces need a source-specific parser mapping before admission.
 FSIS official recall numbers now also enter the family-qualified matcher. An original numeric
 recall and the exact `-EXP` expansion of that number join as one event even though the FSIS
 notices have distinct official IDs and URLs; the match records `same_fsis_recall_series` and

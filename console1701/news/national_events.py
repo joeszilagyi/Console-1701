@@ -11,6 +11,7 @@ _STOPWORDS = {"a", "an", "and", "at", "by", "for", "from", "in", "of", "on",
               "the", "to", "with", "after", "new", "update", "reports", "national"}
 _WINDOW_HOURS = 72
 _FSIS_RECALL_NUMBER = re.compile(r"\d{3}(?:-\d{3})?-\d{4}(?:-exp)?\Z")
+_CISA_NODE_ID = re.compile(r"/node/(\d{1,9})\Z")
 
 
 def _tokens(value: Any) -> set[str]:
@@ -50,6 +51,10 @@ def national_item_signature(item: dict[str, Any]) -> dict[str, Any]:
             ("fda_recall_notice", "fda"),
             ("faa_nas_status", "faa"),
             ("fsis_recall", "fsis"),
+            ("nhc_rss", "noaa_nhc"),
+            ("bls_release", "bls"),
+            ("cdc_han", "cdc"),
+            ("cisa_advisory", "cisa"),
         ) if family == expected_family
     }
     identifiers: set[str] = set()
@@ -63,13 +68,28 @@ def national_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         ("federal_register", "document_number", "fr_document"),
         ("govinfo_publication", "document_id", "govinfo_document"),
         ("fsis_recall", "recall_number", "fsis"),
+        ("nhc_rss", "storm_id", "nhc"),
+        ("bls_release", "entry_id", "bls"),
+        ("cdc_han", "notice_id", "cdc_han"),
     ):
         payload = source_fields.get(evidence_key) or {}
         if payload.get(field):
             identifiers.add(f"{namespace}:{str(payload[field]).strip().casefold()}")
-    for entry in identity.get("official_event_ids") or []:
-        if isinstance(entry, str) and ":" in entry and len(entry) <= 120:
-            identifiers.add(entry.casefold())
+    advisory = source_fields.get("cisa_advisory") or {}
+    node_id = _CISA_NODE_ID.fullmatch(str(advisory.get("feed_item_id") or ""))
+    if node_id:
+        identifiers.add(f"cisa_node:{node_id.group(1)}")
+    if advisory.get("advisory_id"):
+        identifiers.add(f"cisa_advisory:{str(advisory['advisory_id']).strip().casefold()}")
+    cves = advisory.get("cve_ids") or []
+    if isinstance(cves, list) and len(cves) == 1 and isinstance(cves[0], str):
+        identifiers.add(f"cve:{cves[0].strip().casefold()}")
+    raw_claims = identity.get("official_event_ids") or []
+    identity_id_conflict = bool(source_fields) and (
+        not isinstance(raw_claims, list)
+        or any(not isinstance(entry, str) or len(entry) > 120
+               or entry.strip().casefold() not in identifiers for entry in raw_claims)
+    )
     nws = source_fields.get("nws_alert") or {}
     geocode = nws.get("geocode") or {}
     zones = _values(geocode.get("UGC"))
@@ -87,6 +107,7 @@ def national_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     return {
         "id": int(item["id"]),
         "identifiers": identifiers,
+        "identity_id_conflict": identity_id_conflict,
         "event_type": str(identity.get("event_type") or (
             "earthquake" if source_fields.get("usgs_earthquake") else
             "weather_alert" if nws else
@@ -133,6 +154,8 @@ _CONTEXT_FIELDS = (
 
 
 def national_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str]:
+    if left["identity_id_conflict"] or right["identity_id_conflict"]:
+        return []
     # FSIS gives an expansion its own notice number and URL. The explicit
     # -EXP suffix links that notice to the numbered original recall only.
     fsis_original = left["fsis_recall_number"]
@@ -171,7 +194,7 @@ def national_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[st
                 > _WINDOW_HOURS * 3600):
             return []
         return ["shared_cve", "same_authority", "time_window"]
-    if shared_ids:
+    if shared_ids and left["official"] and right["official"]:
         return ["shared_official_event_id"]
     if fsis_series_match:
         return ["same_fsis_recall_series"]

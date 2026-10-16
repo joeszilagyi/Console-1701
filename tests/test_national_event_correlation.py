@@ -6,6 +6,8 @@ from textwrap import dedent
 
 from console1701.config import load_config
 from console1701.db import connect_db, json_loads
+from console1701.news.cdc_han import QUERY as CDC_QUERY
+from console1701.news.cdc_han import SEARCH_URL as CDC_SEARCH_URL
 from console1701.news.national_events import correlate_national_items, national_item_signature
 from console1701.news.parsers import parse_fixture_items
 from console1701.news.scanner import run_news_scan
@@ -18,7 +20,13 @@ def _item(item_id: int, family: str, *, state: str = "WA",
         "title": "Major regional airport ground stop disruption",
         "source_published_at": published, "first_seen_at": published,
         "evidence": {
-            "source": {"source_family": family, "source_key": f"{family}_{item_id}"},
+            "source": {
+                "source_family": family, "source_key": f"{family}_{item_id}",
+                "official_status": "official" if family in {
+                    "nws", "usgs", "nhtsa", "cpsc", "fema", "cisa", "faa",
+                    "cdc", "bls", "noaa_nhc",
+                } else "publisher",
+            },
             "national_identity": {
                 "event_type": "aviation_disruption",
                 "affected_states": [state],
@@ -79,6 +87,11 @@ def test_national_source_ids_require_matching_source_family():
          "fr_document:2026-00001"),
         ("govinfo_publication", "govinfo", {"document_id": "BILLS-119hr1enr"},
          "govinfo_document:bills-119hr1enr"),
+        ("cdc_han", "cdc", {"notice_id": "CDCHAN-00533"},
+         "cdc_han:cdchan-00533"),
+        ("bls_release", "bls", {"entry_id": "https://www.bls.gov/id/2026"},
+         "bls:https://www.bls.gov/id/2026"),
+        ("nhc_rss", "noaa_nhc", {"storm_id": "EP212026"}, "nhc:ep212026"),
     )
     for field, family, value, identifier in cases:
         first = _item(1, "public_media")
@@ -126,16 +139,22 @@ def test_cpsc_official_recall_id_correlates_url_revision_without_impact_inferenc
     }
     parsed = parse_fixture_items(source, fixture.read_text())
     first = {**parsed[0], "id": 1}
-    first["evidence"]["source"] = {"source_family": "cpsc", "source_key": "cpsc_a"}
+    first["evidence"]["source"] = {
+        "source_family": "cpsc", "source_key": "cpsc_a", "official_status": "official"
+    }
     revision = deepcopy(first)
     revision["id"] = 2
     revision["url"] = revision["canonical_url"] = (
         "https://www.cpsc.gov/Recalls/2026/updated-recall-page"
     )
-    revision["evidence"]["source"] = {"source_family": "cpsc", "source_key": "cpsc_b"}
+    revision["evidence"]["source"] = {
+        "source_family": "cpsc", "source_key": "cpsc_b", "official_status": "official"
+    }
     revision["evidence"].pop("national_identity")  # Earlier stored rows lack this contract.
     other = {**parsed[1], "id": 3}
-    other["evidence"]["source"] = {"source_family": "cpsc", "source_key": "cpsc_c"}
+    other["evidence"]["source"] = {
+        "source_family": "cpsc", "source_key": "cpsc_c", "official_status": "official"
+    }
     groups = correlate_national_items([first, revision, other])
     assert [group["item_ids"] for group in groups] == [[1, 2], [3]]
     assert groups[0]["matches"][0]["basis"] == ["shared_official_event_id"]
@@ -155,19 +174,63 @@ def test_openfema_declaration_id_survives_missing_identity_and_url_revision():
     }
     parsed = parse_fixture_items(source, fixture.read_text())
     first = {**parsed[0], "id": 1}
-    first["evidence"]["source"] = {"source_family": "fema", "source_key": "fema_a"}
+    first["evidence"]["source"] = {
+        "source_family": "fema", "source_key": "fema_a", "official_status": "official"
+    }
     revision = deepcopy(first)
     revision["id"] = 2
     revision["url"] = revision["canonical_url"] = "https://www.fema.gov/disaster/4943/revision"
-    revision["evidence"]["source"] = {"source_family": "fema", "source_key": "fema_b"}
+    revision["evidence"]["source"] = {
+        "source_family": "fema", "source_key": "fema_b", "official_status": "official"
+    }
     revision["evidence"].pop("national_identity")
     other = {**parsed[1], "id": 3}
-    other["evidence"]["source"] = {"source_family": "fema", "source_key": "fema_c"}
+    other["evidence"]["source"] = {
+        "source_family": "fema", "source_key": "fema_c", "official_status": "official"
+    }
     groups = correlate_national_items([first, revision, other])
     assert [group["item_ids"] for group in groups] == [[1, 2], [3]]
     assert groups[0]["matches"][0]["basis"] == ["shared_official_event_id"]
     assert groups[0]["identifiers"] == ["fema:dr-4943-ks"]
     assert groups[0]["corroborated"] is False
+
+
+def test_cdc_han_notice_identity_requires_its_parser_family_and_official_source():
+    fixture = Path(__file__).parent / "fixtures/national/cdc_han_search_2026_10_15.json"
+    source = {
+        "id": "cdc_han_notices", "scope": "NATIONAL", "kind": "api_json",
+        "parser": "cdc_han_search_fixture", "source_family": "cdc",
+        "official_status": "official", "official_url": CDC_SEARCH_URL,
+        "url": fixture.resolve().as_uri(), "query_contract": CDC_QUERY,
+    }
+    parsed = parse_fixture_items(source, fixture.read_text())
+    first = {**parsed[0], "id": 1}
+    first["evidence"]["source"] = {
+        "source_family": "cdc", "source_key": "cdc_han_notices",
+        "official_status": "official",
+    }
+    revision = deepcopy(first)
+    revision["id"] = 2
+    revision["title"] = "Updated notice title from the same CDC identifier"
+    other = {**parsed[1], "id": 3}
+    other["evidence"]["source"] = first["evidence"]["source"]
+    other["canonical_url"] = first["canonical_url"]
+    other["title"] = first["title"]
+    groups = correlate_national_items([first, revision, other])
+    assert [group["item_ids"] for group in groups] == [[1, 2], [3]]
+    assert groups[0]["matches"][0]["basis"] == ["shared_official_event_id"]
+    assert groups[0]["corroborated"] is False
+
+    foreign = deepcopy(revision)
+    foreign["evidence"]["source"] = {
+        "source_family": "public_media", "source_key": "publisher",
+        "official_status": "publisher",
+    }
+    foreign["canonical_url"] = "https://publisher.example/notice-coverage"
+    assert national_item_signature(foreign)["identifiers"] == set()
+    assert [group["item_ids"] for group in correlate_national_items([first, foreign])] == [
+        [1], [2]
+    ]
 
 
 def test_national_syndicated_article_does_not_count_as_independent_confirmation():
@@ -226,9 +289,11 @@ def test_national_scan_persists_correlation_without_http(tmp_path, monkeypatch):
               enabled: true
               sources:
                 - {{id: nhtsa_a, name: NHTSA A, kind: api_json, parser: nhtsa_recalls_json,
-                   source_family: nhtsa, enabled: true, url: "file://{fixture}"}}
+                   source_family: nhtsa, official_status: official,
+                   enabled: true, url: "file://{fixture}"}}
                 - {{id: nhtsa_b, name: NHTSA B, kind: api_json, parser: nhtsa_recalls_json,
-                   source_family: nhtsa, enabled: true, url: "file://{fixture}"}}
+                   source_family: nhtsa, official_status: official,
+                   enabled: true, url: "file://{fixture}"}}
     """).strip() + "\n")
     assert run_news_scan(config_path)["item_count"] >= 2
     config = load_config(config_path)
