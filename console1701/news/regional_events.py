@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from datetime import UTC, datetime
 from typing import Any
+from zoneinfo import ZoneInfo
 
 _WORDS = re.compile(r"[a-z0-9]+")
 _STOP = {"a", "an", "and", "at", "by", "for", "from", "in", "of", "on",
@@ -15,6 +16,7 @@ _GEO_FIELDS = (
     "aqi_station", "public_health_jurisdiction",
 )
 MATCH_WINDOW_HOURS = 48
+_WASHINGTON_ZONE = ZoneInfo("America/Los_Angeles")
 
 
 def _value(value: Any) -> str:
@@ -68,8 +70,12 @@ def regional_item_signature(item: dict[str, Any]) -> dict[str, Any]:
             fire_start_date = (evidence.get("nwcc_large_fire") or {}).get("start_date")
         elif source.get("source_key") == "nifc_wfigs_current_wa":
             discovery = (evidence.get("nifc_wfigs") or {}).get("discovery_at")
-            if isinstance(discovery, str) and len(discovery) >= 10:
-                fire_start_date = discovery[:10]
+            if isinstance(discovery, str) and discovery.endswith(("+00:00", "Z")):
+                observed = _time(discovery)
+                if observed:
+                    fire_start_date = observed.astimezone(
+                        _WASHINGTON_ZONE
+                    ).date().isoformat()
     return {
         "id": int(item["id"]),
         "event_key": str(event.get("event_key") or ""),
@@ -104,7 +110,7 @@ def regional_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[st
                 and left["fields"]["county"] == right["fields"]["county"]
                 and left["fire_start_date"]
                 and left["fire_start_date"] == right["fire_start_date"]):
-            return ["event_type", "fire_incident", "county", "source_start_date",
+            return ["event_type", "fire_incident", "county", "pacific_discovery_day",
                     "independent_family"]
         return []
     if (left["event_type"] == "wildfire_update"

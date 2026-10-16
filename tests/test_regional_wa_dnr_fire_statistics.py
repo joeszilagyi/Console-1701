@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from copy import deepcopy
+from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
 
@@ -42,6 +43,7 @@ def test_dnr_statistics_preserve_identity_county_and_unknown_active_state():
     assert data["reported_acres"] == 9584
     assert data["discovery_date"] == "2026-09-29"
     assert data["date_precision"] == "day"
+    assert data["source_date_zone"] == "America/Los_Angeles"
     assert data["lifecycle_status"] == "unknown"
     assert data["active_fire_claimed"] is False
     assert data["public_impact_inferred"] is False
@@ -52,6 +54,9 @@ def test_dnr_statistics_preserve_identity_county_and_unknown_active_state():
     assert reports["COLWASH"]["evidence"]["wa_dnr_fire_statistics"][
         "fire_out_date"
     ] == "2026-08-28"
+    assert reports["PEARL HILL"]["evidence"]["wa_dnr_fire_statistics"][
+        "control_date"
+    ] == "2026-08-01"  # 2026-08-02 02:08 UTC is August 1 in Washington.
     assert {reports[name]["evidence"]["wa_dnr_fire_statistics"]["discovery_date"]
             for name in ("SISI", "LITTLE GIANT", "SINLAHEKIN")} == {
         "2026-08-14", "2026-07-15", "2026-07-26",
@@ -61,6 +66,19 @@ def test_dnr_statistics_preserve_identity_county_and_unknown_active_state():
     assert contract["geography"]["county"] == "Walla Walla"
     assert contract["event_type"] == "wildfire_update"
     assert "active state" in contract["public_impact_basis"]
+
+
+def test_dnr_source_date_uses_pacific_day_at_utc_boundary():
+    payload = json.loads(FIXTURE.read_text())
+    payload["features"] = payload["features"][:1]
+    payload["features"][0]["attributes"]["DSCVR_DT"] = int(
+        datetime.fromisoformat("2026-10-16T06:30:00+00:00").timestamp() * 1000
+    )
+    item, = parse_fixture_items(_source(), json.dumps(payload))
+    assert item["evidence"]["wa_dnr_fire_statistics"]["discovery_date"] == "2026-10-15"
+    assert item["evidence"]["wa_dnr_fire_statistics"]["source_date_zone"] == (
+        "America/Los_Angeles"
+    )
 
 
 def test_dnr_smaller_fire_query_fixture_keeps_its_exact_source_contract():

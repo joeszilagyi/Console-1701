@@ -123,7 +123,7 @@ def test_wfigs_dnr_matches_only_name_county_and_exact_discovery_day():
     group = correlate_regional_items([left, right])[0]
     assert group["item_ids"] == [1, 2]
     assert group["matches"][0]["basis"] == [
-        "event_type", "fire_incident", "county", "source_start_date",
+        "event_type", "fire_incident", "county", "pacific_discovery_day",
         "independent_family",
     ]
     assert group["corroborated"] is True
@@ -141,9 +141,7 @@ def test_wfigs_dnr_matches_only_name_county_and_exact_discovery_day():
     ])] == [[1], [2]]
     little = _correlation_row(wfigs_by_name["little giant"], wfigs_source, 3)
     dnr_little = _correlation_row(dnr_by_name["little giant"], dnr_source, 4)
-    assert [group["item_ids"] for group in correlate_regional_items([
-        little, dnr_little
-    ])] == [[3], [4]]  # Source dates differ by one UTC day.
+    assert correlate_regional_items([little, dnr_little])[0]["item_ids"] == [3, 4]
 
 
 def test_wfigs_dnr_offline_scan_persists_only_verified_cross_family_pairs(
@@ -185,14 +183,14 @@ def test_wfigs_dnr_offline_scan_persists_only_verified_cross_family_pairs(
     by_id = {row["id"]: json_loads(row["evidence_json"], {}) for row in items}
     events = [json_loads(row["evidence_json"], {}) for row in clusters]
     paired = [event for event in events if len(event["item_ids"]) == 2]
-    assert len(paired) == 9
-    assert len(events) == 37
+    assert len(paired) == 11
+    assert len(events) == 35
     names = set()
     for event in paired:
         assert set(event["families"]) == {"wa_dnr", "wildfire_federal"}
         assert event["corroborated"] is True
         assert event["correlation"]["matches"][0]["basis"] == [
-            "event_type", "fire_incident", "county", "source_start_date",
+            "event_type", "fire_incident", "county", "pacific_discovery_day",
             "independent_family",
         ]
         dnr = next(by_id[item_id]["wa_dnr_fire_statistics"] for item_id in event["item_ids"]
@@ -203,8 +201,8 @@ def test_wfigs_dnr_offline_scan_persists_only_verified_cross_family_pairs(
             assert factors["regional_active_alert_bonus"] == 0
             assert factors["regional_public_impact_bonus"] == 0
     assert "SISI" in names
-    assert "LITTLE GIANT" not in names
-    assert "THREE QUEENS" not in names
+    assert "LITTLE GIANT" in names
+    assert "THREE QUEENS" in names
 
 
 def test_wfigs_imsr_nwcc_scan_dedupes_same_fire_without_active_claim(tmp_path, monkeypatch):

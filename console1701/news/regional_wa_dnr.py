@@ -8,6 +8,7 @@ import re
 from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlencode
+from zoneinfo import ZoneInfo
 
 from console1701.news.normalize import bounded_text
 from console1701.news.parsers import NewsParserError, PayloadTooLargeError, _normalize_item
@@ -40,6 +41,7 @@ _FIELDS = {
     "FIREEVNT_CLASS_LABEL_NM", "START_JURISDICTION_AGENCY_NM",
 }
 _COUNTY = re.compile(r"[A-Z][A-Z ]{1,29}\Z")
+_SOURCE_DATE_ZONE = ZoneInfo("America/Los_Angeles")
 
 
 def _date(value: Any, *, required: bool = False) -> str | None:
@@ -47,7 +49,9 @@ def _date(value: Any, *, required: bool = False) -> str | None:
         return None
     if type(value) is not int or not 1_577_836_800_000 <= value <= 4_102_444_800_000:
         raise NewsParserError("WA DNR fire statistics contain an invalid date")
-    return datetime.fromtimestamp(value / 1000, tz=UTC).date().isoformat()
+    return datetime.fromtimestamp(value / 1000, tz=UTC).astimezone(
+        _SOURCE_DATE_ZONE
+    ).date().isoformat()
 
 
 def parse_wa_dnr_fire_statistics_fixture(
@@ -136,6 +140,7 @@ def parse_wa_dnr_fire_statistics_fixture(
             "reported_acres": float(acres),
             "discovery_date": discovered,
             "date_precision": "day",
+            "source_date_zone": "America/Los_Angeles",
             "control_date": controlled,
             "fire_out_date": out,
             "lifecycle_status": (

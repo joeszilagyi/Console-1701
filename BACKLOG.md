@@ -1053,13 +1053,15 @@ The observed NIFC WFIGS fixture supplies the same `UniqueFireIdentifier` as two 
 the normalized NWCC keys. A three-parser offline scan now deduplicates Sisi and Little Giant
 across the WFIGS, IMSR and NWCC records. These are all interagency data views in one
 `wildfire_federal` family; the match does not add independent corroboration or active-fire credit.
-The WFIGS and WA DNR observed fixtures also have nine independent-family incident pairs with
-the same source-reported fire name, county and discovery day. A dedicated match rule joins only
-those three-field agreements; mismatched county or day vetoes the pair before broad context
-matching. Little Giant and Three Queens are deliberately separate across WFIGS/DNR because their
-reported UTC discovery days differ by one, even though other fire views share their names. An
-offline two-parser scan stores nine corroborated identity pairs without granting active-alert or
-public-impact score. This corroborates identity, not current activity or effects on people.
+The WFIGS and WA DNR observed fixtures have eleven independent-family incident pairs with the
+same source-reported fire name, county and Washington discovery day. Their ArcGIS layer metadata
+declares WFIGS dates UTC and DNR dates `America/Los_Angeles`. DNR date fields now use the source
+zone; WFIGS instants are converted to the Washington day for this pairing. This resolves the
+earlier one-UTC-day Little Giant and Three Queens mismatches. A dedicated rule joins only exact
+name/county/Pacific-day agreements; mismatched county or day vetoes the pair before broad
+context matching. An offline two-parser scan stores eleven corroborated identity pairs without
+active-alert or public-impact score. This corroborates identity, not current activity or effects
+on people.
 
 ### REGIONAL Deterministic Ranking
 
