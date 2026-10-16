@@ -14,6 +14,8 @@ from console1701.config import (
     REGIONAL_SOURCE_CLASSES,
     REGIONAL_VERIFICATION_STATUSES,
 )
+from console1701.news.regional_nifc_wfigs import DATASET_URL as NIFC_WFIGS_DATASET_URL
+from console1701.news.regional_nifc_wfigs import QUERY_URL as NIFC_WFIGS_QUERY_URL
 from console1701.news.regional_wa_dnr import (
     LAYER_URL as WA_DNR_FIRE_STATISTICS_LAYER_URL,
 )
@@ -197,6 +199,31 @@ REGIONAL_SOURCE_REGISTRY: tuple[RegionalSourceRegistryEntry, ...] = (
         future_phase="R7",
         expected_access_kind="observed bounded ArcGIS hourly AQI JSON; fixture only",
         why_it_matters="Official Seattle station AQI without storing street addresses.",
+    ),
+    RegionalSourceRegistryEntry(
+        source_key="nifc_wfigs_current_wa",
+        source_name="NIFC WFIGS current/recent Washington wildfire incidents",
+        source_family="wildfire_federal",
+        source_class="official_wildfire",
+        adapter="arcgis_feature_service_candidate",
+        kind="api_json",
+        raw_url=NIFC_WFIGS_QUERY_URL,
+        homepage_url=NIFC_WFIGS_DATASET_URL,
+        parser="nifc_wfigs_fixture",
+        priority=79,
+        interval_minutes=1440,
+        official_status="official",
+        privacy_risk="low",
+        policy_risk="low",
+        parser_risk="medium",
+        retention_sensitivity="medium",
+        verification_status="verified",
+        future_phase="R7",
+        expected_access_kind="bounded NIFC WFIGS current/recent incident JSON; fixture only",
+        why_it_matters=(
+            "Official Washington wildfire identity, county, size and modification time "
+            "without treating ActiveFireCandidate as active status."
+        ),
     ),
     RegionalSourceRegistryEntry(
         source_key="nifc_imsr_current_wa",

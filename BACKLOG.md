@@ -681,8 +681,8 @@ risk, privacy risk, retention sensitivity, verification status, and future phase
 enum values and keep all REGIONAL sources disabled until explicitly configured.
 
 The REGIONAL registry now contains all 224 design-table entries plus six pre-existing reviewed
-operational candidates, one Pierce Road Alert RSS candidate, and NIFC current IMSR, NWCC
-large-fire Washington, and WA DNR fire-statistics fixture candidates. All 234 rows are disabled
+operational candidates, one Pierce Road Alert RSS candidate, and NIFC current IMSR, NIFC WFIGS,
+NWCC large-fire Washington, and WA DNR fire-statistics fixture candidates. All 235 rows are disabled
 by default. At load time it validates unique
 keys, classes/adapters/kinds, official and verification status, risks, HTTPS URLs, priority,
 interval, and future phase. The config layer inherits metadata, and SQLite sync persists the full
@@ -719,7 +719,7 @@ retention purge evidence. Use JSON-heavy columns and indexes for latest-by-scope
 source health, source family, geographic filters, and `expires_at` purge. Do not store full article
 bodies by default.
 
-The shared schema persists all 234 REGIONAL registry rows, configured sources, fetch runs, items,
+The shared schema persists all 235 REGIONAL registry rows, configured sources, fetch runs, items,
 source health, and scoped `news_clusters` with member, family, geography, confidence, and ranking
 evidence. `news_item_facets` now indexes source-provided REGIONAL zone, route, facility, county, and
 region labels, plus event type and source family. It excludes free-text USGS place labels from
@@ -782,6 +782,16 @@ control/out dates. The layer has no positive active-status or update-time field;
 does not make active-fire, evacuation, or public-impact claims. Its live path remains blocked,
 and the existing `wa_dnr_current_wildfire` reference source remains unsupported. See
 `docs/project/REGIONAL_WA_DNR_WILDFIRE_ENDPOINT_REVIEW.md`.
+
+NIFC's separate WFIGS Current Wildland Fire Incident Locations service now has an observed,
+bounded Washington wildfire fixture: 15 records changed since 2026-10-01, at least 1,000 acres,
+and selected by the source's `ActiveFireCandidate=1` flag. The parser preserves official
+`UniqueFireIdentifier`, IRWIN ID, county, acreage, containment and modification time. Several
+rows are 100% contained despite that flag, so it explicitly withholds a current active-fire or
+public-impact claim. The source remains fixture-only; a static date window and unreviewed live
+volume cannot become an opt-in request. WFIGS is NIFC data, not a substitute for the still
+unverified WA DNR active-incident layer. See
+`docs/project/REGIONAL_NIFC_WFIGS_CURRENT_FIXTURE_VERIFICATION.md`.
 
 ### NWS Alert Parser For Washington
 
@@ -1039,6 +1049,10 @@ time are more than 48 hours apart. The offline two-parser scan stores three pair
 and leaves unmatched records separate; a changed start date vetoes the identity. This is
 cross-source corroboration of incident identity, not active status, evacuation, or public impact.
 Other partner-family correlation dimensions remain open.
+The observed NIFC WFIGS fixture supplies the same `UniqueFireIdentifier` as two IMSR records and
+the normalized NWCC keys. A three-parser offline scan now deduplicates Sisi and Little Giant
+across the WFIGS, IMSR and NWCC records. These are all interagency data views in one
+`wildfire_federal` family; the match does not add independent corroboration or active-fire credit.
 
 ### REGIONAL Deterministic Ranking
 
