@@ -25,16 +25,52 @@ def _bounded_int(value: Any, maximum: int) -> int:
 def _member_signals(member: dict[str, Any], now: datetime | None) -> dict[str, Any]:
     evidence = member.get("evidence") or {}
     identity = evidence.get("national_identity") or {}
-    nws = evidence.get("nws_alert") or {}
-    usgs = evidence.get("usgs_earthquake") or {}
-    nhtsa = evidence.get("nhtsa_recall") or {}
-    cisa = evidence.get("cisa_kev") or {}
-    advisory = evidence.get("cisa_advisory") or {}
-    faa = evidence.get("faa_nas_status") or {}
-    federal_register = evidence.get("federal_register") or {}
-    govinfo = evidence.get("govinfo_publication") or {}
     source = evidence.get("source") or {}
+    family = str(source.get("source_family") or "").casefold()
+    nws = (evidence.get("nws_alert") or {}) if family == "nws" else {}
+    usgs = (evidence.get("usgs_earthquake") or {}) if family == "usgs" else {}
+    nhtsa = (evidence.get("nhtsa_recall") or {}) if family == "nhtsa" else {}
+    cpsc = (evidence.get("cpsc_recall") or {}) if family == "cpsc" else {}
+    cisa = (evidence.get("cisa_kev") or {}) if family == "cisa" else {}
+    advisory = (evidence.get("cisa_advisory") or {}) if family == "cisa" else {}
+    faa = (evidence.get("faa_nas_status") or {}) if family == "faa" else {}
+    federal_register = (
+        (evidence.get("federal_register") or {}) if family == "federal_register" else {}
+    )
+    nhc = (evidence.get("nhc_rss") or {}) if family == "noaa_nhc" else {}
+    fsis = (evidence.get("fsis_recall") or {}) if family == "fsis" else {}
+    fema = (evidence.get("openfema_declaration") or {}) if family == "fema" else {}
+    govinfo = evidence.get("govinfo_publication") or {}
     usgs_rank = usgs.get("ranking") or {}
+    nhc_type = str(nhc.get("storm_type") or "").casefold()
+    fsis_class_i = (fsis.get("current_notice") is True
+                    and fsis.get("recall_classification") == "Class I")
+    fsis_public_alert = (fsis.get("current_notice") is True
+                         and fsis.get("recall_type") == "Public Health Alert")
+    cpsc_risk = set(cpsc.get("risk_indicators") or [])
+    impact_basis: list[str] = []
+    if nws.get("instruction"):
+        impact_basis.append("NWS official instruction")
+    if nhtsa:
+        impact_basis.append("NHTSA recall fields")
+    if faa.get("events"):
+        impact_basis.append("FAA NAS event metadata")
+    if usgs.get("tsunami") is True or _bounded_int(
+        usgs_rank.get("national_felt_impact_score"), 25
+    ):
+        impact_basis.append("USGS earthquake fields")
+    if _bounded_int((federal_register.get("ranking") or {}).get("public_impact_score"), 25):
+        impact_basis.append("Federal Register configured impact filter")
+    if cpsc:
+        impact_basis.append("CPSC source-stated recall risk")
+    if cisa:
+        impact_basis.append("CISA known-exploited vulnerability")
+    if advisory.get("directive_flag") is True or advisory.get("kind") == "cyber_alert":
+        impact_basis.append("CISA official alert or directive")
+    if fsis_class_i or fsis_public_alert:
+        impact_basis.append("FSIS current high-risk recall or public health alert")
+    if fema.get("recent_declaration_at_refresh") is True:
+        impact_basis.append("FEMA recent declaration")
     severity = max(
         {"Extreme": 45, "Severe": 32, "Moderate": 15, "Minor": 4}.get(
             str(nws.get("severity") or "").title(), 0
@@ -45,7 +81,8 @@ def _member_signals(member: dict[str, Any], now: datetime | None) -> dict[str, A
         _bounded_int((cisa.get("ranking") or {}).get("cyber_score"), 22),
         _bounded_int((advisory.get("ranking") or {}).get("cyber_score"), 35),
         _bounded_int((faa.get("ranking") or {}).get("aviation_impact_score"), 45),
-        _bounded_int(identity.get("official_severity_score"), 45),
+        25 if nhc_type == "hurricane" else 15 if nhc_type == "tropical storm" else 0,
+        25 if fsis_class_i else 0,
     )
     impact = max(
         30 if nhtsa.get("park_it") or nhtsa.get("park_outside") else
@@ -55,7 +92,13 @@ def _member_signals(member: dict[str, Any], now: datetime | None) -> dict[str, A
         15 if usgs.get("tsunami") is True else 0,
         _bounded_int(usgs_rank.get("national_felt_impact_score"), 25),
         _bounded_int((federal_register.get("ranking") or {}).get("public_impact_score"), 25),
-        _bounded_int(identity.get("public_impact_score"), 35),
+        25 if "death_risk" in cpsc_risk else 18 if "injury_risk" in cpsc_risk else
+        10 if cpsc else 0,
+        12 if cisa else 0,
+        25 if advisory.get("directive_flag") is True
+        or advisory.get("kind") == "cyber_alert" else 0,
+        25 if fsis_class_i or fsis_public_alert else 0,
+        22 if fema.get("recent_declaration_at_refresh") is True else 0,
     )
     alert_active = False
     expiration = _time(nws.get("expires") or nws.get("ends"))
@@ -71,6 +114,11 @@ def _member_signals(member: dict[str, Any], now: datetime | None) -> dict[str, A
         "identity": identity,
         "severity": severity,
         "public_impact": impact,
+        "public_impact_basis": impact_basis,
+        "local_regional_impact": min(20, max(
+            _bounded_int(usgs_rank.get("magnitude_weight"), 40) // 2,
+            _bounded_int(usgs_rank.get("felt_weight"), 10) * 2,
+        )) if usgs else 0,
         "active_alert": alert_active,
         "publication_only": bool(govinfo) and not bool(
             nws or nhtsa or faa or cisa or advisory
@@ -141,8 +189,7 @@ def rank_national_event(
         ), default=0) // 10),
         "cluster_size_score": min(8, len(distinct_article_keys)),
         "local_regional_impact_score": min(20, max((
-            _bounded_int(identity.get("local_regional_impact_score"), 20)
-            for identity in identities
+            signal["local_regional_impact"] for signal in signals
         ), default=0)),
         "duplicate_family_penalty": min(30, 3 * sum(
             max(0, count - 1) for count in family_counts.values()
@@ -181,16 +228,7 @@ def rank_national_event(
         "reasons": reasons,
         "age_hours": age_hours,
         "span_hours": span_hours,
-        "public_impact_basis": [name for name, present in (
-            ("NWS official instruction", any((m.get("evidence") or {}).get(
-                "nws_alert", {}).get("instruction") for m in members)),
-            ("NHTSA recall fields", any((m.get("evidence") or {}).get(
-                "nhtsa_recall") for m in members)),
-            ("FAA NAS active event metadata", any((m.get("evidence") or {}).get(
-                "faa_nas_status", {}).get("events") for m in members)),
-            ("Federal Register configured impact filter", any((m.get("evidence") or {}).get(
-                "federal_register") for m in members)),
-            ("explicit national impact evidence", any(identity.get(
-                "public_impact_score") for identity in identities)),
-        ) if present],
+        "public_impact_basis": list(dict.fromkeys(
+            basis for signal in signals for basis in signal["public_impact_basis"]
+        )),
     }

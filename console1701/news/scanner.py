@@ -2205,13 +2205,6 @@ def _upsert_item(
         identity = dict(item["evidence"].get("national_identity") or {})
         if item["evidence"]["national_policy"]["suppressed"]:
             identity["public_value_class"] = "routine"
-        policy_impact = item["evidence"]["national_policy"]["official_impact_score"]
-        if policy_impact:
-            try:
-                current_impact = int(identity.get("public_impact_score") or 0)
-            except (TypeError, ValueError):
-                current_impact = 0
-            identity["public_impact_score"] = max(0, current_impact, policy_impact)
         item["evidence"]["national_identity"] = identity
     if str(source.get("scope") or "").upper() == "GLOBAL":
         item = classify_global_item(source, item)

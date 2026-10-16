@@ -127,6 +127,13 @@ news:
         assert first["ingest"]["fixture_only"] is True
         assert first["openfema_declaration"]["last_refresh"].startswith("2026-10-14")
         assert items[0]["source_published_at"].startswith("2026-09-01")
+        assert first["national_event"]["ranking"]["factors"][
+            "public_impact_score"
+        ] == 0
+        recent = json_loads(items[1]["evidence_json"], {})
+        assert recent["national_event"]["ranking"]["factors"][
+            "public_impact_score"
+        ] == 22
         clusters = conn.execute(
             "SELECT evidence_json FROM news_clusters WHERE scope='NATIONAL'"
         ).fetchall()

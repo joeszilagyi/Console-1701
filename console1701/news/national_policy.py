@@ -29,58 +29,69 @@ def classify_national_item(source: dict[str, Any], item: dict[str, Any]) -> dict
     title = str(item.get("title") or "")
     family = str(source.get("source_family") or "").strip().casefold()
     official_identity = source.get("official_status") == "official"
+    nws = (evidence.get("nws_alert") or {}) if family == "nws" else {}
+    recall = (evidence.get("nhtsa_recall") or {}) if family == "nhtsa" else {}
+    cpsc = (evidence.get("cpsc_recall") or {}) if family == "cpsc" else {}
+    kev = (evidence.get("cisa_kev") or {}) if family == "cisa" else {}
+    advisory = (evidence.get("cisa_advisory") or {}) if family == "cisa" else {}
+    faa = (evidence.get("faa_nas_status") or {}) if family == "faa" else {}
+    federal_register = (
+        (evidence.get("federal_register") or {}) if family == "federal_register" else {}
+    )
+    fsis = (evidence.get("fsis_recall") or {}) if family == "fsis" else {}
+    fema = (evidence.get("openfema_declaration") or {}) if family == "fema" else {}
     reasons: list[str] = []
     elevated = False
     impact_score = 0
-    if (nws := evidence.get("nws_alert") or {}):
+    if nws:
         if nws.get("status") == "Actual" and str(nws.get("severity") or "") in {
             "Extreme", "Severe"
         }:
             elevated = True
             impact_score = 25 if nws.get("instruction") else 18
             reasons.append("official severe NWS alert")
-    if (recall := evidence.get("nhtsa_recall") or {}):
+    if recall:
         elevated = elevated or bool(recall.get("park_it") or recall.get("park_outside"))
         impact_score = max(impact_score, 30 if elevated else 15)
         reasons.append("official NHTSA safety recall")
-    if (cpsc := evidence.get("cpsc_recall") or {}):
+    if cpsc:
         risk = set(cpsc.get("risk_indicators") or [])
         elevated = elevated or bool(risk & {"death_risk", "injury_risk"})
         impact_score = max(impact_score, 25 if "death_risk" in risk else
                            18 if "injury_risk" in risk else 10)
         reasons.append("official CPSC product recall with source-stated risk")
-    if evidence.get("cisa_kev"):
+    if kev:
         elevated = True
         impact_score = max(impact_score, 12)
         reasons.append("official known-exploited vulnerability")
-    if (faa := evidence.get("faa_nas_status") or {}) and faa.get("events"):
+    if faa.get("events"):
         elevated = True
         impact_score = max(impact_score, 25)
         reasons.append("official active FAA NAS disruption")
-    if (federal_register := evidence.get("federal_register") or {}):
+    if federal_register:
         impact_score = max(
             impact_score,
             min(25, int((federal_register.get("ranking") or {}).get("public_impact_score") or 0)),
         )
         elevated = elevated or impact_score >= 15
         reasons.append("configured Federal Register impact filter")
-    if official_identity and identity.get("official_public_alert") is True:
+    if official_identity and (advisory.get("kind") == "cyber_alert" or (
+        fsis.get("current_notice") is True
+        and fsis.get("recall_type") == "Public Health Alert"
+    )):
         elevated = True
         impact_score = max(impact_score, 25)
         reasons.append("explicit official public alert")
-    if official_identity and identity.get("official_disaster_declaration") is True:
+    if official_identity and fema.get("recent_declaration_at_refresh") is True:
         elevated = True
         impact_score = max(impact_score, 22)
         reasons.append("explicit federal disaster declaration")
-    if official_identity and identity.get("public_health_action_guidance") is True:
-        elevated = True
-        impact_score = max(impact_score, 22)
-        reasons.append("explicit public-health action guidance")
-    if official_identity and identity.get("cyber_emergency_directive") is True:
+    if official_identity and advisory.get("directive_flag") is True:
         elevated = True
         impact_score = max(impact_score, 25)
         reasons.append("explicit cyber emergency directive")
-    if official_identity and identity.get("high_risk_recall") is True:
+    if (official_identity and fsis.get("current_notice") is True
+            and fsis.get("recall_classification") == "Class I"):
         elevated = True
         impact_score = max(impact_score, 25)
         reasons.append("explicit high-risk recall classification")
@@ -106,7 +117,7 @@ def classify_national_item(source: dict[str, Any], item: dict[str, Any]) -> dict
             suppressed_reason = "routine agency or personnel announcement"
         elif _COURT_ROUTINE_RE.search(title):
             suppressed_reason = "routine procedural court filing"
-        elif (nhc := evidence.get("nhc_rss")) and not (
+        elif (nhc := evidence.get("nhc_rss") if family == "noaa_nhc" else None) and not (
             nhc.get("watch_warning_geography_verified") is True
             and (identity.get("affected_states") or identity.get("affected_territories"))
         ):

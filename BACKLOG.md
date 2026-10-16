@@ -1764,6 +1764,18 @@ alone cannot establish severity, impact, or reach. The cluster score no longer s
 scores. Focused factor tests and an offline duplicate-campaign scan pass. Source-specific policy
 classification and suppression remain in RS-051.
 
+NATIONAL ranking now takes severity, public impact, and local/regional seismic context only from
+the matching source family's parser evidence. NHC hurricane/tropical-storm and current FSIS Class I
+severity, CPSC/CISA/FSIS/FEMA public impact, and USGS magnitude/felt context are derived from
+their source fields rather than free-standing `national_identity` score claims. The drawer's
+public-impact basis follows the same qualified fields. NATIONAL policy elevation likewise
+requires a matching NWS/NHTSA/CPSC/CISA/FAA/Federal Register/FSIS/FEMA family and, for official
+identity actions, the relevant parser fact; a generic identity flag does not create an official
+disaster, cyber directive, health guidance, or recall action. The scanner leaves the policy score
+in `national_policy` instead of copying it into generic identity metadata. Offline FSIS and FEMA
+scans preserve supported scores, while unrelated publisher metadata receives none. A future
+public-health guidance elevation needs a verified parser fact and explicit rule.
+
 Implement explainable NATIONAL ranking with recency, official severity, source diversity, temporal
 proximity, public impact, geographic reach, active alert state, source priority, cluster size,
 local/regional impact, duplicate-family penalty, stale-source penalty, low-confidence penalty,
@@ -1782,10 +1794,11 @@ configured title allowlist. Suppressed metadata stays auditable but is excluded 
 and cluster attention views. Same-article URLs and explicit syndication IDs merge without counting
 as independent confirmation or adding duplicate article score. Official severe NWS alerts,
 high-risk NHTSA recalls, CISA KEV, active FAA NAS disruptions, filtered Federal Register actions,
-and explicit official disaster, cyber directive, high-risk recall, and public-health guidance
-evidence receive cautious elevation. Headline-only severity is never inferred. Source-specific
-parsers for later candidates will need to supply the explicit identity/action fields; the rules
-already have offline unit and scan coverage.
+and source-backed official FEMA disaster, CISA alert/directive and FSIS high-risk recall
+evidence receive cautious elevation. Headline-only severity is never inferred. A future public-
+health guidance source needs a verified parser field and explicit rule before elevation; an
+unqualified identity flag is insufficient. Offline unit and scan coverage exercises the current
+source-specific cases.
 
 Add deterministic NATIONAL rules that suppress routine agency press releases, generic political
 messaging, minor personnel announcements, punditry, duplicate syndicated stories, local stories with

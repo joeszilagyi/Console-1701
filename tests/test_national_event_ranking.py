@@ -84,7 +84,14 @@ def test_national_rank_covers_age_geography_local_impact_and_penalties():
     assert reduced["factors"]["stale_source_penalty"] == 8
     assert reduced["factors"]["low_public_value_penalty"] == 35
     assert reduced["factors"]["out_of_scope_penalty"] == 60
-    assert reduced["factors"]["local_regional_impact_score"] == 12
+    assert reduced["factors"]["local_regional_impact_score"] == 0
+    usgs = _member(2, family="usgs")
+    usgs["evidence"]["usgs_earthquake"] = {
+        "ranking": {"magnitude_weight": 24, "felt_weight": 4}
+    }
+    assert rank_national_event(_group("usgs"), [usgs], now=NOW)["factors"][
+        "local_regional_impact_score"
+    ] == 12
     assert any("out of scope penalty subtracts" in reason for reason in reduced["reasons"])
 
 
@@ -98,6 +105,43 @@ def test_national_rank_does_not_infer_impact_from_headline():
     assert score["factors"]["public_impact_score"] == 0
     assert score["factors"]["geographic_reach_score"] == 0
     assert score["public_impact_basis"] == []
+
+
+def test_national_rank_rejects_unqualified_identity_scores_and_foreign_fields():
+    member = _member(1, family="public_media")
+    member["evidence"]["national_identity"] = {
+        "official_severity_score": 45,
+        "public_impact_score": 35,
+        "local_regional_impact_score": 20,
+    }
+    member["evidence"]["national_policy"] = {"official_impact_score": 35}
+    member["evidence"]["openfema_declaration"] = {
+        "recent_declaration_at_refresh": True
+    }
+    score = rank_national_event(_group("public_media"), [member], now=NOW)
+    assert score["factors"]["official_severity_score"] == 0
+    assert score["factors"]["public_impact_score"] == 0
+    assert score["factors"]["local_regional_impact_score"] == 0
+    assert score["public_impact_basis"] == []
+
+
+def test_national_rank_keeps_qualified_fema_and_fsis_signals():
+    fema = _member(1, family="fema")
+    fema["evidence"]["openfema_declaration"] = {
+        "recent_declaration_at_refresh": True
+    }
+    fema_score = rank_national_event(_group("fema"), [fema], now=NOW)
+    assert fema_score["factors"]["public_impact_score"] == 22
+    assert fema_score["public_impact_basis"] == ["FEMA recent declaration"]
+    fsis = _member(2, family="fsis")
+    fsis["evidence"]["fsis_recall"] = {
+        "current_notice": True,
+        "recall_classification": "Class I",
+        "recall_type": "Recall",
+    }
+    fsis_score = rank_national_event(_group("fsis"), [fsis], now=NOW)
+    assert fsis_score["factors"]["official_severity_score"] == 25
+    assert fsis_score["factors"]["public_impact_score"] == 25
 
 
 def test_national_rank_accounts_for_time_priority_cluster_size_and_confidence():

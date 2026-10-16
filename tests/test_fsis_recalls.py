@@ -299,4 +299,13 @@ news:
     evidence = [json_loads(row["evidence_json"], {}) for row in rows]
     assert all(row["fsis_recall"]["public_instruction_url"] for row in evidence)
     assert all(row["ingest"]["fixture_only"] is True for row in evidence)
+    assert all("public_impact_score" not in row["national_identity"] for row in evidence)
+    class_i = next(row for row in evidence if row["fsis_recall"]["current_notice"]
+                   and row["fsis_recall"]["recall_classification"] == "Class I")
+    assert class_i["national_event"]["ranking"]["factors"][
+        "official_severity_score"
+    ] == 25
+    assert class_i["national_event"]["ranking"]["factors"][
+        "public_impact_score"
+    ] == 25
     assert "Fixture narrative" not in str([dict(row) for row in rows])
