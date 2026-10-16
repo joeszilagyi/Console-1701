@@ -1,0 +1,13 @@
+{
+  "request": {"terms": ["2025-A18"]},
+  "results": {
+    "2025-A18": [
+      {
+        "fullname": "2025-A18",
+        "link": "https://www.minorplanetcenter.net/mpec/K25/K25A18.html",
+        "pubdate": "Thu, 02 Jan 2025 09:25:27 GMT",
+        "title": "2025 AA"
+      }
+    ]
+  }
+}

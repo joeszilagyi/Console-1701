@@ -1048,12 +1048,12 @@
   },
   {
     "source_key": "mpc_mpecs_api",
-    "source_name": "MPC MPECs API docs",
+    "source_name": "MPC MPECs API",
     "source_family": "mpc",
     "source_class": "official_minor_planet",
     "scope": "ORBITAL",
-    "raw_url": "https://www.minorplanetcenter.net/mpcops/documentation/mpecs-api/",
-    "expected_access_kind": "public API docs",
+    "raw_url": "https://data.minorplanetcenter.net/api/mpecs",
+    "expected_access_kind": "public GET with bounded JSON search body; fixture only",
     "adapter": "mpc_api",
     "refresh_interval": "60 min",
     "priority": "55",
@@ -1063,7 +1063,7 @@
     "parser_risk": "medium",
     "retention_sensitivity": "medium",
     "verification_status": "official_page_seen",
-    "why_it_matters": "MPEC metadata candidate after endpoint review.",
+    "why_it_matters": "MPEC notice metadata; no circular body or orbit ingestion.",
     "future_phase": "O6"
   },
   {

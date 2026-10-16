@@ -2388,7 +2388,7 @@ ORBITAL parsers and event correlation follow in separate rows.
 
 ### ORBITAL Fixture Pack
 
-Status: partially implemented.
+Status: completed 2026-10-15 for the frozen first-pass fixture contract.
 
 Create local-only fixtures for SWPC alerts JSON, SWPC NOAA scales JSON, SWPC Kp JSON, SWPC aurora
 JSON, JPL CNEOS close approach JSON, JPL CNEOS fireball JSON, JPL Sentry or Scout JSON, MPC MPEC
@@ -2403,12 +2403,17 @@ OVATION aurora and JPL CAD JSON fixtures cover warning, cancelled watch, incompl
 and forecast scale, zero state, K-index thresholds, a tiny aurora grid, close-approach thresholds,
 fireball energy/location variants, a Scout v1.3 provisional-object summary with no impact
 inference, Launch Library 2 upcoming launch/docking metadata with routine press suppression,
-Spaceflight News API linked-headline metadata, and a public ISS-only CelesTrak GP epoch, plus
-NASA and ESA RSS relevance cases. The former SWPC
+Spaceflight News API linked-headline metadata, a public ISS-only CelesTrak GP epoch, and exact
+MPC MPEC publication metadata, plus NASA and ESA RSS relevance cases. The former SWPC
 X-ray summary URL returned 404; an observed seven-day GOES flare event list now supplies an
 offline M/X-class fixture parser with bounded identity, timing, class, flux and cautious ranking.
-Their parsers and offline scans are tested. Remaining ORBITAL products and source-health variants
-are pending in this pack; see `docs/project/ORBITAL_SWPC_XRAY_FLARE_FIXTURE.md`.
+Their parsers and offline scans are tested. The source-health matrix separately covers disabled,
+stale, auth-required, restricted Space-Track, policy-blocked, and parser-failed states without
+HTTP on GET or tests. The reentry-candidate fixture was conditional on source verification;
+RS-102 found ESA predictions auth-required and no permitted machine endpoint, so that candidate
+correctly remains an `auth_required` source-health state instead of a fabricated data fixture.
+See `docs/project/ORBITAL_FIXTURE_PACK_AUDIT.md` for the item-by-item acceptance audit. Further
+products remain in their separate backlog rows and do not reopen this frozen pack.
 
 ### SWPC Alerts JSON Parser
 
@@ -2506,12 +2511,21 @@ source framing only and avoid panic language or inferred impact claims.
 
 ### MPC MPEC And NEOCP Source Verification
 
-Status: not implemented.
+Status: partially implemented; exact MPEC metadata API verified 2026-10-15.
 
 Verify Minor Planet Center MPEC, recent MPEC, NEOCP, observations, orbits, designation, and
 obscode source behavior before implementation. Define strict filters, retention, source-health
 states, and metadata-only storage. Avoid high-volume observation ingestion unless explicitly
 configured and justified.
+
+Current state: the official MPC MPECs API documentation and one bounded GET-with-JSON-body
+response confirm request/term/result fields and circular ID, title, UTC publication time, and
+link. The `mpc_mpecs_api` registry candidate now points to the current data endpoint, and an
+offline parser accepts one exact term with at most 20 rows, stores only publication metadata,
+and suppresses routine orbit-update titles. It does not fetch or reproduce the circular body,
+observations, or orbit elements; no impact prediction is inferred. Wildcard/bulk searches,
+NEOCP, observatory code, retention, and live API admission remain open. See
+`docs/project/ORBITAL_MPC_MPEC_SOURCE_VERIFICATION.md`.
 
 ### Launch Library 2 Fixture Parser
 
