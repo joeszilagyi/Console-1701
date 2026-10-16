@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from console1701.news.parsers import parse_fixture_items
-from console1701.news.science_events import correlate_science_items
+from console1701.news.science_events import correlate_science_items, science_item_signature
 
 
 def _item(item_id, title, family, *, kind="science_release", when="2026-10-15T12:00:00Z",
@@ -71,11 +71,36 @@ def test_gcn_circular_correction_cannot_bridge_conflicting_event_ids():
     assert groups[0]["corroborated"] is False
 
 
+def test_science_parser_ids_require_matching_source_family():
+    cases = (
+        ("gcn_notice", "gcn", {"event_name": "GRB 261015A"}, "gcn_event:"),
+        ("gcn_circular", "gcn", {"circular_id": 33603}, "gcn_circular:"),
+        ("exoplanet_archive", "nasa_exoplanet_archive",
+         {"planet_name": "Kepler-1 b"}, "planet:"),
+        ("mast_caom", "mast", {"observation_id": "obs-123"}, "mast_observation:"),
+        ("pds_collection", "nasa_pds", {"collection_lid": "urn:nasa:pds:test"},
+         "pds_collection:"),
+    )
+    for field, family, value, prefix in cases:
+        row = _item(1, "Same science item", "public_media", extra={field: value})
+        signature = science_item_signature(row)
+        assert not any(identifier.startswith(prefix) for identifier in signature[
+            "identifiers"
+        ])
+        assert signature["kind"] == "science_release"
+        row["evidence"]["source"]["source_family"] = family
+        qualified = science_item_signature(row)
+        assert any(identifier.startswith(prefix) for identifier in qualified[
+            "identifiers"
+        ])
+        assert qualified["kind"] != "science_release"
+
+
 def test_just_a_shared_mission_or_planet_does_not_merge_unrelated_releases():
     items = [
         _item(1, "Webb finds water on planet K2", "esa_webb", identity={"mission": "JWST"}),
         _item(2, "Webb maps dust around star Vela", "nasa_webb", identity={"mission": "JWST"}),
-        _item(3, "Exoplanet Archive parameter update: K2", "nasa_exoplanet",
+        _item(3, "Exoplanet Archive parameter update: K2", "nasa_exoplanet_archive",
               extra={"exoplanet_archive": {"planet_name": "K2"}}),
     ]
     assert [group["item_ids"] for group in correlate_science_items(items)] == [[1], [2], [3]]
@@ -99,10 +124,10 @@ def test_independent_matching_requires_context_tokens_and_complete_link():
 def test_different_event_kinds_and_scope_remain_separate():
     shared = {"dataset_id": "123"}
     items = [
-        _item(1, "MAST data 123", "nasa_mast", extra={"mast_caom": shared}),
+        _item(1, "MAST data 123", "mast", extra={"mast_caom": shared}),
         _item(2, "PDS data 123", "nasa_pds", extra={"pds_collection": {
             "collection_lid": "123"}}),
-        _item(3, "MAST data 123", "nasa_mast", extra={"mast_caom": shared}),
+        _item(3, "MAST data 123", "mast", extra={"mast_caom": shared}),
     ]
     items.append({**items[0], "id": 4, "scope": "ORBITAL"})
     assert [group["item_ids"] for group in correlate_science_items(items)] == [[1, 3], [2]]
