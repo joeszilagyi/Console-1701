@@ -2252,6 +2252,11 @@ records, and broaden GLOBAL versus domestic scope-routing coverage.
 The WMO-hosted BoM RSS GUID and linked CAP identifier now form one same-family event in direct
 parser-backed correlation. Conflicting CAP identifiers do not converge by broad title/context;
 the RSS and CAP copies add no independent-family credit. Linked CAP transport remains disabled.
+GLOBAL correlation now reads GDACS, ReliefWeb disaster/report, WHO DON, and USGS earthquake
+source IDs only from matching stored source families. A foreign-family field cannot create a
+shared-ID join or conflicting-ID veto; explicit parser-supplied `global_identity` identifiers
+remain available for cross-family matches. Direct regressions cover all five field groups and
+cross-family earthquake ID conflicts. Other parser-backed identity paths remain open.
 
 ### GLOBAL Deterministic Ranking
 
