@@ -51,6 +51,24 @@ def test_cdc_han_current_search_snapshot_preserves_notice_identity_without_impac
     assert by_id["CDCHAN-00527"]["evidence"]["cdc_han"]["distribution_time"] == (
         "10:00 AM ET"
     )
+    expected_instants = {
+        "00527": "2026-04-02T14:00:00+00:00",
+        "00526": "2026-01-20T17:30:00+00:00",
+        "00525": "2025-12-03T17:30:00+00:00",
+        "00524": "2025-09-18T16:00:00+00:00",
+        "00521": "2025-02-06T16:15:00+00:00",
+    }
+    for suffix, instant in expected_instants.items():
+        row = by_id[f"CDCHAN-{suffix}"]
+        assert row["source_published_at"] == instant
+        assert row["evidence"]["cdc_han"]["distribution_instant_utc"] == instant
+        assert row["evidence"]["cdc_han"]["index_last_reviewed_at"] != instant
+    assert by_id["CDCHAN-00522"]["evidence"]["cdc_han"][
+        "distribution_instant_utc"
+    ] is None
+    assert by_id["CDCHAN-00522"]["source_published_at"] == (
+        "2025-03-07T05:00:00+00:00"
+    )
     assert by_id["CDCHAN-00527"]["evidence"]["cdc_han"][
         "notice_page_observed_at"
     ] == "2026-10-15"
@@ -169,12 +187,15 @@ def test_cdc_han_offline_scan_stores_metadata_without_fetch_or_alert_claim(tmp_p
     assert run_news_scan(config_path)["item_count"] == 14
     with connect_db(load_config(config_path)["_db_path"]) as conn:
         rows = conn.execute(
-            "SELECT title, evidence_json FROM news_items WHERE scope='NATIONAL'"
+            "SELECT title, source_published_at, evidence_json FROM news_items "
+            "WHERE scope='NATIONAL'"
         ).fetchall()
         clusters = conn.execute(
             "SELECT evidence_json FROM news_clusters WHERE scope='NATIONAL'"
         ).fetchall()
     assert len(rows) == 14
+    timed = next(row for row in rows if "Medetomidine" in row["title"])
+    assert timed["source_published_at"] == "2026-04-02T14:00:00+00:00"
     assert len(clusters) == 14
     evidence = [json_loads(row["evidence_json"], {}) for row in rows]
     assert all(row["ingest"]["fixture_only"] for row in evidence)

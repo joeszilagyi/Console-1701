@@ -1371,9 +1371,13 @@ bounded recent-discovery query has not been signed off. See
 snapshot now supplies 14 notice metadata rows from the official archive's first-party JSON
 view; the fixture parser and offline scan retain identity/date/badge hints without alert or
 impact claims. Three bounded official notice-page summary and lead excerpts now verify their
-message type and distribution date, while the other eleven notices retain unknown fields.
-Distribution time, jurisdiction, broader instructions, active-alert semantics and live source policy
-remain open before RS-039 is complete. Other NATIONAL source-family fixtures remain pending.
+message type and distribution date. Eleven bounded rendered-page observations supply message type
+for the remaining rows and distribution date for ten of them; HAN-00522 has no visible
+At-a-glance distribution date. Five pages print a date and ET time, which the parser converts
+to UTC for the item publication timestamp while retaining the source label and index review
+timestamp. Unknown times, jurisdiction, broader instructions, active-alert semantics and live
+source policy remain open before RS-039 is complete. Other NATIONAL source-family fixtures remain
+pending. See `docs/project/NATIONAL_CDC_HAN_RENDERED_PAGE_OBSERVATIONS.md`.
 
 ### NWS Active Alert Parser
 
@@ -1500,9 +1504,11 @@ additional official notice pages were checked through a rendered browser view af
 requests again returned HTTP 403. Their bounded, manually transcribed At-a-glance and Summary
 observations now verify message type for all 14 index notices and distribution date for 13;
 HAN-00522 shows no date or notice ID in its rendered At-a-glance section, so its distribution
-date remains unknown. Five notices have source-printed ET time labels, retained without invented
-UTC instants. This is explicitly a rendered-page observation fixture, not a verified raw HTML
-shape or live parser. The search index's last-reviewed date remains the item timestamp; none of
+date remains unknown. Five notices have source-printed ET time labels. The parser interprets
+those labels with `America/New_York` daylight rules and uses the calculated UTC distribution
+instant as their item publication timestamp; the index review time stays separate. This is
+explicitly a rendered-page observation fixture, not a verified raw HTML shape or live parser.
+Date-only pages still use the labeled index last-reviewed timestamp; none of
 the page observations prove a current alert, affected geography, public instruction URL, or
 impact. Offline scanning performs no HTTP. See
 `docs/project/NATIONAL_CDC_HAN_ENDPOINT_BLOCKER.md` for source evidence and remaining gate.

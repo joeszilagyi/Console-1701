@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from html import unescape
 from html.parser import HTMLParser
 from typing import Any
 from urllib.parse import urlsplit
+from zoneinfo import ZoneInfo
 
 from console1701.news.normalize import bounded_text, normalize_timestamp
 from console1701.news.parsers import NewsParserError, PayloadTooLargeError, _normalize_item
@@ -42,6 +43,16 @@ _OBSERVED_TYPE_PHRASES = {
     "is issuing this Health Advisory": "Health Advisory",
     "Health Alert Network (HAN) Health Update": "Health Update",
 }
+_EASTERN = ZoneInfo("America/New_York")
+
+
+def _distribution_instant(detail: dict[str, str | None] | None) -> str | None:
+    """Convert a printed ET wall time only when its distribution date is known."""
+    if not detail or not detail["date"] or not detail["time"]:
+        return None
+    local_date = date.fromisoformat(detail["date"])
+    local_time = datetime.strptime(detail["time"], "%I:%M %p ET").time()
+    return datetime.combine(local_date, local_time, _EASTERN).astimezone(UTC).isoformat()
 
 
 class _NoticeSummary(HTMLParser):
@@ -289,16 +300,21 @@ def parse_cdc_han_search_fixture(source: dict[str, Any], payload_text: str) -> l
         detail = by_url.pop(url, None)
         if detail and message_type_hint and detail["type"] != message_type_hint:
             raise NewsParserError(f"CDC HAN row {index} conflicts with its notice summary")
+        distribution_instant = _distribution_instant(detail)
         item = _normalize_item(source, {
             "title": title, "url": url, "description": excerpt,
-            "published_at": reviewed,
+            "published_at": distribution_instant or reviewed,
             "tags": ["official", "cdc", "han", "public-health", "notice-metadata"],
         }, index=index)
         item["evidence"]["cdc_han"] = {
             "notice_id": notice_id, "archive_url": ARCHIVE_URL,
             "search_url": SEARCH_URL, "notice_url": url,
             "index_last_reviewed_at": reviewed, "index_article_date_at": article_date,
-            "date_basis": "CDC search index last-reviewed date; distribution time unverified",
+            "date_basis": (
+                "official_notice_page_ET_distribution_time_converted_to_UTC"
+                if distribution_instant else
+                "CDC search index last-reviewed date; distribution time unverified"
+            ),
             "message_type": detail["type"] if detail else None,
             "message_type_basis": detail["type_basis"] if detail else None,
             "notice_page_observed_at": detail["observed_at"] if detail else None,
@@ -308,6 +324,7 @@ def parse_cdc_han_search_fixture(source: dict[str, Any], payload_text: str) -> l
             ),
             "distribution_date": detail["date"] if detail else None,
             "distribution_time": detail["time"] if detail else None,
+            "distribution_instant_utc": distribution_instant,
             "distribution_date_basis": detail["date_basis"] if detail else None,
             "distribution_time_basis": (
                 "official_notice_page_rendered_at_a_glance_ET"

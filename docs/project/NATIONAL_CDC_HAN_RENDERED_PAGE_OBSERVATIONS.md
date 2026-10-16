@@ -24,8 +24,14 @@ page-summary shape. The CDC search-index JSON is the ingest fixture.
 The fixture retains only the short type phrase from each Summary section, the
 At-a-glance labels, notice URL, and observation date. The parser checks the
 notice ID, official URL, date format, type phrase, and search-index badge
-agreement before joining them. Time labels are kept as printed in ET, with no
-invented UTC instant. HAN-00522's page header says March 7, 2025, but the
+agreement before joining them. Time labels remain available exactly as printed
+in ET. For the five pages that print both a date and time, the parser interprets
+ET with the `America/New_York` daylight rules and records the calculated UTC
+distribution instant as `source_published_at`. This is an explicit time-zone
+conversion, not a separately printed UTC time. The search index's last-reviewed
+timestamp remains separately stored. Date-only pages continue to use that index
+timestamp as their item time, labeled as such; no distribution hour is inferred.
+HAN-00522's page header says March 7, 2025, but the
 rendered At-a-glance section omitted its distribution date and notice ID, so
 the distribution date remains null. None of these observations establish a
 current active alert, affected geography, recommendation URL, or public impact.
