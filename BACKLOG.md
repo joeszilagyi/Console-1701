@@ -2044,6 +2044,10 @@ unverified and uses a summary only when the corresponding Public Advisory is abs
 official-shape fixture verifies offline ingest, global event identity/type, source health, and
 no inferred affected country. [Verification notes](docs/project/GLOBAL_NHC_RSS_SOURCE_VERIFICATION.md)
 record exact URLs and limitations. No NHC HTTP URL is allowlisted by the app.
+GLOBAL ranking now uses official NHC Public Advisory watch/warning terms only within 12 hours
+of their source publication time for active-alert and watch-derived public-impact factors.
+The cap is a local freshness rule, not an inferred watch expiration; stale terms and
+unofficial NHC-shaped rows do not supply those factors.
 
 ### Smithsonian GVP Weekly Report Parser
 
@@ -2294,6 +2298,10 @@ Likely/Observed certainty. Moderate/unknown, Test, Cancel and expired cases rece
 boost (`Test` messages emit no item); warning severity is not treated as observed public impact.
 An offline scan persists the
 rank and caps item expiry at the earliest active-area expiration.
+An official NHC Public Advisory's explicit watch/warning term supplies bounded GLOBAL alert
+and public-warning context only for 12 hours after its source publication. The source provides
+no watch expiry or verified country geography, so an older stored advisory does not remain
+an active alert or retain that watch-derived public-impact factor.
 
 ### GLOBAL UI Disabled States
 

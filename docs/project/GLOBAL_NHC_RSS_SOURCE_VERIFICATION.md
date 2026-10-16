@@ -40,3 +40,12 @@ visible through existing disabled/healthy/empty/parser-failure source states. No
 host scan, or test may fetch it. A separate exact URL allowlist and live-source review are needed
 before HTTP ingest. The same parser can process verified Atlantic and Central Pacific basin
 fixtures in a later source-registration slice.
+
+Ranking follow-up on 2026-10-15: [NHC's product description](https://www.nhc.noaa.gov/aboutnhcprod.shtml)
+says public advisories are normally issued every six hours. Because the RSS fixture provides
+no watch expiration time or verified affected geography, GLOBAL ranking now treats an official
+NHC Public Advisory's watch/warning terms as current only for 12 hours from publication.
+After that local freshness cap, the terms no longer add an active-alert or watch-derived
+public-impact score or basis. This is a conservative app rule, not an NHC watch expiry claim;
+the historical storm type remains source evidence. Unofficial sources cannot supply NHC
+severity or watch factors.
