@@ -2400,8 +2400,9 @@ must be safe for pytest.
 Current state: small official-shape SWPC alerts, NOAA scales, planetary and Boulder K-index, and
 OVATION aurora and JPL CAD JSON fixtures cover warning, cancelled watch, incomplete row, current
 and forecast scale, zero state, K-index thresholds, a tiny aurora grid, close-approach thresholds,
-fireball energy/location variants, and a Scout v1.3 provisional-object summary with no impact
-inference, plus NASA and ESA RSS relevance cases. The former SWPC
+fireball energy/location variants, a Scout v1.3 provisional-object summary with no impact
+inference, and Launch Library 2 upcoming launch/docking metadata with routine press suppression,
+plus NASA and ESA RSS relevance cases. The former SWPC
 X-ray summary URL returned 404; an observed seven-day GOES flare event list now supplies an
 offline M/X-class fixture parser with bounded identity, timing, class, flux and cautious ranking.
 Their parsers and offline scans are tested. Remaining ORBITAL products and source-health variants
@@ -2512,12 +2513,20 @@ configured and justified.
 
 ### Launch Library 2 Fixture Parser
 
-Status: not implemented.
+Status: partially implemented; version 2.3.0 launch/event fixture parser added 2026-10-15.
 
 Build a fixture-first Launch Library 2 parser for launch and event metadata. Preserve launch id,
 event id, provider, vehicle, payload, pad, launch window, status, update time, webcast URL if
 source-provided, source URL, and status-change evidence. Keep live Launch Library access disabled
 until throttling, source-health, and no-page-load-fetch tests exist.
+
+Current state: observed the official development API's two-row upcoming launch and event
+envelopes. The bounded offline parser stores current status, schedule/window, provider, vehicle,
+mission name, pad, update time, and allowlisted official webcast URL for launches; docking and
+other operational event IDs/times are retained while routine press events are suppressed. No
+mission body or media payload is stored. Source current status is not claimed as transition
+history. Production polling, status-change history, source-health throttling, and a full live
+admission gate remain open. See `docs/project/ORBITAL_LAUNCH_LIBRARY_FIXTURE.md`.
 
 ### Spaceflight News API Fixture Parser
 

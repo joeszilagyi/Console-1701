@@ -1,0 +1,21 @@
+{
+  "count": 178,
+  "next": "https://lldev.thespacedevs.com/2.3.0/launches/upcoming/?limit=2&offset=2",
+  "results": [
+    {
+      "id": "df88cfbf-f504-4e11-8370-e33dd6280b5b",
+      "name": "Falcon 9 Block 5 | USSF-481",
+      "status": {"id": 1, "name": "Go for Launch", "abbrev": "Go"},
+      "net": "2026-10-15T23:44:00Z",
+      "window_start": "2026-10-15T23:44:00Z",
+      "window_end": "2026-10-16T03:44:00Z",
+      "last_updated": "2026-10-08T15:48:47Z",
+      "launch_service_provider": {"id": 121, "name": "SpaceX"},
+      "rocket": {"configuration": {"full_name": "Falcon 9 Block 5"}},
+      "mission": {"name": "USSF-481", "description": "Excluded sensitive payload speculation"},
+      "pad": {"name": "Space Launch Complex 4E"},
+      "vid_urls": null
+    },
+    {"id": "bad-id", "name": "Invalid", "net": "2026-10-16T00:00:00Z", "last_updated": "2026-10-08T00:00:00Z"}
+  ]
+}

@@ -142,6 +142,8 @@ def _load_registry() -> tuple[dict[str, Any], ...]:
             "jpl_cad_api": "jpl_cad_json",
             "jpl_fireball_api": "jpl_fireball_json",
             "jpl_scout_api": "jpl_scout_json",
+            "launch_library_upcoming": "launch_library_json",
+            "launch_library_events": "launch_library_json",
             "nasa_rss_feeds": "nasa_orbital_rss",
             "nasa_iss_page": "nasa_orbital_rss",
             "nasa_spacestation_blog": "nasa_orbital_rss",
