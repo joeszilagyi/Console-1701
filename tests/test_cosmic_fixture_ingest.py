@@ -160,6 +160,40 @@ def test_gcn_cross_source_retraction_survives_other_report_until_purge(tmp_path,
         assert conn.execute("SELECT COUNT(*) FROM science_events").fetchone()[0] == 0
 
 
+def test_gcn_circular_revision_withdraws_event_only_after_explicit_scope(
+    tmp_path, monkeypatch
+):
+    path, payload = _gcn_retraction_config(tmp_path, monkeypatch)
+    circular_path = Path(payload["news"]["scopes"]["SYSTEM_SOLAR"]["sources"][1][
+        "url"
+    ].removeprefix("file://"))
+    circular = json.loads(circular_path.read_text())
+    circular["subject"] = "FRB 20261015A: Retraction of optical counterpart"
+    circular_path.write_text(json.dumps(circular))
+    assert run_news_scan(path)["item_count"] == 2
+    config = load_config(path)
+    with connect_db(config["_db_path"]) as conn:
+        event = conn.execute("SELECT status, score FROM science_events").fetchone()
+        assert (event["status"], event["score"] > 0) == ("active", True)
+        assert conn.execute("SELECT COUNT(*) FROM science_withdrawals").fetchone()[0] == 0
+        circular_item_id = conn.execute(
+            "SELECT id FROM news_items WHERE title LIKE '%optical counterpart%'"
+        ).fetchone()[0]
+
+    circular["subject"] = "FRB 20261015A: Retraction of transient candidate"
+    circular_path.write_text(json.dumps(circular))
+    assert run_news_scan(path)["item_count"] == 2
+    with connect_db(config["_db_path"]) as conn:
+        event = conn.execute("SELECT status, score FROM science_events").fetchone()
+        assert tuple(event) == ("retracted", 0)
+        assert conn.execute("SELECT COUNT(*) FROM science_withdrawals").fetchone()[0] == 1
+        item = conn.execute(
+            "SELECT id, evidence_json FROM news_items WHERE title LIKE '%transient candidate%'"
+        ).fetchone()
+        assert item["id"] == circular_item_id
+        assert json_loads(item["evidence_json"], {})["gcn_circular"]["withdraws_event"]
+
+
 def test_gcn_withdrawal_survives_retraction_expiry_and_initial_reingest(tmp_path, monkeypatch):
     path, payload = _gcn_retraction_config(tmp_path, monkeypatch)
     assert run_news_scan(path)["item_count"] == 2

@@ -40,6 +40,20 @@ The [Circular archive guide](https://gcn.nasa.gov/docs/circulars/archive) docume
 search, pagination, event groups, and date filters, but no stable metadata API contract or
 rate limit for automated polling. These additions leave the fixture-only decision in place.
 
+The subject alone also has a material scope limit. NASA's
+[GRB 260705A Circular 45189](https://gcn.nasa.gov/circulars/45189) withdraws an optical
+counterpart, while [LIGO/Virgo Circular 26263](https://gcn.nasa.gov/circulars/26263)
+withdraws a GW candidate. A component retraction must not withdraw the entire transient event.
+The fixture parser now records `component_retraction` for explicitly named observations,
+`retracted` only for a title that explicitly withdraws the event/candidate, and
+`retraction_review` for ambiguous titles. Component and ambiguous statuses receive background
+priority; only `retracted` creates a retained event-withdrawal marker. NASA's
+[GRB 130505A Circular archive](https://gcn.nasa.gov/circulars?query=130505A) also shows a
+subject with an event prefix followed by a correction label; the parser recognizes that form
+without treating it as a fresh preliminary report. A local same-ID revision scan verifies that
+an observation retraction stays active and a later explicit candidate retraction updates the
+same stored item and withdraws the event.
+
 Before any live adapter, verify a supported narrow discovery method, account and reuse terms,
 rate and retention limits, pagination/time bounds, current schema version, and
 correction/retraction semantics. Expand fixtures for aliases and multi-circular revisions.
