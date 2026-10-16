@@ -2550,6 +2550,13 @@ observed Guam GDACS RSS fixture earns the `us` tag; the Costa Rica fixture does 
 wrong-family, candidate-status, unsupported publisher, low-alert and foreign-country tests plus
 an offline stored-cluster scan verify the gate. Further domestic and local impact dimensions
 remain open until their own parser facts are available.
+The pre-storage domestic-politics rule now ignores a free-standing
+`global_identity.international_impact` flag: no current GLOBAL parser supplies a verified
+international-impact exception. It also applies when a parser has already set the generic
+`background` class, recording `generic_politics` and `out_of_scope` rather than letting that
+weaker label mask the rule. A source-backed official alert still keeps its existing exemption.
+Direct regressions cover the unsupported flag and preexisting background label; an
+international-impact exception needs its own reviewed parser field and policy rule.
 
 ### GLOBAL UI Disabled States
 

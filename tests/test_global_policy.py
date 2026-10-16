@@ -39,6 +39,30 @@ def test_official_alert_metadata_prevents_routine_suppression():
     assert "public_value_class" not in result["evidence"]["global_identity"]
 
 
+def test_generic_international_impact_flag_does_not_exempt_domestic_politics():
+    result = classify_global_item(
+        {"scope": "GLOBAL", "source_family": "un_press", "official_status": "official"},
+        _item("Candidate endorsement in domestic election", {
+            "global_identity": {
+                "international_impact": True, "public_value_class": "background",
+            },
+        }),
+    )
+    assert result["evidence"]["global_identity"]["public_value_class"] == (
+        "generic_politics"
+    )
+    assert result["evidence"]["global_identity"]["out_of_scope"] is True
+    assert result["evidence"]["global_attention_policy"]["attention_state"] == "background"
+    alert = classify_global_item(
+        {"scope": "GLOBAL", "source_family": "gdacs", "official_status": "official"},
+        _item("Domestic election disrupted by cyclone alert", {
+            "gdacs": {"alert_level": "Red"},
+        }),
+    )
+    assert alert["evidence"]["global_attention_policy"]["attention_state"] == "eligible"
+    assert "out_of_scope" not in alert["evidence"]["global_identity"]
+
+
 def test_low_value_descriptions_are_classified_without_overriding_official_alerts():
     source = {"scope": "GLOBAL", "source_family": "un_press"}
     cases = (
