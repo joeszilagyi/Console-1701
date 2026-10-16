@@ -142,7 +142,7 @@ def test_global_rank_penalizes_stale_low_value_rumor_and_out_of_scope():
     assert any("rumor penalty subtracts" in reason for reason in reduced["reasons"])
 
 
-def test_global_rank_uses_geography_time_and_verified_domestic_tags():
+def test_global_rank_uses_geography_time_but_ignores_unqualified_domestic_tags():
     first = _member(1)
     second = _member(2, family="who")
     second["source_published_at"] = "2026-10-16T00:00:00+00:00"
@@ -163,8 +163,48 @@ def test_global_rank_uses_geography_time_and_verified_domestic_tags():
     assert near["factors"]["geographic_reach_score"] > far_score["factors"][
         "geographic_reach_score"
     ]
-    assert near["factors"]["us_or_local_impact_score"] == 20
-    assert near["impact_tags"] == ["local", "us"]
+    assert near["factors"]["us_or_local_impact_score"] == 0
+    assert near["impact_tags"] == []
+
+
+def test_global_rank_credits_only_official_source_reported_us_alert_geography():
+    item = _member(1, family="pbs_world")
+    item["evidence"].pop("gdacs")
+    item["evidence"]["global_identity"]["impact_tags"] = ["us", "local"]
+    unsupported = rank_global_event(_group("pbs_world"), [item], now=NOW)
+    assert unsupported["factors"]["us_or_local_impact_score"] == 0
+    assert unsupported["impact_tags"] == []
+
+    item["evidence"]["gdacs"] = {
+        "alert_level": "Orange", "country": "Guam", "iso3": "GUM",
+    }
+    wrong_family = rank_global_event(_group("pbs_world"), [item], now=NOW)
+    assert wrong_family["factors"]["us_or_local_impact_score"] == 0
+    item["evidence"]["source"]["source_family"] = "gdacs"
+    item["evidence"]["source"]["official_status"] = "official_candidate"
+    unverified = rank_global_event(_group("gdacs"), [item], now=NOW)
+    assert unverified["factors"]["us_or_local_impact_score"] == 0
+    item["evidence"]["source"]["official_status"] = "official"
+    verified = rank_global_event(_group("gdacs"), [item], now=NOW)
+    assert verified["factors"]["us_or_local_impact_score"] == 10
+    assert verified["impact_tags"] == ["us"]
+    assert "GDACS alert for source-reported U.S. jurisdiction" in (
+        verified["public_impact_basis"]
+    )
+    item["evidence"]["gdacs"]["alert_level"] = "Green"
+    low_alert = rank_global_event(_group("gdacs"), [item], now=NOW)
+    assert low_alert["factors"]["us_or_local_impact_score"] == 0
+
+    item["evidence"]["source"]["source_family"] = "reliefweb"
+    item["evidence"]["reliefweb_disaster"] = {
+        "status": "current", "countries": ["United States of America"],
+    }
+    reliefweb = rank_global_event(_group("reliefweb"), [item], now=NOW)
+    assert reliefweb["factors"]["us_or_local_impact_score"] == 10
+    assert reliefweb["impact_tags"] == ["us"]
+    item["evidence"]["reliefweb_disaster"]["countries"] = ["Costa Rica"]
+    foreign = rank_global_event(_group("reliefweb"), [item], now=NOW)
+    assert foreign["factors"]["us_or_local_impact_score"] == 0
 
 
 def test_global_rank_does_not_infer_severity_from_headline_or_unverified_region():

@@ -2445,7 +2445,8 @@ tsunami/tropical-cyclone hazards, global transport disruption, nuclear safety al
 multi-source public-impact events.
 
 Current state: the GLOBAL event scorer recognizes explicit parser-provided routine/background,
-rumor, out-of-scope, and domestic-impact tags and records bounded penalties or boosts. It uses
+rumor, and out-of-scope labels and records bounded penalties. Domestic-impact tags now require
+qualified official source fields rather than a free-standing `global_identity` claim. It uses
 official GDACS alert, USGS earthquake/tsunami, and active ReliefWeb disaster evidence for
 first-pass public-impact scores. It does not infer impact from headline wording. A pre-storage
 `global_policy.py` classifier now labels routine diplomatic/institutional/economic headlines,
@@ -2501,6 +2502,15 @@ they cannot supply impact or a drawer basis. Qualified GDACS, ReliefWeb, USGS, a
 retain their existing bounded credit. A direct regression covers unsupported PBS metadata and
 a supported ReliefWeb disaster. Add future impact credit through a verified source-specific
 evidence field and explicit ranking rule.
+The U.S./local impact factor now ignores unqualified `global_identity.impact_tags` completely.
+An official GDACS Orange/Red alert with a source-reported U.S. or territory ISO/country, or an
+official active ReliefWeb disaster with a source-reported U.S. country, adds a bounded `us` tag
+and ten points. The tag describes alert/disaster relevance to the jurisdiction, not observed
+damage or a local footprint. No source currently earns a `local` tag from generic text. The
+observed Guam GDACS RSS fixture earns the `us` tag; the Costa Rica fixture does not. Direct
+wrong-family, candidate-status, unsupported publisher, low-alert and foreign-country tests plus
+an offline stored-cluster scan verify the gate. Further domestic and local impact dimensions
+remain open until their own parser facts are available.
 
 ### GLOBAL UI Disabled States
 
