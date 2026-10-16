@@ -155,6 +155,7 @@ def parse_jpl_fireball_json(
     max_age = int(source.get("max_age_days", 30))
     now = datetime.now(UTC)
     items: list[dict[str, Any]] = []
+    seen_queries: set[str] = set()
     for index, values in enumerate(data):
         if not isinstance(values, list) or len(values) != len(fields):
             continue
@@ -168,7 +169,7 @@ def parse_jpl_fireball_json(
         radiated = _finite_float(row.get("energy"))
         if (
             impact_kt is None or radiated is None or impact_kt < minimum
-            or radiated < 0 or event_at < now - timedelta(days=max_age)
+            or radiated <= 0 or event_at < now - timedelta(days=max_age)
             or event_at > now + timedelta(hours=1)
         ):
             continue
@@ -190,7 +191,19 @@ def parse_jpl_fireball_json(
         )
         event_iso = event_at.isoformat(timespec="seconds")
         api_time = event_at.strftime("%Y-%m-%dT%H:%M:%S")
-        query = urlencode({"date-min": api_time, "date-max": api_time})
+        # The API has no event ID. These documented selectors keep two records
+        # at the same second but with different reported energies distinct in
+        # SQLite while leaving the article link as a valid JPL query.
+        query = urlencode({
+            "date-min": api_time, "date-max": api_time,
+            "energy-min": f"{radiated:g}", "energy-max": f"{radiated:g}",
+            "impact-e-min": f"{impact_kt:g}", "impact-e-max": f"{impact_kt:g}",
+        })
+        if query in seen_queries:
+            raise NewsParserError(
+                "JPL fireball rows share the available API query identity"
+            )
+        seen_queries.add(query)
         item = _normalize_item(source, {
             "title": f"JPL fireball record: {event_at:%Y-%m-%d %H:%M} UTC",
             "url": f"{FIREBALL_URL}?{query}",
@@ -218,7 +231,10 @@ def parse_jpl_fireball_json(
         }
         item["evidence"]["orbital_identity"] = {
             "event_type": "fireball",
-            "object_id": event_iso,
+            "fireball_location": (
+                f"{latitude:g},{longitude:g}"
+                if latitude is not None and longitude is not None else None
+            ),
         }
         items.append(item)
     return items

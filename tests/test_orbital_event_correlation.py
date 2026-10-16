@@ -62,6 +62,43 @@ def test_orbital_identity_is_type_scoped_time_bounded_and_not_corroboration():
     assert groups[0]["corroborated"] is False
 
 
+def test_parsed_fireballs_need_time_and_location_or_energy_identity():
+    fixture = json.loads((ORBITAL_FIXTURES / "jpl_fireball.json").read_text())
+    fixture["data"][2][0] = fixture["data"][0][0]  # Same UTC second, no location.
+    source = {
+        "id": "jpl_fireball_api", "scope": "ORBITAL", "kind": "api_json",
+        "parser": "jpl_fireball_json", "source_family": "jpl_cneos",
+        "max_age_days": 36500,
+    }
+    located, unlocated = parse_fixture_items(source, json.dumps(fixture))
+    assert located["url"] != unlocated["url"]
+    assert "object_id" not in located["evidence"]["orbital_identity"]
+    for item_id, item in ((1, located), (2, unlocated)):
+        item["id"] = item_id
+        item["evidence"]["source"] = {
+            "source_family": "jpl_cneos", "source_key": "jpl_fireball_api",
+        }
+    assert [group["item_ids"] for group in correlate_orbital_items([
+        located, unlocated,
+    ])] == [[1], [2]]
+
+    revised = json.loads(json.dumps(fixture))
+    revised["data"][0][6] = "13.0"  # Same time/location, revised energy.
+    same_event, = parse_fixture_items(source, json.dumps({
+        **revised, "count": 1, "data": [revised["data"][0]],
+    }))
+    same_event["id"] = 3
+    same_event["evidence"]["source"] = {
+        "source_family": "jpl_cneos", "source_key": "jpl_fireball_api",
+    }
+    groups = correlate_orbital_items([located, unlocated, same_event])
+    assert [group["item_ids"] for group in groups] == [[1, 3], [2]]
+    assert groups[0]["matches"][0]["basis"] == [
+        "fireball_time_location_or_energy", "time_window",
+    ]
+    assert groups[0]["corroborated"] is False
+
+
 def test_nasa_channel_variants_and_jpl_do_not_count_as_independent_sources():
     title = "Crew Dragon docks with International Space Station"
     release = _item(1, "nasa", title)

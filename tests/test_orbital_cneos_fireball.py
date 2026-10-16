@@ -59,6 +59,14 @@ def test_jpl_fireball_parser_checks_signature_schema_and_freshness():
     old_payload = FIXTURE.read_text().replace("2026-10-15", "2000-01-01")
     assert parse_fixture_items(dict(SOURCE, max_age_days=1), old_payload) == []
 
+    ambiguous = json.loads(FIXTURE.read_text())
+    second = list(ambiguous["data"][0])
+    second[3:5] = ["80.0", "W"]  # Different location, identical API query fields.
+    ambiguous["data"] = [ambiguous["data"][0], second]
+    ambiguous["count"] = 2
+    with pytest.raises(NewsParserError, match="share the available API query identity"):
+        parse_fixture_items(dict(SOURCE, max_age_days=36500), json.dumps(ambiguous))
+
 
 def test_jpl_fireball_fixture_scan_offline_and_config_thresholds(tmp_path, monkeypatch):
     monkeypatch.setattr(
@@ -67,7 +75,9 @@ def test_jpl_fireball_fixture_scan_offline_and_config_thresholds(tmp_path, monke
     )
     fixture = tmp_path / "recent-fireball.json"
     recent_date = (datetime.now(UTC) - timedelta(days=1)).strftime("%Y-%m-%d")
-    fixture.write_text(FIXTURE.read_text().replace("2026-10-15", recent_date))
+    payload = json.loads(FIXTURE.read_text().replace("2026-10-15", recent_date))
+    payload["data"][2][0] = payload["data"][0][0]
+    fixture.write_text(json.dumps(payload))
     path = tmp_path / "config.yml"
     path.write_text(dedent(f"""
         paths: {{repo_roots: [], explicit_repos: []}}
@@ -89,6 +99,9 @@ def test_jpl_fireball_fixture_scan_offline_and_config_thresholds(tmp_path, monke
     config = load_config(path)
     with connect_db(config["_db_path"]) as conn:
         assert len(list_orbital_items_by_facet(conn, "event_type", "fireball")) == 2
+        assert conn.execute(
+            "SELECT COUNT(*) FROM news_clusters WHERE scope='ORBITAL'"
+        ).fetchone()[0] == 2
     path.write_text(path.read_text().replace(
         "fireball_max_age_days: 30", "fireball_max_age_days: 3000"
     ))

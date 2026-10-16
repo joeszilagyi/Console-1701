@@ -2571,6 +2571,8 @@ source-provided location and altitude, radiated and estimated impact energies in
 units, optional entry velocity components and derived magnitude, official URL, and explicit
 no-ground-damage-inference wording. Configurable energy and age filters suppress routine or
 stale rows. Version, bounded row shape, local-only scan, and indexed event identity are tested.
+Same-second rows use the documented date and energy selectors in their source links; rows with
+identical available query identity fail visibly rather than overwriting a stored record.
 The candidate remains disabled with no live HTTP allowlist entry. See
 `docs/project/ORBITAL_JPL_FIREBALL_SOURCE_VERIFICATION.md`.
 
@@ -2818,6 +2820,12 @@ independent NASA/ESA corroboration, and a docking-versus-launch negative case gu
 against broad station-title matches.
 Other adapter identities, including reentry and safe satellite cases pending verified sources,
 remain open.
+JPL fireball correlation now uses reported UTC peak-brightness time plus coordinates when
+available, or time plus both source energy fields when location is absent. The parser uses those
+documented query fields for a distinct valid source URL and rejects identical-query rows that
+would otherwise overwrite each other. Same-second different events stay separate in parsed and
+stored offline tests; a same-location energy revision joins without independent corroboration.
+See `docs/project/ORBITAL_JPL_FIREBALL_SOURCE_VERIFICATION.md`.
 
 ### ORBITAL Deterministic Ranking
 
