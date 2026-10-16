@@ -8,6 +8,13 @@ machine-readable source was signed off.
   are human-facing references to notable fire updates and the dashboard.
   The portal includes older contained fires; it is not a machine-readable active
   fire feed. The dashboard HTML is not an ingest source.
+- The official `fireinfo.dnr.wa.gov` link redirects to DNR's public ArcGIS
+  [Wildfire Intel Dashboard](https://experience.arcgis.com/experience/6cdda73cf6154949a1fae76ccb2900a0).
+  A bounded read of its public item configuration on 2026-10-15 referenced the DNR
+  fire-statistics layers and three Survey123 stakeholder report services (overview,
+  aviation, and region intel). It did not identify a separate current-incident
+  feature layer with a positive active-state field; this is source research, not
+  permission to scrape dashboard HTML or ingest those report services.
 - WA DNR publishes an official [Current DNR Fire Statistics ArcGIS REST layer](https://gis.dnr.wa.gov/site3/rest/services/Public_Wildfire/WADNR_PUBLIC_WD_WildFire_Data/MapServer/1).
   Its fields include incident and fire-event IDs, name, county, acres, discovery,
   control and out dates, coordinates and class. It supports JSON/GeoJSON queries.
@@ -46,10 +53,23 @@ A bounded follow-up of the parser's `FIREEVENT_ID=89929` record link returned
 HTTP 200, 1,307 bytes and exactly that one event, so item URLs are official
 record queries rather than fabricated deep links.
 
-The separate `wa_dnr_fire_statistics` registry source and parser are validated
-against the saved four-row fixture and require that exact query contract. They preserve day-precision
+The separate `wa_dnr_fire_statistics` registry source and parser were first validated
+against the four-row September sample and require an exact query contract. They preserve day-precision
 discovery and reported control/out dates, official identity and county, and
 explicitly mark active status, evacuation, and public impact unverified. The
 source is disabled, fixture-only and not live allowlisted; a live opt-in is
 policy-blocked. This does not change the `wa_dnr_current_wildfire` decision
 above or establish a current-incident feed.
+
+Expanded evidence on 2026-10-15: an exact DNR layer query for fires discovered
+since 2026-07-01 with at least 1,000 reported acres returned 31 rows in 10,810
+bytes, under a 40-row request cap. The saved large-fire response remains under
+the parser's 16 KiB limit; the earlier four-row smaller-fire fixture is also
+retained under its separate exact query contract. The larger response includes Sisi,
+Little Giant, and Sinlahekin with the same fire names and discovery days as the
+separately observed NWCC large-fire source start dates. An offline two-parser
+scan now joins those three incident identities across the `wa_dnr` and
+`wildfire_federal` families; a changed start date prevents a join. The NWCC edit
+date and DNR discovery date need not be within 48 hours for that exact
+source-backed identity match. Neither the DNR layer nor this correlation proves
+that any fire is active now or that people are affected.

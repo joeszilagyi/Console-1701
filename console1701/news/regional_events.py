@@ -46,6 +46,7 @@ def regional_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     source = evidence.get("source") or {}
     identity = evidence.get("regional_identity") or {}
     fields: dict[str, set[str]] = {field: set() for field in _GEO_FIELDS}
+    fire_start_date = None
     # Parser-derived geography has a known provenance. Optional future identity fields
     # are admitted only for official, high-confidence, geographically matched items.
     if (event.get("confidence") == "high" and geography.get("matched")
@@ -59,6 +60,12 @@ def regional_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         fields["route"].update(_values(geography.get("routes")))
         fields["weather_zone"].update(_values(geography.get("zone_ids")))
         # Facility names are not assumed to identify an airport, port, or pass.
+        if source.get("source_key") == "wa_dnr_fire_statistics":
+            fire_start_date = (evidence.get("wa_dnr_fire_statistics") or {}).get(
+                "discovery_date"
+            )
+        elif source.get("source_key") == "nwcc_large_fire_wa":
+            fire_start_date = (evidence.get("nwcc_large_fire") or {}).get("start_date")
     return {
         "id": int(item["id"]),
         "event_key": str(event.get("event_key") or ""),
@@ -69,6 +76,7 @@ def regional_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         "family": str(source.get("source_family") or "").casefold(),
         "source_key": str(source.get("source_key") or ""),
         "official": source.get("official_status") == "official",
+        "fire_start_date": fire_start_date,
     }
 
 
@@ -82,6 +90,15 @@ def regional_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[st
     if (not left["event_type"] or left["event_type"] == "regional_headline"
             or left["event_type"] != right["event_type"]):
         return []
+    if (left["event_type"] == "wildfire_update"
+            and {left["source_key"], right["source_key"]} == {
+                "wa_dnr_fire_statistics", "nwcc_large_fire_wa",
+            }
+            and left["fields"]["fire_incident"]
+            and left["fields"]["fire_incident"] == right["fields"]["fire_incident"]
+            and left["fire_start_date"]
+            and left["fire_start_date"] == right["fire_start_date"]):
+        return ["event_type", "fire_incident", "source_start_date", "independent_family"]
     shared = [field for field in _GEO_FIELDS if left["fields"][field] & right["fields"][field]]
     if not shared or len(left["tokens"] & right["tokens"]) < 3:
         return []

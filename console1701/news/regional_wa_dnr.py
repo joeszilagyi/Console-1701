@@ -16,13 +16,20 @@ LAYER_URL = (
     "https://gis.dnr.wa.gov/site3/rest/services/Public_Wildfire/"
     "WADNR_PUBLIC_WD_WildFire_Data/MapServer/1"
 )
+QUERY_FIELDS = (
+    "OBJECTID,FIREEVENT_ID,INCIDENT_NM,INCIDENT_ID,COUNTY_LABEL_NM,"
+    "ACRES_BURNED,DSCVR_DT,CONTROL_DT,FIRE_OUT_DT,"
+    "FIREEVNT_CLASS_LABEL_NM,START_JURISDICTION_AGENCY_NM"
+)
 QUERY_URL = f"{LAYER_URL}/query?" + urlencode({
+    "where": "DSCVR_DT >= DATE '2026-07-01' AND ACRES_BURNED >= 1000",
+    "outFields": QUERY_FIELDS,
+    "orderByFields": "DSCVR_DT DESC",
+    "resultRecordCount": "40", "returnGeometry": "false", "f": "json",
+})
+SMALL_QUERY_URL = f"{LAYER_URL}/query?" + urlencode({
     "where": "DSCVR_DT >= DATE '2026-09-01' AND ACRES_BURNED >= 100",
-    "outFields": (
-        "OBJECTID,FIREEVENT_ID,INCIDENT_NM,INCIDENT_ID,COUNTY_LABEL_NM,"
-        "ACRES_BURNED,DSCVR_DT,CONTROL_DT,FIRE_OUT_DT,"
-        "FIREEVNT_CLASS_LABEL_NM,START_JURISDICTION_AGENCY_NM"
-    ),
+    "outFields": QUERY_FIELDS,
     "orderByFields": "DSCVR_DT DESC",
     "resultRecordCount": "10", "returnGeometry": "false", "f": "json",
 })
@@ -50,8 +57,13 @@ def parse_wa_dnr_fire_statistics_fixture(
         raise NewsParserError("WA DNR fire statistics require the REGIONAL registry source")
     if not str(source.get("url") or "").startswith("file://"):
         raise NewsParserError("WA DNR fire statistics parser is fixture-only")
-    if source.get("official_url") != QUERY_URL:
+    query_url = source.get("official_url")
+    if query_url not in {QUERY_URL, SMALL_QUERY_URL}:
         raise NewsParserError("WA DNR fire statistics require the exact official query")
+    min_date, min_acres, max_rows = (
+        ("2026-07-01", 1000, 40) if query_url == QUERY_URL
+        else ("2026-09-01", 100, 10)
+    )
     if len(payload_text.encode("utf-8")) > MAX_BYTES:
         raise PayloadTooLargeError("WA DNR fire statistics exceed 16 KiB")
     try:
@@ -65,7 +77,8 @@ def parse_wa_dnr_fire_statistics_fixture(
     rows = payload.get("features")
     if (not isinstance(fields, list) or not _FIELDS <= {
             field.get("name") for field in fields if isinstance(field, dict)
-        } or not isinstance(rows, list) or len(rows) > 10):
+        } or not isinstance(rows, list) or len(rows) > max_rows
+            or payload.get("exceededTransferLimit") is True):
         raise NewsParserError("WA DNR fire statistics lack bounded fields")
 
     items: list[dict[str, Any]] = []
@@ -87,12 +100,12 @@ def parse_wa_dnr_fire_statistics_fixture(
         acres = row.get("ACRES_BURNED")
         if (not name or not isinstance(county, str) or not _COUNTY.fullmatch(county)
                 or isinstance(acres, bool) or not isinstance(acres, (int, float))
-                or not math.isfinite(acres) or not 100 <= acres <= 20_000_000):
+                or not math.isfinite(acres) or not min_acres <= acres <= 20_000_000):
             raise NewsParserError(f"WA DNR fire feature {index} lacks bounded report fields")
         discovered = _date(row.get("DSCVR_DT"), required=True)
         controlled = _date(row.get("CONTROL_DT"))
         out = _date(row.get("FIRE_OUT_DT"))
-        if discovered < "2026-09-01" or (controlled and controlled < discovered) or (
+        if discovered < min_date or (controlled and controlled < discovered) or (
             out and out < discovered
         ):
             raise NewsParserError(f"WA DNR fire feature {index} has inconsistent dates")
@@ -134,7 +147,7 @@ def parse_wa_dnr_fire_statistics_fixture(
             "evacuation_claimed": False,
             "public_impact_inferred": False,
             "source_url": LAYER_URL,
-            "query_url": QUERY_URL,
+            "query_url": query_url,
             "item_url_kind": "official_record_query",
             "fixture_only": True,
         }
