@@ -94,7 +94,9 @@ def regional_item_signature(item: dict[str, Any]) -> dict[str, Any]:
 
 def regional_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str]:
     if left["event_key"] and left["event_key"] == right["event_key"]:
-        return ["shared_official_event_id"] if left["official"] and right["official"] else []
+        if (left["family"] and left["family"] == right["family"]
+                and left["official"] and right["official"]):
+            return ["shared_official_event_id"]
     if not left["family"] or left["family"] == right["family"]:
         return []
     if not left["official"] or not right["official"]:

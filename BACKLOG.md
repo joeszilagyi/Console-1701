@@ -1092,6 +1092,11 @@ missing Flood category, unofficial source and distant time remain separate. An o
 persists the pair as independent-family context convergence, without treating the county post
 as a second NWS alert or adding an active-alert claim. These are synthetic source-shaped
 fixtures, so the test verifies the rule rather than a real-world flood event.
+The `shared_official_event_id` shortcut now also requires one matching source family. A copied
+key in a different official family cannot bypass event type, title, geography, or time checks;
+those cross-family records can still join through the existing bounded context rule when its
+facts agree. A same-family official revision retains the key even when its publication date
+is outside the cross-family window. Direct and existing NIFC/NWCC fixture regressions pass.
 
 ### REGIONAL Deterministic Ranking
 
