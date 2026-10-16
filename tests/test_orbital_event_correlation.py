@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from textwrap import dedent
 
 from console1701.config import load_config
 from console1701.db import connect_db, json_loads
 from console1701.news.orbital_events import correlate_orbital_items
+from console1701.news.parsers import parse_fixture_items
 from console1701.news.scanner import run_news_scan
 
 FIXTURE = Path(__file__).parent / "fixtures/orbital/swpc_alerts.json"
@@ -107,3 +109,73 @@ def test_orbital_fixture_scan_persists_event_evidence_without_network(tmp_path, 
         event = json_loads(rows[0]["evidence_json"], {})["orbital_event"]
         assert event["item_ids"] and event["families"] == ["swpc"]
         assert event["corroborated"] is False
+
+
+def test_linked_launch_article_uses_source_launch_window_without_corroboration(
+    tmp_path, monkeypatch
+):
+    orbital_fixtures = Path(__file__).parent / "fixtures/orbital"
+    launch = json.loads((orbital_fixtures / "launch_library_upcoming.json").read_text())
+    launch["results"][0]["id"] = "bf2c3027-a314-403e-a416-2bfd5d165ad1"
+    launch_path = tmp_path / "linked-launch.json"
+    launch_path.write_text(json.dumps(launch))
+    article_path = orbital_fixtures / "spaceflight_news_articles.json"
+    launch_source = {
+        "id": "launch_library_upcoming", "scope": "ORBITAL",
+        "parser": "launch_library_json", "source_family": "launch_library",
+    }
+    article_source = {
+        "id": "spaceflight_news_articles", "scope": "ORBITAL",
+        "parser": "spaceflight_news_json", "source_family": "spaceflight_news_api",
+    }
+    launch_item, = parse_fixture_items(launch_source, launch_path.read_text())
+    article_item, = parse_fixture_items(article_source, article_path.read_text())
+    assert launch_item["evidence"]["orbital_identity"]["provider"] == "SpaceX"
+    for item_id, item, family in (
+        (1, launch_item, "launch_library"),
+        (2, article_item, "spaceflight_news_api"),
+    ):
+        item["id"] = item_id
+        item["evidence"]["source"] = {"source_family": family}
+    groups = correlate_orbital_items([launch_item, article_item])
+    assert len(groups) == 1
+    assert groups[0]["item_ids"] == [1, 2]
+    assert groups[0]["matches"][0]["basis"] == [
+        "event_type", "shared_event_id", "launch_window",
+    ]
+    assert groups[0]["corroborated"] is False
+    article_item["source_published_at"] = "2026-09-01T12:00:00Z"
+    assert len(correlate_orbital_items([launch_item, article_item])) == 2
+
+    monkeypatch.setattr(
+        "console1701.news.scanner.fetch_official_text",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("no HTTP")),
+    )
+    path = tmp_path / "config.yml"
+    path.write_text(dedent(f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        orbital: {{enabled: true}}
+        news:
+          enabled: true
+          scopes:
+            ORBITAL:
+              enabled: true
+              sources:
+                - id: launch_library_upcoming
+                  enabled: true
+                  url: "file://{launch_path}"
+                - id: spaceflight_news_articles
+                  enabled: true
+                  url: "file://{article_path}"
+    """).strip() + "\n")
+    assert run_news_scan(path)["item_count"] == 2
+    config = load_config(path)
+    with connect_db(config["_db_path"]) as conn:
+        rows = conn.execute(
+            "SELECT evidence_json FROM news_clusters WHERE scope='ORBITAL'"
+        ).fetchall()
+        assert len(rows) == 1
+        event = json_loads(rows[0]["evidence_json"], {})["orbital_event"]
+        assert event["corroborated"] is False
+        assert event["families"] == ["launch_library"]
+        assert event["matches"][0]["basis"][-1] == "launch_window"

@@ -74,6 +74,7 @@ def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     swpc = evidence.get("swpc_alert") or {}
     swpc_scale = evidence.get("swpc_noaa_scale") or {}
     swpc_kp = evidence.get("swpc_k_index") or {}
+    launch_library = evidence.get("launch_library") or {}
     if swpc.get("noaa_scale"):
         context["noaa_scale"] = _normalized(swpc["noaa_scale"])
     if swpc_scale.get("scale"):
@@ -104,6 +105,7 @@ def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
             "observation_type": swpc_kp.get("observation_type"),
             "observed_at": _time(swpc_kp.get("observed_at")),
         } if swpc_kp else {},
+        "launch_at": _time(launch_library.get("net")),
     }
 
 
@@ -111,7 +113,17 @@ def orbital_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str
     if not left["published_at"] or not right["published_at"]:
         return []
     hours = abs((left["published_at"] - right["published_at"]).total_seconds()) / 3600
-    if hours > MATCH_WINDOW_HOURS:
+    shared_ids = left["identifiers"] & right["identifiers"]
+    shared_launch_id = any(value.startswith("launch_id:") for value in shared_ids)
+    near_source_launch = bool(shared_launch_id and (
+        left["launch_at"] and abs(
+            (left["launch_at"] - right["published_at"]).total_seconds()
+        ) <= MATCH_WINDOW_HOURS * 3600
+        or right["launch_at"] and abs(
+            (right["launch_at"] - left["published_at"]).total_seconds()
+        ) <= MATCH_WINDOW_HOURS * 3600
+    ))
+    if hours > MATCH_WINDOW_HOURS and not near_source_launch:
         return []
     if {left["event_type"], right["event_type"]} == {
         "space_weather_alert", "space_weather_scale",
@@ -156,8 +168,11 @@ def orbital_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str
         return []
     if not left["event_type"] or left["event_type"] != right["event_type"]:
         return []
-    if left["identifiers"] & right["identifiers"]:
-        return ["event_type", "shared_event_id", "time_window"]
+    if shared_ids:
+        return [
+            "event_type", "shared_event_id",
+            "launch_window" if hours > MATCH_WINDOW_HOURS else "time_window",
+        ]
     if left["family"] == "unknown" or left["family"] == right["family"]:
         return []
     shared_context = [
