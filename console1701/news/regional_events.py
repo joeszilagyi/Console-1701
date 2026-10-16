@@ -68,6 +68,8 @@ def regional_item_signature(item: dict[str, Any]) -> dict[str, Any]:
             )
         elif source.get("source_key") == "nwcc_large_fire_wa":
             fire_start_date = (evidence.get("nwcc_large_fire") or {}).get("start_date")
+        elif source.get("source_key") == "nwcc_point_daily_wa":
+            fire_start_date = (evidence.get("nwcc_point_daily") or {}).get("start_date")
         elif source.get("source_key") == "nifc_wfigs_current_wa":
             discovery = (evidence.get("nifc_wfigs") or {}).get("discovery_at")
             if isinstance(discovery, str) and discovery.endswith(("+00:00", "Z")):

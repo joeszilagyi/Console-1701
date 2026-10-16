@@ -682,7 +682,7 @@ enum values and keep all REGIONAL sources disabled until explicitly configured.
 
 The REGIONAL registry now contains all 224 design-table entries plus six pre-existing reviewed
 operational candidates, one Pierce Road Alert RSS candidate, and NIFC current IMSR, NIFC WFIGS,
-NWCC large-fire Washington, and WA DNR fire-statistics fixture candidates. All 235 rows are disabled
+NWCC large-fire Washington, NWCC daily points, and WA DNR fire-statistics fixture candidates. All 236 rows are disabled
 by default. At load time it validates unique
 keys, classes/adapters/kinds, official and verification status, risks, HTTPS URLs, priority,
 interval, and future phase. The config layer inherits metadata, and SQLite sync persists the full
@@ -719,7 +719,7 @@ retention purge evidence. Use JSON-heavy columns and indexes for latest-by-scope
 source health, source family, geographic filters, and `expires_at` purge. Do not store full article
 bodies by default.
 
-The shared schema persists all 235 REGIONAL registry rows, configured sources, fetch runs, items,
+The shared schema persists all 236 REGIONAL registry rows, configured sources, fetch runs, items,
 source health, and scoped `news_clusters` with member, family, geography, confidence, and ranking
 evidence. `news_item_facets` now indexes source-provided REGIONAL zone, route, facility, county, and
 region labels, plus event type and source family. It excludes free-text USGS place labels from
@@ -782,6 +782,17 @@ control/out dates. The layer has no positive active-status or update-time field;
 does not make active-fire, evacuation, or public-impact claims. Its live path remains blocked,
 and the existing `wa_dnr_current_wildfire` reference source remains unsupported. See
 `docs/project/REGIONAL_WA_DNR_WILDFIRE_ENDPOINT_REVIEW.md`.
+
+NWCC's separate `NWCC_Point_Daily` operational view now has an observed six-row bounded query
+fixture joined to its layer-level data edit timestamp. Four rows have Washington management
+units and points; the other two are Oregon and excluded. All four Washington rows have a source
+`Active` label, but the layer was last edited on 2026-10-07, eight days before collection, and
+provides no per-row freshness. The fixture parser stores the label explicitly as a dated snapshot,
+with current activity, evacuation, and public impact unverified. It shares fire keys with the
+existing NWCC large-fire records, so the four matches remain one federal source family with no
+extra corroboration. This does not establish WA DNR's separate active-incident contract. Live
+HTTP remains disabled pending freshness, cadence, and exact-query policy review; see
+`docs/project/REGIONAL_NWCC_POINT_DAILY_SOURCE_VERIFICATION.md`.
 
 NIFC's separate WFIGS Current Wildland Fire Incident Locations service now has an observed,
 bounded Washington wildfire fixture: 15 records changed since 2026-10-01, at least 1,000 acres,
