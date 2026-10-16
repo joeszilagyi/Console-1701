@@ -29,11 +29,11 @@ exposes a point epicenter and aggregate `felt`, `cdi`, and `mmi` fields, but no 
 distribution or country code. The separate [USGS GeoServe regions endpoint](https://earthquake.usgs.gov/ws/geoserve/regions.php)
 can classify an individual point with an `admin` query, returning country, ISO code, and region;
 it does not measure where shaking was felt. Its latitude/longitude-dependent request cannot be
-added to the current exact-URL, one-feed live transport without a separately designed and
-reviewed request gate. Do not convert a GeoServe epicenter classification, place label, or total
-felt count into multi-state impact. Cross-border routing needs either a verified local boundary
-dataset or a bounded explicit GeoServe enrichment design, and multi-state impact needs separate
-source-backed geographic observations.
+added to the original exact-URL, one-feed live transport without a separately designed and
+reviewed request gate. The later bounded opt-in proposal is documented in
+`NATIONAL_USGS_GEOSERVE_ADMIN_FIXTURE_VERIFICATION.md` and awaits owner review. Do not convert a
+GeoServe epicenter classification, place label, or total felt count into multi-state impact;
+that requires separate source-backed geographic observations.
 
 An isolated temporary-config/state explicit smoke scan on 2026-10-15 returned HTTP 200 and
 31,049 bytes. SQLite recorded one successful fetch, `healthy` source health, one NATIONAL item

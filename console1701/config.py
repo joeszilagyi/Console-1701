@@ -1133,6 +1133,27 @@ def _normalize_news_source(
                 raise ConfigError(
                     f"{path}.geoserve_admin_fixture requires a local USGS fixture"
                 )
+        if "geoserve_admin_enrichment" in source_cfg:
+            from console1701.news.official_http import USGS_REGIONAL_EARTHQUAKES_URL
+
+            source_cfg["geoserve_admin_enrichment"] = _coerce_bool(
+                source_cfg["geoserve_admin_enrichment"],
+                f"{path}.geoserve_admin_enrichment",
+            )
+            if source_cfg["geoserve_admin_enrichment"]:
+                interval = _coerce_int(
+                    source_cfg.get("interval_minutes", 0),
+                    f"{path}.interval_minutes", minimum=30,
+                )
+                if (source_key != "usgs_eq_geojson"
+                        or source_cfg.get("url") != USGS_REGIONAL_EARTHQUAKES_URL
+                        or source_cfg.get("parser") != "usgs_earthquake_geojson"
+                        or source_cfg.get("verification_status") != "verified"
+                        or "geoserve_admin_fixture" in source_cfg):
+                    raise ConfigError(
+                        f"{path}.geoserve_admin_enrichment requires the verified live USGS source"
+                    )
+                source_cfg["interval_minutes"] = interval
         source_family = str(source_cfg.get("source_family") or "").strip().lower()
         source_class = str(source_cfg.get("source_class") or "").strip().lower()
         if (

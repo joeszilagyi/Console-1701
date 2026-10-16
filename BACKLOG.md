@@ -1449,8 +1449,13 @@ territory, and zero-polygon cases. A bounded NATIONAL `file://` sidecar fixture 
 exact GeoServe point request against each earthquake and rejects a positively identified
 foreign-land epicenter while retaining U.S./territory and unknown-offshore candidates. It
 stores the admin result as epicenter evidence only; no affected-state or multi-state impact
-claim follows from the point lookup. Offline scan tests trap HTTP. Live per-event GeoServe
-access and live felt-state distribution remain open; see
+claim follows from the point lookup. Offline scan tests trap HTTP. The follow-up live opt-in
+uses the verified NATIONAL feed's parsed coordinates only, a 30-minute minimum scan interval,
+at most five exact point-admin GETs, five-second timeouts, 2 KiB response caps, and strict
+response/request matching. A verified foreign polygon is excluded; unavailable or malformed
+enrichment retains coarse feed routing with a recorded failure state; HTTP 429 triggers a two-hour
+enrichment backoff while base feed scans continue. It is disabled by default
+and awaits owner review as a new outbound request. Live felt-state distribution remains open; see
 `docs/project/NATIONAL_USGS_GEOSERVE_ADMIN_FIXTURE_VERIFICATION.md`.
 The official DYFI ZIP intensity product for a 2026 M5.6 California earthquake supplies
 source-reported state codes, ZIP-aggregated response counts and CDI. A bounded local

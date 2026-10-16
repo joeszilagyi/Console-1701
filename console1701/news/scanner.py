@@ -28,6 +28,7 @@ from console1701.news.normalize import bounded_text, cluster_key, content_hash, 
 from console1701.news.official_http import (
     OfficialFetchResult,
     RateLimitedError,
+    fetch_national_usgs_geoserve_admin,
     fetch_official_text,
     is_supported_official_source,
 )
@@ -45,6 +46,7 @@ from console1701.news.parsers import (
     UnsupportedSourceError,
     load_fixture_text,
     parse_fixture_items,
+    parse_national_usgs_live_enriched,
 )
 from console1701.news.ranking import (
     apply_local_event_ranking_adjustments,
@@ -770,6 +772,72 @@ def _ingest_source(
             fetch_evidence = {"fixture_path": str(path), "fixture_only": True}
             success_message = f"Fixture ingest succeeded for {path.name}."
         items = parse_fixture_items(source, text)
+        if (is_live and source.get("scope") == "NATIONAL"
+                and source.get("id") == "usgs_eq_geojson"
+                and source.get("geoserve_admin_enrichment") is True):
+            candidate_count = len(items)
+            candidates = items[:5]
+            admin_responses: dict[str, Any] = {}
+            geoserve_bytes = 0
+            geoserve_attempts = 0
+            geoserve_state = "bounded_partial" if candidate_count > 5 else "complete"
+            retry_after = None
+            prior_runs = conn.execute(
+                "SELECT evidence_json FROM news_fetch_runs "
+                "WHERE source_id=? AND id<? ORDER BY id DESC LIMIT 20",
+                (source_id, run_id),
+            ).fetchall()
+            for prior in prior_runs:
+                previous = json_loads(prior["evidence_json"], {}).get("geoserve_admin") or {}
+                if previous:
+                    retry_after = previous.get("retry_after")
+                    break
+            if retry_after:
+                try:
+                    retry_at = datetime.fromisoformat(retry_after)
+                    if retry_at.tzinfo and datetime.now(UTC) < retry_at.astimezone(UTC):
+                        geoserve_state = "rate_backoff"
+                except (TypeError, ValueError):
+                    retry_after = None
+            fetch_policy = (config.get("news") or {}).get("fetch_policy") or {}
+            lookup_candidates = [] if geoserve_state == "rate_backoff" else candidates
+            for candidate in lookup_candidates:
+                quake = (candidate.get("evidence") or {}).get("usgs_earthquake") or {}
+                geoserve_attempts += 1
+                try:
+                    response_admin, size = fetch_national_usgs_geoserve_admin(
+                        source,
+                        latitude=float(quake["latitude"]),
+                        longitude=float(quake["longitude"]),
+                        user_agent=str(fetch_policy.get("user_agent")),
+                        timeout_seconds=int(source.get("timeout_seconds") or 5),
+                    )
+                except NewsIngestError as exc:
+                    geoserve_state = (
+                        "rate_limited" if isinstance(exc, RateLimitedError) else "unavailable"
+                    )
+                    if geoserve_state == "rate_limited":
+                        retry_after = (datetime.now(UTC) + timedelta(hours=2)).isoformat()
+                    break
+                admin_responses[str(quake["id"])] = response_admin
+                geoserve_bytes += size
+            if admin_responses:
+                try:
+                    items = parse_national_usgs_live_enriched(source, text, admin_responses)
+                except NewsParserError:
+                    admin_responses = {}
+                    geoserve_state = "invalid_response"
+            fetch_evidence["geoserve_admin"] = {
+                "state": geoserve_state,
+                "candidate_count": candidate_count,
+                "lookups_attempted": geoserve_attempts,
+                "lookups_applied": len(admin_responses),
+                "response_bytes": geoserve_bytes,
+                "max_lookups_per_scan": 5,
+                **({"retry_after": retry_after} if geoserve_state in {
+                    "rate_limited", "rate_backoff",
+                } and retry_after else {}),
+            }
         if is_live:
             items = _fresh_live_orbital_items(source, items, now=datetime.now(UTC))
             items = _fresh_live_science_items(source, items, now=datetime.now(UTC))
