@@ -1394,6 +1394,9 @@ Status: not implemented.
 2026-10-15 source check: FSIS confirms a public API, but its linked documentation and candidate
 API path returned HTTP 403 in bounded checks. Response shape and access remain unverified; see
 `docs/project/NATIONAL_NHTSA_RECALL_API_VERIFICATION.md`. Keep disabled.
+The 2026-10-15 follow-up GET also returned HTTP 403 (`text/html`) for the published v1 API,
+the FSIS Recall API documentation page, and the FSIS recall RSS candidate. None supplied a
+current JSON/XML body from which to validate a fixture parser; do not synthesize an API shape.
 
 Build a fixture-first parser for the FSIS Recall API. Preserve recall id, product, firm, recall
 class, hazard, distribution geography, public instruction URL, recall date, active/update status,
@@ -1553,6 +1556,10 @@ FEMA/NWS region, storm basin, airport, distribution area, infrastructure sector,
 or jurisdiction context, title tokens, and a 72-hour window. Match evidence, families, confidence,
 and identity are persisted in item and cluster JSON. Same-family repeats are not marked
 corroborated; complete-link grouping prevents a broad bridge from merging two incompatible events.
+Conflicting official IDs from the same namespace now veto a match before URL or context checks;
+an identical article URL requires compatible event types and at least two shared title tokens.
+This keeps generic feed/homepage links and multi-event roundups from joining unrelated NATIONAL
+events while allowing same-ID revisions and genuine syndicated stories.
 The CPSC fixture now labels official recall ID, consumer-product event type and agency while
 leaving distribution geography and multi-state impact unknown; the matcher can recover that ID
 from older stored evidence lacking the newer identity contract. FDA's RSS parser labels FDA notice
