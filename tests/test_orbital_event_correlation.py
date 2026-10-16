@@ -279,7 +279,30 @@ def test_mpc_designation_does_not_merge_distinct_circulars():
     revised = json.loads(json.dumps(circulars[0]))
     revised["id"] = 3
     revised["evidence"]["orbital_identity"]["mpc_designation"] = "2025 AB"
+    revised["evidence"]["orbital_identity"]["object_id"] = "2025-A19"
+    assert "minor_planet_notice:2025 a18" in orbital_item_signature(revised)[
+        "identifiers"
+    ]
     assert correlate_orbital_items([circulars[0], revised])[0]["item_ids"] == [1, 3]
+
+    conflicting = deepcopy(circulars[0])
+    conflicting["id"] = 4
+    conflicting["evidence"]["mpc_mpec"]["mpec_id"] = "2025-A19"
+    assert [group["item_ids"] for group in correlate_orbital_items([
+        circulars[0], conflicting
+    ])] == [[1], [4]]
+
+    foreign = deepcopy(circulars[0])
+    foreign["evidence"]["source"]["source_family"] = "esa"
+    foreign["evidence"]["orbital_identity"].pop("object_id")
+    assert "minor_planet_notice:2025 a18" not in orbital_item_signature(foreign)[
+        "identifiers"
+    ]
+    missing = deepcopy(circulars[0])
+    missing["evidence"]["mpc_mpec"].pop("mpec_id")
+    assert "minor_planet_notice:2025 a18" not in orbital_item_signature(missing)[
+        "identifiers"
+    ]
 
 
 def test_nasa_esa_iss_articles_need_the_same_source_title_action(tmp_path, monkeypatch):

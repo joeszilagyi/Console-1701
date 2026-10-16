@@ -3064,6 +3064,10 @@ For MPC MPECs, the publication ID has precedence over a shared object designatio
 two different circulars about the same object stay separate, while a revision of
 one circular retains its identity. The parser-backed regression uses two bounded
 MPEC metadata rows without downloading circular bodies.
+The circular ID in ORBITAL correlation now comes from the MPC-family `mpc_mpec.mpec_id`
+parser field, so a changed copied `object_id` cannot split a revision or merge two
+different circulars behind a shared URL. A foreign-family parser field and a missing
+MPC parser ID cannot manufacture that notice identity. Other adapter identities remain open.
 Other adapter identities, including reentry and safe satellite cases pending verified sources,
 remain open.
 JPL fireball correlation now uses reported UTC peak-brightness time plus coordinates when
