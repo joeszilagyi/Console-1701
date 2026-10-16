@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
+from console1701.news.parsers import parse_fixture_items
 from console1701.news.science_events import correlate_science_items
 
 
@@ -33,6 +37,37 @@ def test_gcn_circular_correlates_by_event_but_not_by_a_shared_source_family():
         "gcn_circular": {"circular_id": 33604, "event_id": "GRB 261015B"}})
     groups = correlate_science_items([notice, circular, unrelated])
     assert [group["item_ids"] for group in groups] == [[1, 2], [3]]
+    assert groups[0]["corroborated"] is False
+
+
+def test_gcn_circular_correction_cannot_bridge_conflicting_event_ids():
+    fixture = Path(__file__).parent / "fixtures/science/gcn_circular.json"
+    source = {
+        "id": "gcn_circulars", "scope": "SYSTEM_SOLAR", "kind": "api_json",
+        "parser": "gcn_circular_fixture", "fixture_only": True,
+        "official_url": "https://gcn.nasa.gov/circulars",
+        "url": fixture.resolve().as_uri(),
+    }
+    original_payload = json.loads(fixture.read_text())
+    corrected_payload = dict(original_payload, eventId="GRB 230410B",
+                             subject="GRB 230410B: Fermi GBM Final Real-time Localization")
+    follow_up_payload = dict(original_payload, circularId=33604,
+                             subject="GRB 230410A: Fermi GBM Follow-up Localization")
+    items = [
+        {**parse_fixture_items(source, json.dumps(payload))[0], "id": index}
+        for index, payload in enumerate(
+            (original_payload, corrected_payload, follow_up_payload), start=1
+        )
+    ]
+    for item in items:
+        item["evidence"]["source"] = {
+            "source_family": "gcn", "source_key": "gcn_circulars",
+        }
+    groups = correlate_science_items(items)
+    assert [group["item_ids"] for group in groups] == [[1, 3], [2]]
+    assert groups[0]["matches"][0]["basis"] == [
+        "event_kind", "shared_event_id", "time_window",
+    ]
     assert groups[0]["corroborated"] is False
 
 

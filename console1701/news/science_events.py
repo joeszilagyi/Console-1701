@@ -10,6 +10,7 @@ _TOKENS = re.compile(r"[a-z0-9]+")
 _STOP = {"a", "an", "and", "at", "by", "for", "from", "in", "of", "on", "the",
          "to", "with", "new", "latest", "update", "science", "nasa", "esa"}
 MATCH_WINDOW_HOURS = 96
+_EXCLUSIVE_EVENT_ID_PREFIXES = ("gcn_event:", "gracedb:")
 
 
 def _value(value: Any) -> str:
@@ -107,6 +108,13 @@ def science_item_signature(item: dict[str, Any]) -> dict[str, Any]:
 def science_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str]:
     if left["kind"] != right["kind"] or not left["published_at"] or not right["published_at"]:
         return []
+    # One Circular ID can be reassigned to another event in a correction.
+    # The explicit transient IDs take precedence over shared publication ID.
+    for prefix in _EXCLUSIVE_EVENT_ID_PREFIXES:
+        left_ids = {value for value in left["identifiers"] if value.startswith(prefix)}
+        right_ids = {value for value in right["identifiers"] if value.startswith(prefix)}
+        if left_ids and right_ids and not left_ids & right_ids:
+            return []
     hours = abs((left["published_at"] - right["published_at"]).total_seconds()) / 3600
     if hours > MATCH_WINDOW_HOURS:
         return []

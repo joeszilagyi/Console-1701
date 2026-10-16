@@ -3694,6 +3694,10 @@ background evidence, not an event-wide withdrawal; an ambiguous retraction is he
 An explicit event/candidate retraction creates the retained withdrawal marker, including when
 it revises the same Circular ID after a component-only version. Event-prefixed corrections are
 recognized without a preliminary-report boost. Live GCN and TNS gates remain open.
+Stored transient correlation now rejects two GCN Circular records with conflicting explicit
+GCN event IDs even when they share a Circular publication ID. A separate Circular about the
+same event still joins; a parser-backed correction regression covers both cases so a
+reassigned publication cannot bridge distinct transient events.
 
 ### Heavy Archive Phase, Disabled By Default
 
