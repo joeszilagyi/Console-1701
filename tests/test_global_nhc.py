@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from copy import deepcopy
 from datetime import UTC, datetime, timedelta
 from email.utils import format_datetime
 from pathlib import Path
@@ -10,6 +11,7 @@ import pytest
 
 from console1701.config import load_config
 from console1701.db import connect_db, json_loads
+from console1701.news.global_events import correlate_global_items, global_item_signature
 from console1701.news.global_ranking import rank_global_event
 from console1701.news.global_registry import get_global_source_registry_entry
 from console1701.news.parsers import NewsParserError, PayloadTooLargeError, parse_fixture_items
@@ -42,6 +44,44 @@ def test_nhc_basin_feed_preserves_explicit_storm_evidence():
     assert first["evidence"]["global_identity"]["storm_id"] == "EP212026"
     assert items[1]["evidence"]["nhc_rss"]["advisory_type"] == "storm_summary"
     assert items[1]["evidence"]["nhc_rss"]["storm_id"] == "EP202026"
+
+
+def test_nhc_storm_correlation_uses_family_qualified_parser_id():
+    advisory = parse_fixture_items(SOURCE, FIXTURE.read_text())[0]
+    advisory["id"] = 1
+    advisory["evidence"]["source"] = {
+        "source_family": "noaa_nhc", "official_status": "official",
+    }
+    revision = deepcopy(advisory)
+    revision["id"] = 2
+    revision["title"] = "Hurricane Trudy Public Advisory Number 10"
+    revision["url"] = revision["canonical_url"] = (
+        "https://www.nhc.noaa.gov/text/refresh/MIATCPEP1+shtml/151939.shtml"
+    )
+    revision["evidence"]["global_identity"].pop("storm_id")
+    signature = global_item_signature(revision)
+    assert signature["family"] == "noaa_nhc"
+    assert signature["identifiers"] == {"storm_id:ep212026"}
+    groups = correlate_global_items([advisory, revision])
+    assert groups[0]["item_ids"] == [1, 2]
+    assert groups[0]["corroborated"] is False
+    assert groups[0]["matches"][0]["basis"] == ["shared_event_id"]
+
+    foreign = deepcopy(revision)
+    foreign["evidence"]["source"]["source_family"] = "un_news"
+    assert global_item_signature(foreign)["identifiers"] == set()
+    foreign["evidence"]["source"]["source_family"] = "noaa_nhc"
+    foreign["evidence"]["nhc_rss"].pop("storm_id")
+    foreign["evidence"]["global_identity"]["storm_id"] = "EP212026"
+    assert global_item_signature(foreign)["identifiers"] == set()
+
+    conflicting = deepcopy(revision)
+    conflicting["evidence"]["nhc_rss"]["storm_id"] = "EP202026"
+    conflicting["evidence"]["global_identity"]["storm_id"] = "EP212026"
+    conflicting["url"] = conflicting["canonical_url"] = advisory["url"]
+    assert [group["item_ids"] for group in correlate_global_items([
+        advisory, conflicting
+    ])] == [[1], [2]]
 
 
 def test_nhc_watch_ranking_expires_without_a_fresh_official_public_advisory():
@@ -156,9 +196,19 @@ def test_nhc_fixture_scan_is_offline_and_does_not_infer_impact(tmp_path, monkeyp
         rows = conn.execute(
             "SELECT evidence_json FROM news_items WHERE scope = 'GLOBAL'"
         ).fetchall()
+        clusters = conn.execute(
+            "SELECT evidence_json FROM news_clusters WHERE scope = 'GLOBAL'"
+        ).fetchall()
         states = get_news_sources_status(conn, config)
     assert len(rows) == 2
+    assert len(clusters) == 2
     assert states[0]["health_state"] == "healthy"
+    cluster_events = [json_loads(row["evidence_json"], {})["global_event"]
+                      for row in clusters]
+    assert {tuple(event["identifiers"]) for event in cluster_events} == {
+        ("storm_id:ep202026",), ("storm_id:ep212026",),
+    }
+    assert all(event["families"] == ["noaa_nhc"] for event in cluster_events)
     evidence = [json_loads(row["evidence_json"], {}) for row in rows]
     assert {row["global"]["event_type"] for row in evidence} == {"tropical_cyclone"}
     assert all(row["global"]["affected_countries"] == [] for row in evidence)
