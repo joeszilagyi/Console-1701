@@ -20,6 +20,11 @@ machine-readable source was signed off.
   timestamp. An empty control/out date is not proof of active status. The layer
   is useful for fire statistics, but cannot truthfully drive a current-incident
   alert parser or active-fire ranking from the observed shape.
+- A follow-up bounded query on 2026-10-15 selected fires of at least 100 acres
+  discovered since 2026-09-01 and returned four records. Three had no control
+  or out date; the fourth had both. None supplied a positive active-status field
+  or update time. Filtering by acreage and discovery date does not resolve the
+  lifecycle ambiguity.
 - The `wa_dnr_current_wildfire` registry entry therefore remains a disabled
   reference source. Even if a user marks it enabled with a file or HTTP URL,
   the scanner records unsupported and does not read or fetch it. Resume only

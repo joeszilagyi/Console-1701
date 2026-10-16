@@ -1973,6 +1973,8 @@ documents report categories, weekly cadence, and preliminary status. A bounded d
 that exact RSS URL returned HTTP 403 on 2026-10-15, so its item XML shape remains unverified.
 The page's companion CAP URL (`https://volcano.si.edu/news/WeeklyVolcanoCAP.xml`)
 also returned HTTP 403 in a bounded direct check; it does not provide a verified fallback.
+An identifying-client recheck of the exact RSS URL and weekly-report page on 2026-10-15
+also returned HTTP 403. The official page still links the RSS URL, but access remains blocked.
 Keep the parser row open until a legitimate official sample can be inspected; do not bypass the
 site access control or infer feed fields from the HTML page. The report page remains a reference
 source only.
@@ -2723,6 +2725,11 @@ Spaceflight News linked article when publication falls within 96 hours of the so
 when the Launch Library record was last updated earlier; the aggregator remains non-independent.
 The parser also supplies source-backed provider, vehicle, and mission-name context. A two-source
 offline scan persists the exact-ID match and rejects an article outside that launch window.
+Launch Library event IDs also join a single linked Spaceflight News article near the
+source event time, including docking/EVA rows whose specific `iss_update` type differs from
+the article's generic `mission_update` type. This uses the exact event ID, source keys and
+96-hour event window; it does not treat the aggregator as corroboration. Parsed fixtures,
+wrong-ID/time cases and a stored offline scan cover the join.
 Other adapter identities, including reentry and safe satellite cases pending verified sources,
 remain open.
 

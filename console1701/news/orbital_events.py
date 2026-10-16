@@ -51,7 +51,7 @@ def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         identifiers.add(f"{event_type}:{object_id}")
     for field in (
         "product_id", "launch_id", "cneos_event_id", "mpc_designation",
-        "reentry_object_id", "safe_satellite_id",
+        "reentry_object_id", "safe_satellite_id", "launch_library_event_id",
     ):
         value = _normalized(identity.get(field))
         if value:
@@ -106,6 +106,7 @@ def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
             "observed_at": _time(swpc_kp.get("observed_at")),
         } if swpc_kp else {},
         "launch_at": _time(launch_library.get("net")),
+        "ll_event_at": _time(launch_library.get("event_time")),
     }
 
 
@@ -115,6 +116,9 @@ def orbital_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str
     hours = abs((left["published_at"] - right["published_at"]).total_seconds()) / 3600
     shared_ids = left["identifiers"] & right["identifiers"]
     shared_launch_id = any(value.startswith("launch_id:") for value in shared_ids)
+    shared_ll_event_id = any(
+        value.startswith("launch_library_event_id:") for value in shared_ids
+    )
     near_source_launch = bool(shared_launch_id and (
         left["launch_at"] and abs(
             (left["launch_at"] - right["published_at"]).total_seconds()
@@ -123,8 +127,23 @@ def orbital_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str
             (right["launch_at"] - left["published_at"]).total_seconds()
         ) <= MATCH_WINDOW_HOURS * 3600
     ))
-    if hours > MATCH_WINDOW_HOURS and not near_source_launch:
+    ll_event, ll_article = (
+        (left, right) if left["source_key"] == "launch_library_events" else (right, left)
+    )
+    near_source_event = bool(
+        shared_ll_event_id
+        and ll_event["source_key"] == "launch_library_events"
+        and ll_article["source_key"] == "spaceflight_news_articles"
+        and ll_event["event_type"] in {"iss_update", "mission_update"}
+        and ll_article["event_type"] == "mission_update"
+        and ll_event["ll_event_at"]
+        and abs((ll_event["ll_event_at"] - ll_article["published_at"]).total_seconds())
+        <= MATCH_WINDOW_HOURS * 3600
+    )
+    if hours > MATCH_WINDOW_HOURS and not near_source_launch and not near_source_event:
         return []
+    if near_source_event:
+        return ["linked_launch_library_event_id", "event_window"]
     if {left["event_type"], right["event_type"]} == {
         "space_weather_alert", "space_weather_scale",
     }:
