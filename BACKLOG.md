@@ -2718,7 +2718,13 @@ fixture and stored-cluster tests cover this case. Planetary three-hour Kp summar
 G level from NOAA's published threshold table and join a same-level SWPC warning/alert only when
 the measurement falls inside its explicit valid window. Boulder local K-index, provisional
 one-minute Kp estimates, level mismatches, and out-of-window values stay separate; the pair
-remains one SWPC family in stored cluster evidence. Other adapter identities remain open.
+remains one SWPC family in stored cluster evidence. A parsed Launch Library UUID now joins a
+Spaceflight News linked article when publication falls within 96 hours of the source NET, even
+when the Launch Library record was last updated earlier; the aggregator remains non-independent.
+The parser also supplies source-backed provider, vehicle, and mission-name context. A two-source
+offline scan persists the exact-ID match and rejects an article outside that launch window.
+Other adapter identities, including reentry and safe satellite cases pending verified sources,
+remain open.
 
 ### ORBITAL Deterministic Ranking
 

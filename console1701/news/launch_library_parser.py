@@ -175,6 +175,11 @@ def parse_launch_library_json(source: dict[str, Any], payload_text: str) -> list
             "event_type": event_type,
             "launch_id" if is_launch else "object_id": identifier,
             "public_value_class": "background",
+            **({
+                "mission_name": mission_name,
+                "launch_vehicle": rocket_name,
+                "provider": provider_name,
+            } if is_launch else {}),
         }
         items.append(item)
     return items
