@@ -1891,8 +1891,11 @@ Current state: checked-in GDACS RSS/API GeoJSON, ReliefWeb disaster/report, WHO 
 USGS earthquake, NHC RSS, WMO-hosted BoM warning RSS, UN News RSS, UN Press RSS and IAEA RSS
 fixtures exercise offline parser and `news-scan` persistence paths. The BoM sample retains
 official issuer, CAP links, GUID/time and cancellation labels as background evidence because RSS
-does not verify CAP status, severity, expiry or affected area. Smithsonian GVP, broader news and
-remaining health/failure variants are pending. A bounded read of the BBC World RSS candidate on 2026-10-15 returned HTTP
+does not verify CAP status, severity, expiry or affected area. Disabled, auth-required, stale,
+and failing states are covered by offline health regressions; an actual valid-to-malformed GDACS
+fixture refresh now verifies `parser_failed` health, GLOBAL page/API state, and retention of the
+last good item. Smithsonian GVP and broader news fixtures remain pending. A bounded read of the
+BBC World RSS candidate on 2026-10-15 returned HTTP
 200 with title, link, GUID, publication time and description fields. Its feed points to BBC reuse
 terms, and [BBC's published terms](https://downloads.bbc.co.uk/usingthebbc/bbc_terms_of_use_31March2022english.pdf)
 restrict extracting metadata from RSS feeds. Keep `bbc_world_rss` disabled and do not build a
@@ -1991,7 +1994,7 @@ record the observed shape. No ECDC HTTP URL is allowlisted for app ingest.
 
 ### WMO CAP Warning Source Verification
 
-Status: first-pass source verification complete; CAP parser and exact-feed ingest remain open.
+Status: first-pass source verification and fixture CAP parser complete; exact-feed live ingest remains open.
 
 Verify WMO severe weather source references, CAP availability, national meteorological service
 links, ownership, policy notes, parser shape, refresh interval, and source-health behavior before
@@ -2323,6 +2326,9 @@ source-health states. The GLOBAL/SYSTEM GET regression covers disabled/not-confi
 healthy/stale/failing/parser-failed/policy-blocked/rate-limited/robots-blocked/unsupported outcomes;
 the gated-source regression covers auth-required, manual-review-only, heavy-data-disabled,
 social-disabled, and homepage-extraction-disabled outcomes with fetch-run evidence.
+An offline valid-to-malformed GDACS fixture scan also verifies that a real parser failure
+records `parser_failed`, leaves the last good item intact, and appears on the GLOBAL page/API
+without a page-load fetch.
 
 ### GLOBAL Evidence Drawer Contract
 
