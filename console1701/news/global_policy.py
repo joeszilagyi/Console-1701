@@ -17,6 +17,7 @@ _DOMESTIC_RE = re.compile(
 _RUMOR_RE = re.compile(r"\b(?:unconfirmed rumor|unverified claim|social media rumor)\b", re.I)
 _GRAPHIC_RE = re.compile(r"\b(?:graphic footage|graphic video|graphic images)\b", re.I)
 _PRIVATE_RE = re.compile(r"\b(?:private distress|identify private victim|home address of)\b", re.I)
+_DOXXING_RE = re.compile(r"\b(?:doxx(?:ing|ed)?|dox(?:ing|ed)?)\b", re.I)
 _SOCIAL_FAMILIES = {"reddit", "bluesky", "x_api", "mastodon", "social"}
 
 
@@ -47,6 +48,10 @@ def classify_global_item(source: dict[str, Any], item: dict[str, Any]) -> dict[s
         sensitivity["private_distress"] = True
         reasons.append("explicit private-person headline" if _PRIVATE_RE.search(title)
                        else "explicit private-person description")
+    if _DOXXING_RE.search(content_text):
+        sensitivity["doxxing"] = True
+        reasons.append("explicit doxxing headline" if _DOXXING_RE.search(title)
+                       else "explicit doxxing description")
     if _RUMOR_RE.search(content_text) and not official_alert:
         identity["rumor"] = True
         reasons.append("explicit unverified claim")
