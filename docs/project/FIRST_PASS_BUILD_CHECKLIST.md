@@ -38,16 +38,16 @@ Each selected row needs working implementation, relevant verification, and a mat
 
 ### REGIONAL Pacific Northwest Recent Signal Layer
 
-- [x] **RS-013** [REGIONAL Source Registry Design Implementation](../../BACKLOG.md#L620) — all 224 design rows plus six existing candidates disabled, validated, inherited by config, and synced to SQLite.
+- [x] **RS-013** [REGIONAL Source Registry Design Implementation](../../BACKLOG.md#L620) — all 224 design rows plus ten reviewed candidates disabled, validated, inherited by config, and synced to SQLite.
 - [x] **RS-014** [Disabled-By-Default REGIONAL Config](../../BACKLOG.md#L634) — validated geography/topic flags and explicit social/homepage gates; defaults remain off.
 - [x] **RS-015** [REGIONAL SQLite Schema Or Extension](../../BACKLOG.md#L649) — scoped clusters, ranking JSON, official geography facets, indexed queries, and expiry purge verified.
-- [ ] **RS-016** [REGIONAL Fixture Pack](../../BACKLOG.md#L665) — partially implemented; observed NIFC IMSR and NWCC large-fire WA fixtures added, WA DNR active-incident shape still open.
+- [ ] **RS-016** [REGIONAL Fixture Pack](../../BACKLOG.md#L665) — partially implemented; observed NIFC IMSR, NWCC large-fire and WA DNR fire-statistics fixtures added, WA DNR active-incident shape still open.
 - [x] **RS-017** [NWS Alert Parser For Washington](../../BACKLOG.md#L682) — dedicated WA/OR fixture, official county/zone evidence, configurable filters, and offline scan verified.
 - [x] **RS-018** [WSDOT Traveler API Fixture Parser](../../BACKLOG.md#L697) — documented WSDOT JSON shape, roadway and WCF time evidence, status/ranking, and offline scan verified; authenticated live JSON held.
 - [x] **RS-019** [USGS Earthquake GeoJSON Parser](../../BACKLOG.md#L738) — official GeoJSON identity, bounded geography/magnitude/radius, event evidence, and fixture scan verified.
 - [x] **RS-020** [King County Emergency Feed Parser](../../BACKLOG.md#L787) — official RSS source, bounded item parser, classification/ranking and offline scan verified; live ingest disabled.
 - [x] **RS-021** [County Emergency Alert Source Verification](../../BACKLOG.md#L795) — eight county access paths, feed candidates, risks and fallbacks recorded; no live feed enabled.
-- [ ] **RS-022** [REGIONAL Deterministic Event Correlation](../../BACKLOG.md#L816) — official NWS/USGS/WSDOT/Pierce road and NIFC/NWCC fire IDs plus conservative cross-family context pass; Pierce/WSDOT county convergence and same-family NIFC/NWCC fire joining are verified, while other source-backed partner families remain open.
+- [ ] **RS-022** [REGIONAL Deterministic Event Correlation](../../BACKLOG.md#L816) — official NWS/USGS/WSDOT/Pierce road, NIFC/NWCC fire and WA DNR fire-statistics IDs plus conservative cross-family context pass; Pierce/WSDOT county convergence and same-family NIFC/NWCC fire joining are verified, while an observed independent wildfire pair and other source-backed partner families remain open.
 - [x] **RS-023** [REGIONAL Deterministic Ranking](../../BACKLOG.md#L831) — implemented for first pass.
 - [x] **RS-024** [REGIONAL Privacy And Public-Impact Rules](../../BACKLOG.md#L846) — completed 2026-10-15; pre-storage address redaction, low-value/outage penalty, official-impact exception, and offline scan test.
 - [x] **RS-025** [REGIONAL UI Disabled States](../../BACKLOG.md#L855) — page/API state matrix and scope-specific social/homepage blocked messaging verified without fetch.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Advanced RS-016 and RS-022 with an observed four-record WA DNR fire-statistics ArcGIS fixture. The separate official parser retains event ID, county, acreage, discovery and reported control/out dates with active/evacuation/public impact unknown. A combined DNR/NIFC offline scan stores six separate incidents; bounded name checks found no observed interagency match. Live DNR statistics and the earlier DNR active-wildfire candidate remain blocked. Progress: 137/150.
 - **2026-10-15:** Advanced RS-037 by requiring accepted USGS GeoJSON rows to have a bounded unique feature ID and a matching exact official event-page URL. A bounded read of the signed-off M2.5+ feed returned 43 rows with no identity mismatches; fixture regressions reject missing, duplicate, mismatched, and query-variant identities. Geography and felt-impact claims remain unchanged. Progress: 137/150.
 - **2026-10-15:** Advanced RS-104 by separating MPC MPEC publication identity from object designation. Two parser-backed circulars about the same object now stay separate; a revision of one circular still joins. No circular body is fetched or stored. Progress: 137/150.
 - **2026-10-15:** Advanced RS-104 by rejecting ORBITAL mission/title-context joins when both records carry different explicit IDs in the same launch, Launch Library event, CNEOS, MPC, reentry-object or safe-satellite namespace. A same-title regression also checks that one matching ID cannot override a second conflicting ID. Progress: 137/150.

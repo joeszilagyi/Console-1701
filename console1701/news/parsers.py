@@ -180,6 +180,10 @@ def parse_fixture_items(
         from console1701.news.regional_nwcc_large_fire import parse_nwcc_large_fire_fixture
 
         return parse_nwcc_large_fire_fixture(source, payload_text)
+    if parser_name == "wa_dnr_fire_statistics_fixture":
+        from console1701.news.regional_wa_dnr import parse_wa_dnr_fire_statistics_fixture
+
+        return parse_wa_dnr_fire_statistics_fixture(source, payload_text)
     if parser_name == "nasa_orbital_rss":
         from console1701.news.orbital_rss import parse_nasa_orbital_rss
 

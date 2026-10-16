@@ -30,3 +30,26 @@ machine-readable source was signed off.
   the scanner records unsupported and does not read or fetch it. Resume only
   after identifying a DNR-endorsed current-incident feature service or a
   source-backed active-status field with bounded geography and lifecycle data.
+
+## Separate fire-statistics fixture
+
+A follow-up bounded query on 2026-10-15 selected eleven fields, discovery dates
+since 2026-09-01, at least 100 reported acres, and at most ten rows. The exact
+official ArcGIS query returned HTTP 200, 2,585 bytes, and four records. Three
+had no control or out date; Sutherland had both dates. The records supplied
+fire-event and incident IDs, names, county labels, acreage, discovery dates,
+class codes, and starting jurisdiction. Name searches for the existing Sisi
+and Little Giant NIFC/NWCC fixture incidents returned no DNR matches; bounded
+NIFC/NWCC name checks for the DNR examples also returned none. There is no
+observed independent-family incident pair to claim.
+A bounded follow-up of the parser's `FIREEVENT_ID=89929` record link returned
+HTTP 200, 1,307 bytes and exactly that one event, so item URLs are official
+record queries rather than fabricated deep links.
+
+The separate `wa_dnr_fire_statistics` registry source and parser are validated
+against the saved four-row fixture and require that exact query contract. They preserve day-precision
+discovery and reported control/out dates, official identity and county, and
+explicitly mark active status, evacuation, and public impact unverified. The
+source is disabled, fixture-only and not live allowlisted; a live opt-in is
+policy-blocked. This does not change the `wa_dnr_current_wildfire` decision
+above or establish a current-incident feed.
