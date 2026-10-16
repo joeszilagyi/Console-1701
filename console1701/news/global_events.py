@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from datetime import UTC, datetime
+from math import asin, cos, isfinite, radians, sin, sqrt
 from typing import Any
 
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
@@ -46,6 +47,49 @@ def _time(value: Any) -> datetime | None:
     except ValueError:
         return None
     return parsed.astimezone(UTC) if parsed.tzinfo else parsed.replace(tzinfo=UTC)
+
+
+def _number(value: Any) -> float | None:
+    if isinstance(value, bool):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if isfinite(number) else None
+
+
+def _earthquake_origin(
+    *, time: Any, latitude: Any, longitude: Any, magnitude: Any,
+) -> tuple[datetime, float, float, float] | None:
+    when = _time(time)
+    lat, lon, mag = _number(latitude), _number(longitude), _number(magnitude)
+    if (when is None or lat is None or lon is None or mag is None
+            or not -90 <= lat <= 90 or not -180 <= lon <= 180 or not 0 <= mag <= 10):
+        return None
+    return when, lat, lon, mag
+
+
+def _same_gdacs_usgs_origin(left: dict[str, Any], right: dict[str, Any]) -> bool:
+    if {left["family"], right["family"]} != {"gdacs", "usgs"}:
+        return False
+    if not left["official"] or not right["official"]:
+        return False
+    gdacs, usgs = (left, right) if left["family"] == "gdacs" else (right, left)
+    if not gdacs["earthquake_origin"] or not usgs["earthquake_origin"]:
+        return False
+    gdacs_time, gdacs_lat, gdacs_lon, gdacs_mag = gdacs["earthquake_origin"]
+    usgs_time, usgs_lat, usgs_lon, usgs_mag = usgs["earthquake_origin"]
+    if (abs((gdacs_time - usgs_time).total_seconds()) > 5
+            or abs(gdacs_mag - usgs_mag) > 0.1):
+        return False
+    lat_delta = radians(usgs_lat - gdacs_lat)
+    lon_delta = radians(usgs_lon - gdacs_lon)
+    distance_term = sin(lat_delta / 2) ** 2 + (
+        cos(radians(gdacs_lat)) * cos(radians(usgs_lat)) * sin(lon_delta / 2) ** 2
+    )
+    distance_km = 6371.0 * 2 * asin(min(1.0, sqrt(distance_term)))
+    return distance_km <= 2.0
 
 
 def global_item_signature(item: dict[str, Any]) -> dict[str, Any]:
@@ -101,6 +145,21 @@ def global_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     }
     if contract.get("geography_basis") != "official_source_fields":
         regions = set()
+    earthquake_origin = None
+    if family == "gdacs" and gdacs.get("event_type") == "EQ" and gdacs.get(
+        "severity_unit"
+    ) == "M":
+        coords = gdacs.get("coordinates")
+        if isinstance(coords, list) and len(coords) == 2:
+            earthquake_origin = _earthquake_origin(
+                time=gdacs.get("start_at"), latitude=coords[1], longitude=coords[0],
+                magnitude=gdacs.get("severity"),
+            )
+    elif family == "usgs" and usgs.get("event_type") == "earthquake":
+        earthquake_origin = _earthquake_origin(
+            time=usgs.get("time"), latitude=usgs.get("latitude"),
+            longitude=usgs.get("longitude"), magnitude=usgs.get("magnitude"),
+        )
     return {
         "id": int(item["id"]),
         "identifiers": identifiers,
@@ -134,6 +193,7 @@ def global_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         "official": source.get("official_status") == "official",
         "article_url": str(item.get("canonical_url") or item.get("url") or "").strip(),
         "syndication_id": _normalized(identity.get("syndication_id")),
+        "earthquake_origin": earthquake_origin,
     }
 
 
@@ -149,6 +209,8 @@ def global_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str]
             return []
     if left["identifiers"] & right["identifiers"]:
         return ["shared_event_id"]
+    if _same_gdacs_usgs_origin(left, right):
+        return ["shared_upstream_earthquake_origin"]
     if (left["article_url"] and left["article_url"] == right["article_url"]
             and len(left["tokens"] & right["tokens"]) >= 2
             and (not left["event_type"] or not right["event_type"]
@@ -249,10 +311,21 @@ def correlate_global_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 seen_syndication.add(syndication)
             if not duplicate:
                 credited.append(member)
-        credited_families = sorted({
-            entry["family"] for entry in credited if entry["family"] != "unknown"
-        })
         group_matches = [entry for entry in matches if set(entry["item_ids"]) <= set(ids)]
+        dependent_gdacs = bool(any(
+            "shared_upstream_earthquake_origin" in match["basis"]
+            for match in group_matches
+        ))
+        # GDACS adds its own alert assessment, but the matching earthquake
+        # origin is not another independent seismic observation.
+        independently_credited = [
+            entry for entry in credited
+            if not (dependent_gdacs and entry["family"] == "gdacs")
+        ]
+        credited_families = sorted({
+            entry["family"] for entry in independently_credited
+            if entry["family"] != "unknown"
+        })
         result.append({
             "event_key": f"global:item:{ids[0]}",
             "item_ids": ids,
@@ -262,10 +335,11 @@ def correlate_global_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "families": families,
             "credited_families": credited_families,
             "credited_official_families": sorted({
-                entry["family"] for entry in credited
+                entry["family"] for entry in independently_credited
                 if entry["official"] and entry["family"] != "unknown"
             }),
             "syndicated_duplicate_count": len(members) - len(credited),
+            "dependent_duplicate_count": len(credited) - len(independently_credited),
             "event_types": sorted({
                 member["event_type"] for member in members if member["event_type"]
             }),
