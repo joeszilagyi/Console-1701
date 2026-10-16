@@ -73,8 +73,10 @@ fixture and live-path checks are recorded; `official_page_seen` remains a resear
   [GovInfo RSS collections](NATIONAL_GOVINFO_RSS_FIXTURE_VERIFICATION.md): official shapes have
   offline adapters; source-specific live admission and filters remain separate.
 - [CPSC recall API fixture verification](NATIONAL_NHTSA_RECALL_API_VERIFICATION.md): a later
-  bounded direct query and offline parser succeeded; live admission remains separate. FSIS
-  documentation and candidate API access remain blocked by HTTP 403.
+  bounded direct query and offline parser succeeded; live admission remains separate.
+- [FSIS recall API fixture verification](NATIONAL_FSIS_RECALL_API_FIXTURE_VERIFICATION.md):
+  direct exact-number JSON responses and a notice link now have an offline parser; the unfiltered
+  13 MB response and unsigned recent-discovery query keep live admission closed.
 
 Before changing a candidate to live, link its record from this list and verify the exact tuple,
 registry status, disabled config, policy gate, no-fetch GET/host-scan tests, source health, bounded

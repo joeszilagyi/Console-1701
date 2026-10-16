@@ -1318,7 +1318,14 @@ bodies, records optional creator without claiming original reporting, and treats
 section as background context rather than verified national impact. An offline scan traps HTTP;
 the disabled registry entry has no live publisher allowlist. See
 `docs/project/NATIONAL_PBS_NEWSHOUR_RSS_FIXTURE_VERIFICATION.md`.
-The other NATIONAL source-family fixtures listed above remain pending.
+An observed, reduced FSIS Recall API fixture now covers an October 2026 Public Health Alert,
+active Class I recall, and closed Class I recall from bounded exact-number responses. The local
+parser stores bounded recall identity, class, risk, product/firm/reason, state labels, notice URL,
+dates and lifecycle flags while dropping HTML summary and contact fields; offline scans trap
+HTTP. Its separate live source remains disabled because the unfiltered API body is 13 MB and a
+bounded recent-discovery query has not been signed off. See
+`docs/project/NATIONAL_FSIS_RECALL_API_FIXTURE_VERIFICATION.md`. CDC HAN and other NATIONAL
+source-family fixtures remain pending.
 
 ### NWS Active Alert Parser
 
@@ -1464,14 +1471,25 @@ research/reference data for this feature. No FDA live source is enabled.
 
 ### FSIS Recall API Parser
 
-Status: not implemented.
+Status: completed 2026-10-15 for fixture-first parser; live scanning remains disabled.
 
-2026-10-15 source check: FSIS confirms a public API, but its linked documentation and candidate
-API path returned HTTP 403 in bounded checks. Response shape and access remain unverified; see
-`docs/project/NATIONAL_NHTSA_RECALL_API_VERIFICATION.md`. Keep disabled.
-The 2026-10-15 follow-up GET also returned HTTP 403 (`text/html`) for the published v1 API,
-the FSIS Recall API documentation page, and the FSIS recall RSS candidate. None supplied a
-current JSON/XML body from which to validate a fixture parser; do not synthesize an API shape.
+Earlier 2026-10-15 source checks returned HTTP 403 for the published API, docs and RSS
+candidate. A later bounded GET of the exact FSIS API returned HTTP 200 JSON. The unfiltered body
+was 12,996,284 decoded bytes with 2,030 rows; exact-number queries returned bounded English and
+Spanish records, active/closed recalls, Public Health Alerts, combined recall IDs, array-valued
+distribution/product/reason/firm fields and official per-notice links. A direct HTTPS HEAD of an
+API-provided notice link returned HTTP 200. The source's `field_active_notice` flag is not a
+reliable active-recall synonym, and a closed record can carry conflicting raw flags.
+
+`fsis_recalls_json` accepts only explicit local fixtures under the exact FSIS NATIONAL identity.
+It validates unique recall number/date, source class/risk and notice URL, caps bytes/rows, keeps
+English notice metadata and source lifecycle flags, and stores bounded product, establishment,
+reason, state distribution and update evidence. HTML summary/contact text is discarded.
+Source-stated current Class I recalls and current flagged Public Health Alerts receive bounded
+attention; old closed Class I records do not. Offline scans and negative tests pass without HTTP.
+The source remains disabled and absent from the live HTTP allowlist. A bounded recent-discovery
+query, polling policy and live release gate are separate work. See
+`docs/project/NATIONAL_FSIS_RECALL_API_FIXTURE_VERIFICATION.md`.
 
 Build a fixture-first parser for the FSIS Recall API. Preserve recall id, product, firm, recall
 class, hazard, distribution geography, public instruction URL, recall date, active/update status,
