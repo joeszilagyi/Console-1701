@@ -216,7 +216,8 @@ def global_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str]
         right_ids = {value for value in right["identifiers"] if value.startswith(prefix)}
         if left_ids and right_ids and not left_ids & right_ids:
             return []
-    if left["identifiers"] & right["identifiers"]:
+    if (left["official"] and right["official"]
+            and left["identifiers"] & right["identifiers"]):
         return ["shared_event_id"]
     if _same_gdacs_usgs_origin(left, right):
         return ["shared_upstream_earthquake_origin"]
