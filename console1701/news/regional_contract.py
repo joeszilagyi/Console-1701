@@ -34,6 +34,7 @@ def build_regional_event_contract(
     aqi = evidence.get("ecology_aqi")
     pierce = evidence.get("pierce_road_alert")
     nifc = evidence.get("nifc_imsr")
+    wfigs = evidence.get("nifc_wfigs")
     nwcc_fire = evidence.get("nwcc_large_fire")
     dnr_fire = evidence.get("wa_dnr_fire_statistics")
     identity = f"isolated:{source.get('id')}:{hashed_url}"
@@ -59,6 +60,26 @@ def build_regional_event_contract(
         }
         match_tokens = [str(usgs["id"])[:120]]
         public_impact_basis = "USGS magnitude, felt reports, and alert level"
+    elif (source.get("id") == "nifc_wfigs_current_wa"
+          and source.get("source_family") == "wildfire_federal"
+          and source.get("official_status") == "official"
+          and isinstance(wfigs, dict) and wfigs.get("unique_fire_identifier")):
+        identity = f"nifc-imsr:{wfigs['unique_fire_identifier']}"
+        event_type = "wildfire_update"
+        matching_basis = "official_nifc_wfigs_unique_fire_identifier"
+        confidence = "high"
+        geography = {
+            "basis": "official_WA_point_of_origin_state_and_county",
+            "matched": True,
+            "county": wfigs.get("county"),
+            "fire_incident": wfigs.get("fire_name"),
+        }
+        match_tokens = [str(wfigs["unique_fire_identifier"])[:120],
+                        str(wfigs.get("fire_name") or "")[:100]]
+        public_impact_basis = (
+            "NIFC WFIGS current/recent record; ActiveFireCandidate does not prove active "
+            "fire or public impact"
+        )
     elif isinstance(nifc, dict) and nifc.get("unique_fire_identifier"):
         identity = f"nifc-imsr:{nifc['unique_fire_identifier']}"
         event_type = "wildfire_update"

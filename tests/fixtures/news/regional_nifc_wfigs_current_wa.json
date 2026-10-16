@@ -1,0 +1,391 @@
+{
+  "objectIdFieldName": "OBJECTID",
+  "geometryType": "esriGeometryPoint",
+  "fields": [
+    {
+      "name": "OBJECTID",
+      "type": "esriFieldTypeOID"
+    },
+    {
+      "name": "IrwinID",
+      "type": "esriFieldTypeString"
+    },
+    {
+      "name": "UniqueFireIdentifier",
+      "type": "esriFieldTypeString"
+    },
+    {
+      "name": "IncidentName",
+      "type": "esriFieldTypeString"
+    },
+    {
+      "name": "FireDiscoveryDateTime",
+      "type": "esriFieldTypeDate"
+    },
+    {
+      "name": "ModifiedOnDateTime_dt",
+      "type": "esriFieldTypeDate"
+    },
+    {
+      "name": "IncidentSize",
+      "type": "esriFieldTypeDouble"
+    },
+    {
+      "name": "PercentContained",
+      "type": "esriFieldTypeDouble"
+    },
+    {
+      "name": "POOState",
+      "type": "esriFieldTypeString"
+    },
+    {
+      "name": "POOCounty",
+      "type": "esriFieldTypeString"
+    },
+    {
+      "name": "ActiveFireCandidate",
+      "type": "esriFieldTypeSmallInteger"
+    },
+    {
+      "name": "ContainmentDateTime",
+      "type": "esriFieldTypeDate"
+    },
+    {
+      "name": "ControlDateTime",
+      "type": "esriFieldTypeDate"
+    },
+    {
+      "name": "FireOutDateTime",
+      "type": "esriFieldTypeDate"
+    },
+    {
+      "name": "IncidentTypeCategory",
+      "type": "esriFieldTypeString"
+    },
+    {
+      "name": "POOJurisdictionalAgency",
+      "type": "esriFieldTypeString"
+    },
+    {
+      "name": "POOJurisdictionalUnit",
+      "type": "esriFieldTypeString"
+    }
+  ],
+  "features": [
+    {
+      "attributes": {
+        "OBJECTID": 586535,
+        "IrwinID": "{DC4342D9-B479-44F1-906C-8ABD42E1F59C}",
+        "UniqueFireIdentifier": "2026-WAOWF-260664",
+        "IncidentName": "SISI",
+        "FireDiscoveryDateTime": 1786730603000,
+        "ModifiedOnDateTime_dt": 1792109631610,
+        "IncidentSize": 4615,
+        "PercentContained": 34,
+        "POOState": "US-WA",
+        "POOCounty": "Chelan",
+        "ActiveFireCandidate": 1,
+        "ContainmentDateTime": null,
+        "ControlDateTime": null,
+        "FireOutDateTime": null,
+        "IncidentTypeCategory": "WF",
+        "POOJurisdictionalAgency": "USFS",
+        "POOJurisdictionalUnit": "WAOWF"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 579390,
+        "IrwinID": "{78D35D3B-F791-4961-AE36-C6D1A4DFF5A0}",
+        "UniqueFireIdentifier": "2026-WANES-001791",
+        "IncidentName": "SINLAHEKIN",
+        "FireDiscoveryDateTime": 1785100320000,
+        "ModifiedOnDateTime_dt": 1792100487040,
+        "IncidentSize": 166007,
+        "PercentContained": 100,
+        "POOState": "US-WA",
+        "POOCounty": "Okanogan",
+        "ActiveFireCandidate": 1,
+        "ContainmentDateTime": null,
+        "ControlDateTime": null,
+        "FireOutDateTime": null,
+        "IncidentTypeCategory": "WF",
+        "POOJurisdictionalAgency": "DNR",
+        "POOJurisdictionalUnit": "WANES"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 575231,
+        "IrwinID": "{091081ED-BD23-4610-AE4A-270F95D1711E}",
+        "UniqueFireIdentifier": "2026-WAOWF-260406",
+        "IncidentName": "LITTLE GIANT",
+        "FireDiscoveryDateTime": 1784164674000,
+        "ModifiedOnDateTime_dt": 1792030633793,
+        "IncidentSize": 172912,
+        "PercentContained": 95,
+        "POOState": "US-WA",
+        "POOCounty": "Chelan",
+        "ActiveFireCandidate": 1,
+        "ContainmentDateTime": null,
+        "ControlDateTime": null,
+        "FireOutDateTime": null,
+        "IncidentTypeCategory": "WF",
+        "POOJurisdictionalAgency": "USFS",
+        "POOJurisdictionalUnit": "WAOWF"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 575195,
+        "IrwinID": "{B5597100-D6C9-49F9-BC74-6B8FC4432E92}",
+        "UniqueFireIdentifier": "2026-WACOA-260140",
+        "IncidentName": "Kaiser Canyon",
+        "FireDiscoveryDateTime": 1784205000000,
+        "ModifiedOnDateTime_dt": 1791931212250,
+        "IncidentSize": 138293,
+        "PercentContained": 100,
+        "POOState": "US-WA",
+        "POOCounty": "Okanogan",
+        "ActiveFireCandidate": 1,
+        "ContainmentDateTime": null,
+        "ControlDateTime": null,
+        "FireOutDateTime": null,
+        "IncidentTypeCategory": "WF",
+        "POOJurisdictionalAgency": "BIA",
+        "POOJurisdictionalUnit": "WACOA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 575790,
+        "IrwinID": "{22D5BB97-9B75-4FB1-A8F6-CAACEBB7C124}",
+        "UniqueFireIdentifier": "2026-WANES-260149",
+        "IncidentName": "Modrite",
+        "FireDiscoveryDateTime": 1784299860000,
+        "ModifiedOnDateTime_dt": 1791931153943,
+        "IncidentSize": 57594,
+        "PercentContained": 100,
+        "POOState": "US-WA",
+        "POOCounty": "Ferry",
+        "ActiveFireCandidate": 1,
+        "ContainmentDateTime": null,
+        "ControlDateTime": null,
+        "FireOutDateTime": null,
+        "IncidentTypeCategory": "WF",
+        "POOJurisdictionalAgency": "BIA",
+        "POOJurisdictionalUnit": "WACOA"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 598640,
+        "IrwinID": "{61516A5A-D2F5-44A8-8CDB-972CF38879A4}",
+        "UniqueFireIdentifier": "2026-WAWFS-260847",
+        "IncidentName": "SECOND STREET",
+        "FireDiscoveryDateTime": 1790373745000,
+        "ModifiedOnDateTime_dt": 1791849739680,
+        "IncidentSize": 1149,
+        "PercentContained": 100,
+        "POOState": "US-WA",
+        "POOCounty": "Benton",
+        "ActiveFireCandidate": 1,
+        "ContainmentDateTime": null,
+        "ControlDateTime": null,
+        "FireOutDateTime": null,
+        "IncidentTypeCategory": "WF",
+        "POOJurisdictionalAgency": null,
+        "POOJurisdictionalUnit": null
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 599327,
+        "IrwinID": "{4A7A0CD9-8A83-4F71-96FA-1FFF22A0DE95}",
+        "UniqueFireIdentifier": "2026-WAWFS-000664",
+        "IncidentName": "Hatch Grade",
+        "FireDiscoveryDateTime": 1790723064000,
+        "ModifiedOnDateTime_dt": 1791823015990,
+        "IncidentSize": 9584,
+        "PercentContained": 100,
+        "POOState": "US-WA",
+        "POOCounty": "Walla Walla",
+        "ActiveFireCandidate": 1,
+        "ContainmentDateTime": null,
+        "ControlDateTime": null,
+        "FireOutDateTime": null,
+        "IncidentTypeCategory": "WF",
+        "POOJurisdictionalAgency": null,
+        "POOJurisdictionalUnit": null
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 575142,
+        "IrwinID": "{DFA477F2-305C-49CA-B82E-2AF072AB55F8}",
+        "UniqueFireIdentifier": "2026-WAOWF-260420",
+        "IncidentName": "THREE QUEENS",
+        "FireDiscoveryDateTime": 1784176080000,
+        "ModifiedOnDateTime_dt": 1791821257803,
+        "IncidentSize": 9575,
+        "PercentContained": 33,
+        "POOState": "US-WA",
+        "POOCounty": "Kittitas",
+        "ActiveFireCandidate": 1,
+        "ContainmentDateTime": null,
+        "ControlDateTime": null,
+        "FireOutDateTime": null,
+        "IncidentTypeCategory": "WF",
+        "POOJurisdictionalAgency": "USFS",
+        "POOJurisdictionalUnit": "WAOWF"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 575558,
+        "IrwinID": "{A60CA689-BD59-4A2D-9BDC-CC551CEAFCA4}",
+        "UniqueFireIdentifier": "2026-WANCP-000266",
+        "IncidentName": "Border 2",
+        "FireDiscoveryDateTime": 1784250840000,
+        "ModifiedOnDateTime_dt": 1791761630717,
+        "IncidentSize": 9108,
+        "PercentContained": 74,
+        "POOState": "US-WA",
+        "POOCounty": "Whatcom",
+        "ActiveFireCandidate": 1,
+        "ContainmentDateTime": null,
+        "ControlDateTime": null,
+        "FireOutDateTime": null,
+        "IncidentTypeCategory": "WF",
+        "POOJurisdictionalAgency": "NPS",
+        "POOJurisdictionalUnit": "WARLP"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 568475,
+        "IrwinID": "{7D70E58C-3570-466C-86F7-8E5F828D0F7F}",
+        "UniqueFireIdentifier": "2026-WANCP-000179",
+        "IncidentName": "Luna",
+        "FireDiscoveryDateTime": 1783019160000,
+        "ModifiedOnDateTime_dt": 1791761173673,
+        "IncidentSize": 8553,
+        "PercentContained": 42,
+        "POOState": "US-WA",
+        "POOCounty": "Whatcom",
+        "ActiveFireCandidate": 1,
+        "ContainmentDateTime": null,
+        "ControlDateTime": null,
+        "FireOutDateTime": null,
+        "IncidentTypeCategory": "WF",
+        "POOJurisdictionalAgency": "NPS",
+        "POOJurisdictionalUnit": "WANCP"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 581501,
+        "IrwinID": "{51A10032-2A86-4517-8784-028DB6BDAC56}",
+        "UniqueFireIdentifier": "2026-WANES-001860",
+        "IncidentName": "HUDSPETH",
+        "FireDiscoveryDateTime": 1785626233000,
+        "ModifiedOnDateTime_dt": 1791656590433,
+        "IncidentSize": 6726,
+        "PercentContained": 100,
+        "POOState": "US-WA",
+        "POOCounty": "Stevens",
+        "ActiveFireCandidate": 1,
+        "ContainmentDateTime": null,
+        "ControlDateTime": null,
+        "FireOutDateTime": null,
+        "IncidentTypeCategory": "WF",
+        "POOJurisdictionalAgency": null,
+        "POOJurisdictionalUnit": null
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 578977,
+        "IrwinID": "{BB27075A-FFA2-4619-8F54-1334194CDDBC}",
+        "UniqueFireIdentifier": "2026-WANES-001782",
+        "IncidentName": "BRADEEN HILL",
+        "FireDiscoveryDateTime": 1785012720000,
+        "ModifiedOnDateTime_dt": 1791498233137,
+        "IncidentSize": 4417,
+        "PercentContained": 100,
+        "POOState": "US-WA",
+        "POOCounty": "Stevens",
+        "ActiveFireCandidate": 1,
+        "ContainmentDateTime": null,
+        "ControlDateTime": null,
+        "FireOutDateTime": null,
+        "IncidentTypeCategory": "WF",
+        "POOJurisdictionalAgency": null,
+        "POOJurisdictionalUnit": null
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 578251,
+        "IrwinID": "{0B15D818-66C9-4225-B4BE-86A858CAD8E8}",
+        "UniqueFireIdentifier": "2026-WAGPF-000684",
+        "IncidentName": "HIGH LAVA",
+        "FireDiscoveryDateTime": 1784850240000,
+        "ModifiedOnDateTime_dt": 1791480945463,
+        "IncidentSize": 2899,
+        "PercentContained": 95,
+        "POOState": "US-WA",
+        "POOCounty": "Skamania",
+        "ActiveFireCandidate": 1,
+        "ContainmentDateTime": null,
+        "ControlDateTime": null,
+        "FireOutDateTime": null,
+        "IncidentTypeCategory": "WF",
+        "POOJurisdictionalAgency": "USFS",
+        "POOJurisdictionalUnit": "WAGPF"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 575753,
+        "IrwinID": "{735FFADD-9F45-4188-A66B-335931316E23}",
+        "UniqueFireIdentifier": "2026-WAOWF-260448",
+        "IncidentName": "PTARMIGAN",
+        "FireDiscoveryDateTime": 1784301660000,
+        "ModifiedOnDateTime_dt": 1791473815407,
+        "IncidentSize": 25566,
+        "PercentContained": 90,
+        "POOState": "US-WA",
+        "POOCounty": "Okanogan",
+        "ActiveFireCandidate": 1,
+        "ContainmentDateTime": null,
+        "ControlDateTime": null,
+        "FireOutDateTime": null,
+        "IncidentTypeCategory": "WF",
+        "POOJurisdictionalAgency": "USFS",
+        "POOJurisdictionalUnit": "WAOWF"
+      }
+    },
+    {
+      "attributes": {
+        "OBJECTID": 588147,
+        "IrwinID": "{E70E0FBE-8DD6-4E75-BCE8-8E5B9672A3C4}",
+        "UniqueFireIdentifier": "2026-WAOWF-260699",
+        "IncidentName": "KING",
+        "FireDiscoveryDateTime": 1787180964000,
+        "ModifiedOnDateTime_dt": 1790988338107,
+        "IncidentSize": 3427,
+        "PercentContained": 36,
+        "POOState": "US-WA",
+        "POOCounty": "Kittitas",
+        "ActiveFireCandidate": 1,
+        "ContainmentDateTime": null,
+        "ControlDateTime": null,
+        "FireOutDateTime": null,
+        "IncidentTypeCategory": "WF",
+        "POOJurisdictionalAgency": "USFS",
+        "POOJurisdictionalUnit": "WAOWF"
+      }
+    }
+  ]
+}
