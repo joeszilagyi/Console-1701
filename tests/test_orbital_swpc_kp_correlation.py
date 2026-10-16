@@ -37,6 +37,29 @@ def _parsed_pair(value: float, stamp: str = "2026-10-10T19:00:00") -> list[dict]
     return [*alerts, *kp]
 
 
+def _current_scale(*, date: str = "2026-10-10", time: str = "19:58:00",
+                   level: str = "3", forecast: bool = False) -> dict:
+    payload = json.loads((FIXTURES / "swpc_noaa_scales.json").read_text())
+    payload["0"]["DateStamp"] = date
+    payload["0"]["TimeStamp"] = time
+    payload["0"]["G"]["Scale"] = "0" if forecast else level
+    if forecast:
+        payload["1"]["DateStamp"] = date
+        payload["1"]["TimeStamp"] = time
+        payload["1"]["G"]["Scale"] = level
+    scales = parse_fixture_items({
+        "id": "swpc_noaa_scales_json", "scope": "ORBITAL", "kind": "api_json",
+        "parser": "swpc_noaa_scales_json",
+    }, json.dumps(payload))
+    scale = next(item for item in scales if item["evidence"]["orbital_identity"][
+        "noaa_scale"] == f"G{level}")
+    scale["id"] = 4
+    scale["evidence"]["source"] = {
+        "source_family": "swpc", "source_key": "swpc_noaa_scales_json",
+    }
+    return scale
+
+
 @pytest.mark.parametrize("value,expected", [
     (5.0, "G1"), (5.67, "G1"), (6.0, "G2"), (7.0, "G3"),
     (8.9, "G4"), (9.0, "G5"),
@@ -90,6 +113,85 @@ def test_kp_requires_same_level_valid_time_and_planetary_measurement():
     assert estimated["evidence"]["orbital_identity"]["noaa_scale"] is None
     assert all(len(group["item_ids"]) == 1
                for group in correlate_orbital_items([*_parsed_pair(7.0)[:2], estimated]))
+
+
+def test_current_g_scale_and_observed_planetary_kp_join_nearby_without_extra_family():
+    alert, cancelled, kp = _parsed_pair(7.0)
+    scale = _current_scale()
+    groups = correlate_orbital_items([alert, cancelled, kp, scale])
+    joined = next(group for group in groups if len(group["item_ids"]) == 3)
+    assert joined["item_ids"] == [1, 3, 4]
+    assert joined["families"] == ["swpc"]
+    assert joined["corroborated"] is False
+    assert ["same_noaa_geomagnetic_scale", "current_scale_observation",
+            "nearby_planetary_kp_3h_observation"] in [
+                match["basis"] for match in joined["matches"]
+            ]
+
+    for other_scale in (
+        _current_scale(level="2"),
+        _current_scale(time="23:10:00"),
+        _current_scale(forecast=True),
+    ):
+        assert [group["item_ids"] for group in correlate_orbital_items([kp, other_scale])] == [
+            [3], [4],
+        ]
+    estimated = parse_fixture_items({
+        "id": "swpc_kp_1m_json", "scope": "ORBITAL", "kind": "api_json",
+        "parser": "swpc_kp_json",
+    }, json.dumps([{"time_tag": "2026-10-10T19:00:00", "estimated_kp": 7.0}]))[0]
+    estimated["id"] = 3
+    estimated["evidence"]["source"] = {
+        "source_family": "swpc", "source_key": "swpc_kp_1m_json",
+    }
+    assert len(correlate_orbital_items([estimated, scale])) == 2
+    boulder = parse_fixture_items({
+        "id": "swpc_boulder_k_json", "scope": "ORBITAL", "kind": "api_json",
+        "parser": "swpc_kp_json",
+    }, json.dumps([{"time_tag": "2026-10-10T19:00:00", "k_index": 7.0}]))[0]
+    boulder["id"] = 3
+    boulder["evidence"]["source"] = {
+        "source_family": "swpc", "source_key": "swpc_boulder_k_json",
+    }
+    assert len(correlate_orbital_items([boulder, scale])) == 2
+
+
+def test_current_scale_kp_warning_triple_persists_offline(tmp_path, monkeypatch):
+    monkeypatch.setattr("console1701.news.scanner.fetch_official_text", lambda *a, **kw: (
+        (_ for _ in ()).throw(AssertionError("SWPC fixture attempted HTTP"))
+    ))
+    scale_payload = json.loads((FIXTURES / "swpc_noaa_scales.json").read_text())
+    scale_payload["0"]["DateStamp"] = "2026-10-10"
+    scale_path = tmp_path / "scales.json"
+    scale_path.write_text(json.dumps(scale_payload))
+    kp_path = tmp_path / "kp.json"
+    kp_path.write_text(_kp_payload(7.0))
+    path = tmp_path / "config.yml"
+    path.write_text(yaml.safe_dump({
+        "paths": {"repo_roots": [], "explicit_repos": []},
+        "orbital": {"enabled": True},
+        "news": {"enabled": True, "scopes": {"ORBITAL": {"enabled": True,
+            "sources": [
+                {"id": "swpc_alerts_json", "enabled": True,
+                 "url": f"file://{FIXTURES / 'swpc_alerts.json'}"},
+                {"id": "swpc_noaa_scales_json", "enabled": True,
+                 "url": f"file://{scale_path}"},
+                {"id": "swpc_kp_summary_json", "enabled": True,
+                 "url": f"file://{kp_path}"},
+            ],
+        }}},
+    }))
+    assert run_news_scan(path)["item_count"] == 6
+    config = load_config(path)
+    with connect_db(config["_db_path"]) as conn:
+        rows = conn.execute(
+            "SELECT evidence_json FROM news_clusters WHERE scope='ORBITAL'"
+        ).fetchall()
+    events = [json_loads(row["evidence_json"], {})["orbital_event"] for row in rows]
+    joined = next(event for event in events if len(event["item_ids"]) == 3)
+    assert joined["families"] == ["swpc"] and joined["corroborated"] is False
+    assert any("nearby_planetary_kp_3h_observation" in match["basis"]
+               for match in joined["matches"])
 
 
 def test_kp_alert_join_persists_offline_without_extra_family_credit(tmp_path, monkeypatch):
