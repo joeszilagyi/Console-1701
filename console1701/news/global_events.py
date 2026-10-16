@@ -220,12 +220,19 @@ def global_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str]
         return ["shared_event_id"]
     if _same_gdacs_usgs_origin(left, right):
         return ["shared_upstream_earthquake_origin"]
+    within_window = bool(
+        left["published_at"] and right["published_at"]
+        and abs((left["published_at"] - right["published_at"]).total_seconds())
+        <= MATCH_WINDOW_HOURS * 3600
+    )
     if (left["article_url"] and left["article_url"] == right["article_url"]
+            and within_window
             and len(left["tokens"] & right["tokens"]) >= 2
             and (not left["event_type"] or not right["event_type"]
                  or left["event_type"] == right["event_type"])):
         return ["same_article_url"]
     if (left["syndication_id"] and left["syndication_id"] == right["syndication_id"]
+            and within_window
             and (not left["event_type"] or not right["event_type"]
                  or left["event_type"] == right["event_type"])):
         return ["same_syndication_id"]
