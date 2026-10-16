@@ -160,6 +160,10 @@ def parse_fixture_items(
         from console1701.news.launch_library_parser import parse_launch_library_json
 
         return parse_launch_library_json(source, payload_text)
+    if parser_name == "spaceflight_news_json":
+        from console1701.news.spaceflight_news_parser import parse_spaceflight_news_json
+
+        return parse_spaceflight_news_json(source, payload_text)
     if parser_name == "nasa_orbital_rss":
         from console1701.news.orbital_rss import parse_nasa_orbital_rss
 

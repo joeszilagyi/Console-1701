@@ -2401,8 +2401,8 @@ Current state: small official-shape SWPC alerts, NOAA scales, planetary and Boul
 OVATION aurora and JPL CAD JSON fixtures cover warning, cancelled watch, incomplete row, current
 and forecast scale, zero state, K-index thresholds, a tiny aurora grid, close-approach thresholds,
 fireball energy/location variants, a Scout v1.3 provisional-object summary with no impact
-inference, and Launch Library 2 upcoming launch/docking metadata with routine press suppression,
-plus NASA and ESA RSS relevance cases. The former SWPC
+inference, Launch Library 2 upcoming launch/docking metadata with routine press suppression,
+and Spaceflight News API linked-headline metadata, plus NASA and ESA RSS relevance cases. The former SWPC
 X-ray summary URL returned 404; an observed seven-day GOES flare event list now supplies an
 offline M/X-class fixture parser with bounded identity, timing, class, flux and cautious ranking.
 Their parsers and offline scans are tested. Remaining ORBITAL products and source-health variants
@@ -2530,12 +2530,21 @@ admission gate remain open. See `docs/project/ORBITAL_LAUNCH_LIBRARY_FIXTURE.md`
 
 ### Spaceflight News API Fixture Parser
 
-Status: not implemented.
+Status: partially implemented; linked-article fixture parser added 2026-10-15.
 
 Build a fixture-first Spaceflight News API parser for headline metadata and launch/event
 correlation. Preserve article id, title, URL, publisher, publication time, summary bounded by local
 limits, and source family. Do not let Spaceflight News API outrank official agency, SWPC, JPL, MPC,
 or launch-provider sources without convergence.
+
+Current state: observed v4 article-list metadata and a Launch Library-linked CRS-35 article. A
+bounded offline parser retains article ID, title, HTTPS publisher URL, news site, bounded summary,
+publication/update time, and validated launch/event links. It suppresses unlinked routine items,
+image stories and sensitive classified/military headlines. Linked exact IDs can join official
+launch/event context, but this aggregator is excluded from independent-family corroboration and
+is always background class. Blogs, report variants, article lifecycle behavior, live HTTP, and
+publisher-specific attribution rules remain open. See
+`docs/project/ORBITAL_SPACEFLIGHT_NEWS_FIXTURE.md`.
 
 ### NASA RSS Parser
 

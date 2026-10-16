@@ -28,6 +28,10 @@ def _time(value: Any) -> datetime | None:
 
 def orbital_independent_family(value: Any) -> str:
     family = _normalized(value).replace(" ", "_")
+    if family == "spaceflight_news_api":
+        # SNAPI aggregates publishers and imports Launch Library links. Its
+        # article metadata must not count as another independent observation.
+        return "unknown"
     if family in {"nasa", "jpl"} or family.startswith(("nasa_", "jpl_")):
         return "nasa"
     if family == "esa" or family.startswith("esa_"):
