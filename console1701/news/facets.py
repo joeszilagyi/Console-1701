@@ -196,7 +196,8 @@ def regional_item_facets(evidence: dict[str, Any]) -> set[tuple[str, str]]:
             add("facility", facility)
         add("county", geography.get("county"))
         add("region", geography.get("region"))
-    elif basis == "official_incident_prefix_and_point_bounds":
+    elif basis in {"official_incident_prefix_and_point_bounds",
+                   "official_WA_management_unit_not_fire_point"}:
         add("fire_incident", geography.get("fire_incident"))
     # USGS coordinates prove a point, not a county or regional impact label.
     return facets
