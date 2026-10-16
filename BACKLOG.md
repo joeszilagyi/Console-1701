@@ -2106,6 +2106,9 @@ ReliefWeb-disaster/report, and WHO DON identifiers or cross-family event-type, v
 title-token, and 96-hour convergence. Same-family title similarity alone cannot corroborate an
 event. Cluster evidence records matched item pairs and basis, known source families, identifiers,
 countries, event types, and source-reported versus independently corroborated confidence.
+GDACS RSS GLIDE and ReliefWeb disaster/report GLIDE values are now retained from source fields.
+Valid exact GLIDE identifiers join the two official families; conflicting valid GLIDE values
+block a contextual match. An offline three-source scan verifies one corroborated stored event.
 Cluster evidence keeps only the strongest base item score from each family for audit; the event
 ranking uses independent family count and a duplicate-family penalty, so repeated same-family
 items cannot create extra convergence credit. A complete-link guard rejects a broad item that

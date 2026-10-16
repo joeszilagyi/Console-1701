@@ -467,6 +467,7 @@ def _gdacs_item(
     item["evidence"]["gdacs"] = {
         "event_id": event_id,
         "episode_id": bounded_text(data.get("episode_id"), max_chars=32),
+        "glide": bounded_text(data.get("glide"), max_chars=64),
         "event_type": event_type,
         "event_name": name,
         "alert_level": alert_level,
@@ -1035,6 +1036,7 @@ def _parse_gdacs_rss(source: dict[str, Any], payload_text: str) -> list[dict[str
             "event_type": field("eventtype"),
             "event_id": field("eventid"),
             "episode_id": field("episodeid"),
+            "glide": field("glide"),
             "alert_level": field("alertlevel"),
             "alert_score": field("alertscore"),
             "severity": severity.get("value") if severity is not None else None,
@@ -1097,6 +1099,7 @@ def _parse_gdacs_geojson(source: dict[str, Any], payload_text: str) -> list[dict
             "event_type": props.get("eventtype"),
             "event_id": props.get("eventid"),
             "episode_id": props.get("episodeid"),
+            "glide": props.get("glide"),
             "alert_level": props.get("alertlevel"),
             "alert_score": props.get("alertscore"),
             "severity": severity.get("severity"),
@@ -1212,6 +1215,9 @@ def _parse_reliefweb_reports_json(
         item["evidence"]["reliefweb_report"] = {
             "id": report_id,
             "disaster_ids": [str(entry["id"]) for entry in matched_disasters],
+            "disaster_glides": _unique_texts(
+                [entry.get("glide") for entry in matched_disasters], max_chars=64
+            )[:10],
             "disaster_names": _reliefweb_names(matched_disasters),
             "sources": matched_sources,
             "countries": countries,

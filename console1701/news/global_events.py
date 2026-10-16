@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
+_GLIDE_RE = re.compile(r"[A-Z]{2}-\d{4}-\d{6}-[A-Z]{3}\Z")
 _STOPWORDS = {
     "a", "an", "and", "at", "by", "for", "from", "in", "of", "on", "the", "to",
     "with", "after", "amid", "new", "update", "report", "reports", "global",
@@ -25,6 +26,13 @@ MATCH_WINDOW_HOURS = 96
 
 def _normalized(value: Any) -> str:
     return " ".join(_TOKEN_RE.findall(str(value or "").lower()))
+
+
+def _glide_identifier(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    candidate = value.strip().upper()
+    return f"glide:{candidate.lower()}" if _GLIDE_RE.fullmatch(candidate) else None
 
 
 def _time(value: Any) -> datetime | None:
@@ -50,10 +58,16 @@ def global_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         )
     if disaster.get("id"):
         identifiers.add(f"reliefweb_disaster:{_normalized(disaster['id'])}")
+    for glide in (gdacs.get("glide"), disaster.get("glide")):
+        if identifier := _glide_identifier(glide):
+            identifiers.add(identifier)
     identifiers.update(
         f"reliefweb_disaster:{_normalized(value)}"
         for value in report.get("disaster_ids") or [] if _normalized(value)
     )
+    for glide in report.get("disaster_glides") or []:
+        if identifier := _glide_identifier(glide):
+            identifiers.add(identifier)
     if who.get("don_id"):
         identifiers.add(f"who_don:{_normalized(who['don_id'])}")
     if (evidence.get("usgs_earthquake") or {}).get("id"):
@@ -114,6 +128,10 @@ def global_item_signature(item: dict[str, Any]) -> dict[str, Any]:
 
 
 def global_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str]:
+    left_glides = {value for value in left["identifiers"] if value.startswith("glide:")}
+    right_glides = {value for value in right["identifiers"] if value.startswith("glide:")}
+    if left_glides and right_glides and not left_glides & right_glides:
+        return []
     if left["identifiers"] & right["identifiers"]:
         return ["shared_event_id"]
     if (left["article_url"] and left["article_url"] == right["article_url"]
