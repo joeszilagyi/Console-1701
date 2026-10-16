@@ -124,7 +124,7 @@ def _load_registry() -> tuple[dict[str, Any], ...]:
             raise ValueError(f"Invalid GLOBAL kind for {key}: {kind}")
         entry["kind"] = kind
         entry["enabled"] = False
-        entry["parser"] = None
+        entry["parser"] = "pbs_world_rss" if key == "pbs_world_rss" else None
         entry["source_health_behavior"] = (
             "unsupported" if row["verification_status"] == "reject_for_now"
             else "policy_blocked" if row["verification_status"] == "candidate_policy_sensitive"
@@ -168,6 +168,7 @@ def global_registry_config_defaults(source_key: str) -> dict[str, Any] | None:
         "kind": entry["kind"],
         "enabled": False,
         "url": url,
+        "parser": entry["parser"],
         "official_status": entry["official_status"],
         "priority": entry["priority"],
         "interval_minutes": entry["interval_minutes"],
@@ -190,6 +191,8 @@ def global_registry_config_defaults(source_key: str) -> dict[str, Any] | None:
         source["auth"] = (
             {"appname": ""} if source_key.startswith("reliefweb_") else {"api_key": ""}
         )
+    if source_key == "pbs_world_rss":
+        source["official_url"] = entry["raw_url"]
     return source
 
 

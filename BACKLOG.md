@@ -1925,7 +1925,12 @@ official issuer, CAP links, GUID/time and cancellation labels as background evid
 does not verify CAP status, severity, expiry or affected area. Disabled, auth-required, stale,
 and failing states are covered by offline health regressions; an actual valid-to-malformed GDACS
 fixture refresh now verifies `parser_failed` health, GLOBAL page/API state, and retention of the
-last good item. Smithsonian GVP and broader news fixtures remain pending. A bounded read of the
+last good item. A PBS NewsHour World RSS fixture now exercises the observed publisher channel,
+world-section permalink/time, optional creator, and metadata-only offline scan. Its stories
+remain background context without inferred international impact or independent reporting;
+the publisher feed remains outside the live official HTTP allowlist. See
+`docs/project/GLOBAL_PBS_WORLD_RSS_FIXTURE_VERIFICATION.md`. Smithsonian GVP and other permitted
+broader news fixtures remain pending. A bounded read of the
 BBC World RSS candidate on 2026-10-15 returned HTTP
 200 with title, link, GUID, publication time and description fields. Its feed points to BBC reuse
 terms, and [BBC's published terms](https://downloads.bbc.co.uk/usingthebbc/bbc_terms_of_use_31March2022english.pdf)
