@@ -35,6 +35,21 @@ def national_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     evidence = item.get("evidence") if isinstance(item.get("evidence"), dict) else {}
     identity = evidence.get("national_identity") or {}
     source = evidence.get("source") or {}
+    family = str(source.get("source_family") or "unknown").strip().casefold()
+    source_fields = {
+        key: evidence.get(key) or {} for key, expected_family in (
+            ("usgs_earthquake", "usgs"),
+            ("nws_alert", "nws"),
+            ("nhtsa_recall", "nhtsa"),
+            ("cpsc_recall", "cpsc"),
+            ("openfema_declaration", "fema"),
+            ("cisa_kev", "cisa"),
+            ("federal_register", "federal_register"),
+            ("govinfo_publication", "govinfo"),
+            ("fda_recall_notice", "fda"),
+            ("faa_nas_status", "faa"),
+        ) if family == expected_family
+    }
     identifiers: set[str] = set()
     for evidence_key, field, namespace in (
         ("usgs_earthquake", "id", "usgs"),
@@ -46,18 +61,18 @@ def national_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         ("federal_register", "document_number", "fr_document"),
         ("govinfo_publication", "document_id", "govinfo_document"),
     ):
-        payload = evidence.get(evidence_key) or {}
+        payload = source_fields.get(evidence_key) or {}
         if payload.get(field):
             identifiers.add(f"{namespace}:{str(payload[field]).strip().casefold()}")
     for entry in identity.get("official_event_ids") or []:
         if isinstance(entry, str) and ":" in entry and len(entry) <= 120:
             identifiers.add(entry.casefold())
-    nws = evidence.get("nws_alert") or {}
+    nws = source_fields.get("nws_alert") or {}
     geocode = nws.get("geocode") or {}
     zones = _values(geocode.get("UGC"))
     states = _values(identity.get("affected_states"))
     states.update(zone[:2] for zone in zones if re.fullmatch(r"[a-z]{2}[cz]\d{3}", zone))
-    faa = evidence.get("faa_nas_status") or {}
+    faa = source_fields.get("faa_nas_status") or {}
     airports = _values(identity.get("affected_airports"))
     if faa.get("airport_code"):
         airports.add(str(faa["airport_code"]).casefold())
@@ -65,19 +80,19 @@ def national_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         "id": int(item["id"]),
         "identifiers": identifiers,
         "event_type": str(identity.get("event_type") or (
-            "earthquake" if evidence.get("usgs_earthquake") else
+            "earthquake" if source_fields.get("usgs_earthquake") else
             "weather_alert" if nws else
-            "vehicle_recall" if evidence.get("nhtsa_recall") else
-            "consumer_product_recall" if evidence.get("cpsc_recall") else
-            "fda_recall_notice" if evidence.get("fda_recall_notice") else
-            "cyber_vulnerability" if evidence.get("cisa_kev") else
+            "vehicle_recall" if source_fields.get("nhtsa_recall") else
+            "consumer_product_recall" if source_fields.get("cpsc_recall") else
+            "fda_recall_notice" if source_fields.get("fda_recall_notice") else
+            "cyber_vulnerability" if source_fields.get("cisa_kev") else
             "aviation_disruption" if faa else
-            "federal_action" if evidence.get("federal_register") else
-            "federal_publication" if evidence.get("govinfo_publication") else ""
+            "federal_action" if source_fields.get("federal_register") else
+            "federal_publication" if source_fields.get("govinfo_publication") else ""
         )).strip().casefold(),
         "agency": str(identity.get("agency") or (
-            "CPSC" if evidence.get("cpsc_recall") else
-            "FDA" if evidence.get("fda_recall_notice") else ""
+            "CPSC" if source_fields.get("cpsc_recall") else
+            "FDA" if source_fields.get("fda_recall_notice") else ""
         )).strip().casefold(),
         "affected_states": states,
         "affected_territories": _values(identity.get("affected_territories")),
@@ -93,7 +108,7 @@ def national_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         "multi_state_impact": bool(identity.get("multi_state_impact")) or len(states) >= 2,
         "tokens": _tokens(item.get("title")) - _STOPWORDS,
         "published_at": _time(item.get("source_published_at") or item.get("first_seen_at")),
-        "family": str(source.get("source_family") or "unknown").strip().casefold(),
+        "family": family,
         "official": source.get("official_status") == "official",
         "source_key": str(source.get("source_key") or "").strip(),
         "article_url": str(item.get("canonical_url") or item.get("url") or "").strip(),

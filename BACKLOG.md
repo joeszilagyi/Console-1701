@@ -1651,6 +1651,13 @@ Official CISA advisory and KEV fixture rows can now join on a shared CVE only wh
 CISA, both are official CISA-family sources, and their publication dates are within 72 hours.
 The shared CVE does not count as independent corroboration. An older advisory with the same CVE
 stays a separate event; the offline scan verifies the stored pair and unrelated entries.
+NATIONAL correlation now qualifies USGS, NWS, NHTSA, CPSC, OpenFEMA, CISA KEV, Federal
+Register, and GovInfo source IDs by their matching stored source families. NWS UGC states and
+FAA airport codes, plus fallback event type/agency from parser fields, use the same gate.
+Mismatched fields cannot create an official-ID join or geographic context; explicit reviewed
+`national_identity` fields remain available for cross-family matches. Direct regressions cover
+each official-ID field group and the NWS/FAA geography fallback. Other source-specific
+dimension coverage remains open.
 
 Implement deterministic NATIONAL event matching by source family, time window, normalized title
 tokens, event type, agency, affected states, affected territories, FEMA region, NWS region, storm
