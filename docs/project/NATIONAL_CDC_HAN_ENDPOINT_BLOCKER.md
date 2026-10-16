@@ -14,6 +14,11 @@ HAN RSS feed, but that does not verify an endpoint in 2026. CDC currently advert
 subscription on its HAN page. No current exact public HAN feed/API or stable paginated data
 shape was established.
 
+CDC's documented [Content Services API](https://tools.cdc.gov/api/docs/info.aspx) was also
+checked with bounded five-row media queries for `sourceUrlContains=/han/php/notices/` and
+`q=Health Alert Network`. Both returned HTTP 200 JSON with `meta.pagination.total=0`. This API
+does not currently provide a verified HAN notice shape or a replacement for the archive feed.
+
 Decision: keep `cdc_han` and `cdc_han_notices` disabled; treat their official pages as manual
 references, not working ingest sources. Do not scrape the notice archive,
 automate email signup, or invent a fixture schema. To resume RS-039, find an official current

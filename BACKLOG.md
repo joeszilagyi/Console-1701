@@ -1355,6 +1355,10 @@ general emergency page, and candidate new XML paths return 404. See
 do not scrape the notice list or invent a parser input shape. Continue when CDC documents a
 current public endpoint.
 
+CDC's documented Content Services media API returned zero records for both an exact HAN notice
+path filter and a Health Alert Network query in bounded 2026-10-15 checks; it does not unblock
+this parser.
+
 ### FDA Recall Endpoint/Feed Verification
 
 Status: implemented (source verification; live ingest disabled).
@@ -2654,14 +2658,19 @@ ORBITAL identity, type, source family, time, title tokens, and available structu
 scanner persists match basis, member ids, independent families, and confidence in item and cluster
 evidence. Shared official identity can deduplicate same-family records without claiming independent
 corroboration; unrelated event types and observations outside 96 hours stay separate. Fixture
-integration and matcher tests pass. Remaining work: populate mission, launch, Kp, reentry, safe
+integration and matcher tests pass. Remaining work: populate mission, launch, reentry, safe
 satellite, and impact identities in verified future adapters; test their real parsed records; and
-extend cross-product space-weather correlation beyond the verified SWPC warning/current-scale
-case. The SWPC matcher now joins only an active warning/alert and an observed current NOAA
+extend cross-product space-weather correlation beyond verified SWPC warning/current-scale and
+warning/planetary-Kp cases. The SWPC matcher now joins only an active warning/alert and an
+observed current NOAA
 scale of the same level when the scale timestamp falls inside the alert's explicit valid
 window. Forecast scales, cancellations, different levels, and out-of-window observations
 remain separate; a joined SWPC pair is never independent corroboration. Parser-backed
-fixture and stored-cluster tests cover this case.
+fixture and stored-cluster tests cover this case. Planetary three-hour Kp summaries now derive a
+G level from NOAA's published threshold table and join a same-level SWPC warning/alert only when
+the measurement falls inside its explicit valid window. Boulder local K-index, provisional
+one-minute Kp estimates, level mismatches, and out-of-window values stay separate; the pair
+remains one SWPC family in stored cluster evidence. Other adapter identities remain open.
 
 ### ORBITAL Deterministic Ranking
 
