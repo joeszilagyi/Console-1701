@@ -1963,6 +1963,8 @@ and volcano ranking evidence. Keep parser conservative where page structure is n
 The official weekly report page links `https://volcano.si.edu/news/WeeklyVolcanoRSS.xml` and
 documents report categories, weekly cadence, and preliminary status. A bounded direct request to
 that exact RSS URL returned HTTP 403 on 2026-10-15, so its item XML shape remains unverified.
+The page's companion CAP URL (`https://volcano.si.edu/news/WeeklyVolcanoCAP.xml`)
+also returned HTTP 403 in a bounded direct check; it does not provide a verified fallback.
 Keep the parser row open until a legitimate official sample can be inspected; do not bypass the
 site access control or infer feed fields from the HTML page. The report page remains a reference
 source only.
