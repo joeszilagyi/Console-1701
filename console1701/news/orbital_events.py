@@ -78,24 +78,25 @@ def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         identifiers.add(f"cad:{designation}:{approach}")
     fireball = evidence.get("jpl_fireball") or {}
     fireball_at = _time(fireball.get("event_time_utc"))
-    fireball_identity = None
+    fireball_location_identity = None
+    fireball_energy_identity = None
     if event_type == "fireball" and fireball_at:
         latitude = _number(fireball.get("latitude"))
         longitude = _number(fireball.get("longitude"))
         if (latitude is not None and longitude is not None
                 and -90 <= latitude <= 90 and -180 <= longitude <= 180):
-            fireball_identity = (
+            fireball_location_identity = (
                 f"{fireball_at.isoformat()}:geo:{latitude:g}:{longitude:g}"
             )
-        else:
-            radiated = _number(fireball.get("radiated_energy_1e10_joules"))
-            impact = _number(fireball.get("estimated_impact_energy_kt"))
-            if radiated is not None and impact is not None:
-                fireball_identity = (
-                    f"{fireball_at.isoformat()}:energy:{radiated:g}:{impact:g}"
-                )
-        if fireball_identity:
-            identifiers.add(f"fireball:{fireball_identity}")
+        radiated = _number(fireball.get("radiated_energy_1e10_joules"))
+        impact = _number(fireball.get("estimated_impact_energy_kt"))
+        if radiated is not None and impact is not None:
+            fireball_energy_identity = (
+                f"{fireball_at.isoformat()}:energy:{radiated:g}:{impact:g}"
+            )
+        for value in (fireball_location_identity, fireball_energy_identity):
+            if value:
+                identifiers.add(f"fireball:{value}")
     context = {
         field: _normalized(identity.get(field)) for field in (
             "mission_name", "launch_vehicle", "payload", "provider", "neo_designation",
@@ -138,7 +139,8 @@ def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         } if swpc_kp else {},
         "launch_at": _time(launch_library.get("net")),
         "ll_event_at": _time(launch_library.get("event_time")),
-        "fireball_identity": fireball_identity,
+        "fireball_location_identity": fireball_location_identity,
+        "fireball_energy_identity": fireball_energy_identity,
     }
 
 
@@ -197,8 +199,16 @@ def orbital_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str
     if hours > MATCH_WINDOW_HOURS and not near_source_launch and not near_source_event:
         return []
     if left["event_type"] == right["event_type"] == "fireball":
-        return ["fireball_time_location_or_energy", "time_window"] if (
-            left["fireball_identity"] and left["fireball_identity"] == right["fireball_identity"]
+        left_location = left["fireball_location_identity"]
+        right_location = right["fireball_location_identity"]
+        if left_location and right_location:
+            return ["fireball_time_location_or_energy", "time_window"] if (
+                left_location == right_location
+            ) else []
+        left_energy = left["fireball_energy_identity"]
+        right_energy = right["fireball_energy_identity"]
+        return ["fireball_time_energy_missing_location", "time_window"] if (
+            left_energy and left_energy == right_energy
         ) else []
     if near_source_event:
         return ["linked_launch_library_event_id", "event_window"]

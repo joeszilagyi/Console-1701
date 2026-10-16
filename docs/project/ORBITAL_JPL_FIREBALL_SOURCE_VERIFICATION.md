@@ -24,6 +24,10 @@ both energy values. A time-only match is insufficient. Two same-second events wi
 location or energy remain separate in direct parser and offline stored-cluster tests. An energy
 revision at the same reported time and location can join as one JPL-family event, without an
 independent-corroboration claim. This is a conservative derived identity, not an official event ID.
+When exactly one record lacks coordinates, the matcher now uses the same exact UTC second and
+both reported energy values as a bridge. If both records report locations, conflicting
+coordinates veto that bridge even when energy agrees. Parser-backed regressions cover both
+cases and a changed-energy rejection.
 
 The registry source remains disabled and the API is not live allowlisted. Before live admission,
 select a bounded date/energy/limit query, verify response size, update cadence and source delay,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from pathlib import Path
 from textwrap import dedent
 
@@ -97,6 +98,49 @@ def test_parsed_fireballs_need_time_and_location_or_energy_identity():
         "fireball_time_location_or_energy", "time_window",
     ]
     assert groups[0]["corroborated"] is False
+
+
+def test_fireball_missing_location_uses_both_reported_energies_without_overriding_geo():
+    fixture = json.loads((ORBITAL_FIXTURES / "jpl_fireball.json").read_text())
+    source = {
+        "id": "jpl_fireball_api", "scope": "ORBITAL", "kind": "api_json",
+        "parser": "jpl_fireball_json", "source_family": "jpl_cneos",
+        "max_age_days": 36500,
+    }
+
+    def parsed(row, item_id):
+        item, = parse_fixture_items(source, json.dumps({
+            **fixture, "count": 1, "data": [row],
+        }))
+        item["id"] = item_id
+        item["evidence"]["source"] = {
+            "source_family": "jpl_cneos", "source_key": "jpl_fireball_api",
+        }
+        return item
+
+    located = parsed(fixture["data"][0], 1)
+    missing_row = deepcopy(fixture["data"][0])
+    missing_row[1:5] = [None] * 4
+    missing = parsed(missing_row, 2)
+    groups = correlate_orbital_items([located, missing])
+    assert [group["item_ids"] for group in groups] == [[1, 2]]
+    assert groups[0]["matches"][0]["basis"] == [
+        "fireball_time_energy_missing_location", "time_window",
+    ]
+    assert groups[0]["corroborated"] is False
+
+    wrong_location_row = deepcopy(fixture["data"][0])
+    wrong_location_row[1] = "48.0"
+    wrong_location = parsed(wrong_location_row, 3)
+    assert [group["item_ids"] for group in correlate_orbital_items([
+        located, wrong_location,
+    ])] == [[1], [3]]
+
+    missing_row[6] = "13.0"
+    wrong_energy = parsed(missing_row, 4)
+    assert [group["item_ids"] for group in correlate_orbital_items([
+        located, wrong_energy,
+    ])] == [[1], [4]]
 
 
 def test_nasa_channel_variants_and_jpl_do_not_count_as_independent_sources():
