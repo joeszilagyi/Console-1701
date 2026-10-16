@@ -28,6 +28,7 @@ from console1701.news.normalize import bounded_text, cluster_key, content_hash, 
 from console1701.news.official_http import (
     OfficialFetchResult,
     RateLimitedError,
+    fetch_national_usgs_dyfi,
     fetch_national_usgs_geoserve_admin,
     fetch_official_text,
     is_supported_official_source,
@@ -44,6 +45,7 @@ from console1701.news.parsers import (
     NewsParserError,
     PayloadTooLargeError,
     UnsupportedSourceError,
+    attach_national_usgs_live_dyfi,
     load_fixture_text,
     parse_fixture_items,
     parse_national_usgs_live_enriched,
@@ -835,6 +837,116 @@ def _ingest_source(
                 "response_bytes": geoserve_bytes,
                 "max_lookups_per_scan": 5,
                 **({"retry_after": retry_after} if geoserve_state in {
+                    "rate_limited", "rate_backoff",
+                } and retry_after else {}),
+            }
+        if (is_live and source.get("scope") == "NATIONAL"
+                and source.get("id") == "usgs_eq_geojson"
+                and source.get("dyfi_state_enrichment") is True):
+            prior_items = conn.execute(
+                "SELECT canonical_url, evidence_json FROM news_items "
+                "WHERE source_id=? AND status='active' ORDER BY id DESC LIMIT 200",
+                (source_id,),
+            ).fetchall()
+            prior_quakes_by_url = {
+                row["canonical_url"]: (
+                    json_loads(row["evidence_json"], {}).get("usgs_earthquake") or {}
+                )
+                for row in prior_items if row["canonical_url"]
+            }
+            cached_by_url = {
+                url: quake.get("dyfi_state_evidence")
+                for url, quake in prior_quakes_by_url.items()
+            }
+
+            def has_unchanged_dyfi(item: dict[str, Any]) -> bool:
+                url = item["canonical_url"]
+                cached = cached_by_url.get(url)
+                prior_quake = prior_quakes_by_url.get(url) or {}
+                return bool(
+                    isinstance(cached, dict) and cached.get("fixture_only") is False
+                    and prior_quake.get("updated")
+                    and prior_quake["updated"] == item["evidence"]["usgs_earthquake"]["updated"]
+                )
+
+            candidates = sorted(
+                (item for item in items
+                 if (item.get("evidence") or {}).get("usgs_earthquake", {}).get("detail_url")
+                 and (item.get("evidence") or {}).get("usgs_earthquake", {}).get("felt", 0) >= 20
+                 and (item.get("evidence") or {}).get("usgs_earthquake", {}).get("magnitude", 0)
+                 >= 5),
+                key=lambda item: (
+                    has_unchanged_dyfi(item),
+                    -item["evidence"]["usgs_earthquake"]["felt"],
+                ),
+            )
+            dyfi_state = "no_eligible_event"
+            dyfi_bytes = 0
+            dyfi_attempts = 0
+            retry_after = None
+            prior_runs = conn.execute(
+                "SELECT evidence_json FROM news_fetch_runs "
+                "WHERE source_id=? AND id<? ORDER BY id DESC LIMIT 20",
+                (source_id, run_id),
+            ).fetchall()
+            for prior in prior_runs:
+                previous = json_loads(prior["evidence_json"], {}).get("dyfi_state") or {}
+                if previous:
+                    retry_after = previous.get("retry_after")
+                    break
+            if retry_after:
+                try:
+                    retry_at = datetime.fromisoformat(retry_after)
+                    if retry_at.tzinfo and datetime.now(UTC) < retry_at.astimezone(UTC):
+                        dyfi_state = "rate_backoff"
+                except (TypeError, ValueError):
+                    retry_after = None
+            if candidates and dyfi_state != "rate_backoff":
+                candidate = candidates[0]
+                quake = candidate["evidence"]["usgs_earthquake"]
+                cached = cached_by_url.get(candidate["canonical_url"])
+                dyfi_attempts = 1
+                try:
+                    sidecar, cached_summary, dyfi_bytes, dyfi_state = fetch_national_usgs_dyfi(
+                        source,
+                        event_id=str(quake["id"]),
+                        detail_url=str(quake["detail_url"]),
+                        user_agent=str(
+                            ((config.get("news") or {}).get("fetch_policy") or {}).get("user_agent")
+                        ),
+                        cached=cached,
+                    )
+                    if sidecar or cached_summary:
+                        attach_national_usgs_live_dyfi(
+                            source, candidate, sidecar=sidecar, cached=cached_summary,
+                        )
+                except RateLimitedError:
+                    dyfi_state = "rate_limited"
+                    retry_after = (datetime.now(UTC) + timedelta(hours=2)).isoformat()
+                except NewsIngestError:
+                    dyfi_state = "unavailable"
+                except NewsParserError:
+                    dyfi_state = "invalid_product"
+            selected_url = candidates[0]["canonical_url"] if dyfi_attempts else None
+            cached_events_reused = 0
+            for candidate in candidates:
+                if candidate["canonical_url"] == selected_url or not has_unchanged_dyfi(candidate):
+                    continue
+                try:
+                    attach_national_usgs_live_dyfi(
+                        source, candidate, cached=cached_by_url[candidate["canonical_url"]],
+                    )
+                    cached_events_reused += 1
+                except NewsParserError:
+                    continue
+            fetch_evidence["dyfi_state"] = {
+                "state": dyfi_state,
+                "eligible_count": len(candidates),
+                "events_attempted": dyfi_attempts,
+                "cached_events_reused": cached_events_reused,
+                "response_bytes": dyfi_bytes,
+                "max_events_per_scan": 1,
+                **({"retry_after": retry_after} if dyfi_state in {
                     "rate_limited", "rate_backoff",
                 } and retry_after else {}),
             }

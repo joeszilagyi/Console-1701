@@ -1744,12 +1744,22 @@ def _usgs_dyfi_state_fixture(
             or not str(source.get("url") or "").startswith("file://")
             or not isinstance(sidecar, dict)):
         raise NewsParserError("USGS DYFI sidecar requires a NATIONAL local fixture")
+    return _parse_usgs_dyfi_sidecar(
+        sidecar,
+        {feature["id"] for feature in payload["features"] if isinstance(feature, dict)
+         and isinstance(feature.get("id"), str)},
+        fixture_only=True,
+    )
+
+
+def _parse_usgs_dyfi_sidecar(
+    sidecar: dict[str, Any], event_ids: set[Any], *, fixture_only: bool
+) -> dict[str, Any]:
     event_id = sidecar.get("event_id")
     product_url = sidecar.get("product_url")
     xml = sidecar.get("xml")
     if (not isinstance(event_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,120}", event_id)
-            or not any(feature.get("id") == event_id for feature in payload["features"]
-                       if isinstance(feature, dict))
+            or event_id not in event_ids
             or not isinstance(product_url, str) or not isinstance(xml, str)
             or len(xml.encode("utf-8")) > 131_072
             or "<!DOCTYPE" in xml.upper() or "<!ENTITY" in xml.upper()):
@@ -1816,8 +1826,79 @@ def _usgs_dyfi_state_fixture(
         "reported_states_at_threshold": reported_states,
         "minimum_responses_per_state": _DYFI_MIN_STATE_RESPONSES,
         "source_basis": "USGS DYFI ZIP aggregates; self-reported shaking, not damage",
-        "fixture_only": True, "zip_locations_stored": False,
+        "fixture_only": fixture_only, "zip_locations_stored": False,
     }
+
+
+def _attach_national_usgs_dyfi(item: dict[str, Any], dyfi: dict[str, Any]) -> None:
+    item["evidence"]["usgs_earthquake"]["dyfi_state_evidence"] = dyfi
+    identity = item["evidence"]["national_identity"]
+    identity["affected_states"] = dyfi["reported_states_at_threshold"]
+    identity["multi_state_impact"] = len(dyfi["reported_states_at_threshold"]) >= 2
+    identity["impact_scope_basis"] = (
+        "USGS DYFI ZIP aggregates report at least ten felt responses in each listed state; "
+        "this is self-reported shaking, not observed damage"
+    )
+
+
+def attach_national_usgs_live_dyfi(
+    source: dict[str, Any], item: dict[str, Any], *,
+    sidecar: dict[str, Any] | None = None, cached: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Attach scanner-fetched or version-matched DYFI state totals to one live item."""
+    from console1701.news.official_http import (
+        USGS_REGIONAL_EARTHQUAKES_URL,
+        is_supported_official_source,
+    )
+
+    quake = (item.get("evidence") or {}).get("usgs_earthquake") or {}
+    event_id = quake.get("id")
+    if (source.get("scope") != "NATIONAL" or source.get("id") != "usgs_eq_geojson"
+            or source.get("url") != USGS_REGIONAL_EARTHQUAKES_URL
+            or source.get("dyfi_state_enrichment") is not True
+            or not is_supported_official_source(source)
+            or not isinstance(event_id, str)
+            or item.get("scope") != "NATIONAL"
+            or "national_identity" not in (item.get("evidence") or {})
+            or (sidecar is None) == (cached is None)):
+        raise NewsParserError("USGS live DYFI requires one exact scanner item and product")
+    if sidecar is not None:
+        dyfi = _parse_usgs_dyfi_sidecar(sidecar, {event_id}, fixture_only=False)
+    else:
+        dyfi = cached
+        if (not isinstance(dyfi, dict) or dyfi.get("event_id") != event_id
+                or dyfi.get("fixture_only") is not False
+                or dyfi.get("zip_locations_stored") is not False
+                or not isinstance(dyfi.get("state_summary"), list)
+                or len(dyfi["state_summary"]) > 60
+                or not all(
+                    isinstance(row, dict)
+                    and row.get("state") in _DYFI_US_CODES
+                    and type(row.get("response_count")) is int
+                    and 1 <= row["response_count"] <= 100_000
+                    and type(row.get("max_cdi")) in {int, float}
+                    and 0 <= row["max_cdi"] <= 10
+                    for row in dyfi["state_summary"]
+                )):
+            raise NewsParserError("USGS cached DYFI summary is invalid")
+        states = [row["state"] for row in dyfi["state_summary"]]
+        product_url = str(dyfi.get("product_url") or "")
+        if (len(states) != len(set(states))
+                or not re.fullmatch(
+                    rf"https://earthquake\.usgs\.gov/product/dyfi/"
+                    rf"{re.escape(event_id)}/us/\d{{13}}/cdi_zip\.xml",
+                    product_url,
+                )):
+            raise NewsParserError("USGS cached DYFI product identity is invalid")
+        reported = sorted(
+            row["state"] for row in dyfi["state_summary"]
+            if row["response_count"] >= _DYFI_MIN_STATE_RESPONSES
+            and row["max_cdi"] >= 2.0
+        )
+        if dyfi.get("reported_states_at_threshold") != reported:
+            raise NewsParserError("USGS cached DYFI state threshold has changed")
+    _attach_national_usgs_dyfi(item, dyfi)
+    return item
 
 
 def _usgs_timestamp(value: Any) -> str | None:
@@ -1924,6 +2005,14 @@ def _parse_usgs_earthquake_geojson(
                 or parts.query or parts.fragment
                 or parts.path != f"/earthquakes/eventpage/{event_id}"):
             raise NewsParserError(f"USGS feature {index} has no matching official event URL.")
+        detail_url = properties.get("detail")
+        if detail_url is not None:
+            if (not isinstance(detail_url, str)
+                    or detail_url != (
+                        "https://earthquake.usgs.gov/earthquakes/feed/v1.0/detail/"
+                        f"{event_id}.geojson"
+                    )):
+                raise NewsParserError(f"USGS feature {index} has no matching detail URL.")
         place = bounded_text(source_place, max_chars=180) or (
             "World" if global_scope else "U.S. region" if national else "Washington region"
         )
@@ -2004,6 +2093,7 @@ def _parse_usgs_earthquake_geojson(
             "status": bounded_text(properties.get("status"), max_chars=32),
             "event_type": "earthquake",
             "source_url": url,
+            "detail_url": detail_url,
             "filter": {
                 **geo_filter,
                 "matched": True,
@@ -2039,8 +2129,6 @@ def _parse_usgs_earthquake_geojson(
             dyfi_fixture if national and dyfi_fixture
             and dyfi_fixture["event_id"] == event_id else None
         )
-        if dyfi:
-            item["evidence"]["usgs_earthquake"]["dyfi_state_evidence"] = dyfi
         if national:
             item["evidence"]["national_identity"] = {
                 "event_type": "earthquake",
@@ -2049,17 +2137,14 @@ def _parse_usgs_earthquake_geojson(
                 "local_regional_impact_score": min(20, max(
                     magnitude_weight // 2, felt_weight * 2,
                 )),
-                **({"affected_states": dyfi["reported_states_at_threshold"]} if dyfi else {}),
-                "multi_state_impact": len(dyfi["reported_states_at_threshold"]) >= 2
-                if dyfi else False,
+                "multi_state_impact": False,
                 "impact_scope_basis": (
-                    "USGS DYFI ZIP aggregates report at least ten felt responses in each "
-                    "listed state; this is self-reported shaking, not observed damage"
-                    if dyfi else
                     "USGS summary felt count has no verified state distribution; "
                     "coarse epicenter region does not prove multi-state impact"
                 ),
             }
+            if dyfi:
+                _attach_national_usgs_dyfi(item, dyfi)
         if global_scope:
             item["evidence"]["global_identity"] = {
                 "earthquake_id": item["evidence"]["usgs_earthquake"]["id"],

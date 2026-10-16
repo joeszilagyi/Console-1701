@@ -1464,7 +1464,12 @@ requires at least ten responses plus CDI 2.0 in each of two states before labeli
 multi-state **reported felt shaking**. California and Nevada qualify; Oregon's six responses
 do not. No ZIP or city rows enter SQLite, and no damage or observed footprint is inferred.
 The offline scan proves stored state/score evidence with HTTP trapped. Live DYFI product
-enrichment remains separately gated; see
+enrichment now has a separately enabled, exact summary-detail/product path proposed for owner
+review. It requires a 60-minute source interval, at most one magnitude-5/felt-20 event per scan,
+256 KiB detail and 128 KiB XML caps, preferred `us` product identity/length validation, cached
+same-version state totals, and a two-hour 429 backoff. Missing or failed products preserve the
+summary feed's unknown felt-state distribution. The live path remains disabled by default and
+unmerged pending new-outbound-request review; see
 `docs/project/NATIONAL_USGS_DYFI_STATE_FIXTURE_VERIFICATION.md`.
 
 ### FEMA/OpenFEMA Disaster Declarations Research
