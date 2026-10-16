@@ -71,6 +71,34 @@ def test_regional_correlation_does_not_bridge_distinct_incidents():
     assert sorted(len(group["item_ids"]) for group in groups) == [1, 2]
 
 
+def test_regional_shared_event_key_is_scoped_to_one_official_source_family():
+    first = _correlation_item(
+        1, family="wildfire_federal", title="Sisi wildfire status",
+        event_type="wildfire_update",
+    )
+    revised = _correlation_item(
+        2, family="wildfire_federal", title="Sisi revised status",
+        event_type="wildfire_update", published="2026-10-01T10:00:00+00:00",
+    )
+    revised["evidence"]["regional_event"]["event_key"] = first[
+        "evidence"
+    ]["regional_event"]["event_key"]
+    assert correlate_regional_items([first, revised])[0]["matches"][0]["basis"] == [
+        "shared_official_event_id"
+    ]
+
+    copied = _correlation_item(
+        3, family="county_emergency", title="Unrelated county weather alert",
+        event_type="weather_alert",
+    )
+    copied["evidence"]["regional_event"]["event_key"] = first[
+        "evidence"
+    ]["regional_event"]["event_key"]
+    assert [group["item_ids"] for group in correlate_regional_items([
+        first, copied
+    ])] == [[1], [3]]
+
+
 def test_pierce_road_id_survives_revisions_and_matches_only_pierce_road_context():
     source = regional_registry_config_defaults("pierce_road_alert_rss")
     source["official_url"] = source["url"]
