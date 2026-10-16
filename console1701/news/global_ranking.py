@@ -106,12 +106,10 @@ def _source_signals(member: dict[str, Any], *, observed: datetime | None) -> dic
         18 if usgs.get("tsunami") is True else 0,
         15 if reliefweb.get("status") in {"current", "alert"} else 0,
         12 if nhc_watch else 0,
-        min(35, max(0, _int(identity.get("public_impact_score")))),
     )
     humanitarian = max(
         25 if reliefweb.get("status") in {"current", "alert"} else 0,
         12 if report else 0,
-        min(35, max(0, _int(identity.get("humanitarian_impact_score")))),
     )
     alert = bool(nhc_watch or level in {"red", "orange"} or usgs.get("tsunami") is True or
                  reliefweb.get("status") in {"current", "alert"} or cap_level)
@@ -293,9 +291,6 @@ def rank_global_event(
         ) else None,
         "NHC advisory watch/warning terms (geography unverified)" if any(
             signal["nhc_watch_current"] for signal in signals
-        ) else None,
-        "parser-provided impact score" if any(
-            identity.get("public_impact_score") for identity in identities
         ) else None,
     ]
     reasons = [

@@ -2410,6 +2410,12 @@ public-impact, humanitarian, or active-alert boost from those fields. The public
 derived from the same qualified signals, so the drawer cannot cite a rejected field. Direct
 tests cover each family and both rejection paths. Broader source-specific impact and low-value
 coverage remains open.
+GLOBAL ranking also ignores free-standing `global_identity` public/humanitarian score claims.
+No current GLOBAL parser emits those scores with a source-specific verification contract, so
+they cannot supply impact or a drawer basis. Qualified GDACS, ReliefWeb, USGS, and NHC signals
+retain their existing bounded credit. A direct regression covers unsupported PBS metadata and
+a supported ReliefWeb disaster. Add future impact credit through a verified source-specific
+evidence field and explicit ranking rule.
 
 ### GLOBAL UI Disabled States
 

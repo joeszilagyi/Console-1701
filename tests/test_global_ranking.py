@@ -100,6 +100,29 @@ def test_global_rank_ignores_impact_fields_on_wrong_or_unverified_source():
         assert basis in verified["public_impact_basis"]
 
 
+def test_global_rank_requires_source_specific_evidence_for_impact_scores():
+    article = _member(1, family="pbs_world")
+    article["evidence"].pop("gdacs")
+    article["evidence"]["global_identity"] = {
+        "public_value_class": "background",
+        "public_impact_score": 35,
+        "humanitarian_impact_score": 35,
+    }
+    unsupported = rank_global_event(_group("pbs_world"), [article], now=NOW)
+    assert unsupported["factors"]["public_impact_score"] == 0
+    assert unsupported["factors"]["humanitarian_impact_score"] == 0
+    assert unsupported["public_impact_basis"] == []
+
+    article["evidence"]["source"].update(
+        {"source_family": "reliefweb", "official_status": "official"}
+    )
+    article["evidence"]["reliefweb_disaster"] = {"status": "current"}
+    supported = rank_global_event(_group("reliefweb"), [article], now=NOW)
+    assert supported["factors"]["public_impact_score"] == 15
+    assert supported["factors"]["humanitarian_impact_score"] == 25
+    assert supported["public_impact_basis"] == ["ReliefWeb active disaster"]
+
+
 def test_global_rank_penalizes_stale_low_value_rumor_and_out_of_scope():
     base = _member(1)
     normal = rank_global_event(_group("gdacs"), [base], now=NOW)
