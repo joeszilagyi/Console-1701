@@ -25,11 +25,12 @@ def test_orbital_inventory_is_complete_disabled_and_validated():
     entries = list_orbital_source_registry()
     keys = {entry["source_key"] for entry in entries}
     summary = orbital_source_registry_summary()
-    assert len(entries) == len(keys) == 136
+    assert len(entries) == len(keys) == 137
+    assert get_orbital_source_registry_entry("celestrak_iss_gp")["enabled"] is False
     assert all(entry["scope"] == "ORBITAL" and entry["enabled"] is False
                for entry in entries)
     assert all(entry["source_health_behavior"] for entry in entries)
-    assert summary["source_count"] == 136
+    assert summary["source_count"] == 137
     assert summary["enabled_by_default"] is False
     assert get_orbital_source_registry_entry("swpc_alerts_json")["kind"] == "api_json"
     assert get_orbital_source_registry_entry("nasa_rss_feeds")["kind"] == "rss"
@@ -68,9 +69,10 @@ def test_orbital_registry_seeds_config_and_sqlite_without_fetch(tmp_path, monkey
             "WHERE scope = 'ORBITAL'"
         ).fetchall()
         summary = get_news_storage_summary(conn, config)
-    assert len(rows) == 136
+    assert len(rows) == 137
+    assert "celestrak_iss_gp" in {row["source_key"] for row in rows}
     assert all(row["enabled_by_default"] == 0 for row in rows)
-    assert summary["orbital_registry"]["source_count"] == 136
+    assert summary["orbital_registry"]["source_count"] == 137
 
 
 def test_orbital_reference_cannot_ingest_even_with_file_override(tmp_path, monkeypatch):

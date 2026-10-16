@@ -2335,7 +2335,8 @@ Architecture reference:
 
 Status: implemented as disabled planning inventory.
 
-All 136 ORBITAL design-table entries are checked into `orbital_registry.json` with source/family,
+All 136 ORBITAL design-table entries plus one reviewed ISS-only CelesTrak fixture candidate are
+checked into `orbital_registry.json` with source/family,
 class, exact or reference URL, access, adapter, interval, priority, status, risks, phase, and
 planned health behavior. The loader validates enums, URL exceptions, key uniqueness, priority,
 and cadence; config inherits registry defaults, all entries remain disabled, and explicit scan
@@ -2402,7 +2403,8 @@ OVATION aurora and JPL CAD JSON fixtures cover warning, cancelled watch, incompl
 and forecast scale, zero state, K-index thresholds, a tiny aurora grid, close-approach thresholds,
 fireball energy/location variants, a Scout v1.3 provisional-object summary with no impact
 inference, Launch Library 2 upcoming launch/docking metadata with routine press suppression,
-and Spaceflight News API linked-headline metadata, plus NASA and ESA RSS relevance cases. The former SWPC
+Spaceflight News API linked-headline metadata, and a public ISS-only CelesTrak GP epoch, plus
+NASA and ESA RSS relevance cases. The former SWPC
 X-ray summary URL returned 404; an observed seven-day GOES flare event list now supplies an
 offline M/X-class fixture parser with bounded identity, timing, class, flux and cautious ranking.
 Their parsers and offline scans are tested. Remaining ORBITAL products and source-health variants
@@ -2622,12 +2624,21 @@ to the current JAXA page, exact NASA Commercial Crew feed candidate, and honest 
 
 ### CelesTrak Public GP Safety Review And Tiny Allowlisted Fixture Parser
 
-Status: not implemented.
+Status: partially implemented; ISS-only GP metadata fixture added 2026-10-15.
 
 Review CelesTrak GP, SATCAT, supplemental, and SOCRATES source policies, data volume, sensitivity,
 refresh intervals, object-group filters, and safe display rules before any implementation. If
 allowed, build only a tiny allowlisted fixture parser first. Do not create tactical tracking,
 object-by-object surveillance, or broad catalog archive behavior.
+
+Current state: CelesTrak's official GP format and usage pages document OMM JSON, the exact
+single-object `CATNR=25544&FORMAT=JSON` query, two-hour GP updates and serial-use limits. One
+bounded ISS response verified the current one-row JSON shape. A separate disabled registry row
+allows an offline fixture scan of that exact public object and stores only the catalog epoch,
+identity, and source URL. Orbital elements, positions, pass times, and maneuver inferences are
+dropped. Broad `celestrak_elements`, SATCAT, SupGP, and SOCRATES candidates remain blocked by
+the original sensitivity gates. Detailed SATCAT/SupGP/SOCRATES policy classification and any
+live ISS admission remain open. See `docs/project/ORBITAL_CELESTRAK_ISS_GP_FIXTURE.md`.
 
 ### Space-Track Auth-Required Policy Design
 
