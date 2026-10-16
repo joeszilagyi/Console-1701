@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import datetime
 from html import unescape
+from html.parser import HTMLParser
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -30,6 +32,58 @@ _BADGE_TYPES = {
     "HAN-Health-Advisory.png": "Health Advisory",
     "logo-han-health-update.png": "Health Update",
 }
+_PAGE_BADGE_TYPES = {
+    "CDC Health Advisory": "Health Advisory",
+    "This is an official CDC health update": "Health Update",
+}
+
+
+class _NoticeSummary(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.text: list[str] = []
+        self.badges: list[tuple[str, str]] = []
+
+    def handle_data(self, data: str) -> None:
+        value = data.strip()
+        if value:
+            self.text.append(value)
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag == "img":
+            attributes = dict(attrs)
+            self.badges.append((attributes.get("src") or "", attributes.get("alt") or ""))
+
+
+def _page_summary(summary: Any, lead: Any, notice_id: str) -> tuple[str, str]:
+    if (not isinstance(summary, str) or len(summary.encode("utf-8")) > 4096
+            or summary.count('data-section="cdc_health_alert_summary"') != 1):
+        raise NewsParserError("CDC HAN notice summary lacks bounded page provenance")
+    parsed = _NoticeSummary()
+    parsed.feed(summary)
+    if (len(parsed.text) != 4 or parsed.text[:2] != [
+        "At a glance", "Distributed via the CDC Health Alert Network"
+    ] or parsed.text[3] != notice_id or len(parsed.badges) != 1):
+        raise NewsParserError("CDC HAN notice summary lacks distribution fields")
+    try:
+        distribution_date = datetime.strptime(parsed.text[2], "%B %d, %Y").date().isoformat()
+    except ValueError as exc:
+        raise NewsParserError("CDC HAN notice summary has invalid distribution date") from exc
+    badge_src, badge_alt = parsed.badges[0]
+    badge_type = _PAGE_BADGE_TYPES.get(badge_alt)
+    if (not badge_src.startswith("/han/media/images/") or ".." in badge_src
+            or not badge_type):
+        raise NewsParserError("CDC HAN notice summary has unverified message type")
+    if not isinstance(lead, str) or len(lead.encode("utf-8")) > 4096:
+        raise NewsParserError("CDC HAN notice summary lead is invalid")
+    parsed_lead = _NoticeSummary()
+    parsed_lead.feed(lead)
+    lead_text = re.sub(r"\s+", " ", " ".join(parsed_lead.text))
+    if (not lead.lstrip().startswith("<p>") or not lead.rstrip().endswith("</p>")
+            or ("The Centers for Disease Control and Prevention (CDC) is issuing this "
+                f"Health Alert Network (HAN) {badge_type}") not in lead_text):
+        raise NewsParserError("CDC HAN notice lead conflicts with message type")
+    return distribution_date, badge_type
 
 
 def _plain(value: Any, *, max_chars: int) -> str | None:
@@ -67,6 +121,28 @@ def parse_cdc_han_search_fixture(source: dict[str, Any], payload_text: str) -> l
             or len(rows) > 20 or not isinstance(response.get("numFound"), int)
             or response["numFound"] < len(rows)):
         raise NewsParserError("CDC HAN fixture lacks its bounded search response shape")
+    summaries = payload.get("notice_summaries", [])
+    if not isinstance(summaries, list) or len(summaries) > 20:
+        raise NewsParserError("CDC HAN fixture has unbounded notice summaries")
+    by_url: dict[str, tuple[str, str]] = {}
+    for summary in summaries:
+        if not isinstance(summary, dict) or not isinstance(summary.get("permalink"), str):
+            raise NewsParserError("CDC HAN notice summary lacks a permalink")
+        summary_url = summary["permalink"]
+        try:
+            parts = urlsplit(summary_url)
+            port = parts.port
+        except ValueError as exc:
+            raise NewsParserError("CDC HAN notice summary has invalid URL") from exc
+        match = _NOTICE_PATH.fullmatch(parts.path)
+        if (parts.scheme != "https" or parts.hostname != "www.cdc.gov"
+                or parts.username or parts.password or port or parts.query or parts.fragment
+                or not match or summary_url in by_url):
+            raise NewsParserError("CDC HAN notice summary has invalid or duplicate URL")
+        by_url[summary_url] = _page_summary(
+            summary.get("page_summary_html"), summary.get("summary_lead_html"),
+            f"CDCHAN-{match.group(1)}"
+        )
     items: list[dict[str, Any]] = []
     seen: set[str] = set()
     for index, row in enumerate(rows):
@@ -104,6 +180,9 @@ def parse_cdc_han_search_fixture(source: dict[str, Any], payload_text: str) -> l
             if isinstance(badge, str)
             and badge.startswith("https://www.cdc.gov/han/media/images/") else None
         )
+        detail = by_url.pop(url, None)
+        if detail and message_type_hint and detail[1] != message_type_hint:
+            raise NewsParserError(f"CDC HAN row {index} conflicts with its notice summary")
         item = _normalize_item(source, {
             "title": title, "url": url, "description": excerpt,
             "published_at": reviewed,
@@ -114,8 +193,15 @@ def parse_cdc_han_search_fixture(source: dict[str, Any], payload_text: str) -> l
             "search_url": SEARCH_URL, "notice_url": url,
             "index_last_reviewed_at": reviewed, "index_article_date_at": article_date,
             "date_basis": "CDC search index last-reviewed date; distribution time unverified",
-            "message_type": None, "message_type_hint": message_type_hint,
-            "message_type_hint_basis": "index badge filename; notice body not fetched",
+            "message_type": detail[1] if detail else None,
+            "message_type_basis": "official_notice_page_badge_and_summary_lead" if detail else None,
+            "message_type_hint": message_type_hint,
+            "message_type_hint_basis": (
+                "index badge filename; separate from notice-page verification"
+            ),
+            "distribution_date": detail[0] if detail else None,
+            "distribution_time": None,
+            "distribution_date_basis": "official_notice_page_at_a_glance" if detail else None,
             "affected_population": None, "jurisdiction": None,
             "public_instruction_url": None, "preliminary_status": "unverified",
             "active_alert_verified": False, "public_impact_verified": False,
@@ -130,4 +216,6 @@ def parse_cdc_han_search_fixture(source: dict[str, Any], payload_text: str) -> l
             ),
         }
         items.append(item)
+    if by_url:
+        raise NewsParserError("CDC HAN notice summary has no matching search row")
     return items
