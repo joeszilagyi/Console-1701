@@ -66,6 +66,10 @@ def regional_item_signature(item: dict[str, Any]) -> dict[str, Any]:
             )
         elif source.get("source_key") == "nwcc_large_fire_wa":
             fire_start_date = (evidence.get("nwcc_large_fire") or {}).get("start_date")
+        elif source.get("source_key") == "nifc_wfigs_current_wa":
+            discovery = (evidence.get("nifc_wfigs") or {}).get("discovery_at")
+            if isinstance(discovery, str) and len(discovery) >= 10:
+                fire_start_date = discovery[:10]
     return {
         "id": int(item["id"]),
         "event_key": str(event.get("event_key") or ""),
@@ -89,6 +93,19 @@ def regional_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[st
         return []
     if (not left["event_type"] or left["event_type"] == "regional_headline"
             or left["event_type"] != right["event_type"]):
+        return []
+    if (left["event_type"] == "wildfire_update"
+            and {left["source_key"], right["source_key"]} == {
+                "wa_dnr_fire_statistics", "nifc_wfigs_current_wa",
+            }):
+        if (left["fields"]["fire_incident"]
+                and left["fields"]["fire_incident"] == right["fields"]["fire_incident"]
+                and left["fields"]["county"]
+                and left["fields"]["county"] == right["fields"]["county"]
+                and left["fire_start_date"]
+                and left["fire_start_date"] == right["fire_start_date"]):
+            return ["event_type", "fire_incident", "county", "source_start_date",
+                    "independent_family"]
         return []
     if (left["event_type"] == "wildfire_update"
             and {left["source_key"], right["source_key"]} == {
