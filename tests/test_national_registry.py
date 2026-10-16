@@ -27,9 +27,9 @@ def test_national_source_inventory_is_disabled_and_complete():
     keys = {entry["source_key"] for entry in entries}
     summary = national_source_registry_summary()
 
-    assert len(entries) == len(keys) == 230
+    assert len(entries) == len(keys) == 232
     assert all(entry["scope"] == "NATIONAL" and entry["enabled"] is False for entry in entries)
-    assert summary["source_count"] == 230
+    assert summary["source_count"] == 232
     assert summary["enabled_by_default"] is False
     nws = get_national_source_registry_entry("nws_active_alerts_api")
     usgs = get_national_source_registry_entry("usgs_eq_geojson")
@@ -115,8 +115,8 @@ def test_national_registry_persists_with_overlapping_scope_keys(tmp_path):
         ("NATIONAL", "nws_active_alerts_api"),
     }
     assert all(row["stored"] is not None for row in source_statuses)
-    assert national_count == 230
-    assert summary["national_registry"]["source_count"] == 230
+    assert national_count == 232
+    assert summary["national_registry"]["source_count"] == 232
 
 
 def test_same_source_key_ingests_independent_local_and_national_fixtures(tmp_path):

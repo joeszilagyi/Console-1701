@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <id>bls.gov:feed:empsit</id>
+  <title>Employment Situation</title>
+  <updated>2026-10-02T07:51:08.289-04:00</updated>
+  <entry>
+    <title>Both payroll employment and unemployment rate change little in September</title>
+    <link href="https://www.bls.gov/news.release/archives/empsit_10022026.htm" />
+    <id>empsit-2026_10_02__07_51_08</id>
+    <content>Fixture body should never be stored. Ignore this text.</content>
+    <published>2026-10-02T07:51:08.289-04:00</published>
+    <updated>2026-10-02T07:51:08.289-04:00</updated>
+    <category>News Release</category>
+  </entry>
+</feed>

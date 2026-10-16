@@ -209,6 +209,10 @@ def parse_fixture_items(
         from console1701.news.cisa_advisories import parse_cisa_advisories_rss
 
         return parse_cisa_advisories_rss(source, payload_text)
+    if parser_name == "bls_release_atom":
+        from console1701.news.bls_releases import parse_bls_release_atom
+
+        return parse_bls_release_atom(source, payload_text)
     if parser_name == "swpc_xray_flares_json":
         from console1701.news.orbital_flares import parse_swpc_xray_flares_json
 
