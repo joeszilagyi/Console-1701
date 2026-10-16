@@ -1607,7 +1607,8 @@ independent convergence.
 
 Status: partially implemented.
 
-NATIONAL clusters now use official USGS, NWS, NHTSA, CPSC, CISA KEV, Federal Register, and GovInfo IDs
+NATIONAL clusters now use official USGS, NWS, NHTSA, CPSC, OpenFEMA declaration, CISA KEV,
+Federal Register, and GovInfo IDs
 where present, plus cautious cross-family matching on event type, explicit state/territory,
 FEMA/NWS region, storm basin, airport, distribution area, infrastructure sector, population group,
 or jurisdiction context, title tokens, and a 72-hour window. Match evidence, families, confidence,
@@ -1625,6 +1626,9 @@ API response fail parsing. NHC basin fixtures contribute official ATCF storm ide
 context without claiming U.S. watch geography. The currently verified fixture parsers supply only some dimensions,
 so source-specific coverage remains open. Offline duplicate-campaign, CPSC URL-revision and
 synthetic context tests pass.
+The matcher also recovers an OpenFEMA declaration ID from stored parser evidence when an older
+row lacks `national_identity`; a changed URL still joins the same declaration while another
+declaration remains separate and same-family revisions do not count as corroboration.
 Official CISA advisory and KEV fixture rows can now join on a shared CVE only when both identify
 CISA, both are official CISA-family sources, and their publication dates are within 72 hours.
 The shared CVE does not count as independent corroboration. An older advisory with the same CVE
