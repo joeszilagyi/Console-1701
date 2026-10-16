@@ -60,10 +60,14 @@ def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     source_family = _normalized(source.get("source_family")).replace(" ", "_")
     identity = evidence.get("orbital_identity") or {}
     event_type = _normalized(identity.get("event_type")).replace(" ", "_")
+    mpec = (evidence.get("mpc_mpec") or {}) if source_family == "mpc" else {}
     identifiers: set[str] = set()
     # The object's identity is scoped by event type. A designation alone is not
     # enough to merge distinct close approaches on different dates.
-    object_id = _normalized(identity.get("object_id"))
+    object_id = _normalized(
+        mpec.get("mpec_id") if event_type == "minor_planet_notice" and source_family == "mpc"
+        else identity.get("object_id")
+    )
     if object_id and event_type and event_type != "neo_close_approach":
         identifiers.add(f"{event_type}:{object_id}")
     for field in (
