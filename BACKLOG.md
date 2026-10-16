@@ -2886,6 +2886,10 @@ available, or time plus both source energy fields when location is absent. The p
 documented query fields for a distinct valid source URL and rejects identical-query rows that
 would otherwise overwrite each other. Same-second different events stay separate in parsed and
 stored offline tests; a same-location energy revision joins without independent corroboration.
+Parser-backed matching now also joins a located and an unlocated report when their exact UTC
+second and both reported energy fields agree. Two reports with conflicting coordinates remain
+separate even when their energies agree; a single energy mismatch blocks the missing-location
+join. This remains a derived identity, not a source-assigned event ID.
 See `docs/project/ORBITAL_JPL_FIREBALL_SOURCE_VERIFICATION.md`.
 
 ### ORBITAL Deterministic Ranking
