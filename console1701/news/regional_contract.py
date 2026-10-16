@@ -34,6 +34,7 @@ def build_regional_event_contract(
     aqi = evidence.get("ecology_aqi")
     pierce = evidence.get("pierce_road_alert")
     nifc = evidence.get("nifc_imsr")
+    nwcc_fire = evidence.get("nwcc_large_fire")
     identity = f"isolated:{source.get('id')}:{hashed_url}"
     event_type = "regional_headline"
     matching_basis = "isolated_url"
@@ -73,6 +74,23 @@ def build_regional_event_contract(
                         str(nifc.get("fire_name") or "")[:100]]
         public_impact_basis = (
             "Current IMSR listing and reported acres; active status and public impact unverified"
+        )
+    elif isinstance(nwcc_fire, dict) and nwcc_fire.get("normalized_fire_key"):
+        identity = f"nifc-imsr:{nwcc_fire['normalized_fire_key']}"
+        event_type = "wildfire_update"
+        matching_basis = "official_nwcc_unit_number_start_year"
+        confidence = "high"
+        geography = {
+            "basis": "official_WA_management_unit_not_fire_point",
+            "matched": True,
+            "fire_incident": nwcc_fire.get("fire_name"),
+            "management_unit": nwcc_fire.get("unit_id"),
+        }
+        match_tokens = [str(nwcc_fire["normalized_fire_key"])[:120],
+                        str(nwcc_fire.get("fire_name") or "")[:100]]
+        public_impact_basis = (
+            "NWCC large-fire record; edit time and containment do not prove current activity "
+            "or public impact"
         )
     elif isinstance(nws, dict) and nws.get("id"):
         identity = f"nws-alert:{nws['id']}"

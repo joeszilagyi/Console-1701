@@ -681,8 +681,8 @@ risk, privacy risk, retention sensitivity, verification status, and future phase
 enum values and keep all REGIONAL sources disabled until explicitly configured.
 
 The REGIONAL registry now contains all 224 design-table entries plus six pre-existing reviewed
-operational candidates, one Pierce Road Alert RSS candidate, and one NIFC current IMSR
-Washington fixture candidate. All 232 rows are disabled by default. At load time it validates unique
+operational candidates, one Pierce Road Alert RSS candidate, and NIFC current IMSR plus NWCC
+large-fire Washington fixture candidates. All 233 rows are disabled by default. At load time it validates unique
 keys, classes/adapters/kinds, official and verification status, risks, HTTPS URLs, priority,
 interval, and future phase. The config layer inherits metadata, and SQLite sync persists the full
 inventory. Reference-only pages and documentation cannot trigger fixture or HTTP ingest when
@@ -718,7 +718,7 @@ retention purge evidence. Use JSON-heavy columns and indexes for latest-by-scope
 source health, source family, geographic filters, and `expires_at` purge. Do not store full article
 bodies by default.
 
-The shared schema persists all 232 REGIONAL registry rows, configured sources, fetch runs, items,
+The shared schema persists all 233 REGIONAL registry rows, configured sources, fetch runs, items,
 source health, and scoped `news_clusters` with member, family, geography, confidence, and ranking
 evidence. `news_item_facets` now indexes source-provided REGIONAL zone, route, facility, county, and
 region labels, plus event type and source family. It excludes free-text USGS place labels from
@@ -764,7 +764,13 @@ IMSR Washington response now has an observed two-incident fixture and parser: it
 incident identity, report day, acres, and Washington point, while explicitly withholding active
 fire, evacuation, and public-impact claims. The NIFC source is fixture-only; exact HTTP admission,
 cadence, and source policy review remain open. It does not resolve the separate WA DNR active-status
-gap. See `docs/project/REGIONAL_NIFC_IMSR_SOURCE_VERIFICATION.md`. Dedicated WA DNR incident, other county
+gap. See `docs/project/REGIONAL_NIFC_IMSR_SOURCE_VERIFICATION.md`. NWCC's public large-fire
+point view now supplies a second observed fixture with WA managing-unit IDs, start/edit times,
+acreage and containment percentages. Two recently edited rows share incident keys with the NIFC
+fixture; two older rows remain visibly dated. The NWCC view has no bounded-query active-status
+field, and neither WA unit nor containment proves current activity or WA impact. It remains
+fixture-only pending live freshness and source-policy decisions; see
+`docs/project/REGIONAL_NWCC_LARGE_FIRE_SOURCE_VERIFICATION.md`. Dedicated WA DNR incident, other county
 emergency, outage, and other regional fixture shapes remain pending endpoint verification; do not
 invent live API shapes to close this pack.
 
@@ -1011,7 +1017,13 @@ The WSDOT JSON remains synthetic and fixture-only because API access requires a 
 NIFC's current IMSR fixture now adds an official unique fire identifier and source-backed WA
 incident name. A later report date retains the same event key; a bounded offline scan stores two
 separate WA incidents without claiming cross-family corroboration. A second official parser with
-matching fire-name evidence is still needed to exercise wildfire convergence.
+independently sourced, matching fire-name evidence is still needed to exercise wildfire
+convergence across families.
+NWCC's public large-fire view now normalizes source start year, WA unit and fire number to the
+same keys as two NIFC incidents. A combined offline scan yields two incident pairs and two
+unpaired older NWCC records; both views share one interagency family, so the pairs are deduped
+but not independently corroborated. Independent wildfire correlation still needs a truly
+separate source family with source-backed incident identity, geography and time.
 
 ### REGIONAL Deterministic Ranking
 

@@ -176,6 +176,10 @@ def parse_fixture_items(
         from console1701.news.regional_nifc import parse_nifc_imsr_fixture
 
         return parse_nifc_imsr_fixture(source, payload_text)
+    if parser_name == "nwcc_large_fire_fixture":
+        from console1701.news.regional_nwcc_large_fire import parse_nwcc_large_fire_fixture
+
+        return parse_nwcc_large_fire_fixture(source, payload_text)
     if parser_name == "nasa_orbital_rss":
         from console1701.news.orbital_rss import parse_nasa_orbital_rss
 

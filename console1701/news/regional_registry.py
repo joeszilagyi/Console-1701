@@ -225,6 +225,38 @@ REGIONAL_SOURCE_REGISTRY: tuple[RegionalSourceRegistryEntry, ...] = (
         ),
     ),
     RegionalSourceRegistryEntry(
+        source_key="nwcc_large_fire_wa",
+        source_name="NWCC large-fire public information for WA units",
+        source_family="wildfire_federal",
+        source_class="official_wildfire",
+        adapter="arcgis_feature_service_candidate",
+        kind="api_json",
+        raw_url=(
+            "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/"
+            "NWCC_Large_Fire_Information_Public_View/FeatureServer/0/query"
+            "?where=UNIT_ID%20LIKE%20%27WA%25%27"
+            "&outFields=FIRE_NM%2CFIRE_NUM%2CUNIT_ID%2CSTART_DATE%2CRPTD_ACRES%2C"
+            "Percent_Contained%2CEditDate%2CINCIWEB%2CGlobalID"
+            "&orderByFields=EditDate%20DESC&resultRecordCount=100&returnGeometry=false&f=json"
+        ),
+        homepage_url="https://gacc.nifc.gov/nwcc/firemap.php",
+        parser="nwcc_large_fire_fixture",
+        priority=78,
+        interval_minutes=1440,
+        official_status="official",
+        privacy_risk="low",
+        policy_risk="low",
+        parser_risk="medium",
+        retention_sensitivity="medium",
+        verification_status="verified",
+        future_phase="R7",
+        expected_access_kind="NWCC public large-fire ArcGIS view; fixture only",
+        why_it_matters=(
+            "Source-backed WA management-unit fire identity, edit time and containment "
+            "without current-activity inference."
+        ),
+    ),
+    RegionalSourceRegistryEntry(
         source_key="nwcc_blog",
         source_name="NWCC Info blog",
         source_family="nwcc",

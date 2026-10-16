@@ -10,6 +10,7 @@ and are visible through the existing scope/item APIs and evidence drawers.
 | --- | --- | --- | --- |
 | USGS earthquake | `earthquake` | official USGS event ID | point coordinates and configured bounding filter |
 | NIFC current IMSR incident | `wildfire_update` | official unique fire identifier | WA incident prefix and bounded official point; current report listing does not prove active burning or public impact |
+| NWCC large-fire public view | `wildfire_update` | start year, WA managing unit and fire number normalized to NIFC fire key | WA managing unit only; neither fire point nor current activity is established |
 | NWS alert | `weather_alert` | official NWS alert ID | Washington zone IDs and area description |
 | WSDOT alert | `traveler_alert` | official WSDOT alert ID | route, facility, county, and region |
 | WSF bulletin | `ferry_alert` | official bulletin ID | affected route IDs; all-routes flag stays distinct |
@@ -23,8 +24,12 @@ duplicate feed paths carrying the same official ID. The cluster rebuild can also
 different official source families when event type, one verified geographic field, at least three
 normalized title tokens, and publication times within 48 hours all agree. Current parser-backed
 geographic fields include WSDOT route/county, NWS weather zone, Pierce County jurisdiction,
-WSF route IDs, USGS water basin/county, Ecology station/city, and NIFC fire name. Event type still has to match;
-the Pierce and WSDOT road reports can converge on a shared county and title. County comparison
+WSF route IDs, USGS water basin/county, Ecology station/city, and NIFC/NWCC fire names.
+NIFC and NWCC large-fire records with the same start year, unit and fire number use one event key.
+The two interagency views share a family and are not independent corroboration; older NWCC
+record edit times stay visible and do not establish current activity. For context matching,
+event type still has to match; the Pierce and WSDOT road reports can converge on a shared county
+and title. County comparison
 normalizes an optional terminal `County` suffix (for example, `Pierce` and `Pierce County`)
 without treating distinct counties as the same place. A two-parser offline scan persists this
 cross-family match and a different-county negative case. The WSDOT record in that regression
