@@ -102,6 +102,8 @@ def global_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     report = (evidence.get("reliefweb_report") or {}) if family == "reliefweb" else {}
     who = (evidence.get("who_don") or {}) if family == "who" else {}
     usgs = (evidence.get("usgs_earthquake") or {}) if family == "usgs" else {}
+    bom_rss = (evidence.get("wmo_bom_rss") or {}) if family == "wmo" else {}
+    bom_cap = (evidence.get("wmo_bom_cap") or {}) if family == "wmo" else {}
     identity = evidence.get("global_identity") or {}
     identifiers: set[str] = set()
     if gdacs.get("event_id") and gdacs.get("event_type"):
@@ -129,8 +131,11 @@ def global_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     for field in ("storm_id", "earthquake_id", "cyber_incident_id"):
         if identity.get(field):
             identifiers.add(f"{field}:{_normalized(identity[field])}")
-    if identity.get("cap_identifier"):
-        identifiers.add(f"cap:{_normalized(identity['cap_identifier'])}")
+    # The RSS GUID and CAP identifier are the two source-backed forms of the
+    # same BoM alert ID. A generic identity claim must not manufacture a join.
+    for cap_id in (bom_rss.get("guid"), bom_cap.get("identifier")):
+        if cap_id and _normalized(cap_id):
+            identifiers.add(f"cap:{_normalized(cap_id)}")
     event_type = _normalized(contract.get("event_type"))
     event_type = _TYPE_ALIASES.get(event_type, event_type.replace(" ", "_"))
     countries = {

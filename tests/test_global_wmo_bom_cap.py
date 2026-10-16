@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from textwrap import dedent
@@ -132,6 +133,30 @@ def test_wmo_rss_and_cap_fixture_join_without_independent_corroboration():
     assert groups[0]["item_ids"] == [1, 2]
     assert groups[0]["corroborated"] is False
     assert groups[0]["matches"][0]["basis"] == ["shared_event_id"]
+
+    # Stored identity claims are descriptive; the parser's authority-specific
+    # fields decide whether an RSS item and a CAP alert share an event ID.
+    foreign = deepcopy(cap)
+    foreign["evidence"]["source"]["source_family"] = "un_news"
+    foreign["url"] = foreign["canonical_url"] = "https://example.org/other-alert"
+    foreign["title"] = "Unrelated bulletin"
+    assert [group["item_ids"] for group in correlate_global_items([rss, foreign])] == [
+        [1], [2]
+    ]
+    claimed = deepcopy(cap)
+    claimed["evidence"].pop("wmo_bom_cap")
+    claimed["url"] = claimed["canonical_url"] = "https://example.org/other-alert"
+    claimed["title"] = "Unrelated bulletin"
+    assert [group["item_ids"] for group in correlate_global_items([rss, claimed])] == [
+        [1], [2]
+    ]
+    changed = deepcopy(cap)
+    changed["evidence"]["global_identity"]["cap_identifier"] = "other"
+    assert correlate_global_items([rss, changed])[0]["item_ids"] == [1, 2]
+    changed["evidence"]["wmo_bom_cap"]["identifier"] = "other"
+    assert [group["item_ids"] for group in correlate_global_items([rss, changed])] == [
+        [1], [2]
+    ]
 
 
 def test_current_severe_cap_offline_scan_stores_source_backed_rank(tmp_path, monkeypatch):
