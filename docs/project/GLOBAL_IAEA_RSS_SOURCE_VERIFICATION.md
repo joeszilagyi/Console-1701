@@ -20,6 +20,10 @@ meeting and institutional titles are excluded. The raw feed time is retained as 
 original timezone and exact instant are unknown. Title matching does not establish severity,
 facility condition, geographic impact, or public action guidance. A synthetic fixture covers
 retained and filtered items, and an offline scan test verifies persistence without HTTP access.
+GLOBAL event ranking now assigns only an eight-point nuclear-safety context factor to an urgent
+title retained from this exact official source. The routine situation update gets no such factor.
+The factor is neither severity nor public-impact evidence, and it does not set active-alert state.
+Stored-cluster and direct tests verify those limits; nonofficial IAEA-like metadata gets no factor.
 
 Keep the registry feed candidate disabled. Before live admission, verify feed cadence, conditional
 responses, corrections, timezone semantics, HTTPS article redirects, robots/terms, retention, and
