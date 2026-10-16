@@ -77,3 +77,29 @@ that any fire is active now or that people are affected.
 ## Source date zone correction
 
 The [ArcGIS layer JSON](https://gis.dnr.wa.gov/site3/rest/services/Public_Wildfire/WADNR_PUBLIC_WD_WildFire_Data/MapServer/1?f=json) explicitly declares `dateFieldsTimeReference.timeZoneIANA=America/Los_Angeles` and daylight-saving behavior. The fixture parser now converts `DSCVR_DT`, `CONTROL_DT`, and `FIRE_OUT_DT` from ArcGIS epoch milliseconds into that source calendar day. Pearl Hill's reported control time is 2026-08-02 02:08 UTC, which is August 1 in Washington; the stored control date is now `2026-08-01`. The parser records the source date zone in item evidence.
+
+## Dashboard source-lineage recheck, 2026-10-15
+
+The public [DNR Wildfire Intel Dashboard ArcGIS item](https://www.arcgis.com/home/item.html?id=6cdda73cf6154949a1fae76ccb2900a0)
+identifies a published `Web Experience` in the WA DNR ArcGIS organization. A bounded read of its
+public item data found two web-map references and one Survey123 stakeholder feature service.
+The current [Wildfire Intel web-map item](https://wadnr.maps.arcgis.com/home/item.html?id=71bf504258674effaa7010ab26dbc500)
+has thirteen operational layers. Its named incident layers are:
+
+- `DNR Fires (Current Year)`: the already verified DNR fire-statistics layer 1. Its map filter
+  excludes `DNR NOT RESPONSIBLE` fire causes but does not require a positive active state.
+- `Current and Emerging Incidents (NIFC)` and `Current Fire Perimeters (NIFC)`: the NIFC/Esri
+  `USA_Wildfires_v1` feature layers, with the incident map filtered to `POOState = 'US-WA'`.
+- `Active Large Incidents (NWCC)`: the NWCC operational view already represented by a separate
+  fixture family.
+
+The current [Survey123 stakeholder service](https://services.arcgis.com/4x406oNViizbGo13/arcgis/rest/services/survey123_4fc29e5507c64d55a0e992b4e4da16c0_stakeholder/FeatureServer/0)
+has report-date and statewide count/acreage fields; its `current_wa_large_fires` field is an
+aggregate report field, not a verified per-incident active-state contract. This read supersedes
+the earlier item-configuration inventory of three Survey123 services. The published dashboard
+therefore does not establish a distinct WA DNR active-incident feature shape. The first-pass
+REGIONAL fixture pack uses the observed DNR fire-statistics records for DNR wildfire metadata and
+the observed NIFC/NWCC records for current-incident candidate metadata, each with its source
+family and freshness limits. `wa_dnr_current_wildfire` remains a disabled reference, and no
+dashboard HTML or Survey123 response is ingested. A future DNR-owned active-state feed would
+need its own exact source verification and release decision.

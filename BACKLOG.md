@@ -731,7 +731,7 @@ correlation and ranking rows.
 
 ### REGIONAL Fixture Pack
 
-Status: partially implemented.
+Status: implemented for the first-pass fixture pack; further source admissions remain separate.
 
 Create local-only fixtures for NWS active alert JSON, WSDOT travel alert JSON, WSF bulletin/API
 shape, WA DNR wildfire data after endpoint verification, NWCC feed shape after verification, USGS
@@ -771,9 +771,9 @@ acreage and containment percentages. Two recently edited rows share incident key
 fixture; two older rows remain visibly dated. The NWCC view has no bounded-query active-status
 field, and neither WA unit nor containment proves current activity or WA impact. It remains
 fixture-only pending live freshness and source-policy decisions; see
-`docs/project/REGIONAL_NWCC_LARGE_FIRE_SOURCE_VERIFICATION.md`. Dedicated WA DNR incident, other county
-emergency, outage, and other regional fixture shapes remain pending endpoint verification; do not
-invent live API shapes to close this pack.
+`docs/project/REGIONAL_NWCC_LARGE_FIRE_SOURCE_VERIFICATION.md`. Other-county emergency, outage,
+and additional regional fixture shapes remain pending endpoint verification; do not invent
+live API shapes for those later candidates.
 
 WA DNR's separate fire-statistics ArcGIS layer now has observed 31-record large-fire and
 four-record smaller-fire fixtures with separate exact query contracts, and a
@@ -800,9 +800,19 @@ and selected by the source's `ActiveFireCandidate=1` flag. The parser preserves 
 `UniqueFireIdentifier`, IRWIN ID, county, acreage, containment and modification time. Several
 rows are 100% contained despite that flag, so it explicitly withholds a current active-fire or
 public-impact claim. The source remains fixture-only; a static date window and unreviewed live
-volume cannot become an opt-in request. WFIGS is NIFC data, not a substitute for the still
-unverified WA DNR active-incident layer. See
+volume cannot become an opt-in request. WFIGS is NIFC data, not a DNR-owned active-state feed. See
 `docs/project/REGIONAL_NIFC_WFIGS_CURRENT_FIXTURE_VERIFICATION.md`.
+
+The official DNR Wildfire Intel Dashboard's current published web map was rechecked on
+2026-10-15. It uses the same DNR current-year fire-statistics layer for DNR records, a
+Washington-filtered NIFC current/emerging incident layer, and NWCC active large incidents.
+Its separate Survey123 stakeholder layer holds aggregate readiness/count fields, not a
+per-incident active-state contract. The first-pass pack now covers those distinct source
+families with observed, offline fixtures and explicit freshness/lifecycle limits. No separate
+DNR-owned active-incident feed was found in the dashboard; the `wa_dnr_current_wildfire`
+reference stays disabled pending any future source verification. This resolves the first-pass
+fixture-pack acceptance without treating the DNR statistics or dashboard title as proof of
+current activity. See `docs/project/REGIONAL_WA_DNR_WILDFIRE_ENDPOINT_REVIEW.md`.
 
 ### NWS Alert Parser For Washington
 
