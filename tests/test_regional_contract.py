@@ -109,6 +109,93 @@ def test_pierce_road_id_survives_revisions_and_matches_only_pierce_road_context(
     assert len(correlate_regional_items([pierce_row, wsdot_row])) == 2
 
 
+def test_nws_and_county_flood_warning_match_only_explicit_king_context():
+    nws_source = regional_registry_config_defaults("nws_active_alerts_wa")
+    county_source = regional_registry_config_defaults("king_county_emergency_news")
+    nws = next(item for item in parse_fixture_items(
+        nws_source, (FIXTURES / "regional_nws_alerts.json").read_text()
+    ) if item["evidence"]["nws_alert"]["id"] == "regional-king-flood")
+    county = next(item for item in parse_fixture_items(
+        county_source, (FIXTURES / "regional_king_county_emergency.rss").read_text()
+    ) if item["evidence"]["king_county_emergency"]["classification"] == "emergency_alert")
+
+    def prepared(item, source, item_id):
+        row = {**item, "id": item_id, "evidence": dict(item["evidence"])}
+        row["evidence"]["regional_event"] = build_regional_event_contract(
+            source, row, hashed_url=str(item_id) * 64
+        )
+        row["evidence"]["source"] = {
+            "source_key": source["id"], "source_family": source["source_family"],
+            "official_status": source["official_status"],
+        }
+        return row
+
+    first = prepared(nws, nws_source, 1)
+    second = prepared(county, county_source, 2)
+    assert first["evidence"]["regional_event"]["geography"]["county"] == ["King County"]
+    assert second["evidence"]["regional_event"]["geography"]["county"] == "King County"
+    groups = correlate_regional_items([first, second])
+    assert [group["item_ids"] for group in groups] == [[1, 2]]
+    assert groups[0]["corroborated"] is True
+    assert "county" in groups[0]["matches"][0]["basis"]
+
+    wrong_county = json.loads(json.dumps(nws))
+    wrong_county["evidence"]["nws_alert"]["area_desc"] = "Spokane County"
+    assert len(correlate_regional_items([
+        prepared(wrong_county, nws_source, 1), second
+    ])) == 2
+    recovery = next(item for item in parse_fixture_items(
+        county_source, (FIXTURES / "regional_king_county_emergency.rss").read_text()
+    ) if item["evidence"]["king_county_emergency"]["classification"] == "recovery")
+    assert len(correlate_regional_items([first, prepared(recovery, county_source, 2)])) == 2
+    unofficial_source = {**county_source, "official_status": "unverified"}
+    assert len(correlate_regional_items([
+        first, prepared(county, unofficial_source, 2)
+    ])) == 2
+    late = {**county, "source_published_at": "2026-10-19T10:00:00+00:00"}
+    assert len(correlate_regional_items([first, prepared(late, county_source, 2)])) == 2
+    other_hazard = json.loads(json.dumps(county))
+    other_hazard["evidence"]["king_county_emergency"]["categories"] = ["Wind"]
+    assert len(correlate_regional_items([
+        first, prepared(other_hazard, county_source, 2)
+    ])) == 2
+
+
+def test_nws_and_county_flood_fixture_scan_persists_independent_pair(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        "console1701.news.scanner.fetch_official_text",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("no HTTP")),
+    )
+    config_path = tmp_path / "regional.yml"
+    config_path.write_text(dedent(f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        news:
+          enabled: true
+          scopes:
+            REGIONAL:
+              enabled: true
+              sources:
+                - id: nws_active_alerts_wa
+                  enabled: true
+                  url: "{_file_url('regional_nws_alerts.json')}"
+                - id: king_county_emergency_news
+                  enabled: true
+                  url: "{_file_url('regional_king_county_emergency.rss')}"
+    """).strip() + "\n")
+    result = run_news_scan(config_path)
+    assert result["status"] == "complete"
+    with connect_db(load_config(config_path)["_db_path"]) as conn:
+        clusters = conn.execute(
+            "SELECT item_count, evidence_json FROM news_clusters WHERE scope='REGIONAL'"
+        ).fetchall()
+    paired = [json_loads(row["evidence_json"], {}) for row in clusters
+              if row["item_count"] == 2]
+    assert len(paired) == 1
+    assert paired[0]["corroborated"] is True
+    assert paired[0]["family_count"] == 2
+    assert "county" in paired[0]["correlation"]["matches"][0]["basis"]
+
+
 def test_pierce_and_wsdot_parsed_road_reports_correlate_offline(tmp_path, monkeypatch):
     monkeypatch.setattr(
         "console1701.news.scanner.fetch_official_text",

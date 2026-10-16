@@ -7,6 +7,7 @@ from hashlib import sha256
 from typing import Any
 
 _ZONE_RE = re.compile(r"\b[A-Z]{2}[A-Z]\d{3}\b")
+_COUNTY_LABEL_RE = re.compile(r"[A-Za-z][A-Za-z .'-]{0,80} County\Z", re.I)
 
 
 def _texts(values: Any, *, limit: int = 8) -> list[str]:
@@ -37,6 +38,7 @@ def build_regional_event_contract(
     wfigs = evidence.get("nifc_wfigs")
     nwcc_fire = evidence.get("nwcc_large_fire")
     dnr_fire = evidence.get("wa_dnr_fire_statistics")
+    county_news = evidence.get("king_county_emergency")
     identity = f"isolated:{source.get('id')}:{hashed_url}"
     event_type = "regional_headline"
     matching_basis = "isolated_url"
@@ -141,14 +143,41 @@ def build_regional_event_contract(
         zone_ids.extend(
             zone for value in zones for zone in _ZONE_RE.findall(value) if zone not in zone_ids
         )
+        county_labels = [
+            part.strip() for part in str(nws.get("area_desc") or "").split(";")
+            if _COUNTY_LABEL_RE.fullmatch(part.strip())
+        ][:8]
         geography = {
             "basis": "official_affected_zones",
             "matched": bool(zone_ids or nws.get("area_desc")),
             "zone_ids": zone_ids[:8],
+            "county": county_labels,
             "area_desc": nws.get("area_desc"),
         }
         match_tokens = [str(nws["id"])[:120], *zone_ids[:8]]
         public_impact_basis = "NWS severity, urgency, and active-alert state"
+    elif (source.get("id") == "king_county_emergency_news"
+          and source.get("source_family") == "county_emergency"
+          and source.get("official_status") == "official"
+          and isinstance(county_news, dict)
+          and county_news.get("classification") == "emergency_alert"
+          and county_news.get("county") == "King County"
+          and "flood" in {
+              str(category).casefold() for category in county_news.get("categories") or []
+          }
+          and re.search(r"\bKing County\b", str(item.get("title") or ""), re.I)
+          and re.search(r"\bflood\b", str(item.get("title") or ""), re.I)):
+        identity = f"king-county-emergency:{item['url']}"
+        event_type = "weather_alert"
+        matching_basis = "official_county_flood_warning_title_and_category"
+        confidence = "high"
+        geography = {
+            "basis": "official_county_publisher_and_explicit_title",
+            "matched": True,
+            "county": "King County",
+        }
+        match_tokens = ["King County", "Flood"]
+        public_impact_basis = "County source warning title and Flood category"
     elif isinstance(water, dict) and water.get("gauge_id"):
         identity = f"usgs-water:{water['gauge_id']}:{water.get('observation_timestamp')}"
         event_type = "hydrology_observation"
