@@ -19,6 +19,13 @@ derives a level only from the observed three-hour planetary summary, and joins a
 SWPC warning/alert only when the Kp timestamp lies inside the warning's explicit valid window.
 The provisional one-minute estimate and Boulder local K-index do not supply this match. A joined
 pair is one SWPC source family, not independent corroboration or a local aurora claim.
+The matcher also links a same-level current NOAA G-scale entry to a nearby observed planetary
+three-hour Kp summary when their source timestamps are within three hours. This is bounded
+same-agency condition context, not proof that the two timestamps denote an identical physical
+measurement interval. Forecast scales, estimated one-minute Kp and Boulder local indices stay
+separate. An offline scan persists a three-product warning/current-scale/Kp group without an
+independent-family or local-aurora claim. NOAA describes Kp as a
+[three-hour planetary measure](https://www.spaceweather.gov/products/planetary-k-index).
 
 The [OVATION aurora JSON](https://services.swpc.noaa.gov/json/ovation_aurora_latest.json)
 has observation and forecast times, a stated `[Longitude, Latitude, Aurora]` format, and a

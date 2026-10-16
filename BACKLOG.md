@@ -2775,18 +2775,23 @@ evidence. Shared official identity can deduplicate same-family records without c
 corroboration; unrelated event types and observations outside 96 hours stay separate. Fixture
 integration and matcher tests pass. Remaining work: populate mission, launch, reentry, safe
 satellite, and impact identities in verified future adapters; test their real parsed records; and
-extend cross-product space-weather correlation beyond verified SWPC warning/current-scale and
-warning/planetary-Kp cases. The SWPC matcher now joins only an active warning/alert and an
-observed current NOAA
-scale of the same level when the scale timestamp falls inside the alert's explicit valid
+extend cross-product space-weather correlation beyond verified SWPC warning/current-scale,
+warning/planetary-Kp, and current-scale/planetary-Kp cases. The SWPC matcher joins an active
+warning/alert to an observed current NOAA scale of the same level only when the scale timestamp
+falls inside the alert's explicit valid
 window. Forecast scales, cancellations, different levels, and out-of-window observations
 remain separate; a joined SWPC pair is never independent corroboration. Parser-backed
 fixture and stored-cluster tests cover this case. Planetary three-hour Kp summaries now derive a
 G level from NOAA's published threshold table and join a same-level SWPC warning/alert only when
 the measurement falls inside its explicit valid window. Boulder local K-index, provisional
 one-minute Kp estimates, level mismatches, and out-of-window values stay separate; the pair
-remains one SWPC family in stored cluster evidence. A parsed Launch Library UUID now joins a
-Spaceflight News linked article when publication falls within 96 hours of the source NET, even
+remains one SWPC family in stored cluster evidence.
+Same-level current NOAA G scales also join nearby observed planetary three-hour Kp summaries
+within three hours. Forecast scales, Boulder local indices, one-minute estimates, level
+mismatches and distant observations remain separate. An offline three-product scan persists a
+warning/current-scale/Kp group as one SWPC family with no independent corroboration or local
+aurora claim. A parsed Launch Library UUID joins a Spaceflight News linked article when
+publication falls within 96 hours of the source NET, even
 when the Launch Library record was last updated earlier; the aggregator remains non-independent.
 The parser also supplies source-backed provider, vehicle, and mission-name context. A two-source
 offline scan persists the exact-ID match and rejects an article outside that launch window.

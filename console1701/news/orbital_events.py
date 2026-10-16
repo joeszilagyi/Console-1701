@@ -185,6 +185,26 @@ def orbital_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str
             return ["same_noaa_geomagnetic_scale", "alert_valid_window",
                     "planetary_kp_observation"]
         return []
+    if {left["event_type"], right["event_type"]} == {
+        "space_weather_scale", "geomagnetic_k_index",
+    }:
+        scale, kp = (left, right) if left["event_type"] == "space_weather_scale" else (
+            right, left
+        )
+        scale_at = scale["swpc_scale"].get("observed_at")
+        kp_at = kp["swpc_kp"].get("observed_at")
+        scale_level = scale["context"].get("noaa_scale")
+        if (scale["family"] == kp["family"] == "swpc"
+                and scale["swpc_scale"].get("period_kind") == "current"
+                and kp["swpc_kp"].get("source_kind") == "planetary"
+                and kp["swpc_kp"].get("observation_type") == "observed_3h_summary"
+                and scale_level and scale_level.startswith("g")
+                and scale_level == kp["context"].get("noaa_scale")
+                and scale_at and kp_at
+                and abs((scale_at - kp_at).total_seconds()) <= 3 * 3600):
+            return ["same_noaa_geomagnetic_scale", "current_scale_observation",
+                    "nearby_planetary_kp_3h_observation"]
+        return []
     if not left["event_type"] or left["event_type"] != right["event_type"]:
         return []
     if shared_ids:
