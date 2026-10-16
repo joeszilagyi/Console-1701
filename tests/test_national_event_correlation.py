@@ -94,6 +94,32 @@ def test_cpsc_official_recall_id_correlates_url_revision_without_impact_inferenc
     assert groups[0]["multi_state_impact"] is False
 
 
+def test_openfema_declaration_id_survives_missing_identity_and_url_revision():
+    fixture = Path(__file__).parent / "fixtures/national/openfema_declarations_2026_10_15.json"
+    source = {
+        "id": "openfema_disaster_declarations", "scope": "NATIONAL",
+        "kind": "api_json", "parser": "openfema_declarations_fixture",
+        "source_family": "fema", "official_status": "official",
+        "url": fixture.resolve().as_uri(),
+        "official_url": "https://www.fema.gov/api/open/v2/DisasterDeclarationsSummaries",
+    }
+    parsed = parse_fixture_items(source, fixture.read_text())
+    first = {**parsed[0], "id": 1}
+    first["evidence"]["source"] = {"source_family": "fema", "source_key": "fema_a"}
+    revision = deepcopy(first)
+    revision["id"] = 2
+    revision["url"] = revision["canonical_url"] = "https://www.fema.gov/disaster/4943/revision"
+    revision["evidence"]["source"] = {"source_family": "fema", "source_key": "fema_b"}
+    revision["evidence"].pop("national_identity")
+    other = {**parsed[1], "id": 3}
+    other["evidence"]["source"] = {"source_family": "fema", "source_key": "fema_c"}
+    groups = correlate_national_items([first, revision, other])
+    assert [group["item_ids"] for group in groups] == [[1, 2], [3]]
+    assert groups[0]["matches"][0]["basis"] == ["shared_official_event_id"]
+    assert groups[0]["identifiers"] == ["fema:dr-4943-ks"]
+    assert groups[0]["corroborated"] is False
+
+
 def test_national_syndicated_article_does_not_count_as_independent_confirmation():
     first = _item(1, "publisher_one")
     second = _item(2, "publisher_two")

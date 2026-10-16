@@ -41,6 +41,7 @@ def national_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         ("nws_alert", "id", "nws"),
         ("nhtsa_recall", "campaign_number", "nhtsa_campaign"),
         ("cpsc_recall", "recall_id", "cpsc"),
+        ("openfema_declaration", "declaration", "fema"),
         ("cisa_kev", "cve_id", "cve"),
         ("federal_register", "document_number", "fr_document"),
         ("govinfo_publication", "document_id", "govinfo_document"),
