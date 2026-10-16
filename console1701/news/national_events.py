@@ -202,11 +202,21 @@ def national_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[st
         not left["event_type"] or not right["event_type"]
         or left["event_type"] == right["event_type"]
     )
+    within_window = bool(
+        left["published_at"] and right["published_at"]
+        and abs((left["published_at"] - right["published_at"]).total_seconds())
+        <= _WINDOW_HOURS * 3600
+    )
+    reusable_faa_status_url = (
+        left["article_url"].startswith("https://www.faa.gov/airport-status/")
+        and (left["family"] == "faa" or right["family"] == "faa")
+    )
     if (left["article_url"] and left["article_url"] == right["article_url"]
-            and compatible_type and len(left["tokens"] & right["tokens"]) >= 2):
+            and within_window and not reusable_faa_status_url and compatible_type
+            and len(left["tokens"] & right["tokens"]) >= 2):
         return ["same_article_url"]
     if (left["syndication_id"] and left["syndication_id"] == right["syndication_id"]
-            and compatible_type):
+            and within_window and compatible_type):
         return ["same_syndication_id"]
     if left["family"] == "unknown" or left["family"] == right["family"]:
         return []

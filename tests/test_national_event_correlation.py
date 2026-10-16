@@ -244,6 +244,54 @@ def test_national_syndicated_article_does_not_count_as_independent_confirmation(
     assert group["corroborated"] is False
 
 
+def test_national_shared_url_and_syndication_require_nearby_publication():
+    first = _item(1, "faa")
+    later = _item(2, "faa", published="2026-10-01T12:00:00+00:00")
+    for item in (first, later):
+        item["canonical_url"] = "https://www.faa.gov/airport-status/SEA"
+        item["evidence"]["faa_nas_status"] = {"airport_code": "SEA"}
+    assert [group["item_ids"] for group in correlate_national_items([
+        first, later
+    ])] == [[1], [2]]
+
+    near = deepcopy(later)
+    near["source_published_at"] = "2026-10-14T12:00:00+00:00"
+    assert [group["item_ids"] for group in correlate_national_items([
+        first, near
+    ])] == [[1], [2]]
+
+    article = _item(5, "publisher_one")
+    article_copy = _item(6, "publisher_two", published="2026-10-14T12:00:00+00:00")
+    for item in (article, article_copy):
+        item["canonical_url"] = "https://wire.example/story/nearby"
+    assert correlate_national_items([article, article_copy])[0]["matches"][0][
+        "basis"
+    ] == ["same_article_url"]
+
+    old_article_copy = deepcopy(article_copy)
+    old_article_copy["source_published_at"] = "2026-10-01T12:00:00+00:00"
+    assert [group["item_ids"] for group in correlate_national_items([
+        article, old_article_copy
+    ])] == [[5], [6]]
+    for item in (article, article_copy, old_article_copy):
+        item["canonical_url"] = f"https://publisher.example/story/{item['id']}"
+        item["evidence"]["national_identity"]["syndication_id"] = "wire-123"
+    assert [group["item_ids"] for group in correlate_national_items([
+        article, old_article_copy
+    ])] == [[5], [6]]
+    assert correlate_national_items([article, article_copy])[0]["matches"][0]["basis"] == [
+        "same_syndication_id"
+    ]
+
+    official = _item(3, "nws")
+    old_revision = _item(4, "nws", published="2026-10-01T12:00:00+00:00")
+    for item in (official, old_revision):
+        item["evidence"]["nws_alert"] = {"id": "urn:alert:long-lived"}
+    assert correlate_national_items([official, old_revision])[0]["matches"][0][
+        "basis"
+    ] == ["shared_official_event_id"]
+
+
 def test_national_shared_url_cannot_bridge_unrelated_official_events():
     first = _item(1, "nws")
     second = _item(2, "nws")

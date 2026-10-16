@@ -1787,6 +1787,12 @@ source family or extra conflicting FSIS ID cannot claim the exception. An offlin
 persists two notices in one uncorroborated FSIS event. This is based on observed `005-2026` and
 `005-2026-EXP` notice identities; the source remains fixture-only. Other source-specific
 dimension coverage remains open.
+Shared article URLs and syndication IDs now also require both publication timestamps within
+the NATIONAL 72-hour window. A reusable FAA airport-status URL never supplies article identity;
+two snapshots of that status page remain separate without an exact event ID. Nearby copies of
+an actual article can still dedupe, and a long-lived official alert ID still joins revisions
+outside the URL time window. Direct regressions cover both stale and nearby cases. Further
+source-specific correlation dimensions remain open.
 
 Implement deterministic NATIONAL event matching by source family, time window, normalized title
 tokens, event type, agency, affected states, affected territories, FEMA region, NWS region, storm
