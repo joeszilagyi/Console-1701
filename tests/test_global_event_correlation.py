@@ -76,6 +76,28 @@ def test_global_correlation_shared_official_id_and_unverified_location_rules():
         gdacs_rss, changed_id
     ])] == [[1], [2]]
 
+    # Reprints and broad descriptions cannot override conflicting event IDs.
+    for item in (gdacs_rss, changed_id):
+        item["canonical_url"] = "https://example.org/earthquake-roundup"
+        item["title"] = "Orange alert for cyclone Ana"
+    assert [group["item_ids"] for group in correlate_global_items([
+        gdacs_rss, changed_id
+    ])] == [[1], [2]]
+
+
+def test_global_correlation_rejects_conflicting_source_ids_across_families():
+    first = _item(1, family="usgs", event_type="earthquake",
+                  title="Strong earthquake near Example Island")
+    second = _item(2, family="reliefweb", event_type="earthquake",
+                   title="Strong earthquake near Example Island")
+    first["evidence"]["usgs_earthquake"] = {"id": "us1001"}
+    second["evidence"]["usgs_earthquake"] = {"id": "us1002"}
+    assert [group["item_ids"] for group in correlate_global_items([first, second])] == [
+        [1], [2]
+    ]
+    second["evidence"]["usgs_earthquake"]["id"] = "us1001"
+    assert correlate_global_items([first, second])[0]["item_ids"] == [1, 2]
+
 
 def test_global_correlation_rejects_multi_country_bridge():
     island_a = _item(1, family="gdacs", country="Island A")

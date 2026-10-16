@@ -2130,6 +2130,11 @@ countries, event types, and source-reported versus independently corroborated co
 GDACS RSS GLIDE and ReliefWeb disaster/report GLIDE values are now retained from source fields.
 Valid exact GLIDE identifiers join the two official families; conflicting valid GLIDE values
 block a contextual match. An offline three-source scan verifies one corroborated stored event.
+Conflicting explicit event IDs from the same authority now also block URL, title, or context
+matches for GDACS, ReliefWeb disaster, WHO DON, USGS, storm, earthquake, and cyber event
+identities; a ReliefWeb report with several linked disasters may match any shared one. Direct
+tests cover conflicting GDACS IDs behind one syndicated URL and different USGS IDs behind
+otherwise matching cross-family reports.
 Cluster evidence keeps only the strongest base item score from each family for audit; the event
 ranking uses independent family count and a duplicate-family penalty, so repeated same-family
 items cannot create extra convergence credit. A complete-link guard rejects a broad item that

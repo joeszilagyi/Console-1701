@@ -22,6 +22,10 @@ _TYPE_ALIASES = {
     "volcanic eruption": "volcano",
 }
 MATCH_WINDOW_HOURS = 96
+_SOURCE_EVENT_ID_PREFIXES = (
+    "gdacs:", "reliefweb_disaster:", "who_don:", "usgs_earthquake:",
+    "storm_id:", "earthquake_id:", "cyber_incident_id:", "glide:",
+)
 
 
 def _normalized(value: Any) -> str:
@@ -128,10 +132,15 @@ def global_item_signature(item: dict[str, Any]) -> dict[str, Any]:
 
 
 def global_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str]:
-    left_glides = {value for value in left["identifiers"] if value.startswith("glide:")}
-    right_glides = {value for value in right["identifiers"] if value.startswith("glide:")}
-    if left_glides and right_glides and not left_glides & right_glides:
-        return []
+    # One source's event identity may be accompanied by a shared article URL,
+    # place, or broad title. Contradictory IDs from the same authority are a
+    # stronger signal that these are separate events. Report rows may list more
+    # than one ReliefWeb disaster, so require overlap rather than equality.
+    for prefix in _SOURCE_EVENT_ID_PREFIXES:
+        left_ids = {value for value in left["identifiers"] if value.startswith(prefix)}
+        right_ids = {value for value in right["identifiers"] if value.startswith(prefix)}
+        if left_ids and right_ids and not left_ids & right_ids:
+            return []
     if left["identifiers"] & right["identifiers"]:
         return ["shared_event_id"]
     if (left["article_url"] and left["article_url"] == right["article_url"]
