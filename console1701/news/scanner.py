@@ -1943,6 +1943,7 @@ def _global_evidence_contract(
     usgs = evidence.get("usgs_earthquake") or {}
     nhc = evidence.get("nhc_rss") or {}
     wmo_bom = evidence.get("wmo_bom_rss") or {}
+    wmo_cap = evidence.get("wmo_bom_cap") or {}
     countries = list(dict.fromkeys([
         *([gdacs["country"]] if gdacs.get("country") else []),
         *(gdacs.get("affected_countries") or []),
@@ -1953,11 +1954,16 @@ def _global_evidence_contract(
         gdacs.get("event_type") or disaster.get("primary_type")
         or who.get("hazard_label") or usgs.get("event_type")
         or ("tropical_cyclone" if nhc.get("storm_name") else None)
-        or ("weather_warning" if wmo_bom else None)
+        or ("weather_warning" if wmo_bom or wmo_cap else None)
     )
     regions = [who["geography_label"]] if who.get("geography_label") else (
         [usgs["place"]] if usgs.get("place") else []
     )
+    if wmo_cap:
+        regions = list(dict.fromkeys(
+            name for info in wmo_cap.get("infos") or [] if not info.get("cancelled")
+            for name in info.get("areas") or []
+        ))[:20]
     return {
         "contract_version": 1,
         "item_url": item["url"],
@@ -1978,7 +1984,7 @@ def _global_evidence_contract(
         "affected_countries": countries,
         "affected_regions": regions,
         "geography_basis": (
-            "official_source_fields" if countries else
+            "official_source_fields" if countries or (wmo_cap and regions) else
             who.get("geography_basis") if who.get("geography_label") else
             "source_place_unverified" if usgs.get("place") else "not_provided"
         ),
@@ -2245,6 +2251,18 @@ def _upsert_item(
         ) is True:
             retention_days = min(retention_days, 1)
     expire_at = expires_at(seen_at, retention_days)
+    if str(source.get("scope") or "").upper() == "GLOBAL":
+        cap = (item.get("evidence") or {}).get("wmo_bom_cap") or {}
+        cap_expiries = [
+            parsed for info in cap.get("infos") or []
+            if isinstance(info, dict) and not info.get("cancelled")
+            if (parsed := _safe_parse_time(info.get("expires_at")))
+        ]
+        if cap_expiries:
+            expire_at = min(
+                _safe_parse_time(expire_at) or min(cap_expiries),
+                min(cap_expiries),
+            ).isoformat(timespec="seconds")
     existing = conn.execute(
         """
         SELECT id, first_seen_at, trend_score

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+  <identifier>AusBoM-IDN29000-2026-10-15T23:20:53+00:00</identifier>
+  <sender>CAP.Message@bom.gov.au</sender>
+  <sent>2026-10-15T23:20:53+00:00</sent>
+  <status>Actual</status>
+  <msgType>Update</msgType>
+  <scope>Public</scope>
+  <info>
+    <language>en-AU</language><category>Met</category>
+    <event>Sheep Grazier Warning</event>
+    <urgency>Unknown</urgency><severity>Moderate</severity><certainty>Unknown</certainty>
+    <effective>2026-10-15T23:19:00+00:00</effective>
+    <expires>2026-10-17T13:00:00+00:00</expires>
+    <senderName>Australian Government Bureau of Meteorology</senderName>
+    <headline>Grazier warning for Northern Tablelands</headline>
+    <description>Warning narrative is deliberately not retained by the parser.</description>
+    <area>
+      <areaDesc>New South Wales: Northern Tablelands forecast district</areaDesc>
+      <geocode><valueName>AMOC-AreaCode</valueName><value>NSW_PW004</value></geocode>
+    </area>
+  </info>
+  <info>
+    <language>en-AU</language><category>Met</category>
+    <event>Sheep Grazier Warning</event>
+    <urgency>Unknown</urgency><severity>Minor</severity><certainty>Unknown</certainty>
+    <effective>2026-10-15T23:19:00+00:00</effective>
+    <expires>2026-10-17T13:00:00+00:00</expires>
+    <senderName>Australian Government Bureau of Meteorology</senderName>
+    <headline>Cancellation of grazier warning for other districts</headline>
+    <area>
+      <areaDesc>New South Wales: North West Slopes and Plains forecast district</areaDesc>
+      <geocode><valueName>AMOC-AreaCode</valueName><value>NSW_PW011</value></geocode>
+    </area>
+  </info>
+</alert>

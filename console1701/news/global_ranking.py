@@ -24,7 +24,7 @@ def _int(value: Any, default: int = 0) -> int:
         return default
 
 
-def _source_signals(member: dict[str, Any]) -> dict[str, Any]:
+def _source_signals(member: dict[str, Any], *, observed: datetime | None) -> dict[str, Any]:
     evidence = member.get("evidence") or {}
     gdacs = evidence.get("gdacs") or {}
     reliefweb = evidence.get("reliefweb_disaster") or {}
@@ -33,8 +33,27 @@ def _source_signals(member: dict[str, Any]) -> dict[str, Any]:
     usgs = evidence.get("usgs_earthquake") or {}
     nhc = evidence.get("nhc_rss") or {}
     iaea = evidence.get("iaea") or {}
+    cap = evidence.get("wmo_bom_cap") or {}
     identity = evidence.get("global_identity") or {}
     source = evidence.get("source") or {}
+    cap_level = 0
+    if (observed and source.get("source_family") == "wmo"
+            and source.get("official_status") == "official"
+            and cap.get("issuer_verified") is True and cap.get("status") == "Actual"
+            and cap.get("scope") == "Public"
+            and cap.get("message_type") in {"Alert", "Update"}):
+        for info in cap.get("infos") or []:
+            if not isinstance(info, dict) or info.get("cancelled") is True:
+                continue
+            effective = _time(info.get("effective_at"))
+            expires = _time(info.get("expires_at"))
+            if (effective and expires and effective <= observed < expires
+                    and info.get("areas")
+                    and info.get("urgency") in {"Immediate", "Expected"}
+                    and info.get("certainty") in {"Observed", "Likely"}):
+                cap_level = max(cap_level, {"Severe": 25, "Extreme": 40}.get(
+                    str(info.get("severity")), 0
+                ))
     iaea_urgent = bool(
         source.get("source_family") == "iaea"
         and source.get("official_status") == "official"
@@ -50,6 +69,7 @@ def _source_signals(member: dict[str, Any]) -> dict[str, Any]:
     )
     level = str(gdacs.get("alert_level") or "").lower()
     official_severity = {"red": 50, "orange": 35, "green": 12}.get(level, 0)
+    official_severity = max(official_severity, cap_level)
     if reliefweb.get("status") in {"current", "alert"}:
         official_severity = max(official_severity, 20)
     magnitude = usgs.get("magnitude")
@@ -78,7 +98,7 @@ def _source_signals(member: dict[str, Any]) -> dict[str, Any]:
         min(35, max(0, _int(identity.get("humanitarian_impact_score")))),
     )
     alert = bool(nhc_watch or level in {"red", "orange"} or usgs.get("tsunami") is True or
-                 reliefweb.get("status") in {"current", "alert"})
+                 reliefweb.get("status") in {"current", "alert"} or cap_level)
     return {
         "official_severity": official_severity,
         "public_impact": public_impact,
@@ -89,6 +109,7 @@ def _source_signals(member: dict[str, Any]) -> dict[str, Any]:
         "identity": identity,
         "iaea_urgent": iaea_urgent,
         "who_don_context": who_don_context,
+        "cap_level": cap_level,
     }
 
 
@@ -111,7 +132,7 @@ def rank_global_event(
         if observed and latest else 72
     )
     span_hours = int((latest - earliest).total_seconds() // 3600) if latest and earliest else None
-    signals = [_source_signals(member) for member in members]
+    signals = [_source_signals(member, observed=observed) for member in members]
     families = list(group.get("credited_families") or group.get("families") or [])
     family_counts = Counter(
         str(signal["source"].get("source_family") or "unknown") for signal in signals
@@ -271,6 +292,9 @@ def rank_global_event(
         "age_hours": age_hours,
         "span_hours": span_hours,
         "public_impact_basis": [value for value in impact_basis if value],
+        "official_alert_basis": [
+            "BoM CAP Actual/Public high-severity area warning within effective window"
+        ] if any(signal["cap_level"] for signal in signals) else [],
         "impact_tags": sorted(impact_tags),
         "sensitivity": {
             "score_before_sensitivity": score_before_sensitivity,

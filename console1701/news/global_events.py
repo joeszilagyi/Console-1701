@@ -25,6 +25,7 @@ MATCH_WINDOW_HOURS = 96
 _SOURCE_EVENT_ID_PREFIXES = (
     "gdacs:", "reliefweb_disaster:", "who_don:", "usgs_earthquake:",
     "storm_id:", "earthquake_id:", "cyber_incident_id:", "glide:",
+    "cap:",
 )
 
 
@@ -81,6 +82,8 @@ def global_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     for field in ("storm_id", "earthquake_id", "cyber_incident_id"):
         if identity.get(field):
             identifiers.add(f"{field}:{_normalized(identity[field])}")
+    if identity.get("cap_identifier"):
+        identifiers.add(f"cap:{_normalized(identity['cap_identifier'])}")
     event_type = _normalized(contract.get("event_type"))
     event_type = _TYPE_ALIASES.get(event_type, event_type.replace(" ", "_"))
     countries = {
