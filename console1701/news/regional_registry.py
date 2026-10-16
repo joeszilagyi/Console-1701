@@ -290,6 +290,38 @@ REGIONAL_SOURCE_REGISTRY: tuple[RegionalSourceRegistryEntry, ...] = (
         ),
     ),
     RegionalSourceRegistryEntry(
+        source_key="nwcc_point_daily_wa",
+        source_name="NWCC daily active-labeled fire points for WA units",
+        source_family="wildfire_federal",
+        source_class="official_wildfire",
+        adapter="arcgis_feature_service_candidate",
+        kind="api_json",
+        raw_url=(
+            "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/"
+            "NWCC_Operational_Layers_view/FeatureServer/11/query?where=1%3D1"
+            "&outFields=OBJECTID%2CFIRE_NM%2CFIRE_NUM%2CCOMPLEX%2CSTART_DATE%2C"
+            "RPTD_ACRES%2CSTATUS%2CUNIT_ID%2CINCIWEB%2CINFO_LINK%2CIRWIN_ID%2C"
+            "FIRE_CODE%2CGlobalID&orderByFields=START_DATE+DESC&resultRecordCount=10"
+            "&returnGeometry=true&outSR=4326&f=json"
+        ),
+        homepage_url="https://gacc.nifc.gov/nwcc/firemap.php",
+        parser="nwcc_point_daily_fixture",
+        priority=78,
+        interval_minutes=1440,
+        official_status="official",
+        privacy_risk="low",
+        policy_risk="low",
+        parser_risk="medium",
+        retention_sensitivity="medium",
+        verification_status="verified",
+        future_phase="R7",
+        expected_access_kind="NWCC daily ArcGIS layer and bounded query; fixture only",
+        why_it_matters=(
+            "Source-dated active label and WA point identity; current activity requires fresh "
+            "verification."
+        ),
+    ),
+    RegionalSourceRegistryEntry(
         source_key="wa_dnr_fire_statistics",
         source_name="WA DNR fire statistics, active state unknown",
         source_family="wa_dnr",

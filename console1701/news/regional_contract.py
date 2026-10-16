@@ -37,6 +37,7 @@ def build_regional_event_contract(
     nifc = evidence.get("nifc_imsr")
     wfigs = evidence.get("nifc_wfigs")
     nwcc_fire = evidence.get("nwcc_large_fire")
+    nwcc_point = evidence.get("nwcc_point_daily")
     dnr_fire = evidence.get("wa_dnr_fire_statistics")
     county_news = evidence.get("king_county_emergency")
     identity = f"isolated:{source.get('id')}:{hashed_url}"
@@ -115,6 +116,25 @@ def build_regional_event_contract(
         public_impact_basis = (
             "NWCC large-fire record; edit time and containment do not prove current activity "
             "or public impact"
+        )
+    elif isinstance(nwcc_point, dict) and nwcc_point.get("normalized_fire_key"):
+        identity = f"nifc-imsr:{nwcc_point['normalized_fire_key']}"
+        event_type = "wildfire_update"
+        matching_basis = "official_nwcc_daily_unit_number_start_year"
+        confidence = "high"
+        geography = {
+            "basis": "official_WA_management_unit_and_point_bounds",
+            "matched": True,
+            "fire_incident": nwcc_point.get("fire_name"),
+            "management_unit": nwcc_point.get("unit_id"),
+            "latitude": nwcc_point.get("latitude"),
+            "longitude": nwcc_point.get("longitude"),
+        }
+        match_tokens = [str(nwcc_point["normalized_fire_key"])[:120],
+                        str(nwcc_point.get("fire_name") or "")[:100]]
+        public_impact_basis = (
+            "NWCC daily layer labeled Active at its data edit time; current activity and "
+            "public impact remain unverified"
         )
     elif isinstance(dnr_fire, dict) and dnr_fire.get("fire_event_id"):
         identity = f"wa-dnr-fire:{dnr_fire['fire_event_id']}"
