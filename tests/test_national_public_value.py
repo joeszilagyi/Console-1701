@@ -43,23 +43,38 @@ def test_national_policy_suppresses_routine_categories_and_keeps_official_alerts
     alert = _item("Routine press release on severe storm", nws_alert={
         "status": "Actual", "severity": "Severe", "instruction": "Shelter now."
     })
-    assert classify_national_item(source, alert)["attention_state"] == "elevated"
-    assert classify_national_item(source, alert)["official_impact_score"] == 25
+    assert classify_national_item(source, alert)["attention_state"] == "suppressed"
+    nws_source = {"source_family": "nws", "official_status": "official"}
+    assert classify_national_item(nws_source, alert)["attention_state"] == "elevated"
+    assert classify_national_item(nws_source, alert)["official_impact_score"] == 25
 
 
 def test_national_policy_elevates_verified_public_safety_signals():
-    source = {"source_family": "official", "official_status": "official"}
     cases = [
-        _item("Recall", nhtsa_recall={"park_it": True}),
-        _item("KEV", cisa_kev={"cve_id": "CVE-2026-1234"}),
-        _item("Airport", faa_nas_status={"events": [{"event_type": "ground_stop"}]}),
-        _item("Disaster", national_identity={"official_disaster_declaration": True}),
-        _item("Health", national_identity={"public_health_action_guidance": True}),
-        _item("Cyber", national_identity={"cyber_emergency_directive": True}),
-        _item("Recall", national_identity={"high_risk_recall": True}),
+        ("nhtsa", _item("Recall", nhtsa_recall={"park_it": True})),
+        ("cisa", _item("KEV", cisa_kev={"cve_id": "CVE-2026-1234"})),
+        ("faa", _item("Airport", faa_nas_status={
+            "events": [{"event_type": "ground_stop"}]
+        })),
+        ("fema", _item("Disaster", openfema_declaration={
+            "recent_declaration_at_refresh": True
+        })),
+        ("cisa", _item("Cyber", cisa_advisory={"directive_flag": True})),
+        ("fsis", _item("Recall", fsis_recall={
+            "current_notice": True, "recall_classification": "Class I"
+        })),
     ]
-    assert all(classify_national_item(source, item)["attention_state"] == "elevated"
-               for item in cases)
+    assert all(classify_national_item(
+        {"source_family": family, "official_status": "official"}, item
+    )["attention_state"] == "elevated" for family, item in cases)
+    unsupported = _item("Claim", national_identity={
+        "official_disaster_declaration": True,
+        "public_health_action_guidance": True,
+        "official_public_alert": True,
+    })
+    assert classify_national_item(
+        {"source_family": "national_news", "official_status": "official"}, unsupported
+    )["attention_state"] == "background"
     assert classify_national_item(
         {"source_family": "social", "official_status": "unofficial"},
         _item("Claim", national_identity={"official_disaster_declaration": True}),
