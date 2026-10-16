@@ -105,6 +105,34 @@ def test_national_syndicated_article_does_not_count_as_independent_confirmation(
     assert group["corroborated"] is False
 
 
+def test_national_shared_url_cannot_bridge_unrelated_official_events():
+    first = _item(1, "nws")
+    second = _item(2, "nws")
+    for item in (first, second):
+        item["canonical_url"] = "https://weather.gov/alerts"
+    first["evidence"]["nws_alert"] = {"id": "urn:alert:one"}
+    second["evidence"]["nws_alert"] = {"id": "urn:alert:two"}
+    assert [group["item_ids"] for group in correlate_national_items([
+        first, second
+    ])] == [[1], [2]]
+
+    second["evidence"]["nws_alert"]["id"] = "urn:alert:one"
+    assert correlate_national_items([first, second])[0]["item_ids"] == [1, 2]
+
+    unrelated = _item(3, "public_media")
+    unrelated["canonical_url"] = first["canonical_url"]
+    unrelated["title"] = "Routine airport terminal renovation announcement"
+    assert [group["item_ids"] for group in correlate_national_items([
+        first, unrelated
+    ])] == [[1], [3]]
+
+    unrelated["title"] = first["title"]
+    unrelated["evidence"]["national_identity"]["event_type"] = "weather_alert"
+    assert [group["item_ids"] for group in correlate_national_items([
+        first, unrelated
+    ])] == [[1], [3]]
+
+
 def test_national_scan_persists_correlation_without_http(tmp_path, monkeypatch):
     monkeypatch.setattr(
         "console1701.news.scanner.fetch_official_text",

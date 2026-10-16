@@ -107,11 +107,30 @@ _CONTEXT_FIELDS = (
 
 
 def national_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str]:
+    # An article or broad title may mention several official events. When both
+    # items carry IDs from the same authority, disjoint IDs rule out a match.
+    namespaces = {
+        value.split(":", 1)[0] for value in left["identifiers"]
+    } & {
+        value.split(":", 1)[0] for value in right["identifiers"]
+    }
+    for namespace in namespaces:
+        prefix = f"{namespace}:"
+        left_ids = {value for value in left["identifiers"] if value.startswith(prefix)}
+        right_ids = {value for value in right["identifiers"] if value.startswith(prefix)}
+        if not left_ids & right_ids:
+            return []
     if left["identifiers"] & right["identifiers"]:
         return ["shared_official_event_id"]
-    if left["article_url"] and left["article_url"] == right["article_url"]:
+    compatible_type = (
+        not left["event_type"] or not right["event_type"]
+        or left["event_type"] == right["event_type"]
+    )
+    if (left["article_url"] and left["article_url"] == right["article_url"]
+            and compatible_type and len(left["tokens"] & right["tokens"]) >= 2):
         return ["same_article_url"]
-    if left["syndication_id"] and left["syndication_id"] == right["syndication_id"]:
+    if (left["syndication_id"] and left["syndication_id"] == right["syndication_id"]
+            and compatible_type):
         return ["same_syndication_id"]
     if left["family"] == "unknown" or left["family"] == right["family"]:
         return []
