@@ -18,6 +18,15 @@ _RUMOR_RE = re.compile(r"\b(?:unconfirmed rumor|unverified claim|social media ru
 _GRAPHIC_RE = re.compile(r"\b(?:graphic footage|graphic video|graphic images)\b", re.I)
 _PRIVATE_RE = re.compile(r"\b(?:private distress|identify private victim|home address of)\b", re.I)
 _DOXXING_RE = re.compile(r"\b(?:doxx(?:ing|ed)?|dox(?:ing|ed)?)\b", re.I)
+_TARGETED_TRACKING_RE = re.compile(
+    r"\b(?:targeted person tracking|"
+    r"(?:live|real[- ]time)\s+(?:location|movements?|whereabouts)\s+of\s+"
+    r"(?:a|an|the)?\s*(?:named|private)\s+"
+    r"(?:person|individual|victim|family|journalist|activist|refugee)|"
+    r"track(?:ing|ed)?\s+(?:down\s+)?(?:a|an|the)?\s*"
+    r"(?:named|private)\s+(?:person|individual|victim|family))\b",
+    re.I,
+)
 _SOCIAL_FAMILIES = {"reddit", "bluesky", "x_api", "mastodon", "social"}
 
 
@@ -52,6 +61,12 @@ def classify_global_item(source: dict[str, Any], item: dict[str, Any]) -> dict[s
         sensitivity["doxxing"] = True
         reasons.append("explicit doxxing headline" if _DOXXING_RE.search(title)
                        else "explicit doxxing description")
+    if _TARGETED_TRACKING_RE.search(title) or _TARGETED_TRACKING_RE.search(description):
+        sensitivity["targeted_person_tracking"] = True
+        reasons.append(
+            "explicit person-tracking headline" if _TARGETED_TRACKING_RE.search(title)
+            else "explicit person-tracking description"
+        )
     if _RUMOR_RE.search(content_text) and not official_alert:
         identity["rumor"] = True
         reasons.append("explicit unverified claim")

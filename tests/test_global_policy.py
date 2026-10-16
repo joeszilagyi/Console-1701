@@ -156,6 +156,66 @@ def test_explicit_doxxing_is_redacted_before_global_storage(tmp_path, monkeypatc
     assert "explicit doxxing description" in evidence["global"]["policy_notes"]
 
 
+def test_explicit_person_tracking_is_redacted_before_global_storage(tmp_path, monkeypatch):
+    source = {"scope": "GLOBAL", "source_family": "regional_media"}
+    headline = classify_global_item(source, _item("Live location of a named journalist"))
+    description = classify_global_item(
+        source,
+        _item("Incident update", description="A post is tracking a private family."),
+    )
+    neutral = classify_global_item(source, _item("Tracking movements of a tropical storm"))
+    assert headline["evidence"]["sensitivity"]["targeted_person_tracking"] is True
+    assert description["evidence"]["sensitivity"]["targeted_person_tracking"] is True
+    assert "targeted_person_tracking" not in neutral["evidence"]["sensitivity"]
+    assert headline["evidence"]["global_attention_policy"]["attention_state"] == "suppressed"
+
+    monkeypatch.setattr("console1701.news.scanner.fetch_official_text", lambda *a, **kw: (
+        (_ for _ in ()).throw(AssertionError("unexpected HTTP"))
+    ))
+    fixture = tmp_path / "tracking.json"
+    fixture.write_text(json.dumps({"items": [{
+        "title": "Incident update from region",
+        "url": "https://example.test/global/tracking",
+        "description": "A post is tracking a private family.",
+        "published_at": "2026-10-15T12:00:00Z",
+    }]}))
+    config_path = tmp_path / "config.yml"
+    config_path.write_text(dedent(f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        global: {{enabled: true}}
+        news:
+          enabled: true
+          scopes:
+            GLOBAL:
+              enabled: true
+              sources:
+                - id: global_tracking_fixture
+                  name: GLOBAL tracking fixture
+                  kind: api_json
+                  parser: generic_json_items
+                  source_family: unocha
+                  source_class: official_conflict_humanitarian
+                  official_status: official
+                  policy_reviewed: true
+                  enabled: true
+                  url: "file://{fixture}"
+    """).strip() + "\n")
+    assert run_news_scan(config_path)["item_count"] == 1
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        row = conn.execute("SELECT title, description, evidence_json FROM news_items").fetchone()
+        cluster_count = conn.execute(
+            "SELECT COUNT(*) FROM news_clusters WHERE scope='GLOBAL'"
+        ).fetchone()[0]
+    assert row["title"] == "Sensitive humanitarian report"
+    assert row["description"] is None
+    assert cluster_count == 0
+    evidence = json_loads(row["evidence_json"], {})
+    assert evidence["sensitivity"]["targeted_person_tracking"] is True
+    assert evidence["sensitivity"]["redacted_before_storage"] is True
+    assert "explicit person-tracking description" in evidence["global"]["policy_notes"]
+
+
 def test_scan_suppresses_graphic_title_before_sqlite_storage(tmp_path, monkeypatch):
     monkeypatch.setattr("console1701.news.scanner.fetch_official_text", lambda *a, **kw: (
         (_ for _ in ()).throw(AssertionError("unexpected HTTP"))
