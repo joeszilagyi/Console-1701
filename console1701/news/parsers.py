@@ -164,6 +164,10 @@ def parse_fixture_items(
         from console1701.news.spaceflight_news_parser import parse_spaceflight_news_json
 
         return parse_spaceflight_news_json(source, payload_text)
+    if parser_name == "celestrak_iss_gp_json":
+        from console1701.news.celestrak_iss_parser import parse_celestrak_iss_gp_json
+
+        return parse_celestrak_iss_gp_json(source, payload_text)
     if parser_name == "nasa_orbital_rss":
         from console1701.news.orbital_rss import parse_nasa_orbital_rss
 

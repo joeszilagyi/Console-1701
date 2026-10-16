@@ -145,6 +145,7 @@ def _load_registry() -> tuple[dict[str, Any], ...]:
             "launch_library_upcoming": "launch_library_json",
             "launch_library_events": "launch_library_json",
             "spaceflight_news_articles": "spaceflight_news_json",
+            "celestrak_iss_gp": "celestrak_iss_gp_json",
             "nasa_rss_feeds": "nasa_orbital_rss",
             "nasa_iss_page": "nasa_orbital_rss",
             "nasa_spacestation_blog": "nasa_orbital_rss",

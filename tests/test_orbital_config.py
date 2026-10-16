@@ -172,5 +172,5 @@ def test_all_orbital_candidates_stay_closed_with_parent_off(tmp_path, monkeypatc
         lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("no HTTP")),
     )
     result = run_news_scan(path)
-    assert result["scanned_sources"] == len(sources) == 136
+    assert result["scanned_sources"] == len(sources) == 137
     assert result["item_count"] == 0
