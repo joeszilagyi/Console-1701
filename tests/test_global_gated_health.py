@@ -102,6 +102,66 @@ def test_global_gated_sources_show_health_and_never_access_fixture_or_http(tmp_p
     assert len(_route(router, "/api/news/sources")()) == 5
 
 
+def test_global_parser_failure_from_fixture_reaches_stored_health_and_ui(tmp_path, monkeypatch):
+    state_dir = tmp_path / "state"
+    monkeypatch.setattr(config_module, "DEFAULT_STATE_DIR", state_dir)
+    monkeypatch.setattr(config_module, "DEFAULT_DB_PATH", state_dir / "console.sqlite")
+    monkeypatch.setattr(config_module, "DEFAULT_HANDOFF_DIR", state_dir / "handoffs")
+    monkeypatch.setattr(
+        "console1701.news.scanner.fetch_official_text",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("no HTTP")),
+    )
+    fixture = tmp_path / "gdacs.rss"
+    fixture.write_text((Path(__file__).parent / "fixtures/news/global_gdacs.rss").read_text())
+    config_path = tmp_path / "global-parser-failure.yml"
+    config_path.write_text(dedent(f"""
+        paths: {{repo_roots: [], explicit_repos: []}}
+        global: {{enabled: true}}
+        news:
+          enabled: true
+          scopes:
+            GLOBAL:
+              enabled: true
+              sources:
+                - {{id: gdacs_failure_fixture, name: GDACS malformed fixture,
+                   kind: rss, parser: gdacs_rss, source_family: gdacs,
+                   official_status: official, enabled: true,
+                   url: '{fixture.as_uri()}'}}
+    """).strip() + "\n")
+    first = run_news_scan(config_path)
+    assert first["status"] == "complete"
+    assert first["item_count"] == 1
+    fixture.write_text("<rss><channel><item>")
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        conn.execute("UPDATE news_fetch_runs SET started_at='2026-01-01T00:00:00+00:00'")
+        conn.commit()
+    result = run_news_scan(config_path)
+    assert result["status"] == "partial"
+    assert result["item_count"] == 0
+    with connect_db(config["_db_path"]) as conn:
+        runs = conn.execute(
+            "SELECT status FROM news_fetch_runs ORDER BY id"
+        ).fetchall()
+        items = conn.execute(
+            "SELECT id FROM news_items WHERE scope='GLOBAL'"
+        ).fetchall()
+        states = get_news_sources_status(conn, config)
+        scope_state = get_news_scope_states(conn, config)["GLOBAL"]
+    assert runs[-1]["status"] == "parser_failed"
+    assert len(items) == 1  # Last good snapshot survives the failed refresh.
+    assert states[0]["health_state"] == "parser_failed"
+    assert scope_state["state"] == "failing"
+
+    router = build_router(str(config_path))
+    page = _route(router, "/{scope}")(_request("/GLOBAL"), "GLOBAL")
+    assert page.status_code == 200
+    assert "parser_failed" in page.body.decode()
+    assert _route(router, "/api/news/scopes/{scope}")("GLOBAL")["sources"][0][
+        "health_state"
+    ] == "parser_failed"
+
+
 def test_all_heavy_global_candidates_block_without_local_gate(tmp_path, monkeypatch):
     def unexpected_access(*args, **kwargs):
         raise AssertionError("heavy GLOBAL candidate attempted file or network access")
