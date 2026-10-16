@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
@@ -8,6 +9,7 @@ import pytest
 from console1701.config import load_config
 from console1701.db import connect_db, json_loads
 from console1701.news.fsis_recalls import FSIS_API_URL
+from console1701.news.national_events import correlate_national_items, national_item_signature
 from console1701.news.national_policy import classify_national_item
 from console1701.news.national_registry import get_national_source_registry_entry
 from console1701.news.official_http import is_supported_official_source
@@ -140,6 +142,114 @@ def test_fsis_expanded_recall_number_from_observed_2026_snapshot():
     assert item["evidence"]["national_identity"]["official_event_ids"] == [
         "fsis:005-2026-exp"
     ]
+
+
+def _expansion_pair_rows():
+    # Identity, titles and notice URLs follow the observed exact-number API
+    # responses; unrelated metadata is borrowed from the existing test row.
+    template = json.loads(FIXTURE.read_text())[2]
+    original = deepcopy(template)
+    original.update({
+        "field_recall_number": "005-2026",
+        "field_recall_number_export": "005-2026",
+        "field_recall_date": "2026-02-19",
+        "field_last_modified_date": "2026-02-19",
+        "field_title": (
+            "Ajinomoto Foods North America, Inc. Recalls Chicken Fried Rice Products "
+            "Due to Possible Foreign Matter Contamination"
+        ),
+        "field_recall_url": (
+            "http://www.fsis.usda.gov/recalls-alerts/ajinomoto-foods-north-america-"
+            "inc--recalls-chicken-fried-rice-products-due-0"
+        ),
+    })
+    expansion = deepcopy(template)
+    expansion.update({
+        "field_recall_number": "005-2026-EXP",
+        "field_recall_number_export": "005-2026-EXP",
+        "field_recall_date": "2026-03-03",
+        "field_last_modified_date": "2026-04-15",
+        "field_title": (
+            "Ajinomoto Foods North America, Inc. Expands Recall for Chicken and Pork "
+            "Fried Rice, Ramen, and Shu Mai Products Due to Possible Foreign Matter "
+            "Contamination"
+        ),
+        "field_recall_url": (
+            "http://www.fsis.usda.gov/recalls-alerts/ajinomoto-foods-north-america-"
+            "inc--expands-recall-chicken-and-pork-fried-rice-ramen"
+        ),
+    })
+    other = deepcopy(original)
+    other["field_recall_number"] = other["field_recall_number_export"] = "006-2026"
+    other["field_recall_url"] = "http://www.fsis.usda.gov/recalls-alerts/other-recall"
+    return [original, expansion, other]
+
+
+def test_fsis_expansion_joins_original_without_false_corroboration():
+    parsed = parse_fixture_items(_source(), json.dumps(_expansion_pair_rows()))
+    rows = [{**item, "id": index} for index, item in enumerate(parsed, 1)]
+    for item in rows:
+        item["evidence"]["source"] = {
+            "source_family": "fsis", "source_key": "fsis_recall_api",
+            "official_status": "official",
+        }
+    assert len({item["url"] for item in rows}) == 3
+    groups = correlate_national_items(rows)
+    assert [group["item_ids"] for group in groups] == [[1, 2], [3]]
+    assert groups[0]["matches"][0]["basis"] == ["same_fsis_recall_series"]
+    assert groups[0]["identifiers"] == ["fsis:005-2026", "fsis:005-2026-exp"]
+    assert groups[0]["corroborated"] is False
+
+    spoof = deepcopy(rows[1])
+    spoof["evidence"]["source"]["source_family"] = "public_media"
+    assert national_item_signature(spoof)["fsis_recall_number"] == ""
+    assert [group["item_ids"] for group in correlate_national_items([rows[0], spoof])] == [
+        [1], [2]
+    ]
+    extra_id = deepcopy(rows[1])
+    extra_id["evidence"]["national_identity"]["official_event_ids"].append("fsis:006-2026")
+    assert [group["item_ids"] for group in correlate_national_items([rows[0], extra_id])] == [
+        [1], [2]
+    ]
+
+
+def test_fsis_expansion_scan_persists_one_event_and_two_notices(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        "console1701.news.scanner.fetch_official_text",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("unexpected HTTP")),
+    )
+    fixture = tmp_path / "fsis-expansion.json"
+    fixture.write_text(json.dumps(_expansion_pair_rows()[:2]))
+    config_path = tmp_path / "fsis-expansion.yml"
+    config_path.write_text(f"""
+paths: {{repo_roots: [], explicit_repos: []}}
+news:
+  enabled: true
+  scopes:
+    NATIONAL:
+      enabled: true
+      sources:
+        - id: fsis_recall_api
+          enabled: true
+          fixture_only: true
+          retention_days: 365
+          url: "{fixture.as_uri()}"
+""".strip() + "\n")
+    assert run_news_scan(config_path)["item_count"] == 2
+    config = load_config(config_path)
+    with connect_db(config["_db_path"]) as conn:
+        notices = conn.execute(
+            "SELECT canonical_url FROM news_items WHERE scope='NATIONAL'"
+        ).fetchall()
+        clusters = conn.execute(
+            "SELECT item_count, evidence_json FROM news_clusters WHERE scope='NATIONAL'"
+        ).fetchall()
+    assert len({row["canonical_url"] for row in notices}) == 2
+    assert len(clusters) == 1
+    assert clusters[0]["item_count"] == 2
+    event = json_loads(clusters[0]["evidence_json"], {})["national_event"]
+    assert event["matches"][0]["basis"] == ["same_fsis_recall_series"]
+    assert event["corroborated"] is False
 
 
 def test_fsis_skips_spanish_translation_of_one_recall():

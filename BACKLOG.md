@@ -1676,6 +1676,14 @@ Mismatched fields cannot create an official-ID join or geographic context; expli
 `national_identity` fields remain available for cross-family matches. Direct regressions cover
 each official-ID field group and the NWS/FAA geography fallback. Other source-specific
 dimension coverage remains open.
+FSIS official recall numbers now also enter the family-qualified matcher. An original numeric
+recall and the exact `-EXP` expansion of that number join as one event even though the FSIS
+notices have distinct official IDs and URLs; the match records `same_fsis_recall_series` and
+retains both IDs. Other differing FSIS numbers remain in separate events, and a mismatched
+source family or extra conflicting FSIS ID cannot claim the exception. An offline fixture scan
+persists two notices in one uncorroborated FSIS event. This is based on observed `005-2026` and
+`005-2026-EXP` notice identities; the source remains fixture-only. Other source-specific
+dimension coverage remains open.
 
 Implement deterministic NATIONAL event matching by source family, time window, normalized title
 tokens, event type, agency, affected states, affected territories, FEMA region, NWS region, storm
