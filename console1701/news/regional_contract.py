@@ -33,6 +33,7 @@ def build_regional_event_contract(
     wsf = evidence.get("wsf_alert")
     aqi = evidence.get("ecology_aqi")
     pierce = evidence.get("pierce_road_alert")
+    nifc = evidence.get("nifc_imsr")
     identity = f"isolated:{source.get('id')}:{hashed_url}"
     event_type = "regional_headline"
     matching_basis = "isolated_url"
@@ -56,6 +57,23 @@ def build_regional_event_contract(
         }
         match_tokens = [str(usgs["id"])[:120]]
         public_impact_basis = "USGS magnitude, felt reports, and alert level"
+    elif isinstance(nifc, dict) and nifc.get("unique_fire_identifier"):
+        identity = f"nifc-imsr:{nifc['unique_fire_identifier']}"
+        event_type = "wildfire_update"
+        matching_basis = "official_nifc_unique_fire_identifier"
+        confidence = "high"
+        geography = {
+            "basis": "official_incident_prefix_and_point_bounds",
+            "matched": True,
+            "fire_incident": nifc.get("fire_name"),
+            "latitude": nifc.get("latitude"),
+            "longitude": nifc.get("longitude"),
+        }
+        match_tokens = [str(nifc["unique_fire_identifier"])[:120],
+                        str(nifc.get("fire_name") or "")[:100]]
+        public_impact_basis = (
+            "Current IMSR listing and reported acres; active status and public impact unverified"
+        )
     elif isinstance(nws, dict) and nws.get("id"):
         identity = f"nws-alert:{nws['id']}"
         event_type = "weather_alert"

@@ -9,6 +9,7 @@ and are visible through the existing scope/item APIs and evidence drawers.
 | Parser evidence | Event type | Stable identity | Geography basis |
 | --- | --- | --- | --- |
 | USGS earthquake | `earthquake` | official USGS event ID | point coordinates and configured bounding filter |
+| NIFC current IMSR incident | `wildfire_update` | official unique fire identifier | WA incident prefix and bounded official point; current report listing does not prove active burning or public impact |
 | NWS alert | `weather_alert` | official NWS alert ID | Washington zone IDs and area description |
 | WSDOT alert | `traveler_alert` | official WSDOT alert ID | route, facility, county, and region |
 | WSF bulletin | `ferry_alert` | official bulletin ID | affected route IDs; all-routes flag stays distinct |
@@ -22,7 +23,7 @@ duplicate feed paths carrying the same official ID. The cluster rebuild can also
 different official source families when event type, one verified geographic field, at least three
 normalized title tokens, and publication times within 48 hours all agree. Current parser-backed
 geographic fields include WSDOT route/county, NWS weather zone, Pierce County jurisdiction,
-WSF route IDs, USGS water basin/county, and Ecology station/city. Event type still has to match;
+WSF route IDs, USGS water basin/county, Ecology station/city, and NIFC fire name. Event type still has to match;
 the Pierce and WSDOT road reports can converge on a shared county and title. County comparison
 normalizes an optional terminal `County` suffix (for example, `Pierce` and `Pierce County`)
 without treating distinct counties as the same place. A two-parser offline scan persists this
@@ -48,6 +49,8 @@ show those decisions.
 
 REGIONAL ranking keeps shared recency/priority/health factors, then adds explicit geography,
 public-impact, confidence, privacy, source-diversity, cluster-size, and same-family duplicate factors.
+NIFC current IMSR records can receive a capped context factor for reported acres; 100-percent
+contained records receive none, and the factor does not assert active fire or public impact.
 An active NWS alert receives an expiry-bounded bonus; a stale source and rejected seismic geography
 receive explicit penalties. Corroborated reports receive a bounded publication-time proximity bonus
 when all member timestamps are present. These factors and reasons are stored on each item.
