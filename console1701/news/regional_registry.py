@@ -193,6 +193,38 @@ REGIONAL_SOURCE_REGISTRY: tuple[RegionalSourceRegistryEntry, ...] = (
         why_it_matters="Official Seattle station AQI without storing street addresses.",
     ),
     RegionalSourceRegistryEntry(
+        source_key="nifc_imsr_current_wa",
+        source_name="NIFC current IMSR Washington large fires",
+        source_family="wildfire_federal",
+        source_class="official_wildfire",
+        adapter="arcgis_feature_service_candidate",
+        kind="api_json",
+        raw_url=(
+            "https://services3.arcgis.com/T4QMspbfLg3qTGWY/ArcGIS/rest/services/"
+            "IMSR_Incident_Locations_Most_Recent_View/FeatureServer/0/query"
+            "?where=IsLatest%3d%27x%27+AND+incident_id+LIKE+%27WA-%25%27"
+            "&outFields=incident_id%2cfire_name%2cpost_date_isoformat%2cIsLatest%2csize%2c"
+            "x100pct%2clatitude%2clongitude%2cUniqueFireIdentifier%2cinitial_imsr_date%2cnew_to_imsr"
+            "&orderByFields=post_date_isoformat+DESC&resultRecordCount=100&returnGeometry=false&f=json"
+        ),
+        homepage_url="https://www.nifc.gov/nicc/incident-information/national-incident-map",
+        parser="nifc_imsr_fixture",
+        priority=80,
+        interval_minutes=1440,
+        official_status="official",
+        privacy_risk="low",
+        policy_risk="low",
+        parser_risk="medium",
+        retention_sensitivity="medium",
+        verification_status="verified",
+        future_phase="R7",
+        expected_access_kind="NIFC-linked current IMSR ArcGIS feature view; fixture only",
+        why_it_matters=(
+            "Current report presence and size for Washington large fires "
+            "without active-status inference."
+        ),
+    ),
+    RegionalSourceRegistryEntry(
         source_key="nwcc_blog",
         source_name="NWCC Info blog",
         source_family="nwcc",

@@ -381,6 +381,8 @@ def _regional_signal_factors(
     ) else {}
     usgs_filter = usgs.get("filter") if isinstance(usgs.get("filter"), dict) else {}
     water = evidence.get("usgs_water") if isinstance(evidence.get("usgs_water"), dict) else {}
+    nifc = evidence.get("nifc_imsr") if isinstance(evidence.get("nifc_imsr"), dict) else {}
+    nifc_rank = nifc.get("ranking") if isinstance(nifc.get("ranking"), dict) else {}
     active_until = _parse_time(nws.get("ends") or nws.get("expires"))
     active_alert = bool(
         nws_rank.get("active_alert") and seen and active_until and active_until > seen
@@ -397,6 +399,9 @@ def _regional_signal_factors(
     factors = {
         "regional_geography_bonus": 8 if geography.get("matched") else 0,
         "regional_public_impact_bonus": public_impact,
+        "regional_wildfire_report_bonus": min(
+            12, max(0, _int_value(nifc_rank.get("official_current_report_context")))
+        ),
         "regional_active_alert_bonus": 10 if active_alert else 0,
         "regional_stale_source_penalty": -6 if health_state == "stale" else 0,
         "regional_hydrology_stale_penalty": -25 if water.get("stale_at_snapshot") else 0,
@@ -411,6 +416,11 @@ def _regional_signal_factors(
         reasons.append("REGIONAL official geography evidence adds 8.")
     if public_impact:
         reasons.append(f"REGIONAL public-impact evidence adds {public_impact}.")
+    if factors["regional_wildfire_report_bonus"]:
+        reasons.append(
+            "NIFC current IMSR large-fire context adds "
+            f"{factors['regional_wildfire_report_bonus']}; no active-status claim."
+        )
     if active_alert:
         reasons.append("REGIONAL NWS alert remains active and adds 10.")
     if factors["regional_out_of_region_penalty"]:
