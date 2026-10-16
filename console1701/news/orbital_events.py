@@ -69,6 +69,7 @@ def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     }
     swpc = evidence.get("swpc_alert") or {}
     swpc_scale = evidence.get("swpc_noaa_scale") or {}
+    swpc_kp = evidence.get("swpc_k_index") or {}
     if swpc.get("noaa_scale"):
         context["noaa_scale"] = _normalized(swpc["noaa_scale"])
     if swpc_scale.get("scale"):
@@ -94,6 +95,11 @@ def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
             "period_kind": swpc_scale.get("period_kind"),
             "observed_at": _time(swpc_scale.get("timestamp")),
         } if swpc_scale else {},
+        "swpc_kp": {
+            "source_kind": swpc_kp.get("source_kind"),
+            "observation_type": swpc_kp.get("observation_type"),
+            "observed_at": _time(swpc_kp.get("observed_at")),
+        } if swpc_kp else {},
     }
 
 
@@ -121,6 +127,28 @@ def orbital_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str
                 and observed.get("observed_at")
                 and valid["valid_from"] <= observed["observed_at"] <= valid["valid_until"]):
             return ["same_noaa_scale", "alert_valid_window", "current_scale_observation"]
+        return []
+    if {left["event_type"], right["event_type"]} == {
+        "space_weather_alert", "geomagnetic_k_index",
+    }:
+        alert, kp = (left, right) if left["event_type"] == "space_weather_alert" else (
+            right, left
+        )
+        valid = alert["swpc_alert"]
+        observation = kp["swpc_kp"]
+        scale = alert["context"].get("noaa_scale")
+        if (alert["family"] == kp["family"] == "swpc"
+                and valid.get("kind") in {"ALERT", "WARNING", "EXTENDED WARNING"}
+                and not valid.get("cancelled")
+                and scale and scale.startswith("g")
+                and scale == kp["context"].get("noaa_scale")
+                and observation.get("source_kind") == "planetary"
+                and observation.get("observation_type") == "observed_3h_summary"
+                and valid.get("valid_from") and valid.get("valid_until")
+                and observation.get("observed_at")
+                and valid["valid_from"] <= observation["observed_at"] <= valid["valid_until"]):
+            return ["same_noaa_geomagnetic_scale", "alert_valid_window",
+                    "planetary_kp_observation"]
         return []
     if not left["event_type"] or left["event_type"] != right["event_type"]:
         return []

@@ -244,6 +244,10 @@ def parse_swpc_kp_json(source: dict[str, Any], payload_text: str) -> list[dict[s
     if value < threshold:
         return []
     measurement = "Boulder K-index" if source_key == "swpc_boulder_k_json" else "planetary Kp"
+    noaa_scale = (
+        f"G{min(5, int(value) - 4)}"
+        if source_key == "swpc_kp_summary_json" and value >= 5 else None
+    )
     hour_key = observed_at[:13]
     query = urlencode({"time": hour_key, "product": source_key})
     item = _normalize_item(source, {
@@ -263,11 +267,19 @@ def parse_swpc_kp_json(source: dict[str, Any], payload_text: str) -> list[dict[s
         "kp_label": row.get("kp") if source_key == "swpc_kp_1m_json" else None,
         "source_url": source_url,
         "source_kind": "regional" if source_key == "swpc_boulder_k_json" else "planetary",
+        "observation_type": (
+            "observed_3h_summary" if source_key == "swpc_kp_summary_json" else
+            "estimated_1m" if source_key == "swpc_kp_1m_json" else "regional_local"
+        ),
+        "noaa_scale": noaa_scale,
+        "scale_basis": "NOAA planetary Kp geomagnetic thresholds" if noaa_scale else None,
         "link_note": "Measurement-specific deep links are unavailable in this JSON product.",
     }
     item["evidence"]["orbital_identity"] = {
         "event_type": "geomagnetic_k_index",
         "object_id": f"{source_key}:{hour_key}",
+        "noaa_scale": noaa_scale,
+        "kp_window": hour_key if noaa_scale else None,
     }
     return [item]
 

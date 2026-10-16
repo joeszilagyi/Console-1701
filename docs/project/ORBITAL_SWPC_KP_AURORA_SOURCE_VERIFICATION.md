@@ -13,6 +13,13 @@ product has minute rows with `time_tag`, `kp_index`, `estimated_kp`, and `kp`; t
 product has `time_tag` and `k_index`. Boulder is a regional measurement and remains distinct
 from planetary Kp.
 
+NOAA's [Space Weather Scales table](https://www.spaceweather.gov/noaa-scales-explanation)
+maps planetary Kp 5, 6, 7, 8 and 9 to geomagnetic G1, G2, G3, G4 and G5. The offline matcher
+derives a level only from the observed three-hour planetary summary, and joins a same-level
+SWPC warning/alert only when the Kp timestamp lies inside the warning's explicit valid window.
+The provisional one-minute estimate and Boulder local K-index do not supply this match. A joined
+pair is one SWPC source family, not independent corroboration or a local aurora claim.
+
 The [OVATION aurora JSON](https://services.swpc.noaa.gov/json/ovation_aurora_latest.json)
 has observation and forecast times, a stated `[Longitude, Latitude, Aurora]` format, and a
 `MultiPoint` coordinate grid. The observed response held 65,160 points and about 920 KB.
