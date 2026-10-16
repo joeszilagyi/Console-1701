@@ -2048,6 +2048,9 @@ GLOBAL ranking now uses official NHC Public Advisory watch/warning terms only wi
 of their source publication time for active-alert and watch-derived public-impact factors.
 The cap is a local freshness rule, not an inferred watch expiration; stale terms and
 unofficial NHC-shaped rows do not supply those factors.
+The GLOBAL fixture parser now shares NATIONAL's 64 KiB/50-entry, DTD/entity, and exact
+NHC text-product link bounds. Offline regressions cover rejected oversized or malformed input
+without enabling a live NHC request.
 
 ### Smithsonian GVP Weekly Report Parser
 
