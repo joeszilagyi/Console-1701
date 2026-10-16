@@ -2375,6 +2375,12 @@ The matcher now derives that CAP event ID from the WMO-family RSS GUID or CAP pa
 from an unqualified `global_identity` claim. A mismatched stored source family or missing parser
 field cannot force a shared-ID join; a changed generic claim cannot override matching source
 fields, and conflicting source IDs still veto a shared URL. Offline parser-backed regressions pass.
+GLOBAL NHC advisory revisions now recover the official ATCF storm ID from the NHC parser field,
+even when a stored generic identity is absent. The matcher normalizes underscored source-family
+keys consistently, so `noaa_nhc` is recognized as its actual family; a foreign-family NHC field
+or generic claim on an NHC row cannot force the join. Parser-backed tests cover URL revision,
+same-family non-corroboration, and conflicting storm IDs behind a shared URL. Other source-specific
+identity dimensions remain open.
 An observed GDACS/USGS Costa Rica M4.5 earthquake pair now joins by a tightly bounded
 official origin fingerprint: five-second origin time, two-kilometer epicenter and 0.1 magnitude
 tolerances. Both agencies' IDs remain separate. The pair is one upstream observation for

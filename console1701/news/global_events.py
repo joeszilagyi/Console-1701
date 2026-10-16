@@ -96,12 +96,13 @@ def global_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     evidence = item.get("evidence") or {}
     contract = evidence.get("global") or {}
     source = evidence.get("source") or {}
-    family = _normalized(source.get("source_family")) or "unknown"
+    family = _normalized(source.get("source_family")).replace(" ", "_") or "unknown"
     gdacs = (evidence.get("gdacs") or {}) if family == "gdacs" else {}
     disaster = (evidence.get("reliefweb_disaster") or {}) if family == "reliefweb" else {}
     report = (evidence.get("reliefweb_report") or {}) if family == "reliefweb" else {}
     who = (evidence.get("who_don") or {}) if family == "who" else {}
     usgs = (evidence.get("usgs_earthquake") or {}) if family == "usgs" else {}
+    nhc = (evidence.get("nhc_rss") or {}) if family == "noaa_nhc" else {}
     bom_rss = (evidence.get("wmo_bom_rss") or {}) if family == "wmo" else {}
     bom_cap = (evidence.get("wmo_bom_cap") or {}) if family == "wmo" else {}
     identity = evidence.get("global_identity") or {}
@@ -128,7 +129,10 @@ def global_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         identifiers.add(
             f"usgs_earthquake:{_normalized(usgs['id'])}"
         )
-    for field in ("storm_id", "earthquake_id", "cyber_incident_id"):
+    storm_id = nhc.get("storm_id") if family == "noaa_nhc" else identity.get("storm_id")
+    if storm_id and _normalized(storm_id):
+        identifiers.add(f"storm_id:{_normalized(storm_id)}")
+    for field in ("earthquake_id", "cyber_incident_id"):
         if identity.get(field):
             identifiers.add(f"{field}:{_normalized(identity[field])}")
     # The RSS GUID and CAP identifier are the two source-backed forms of the
