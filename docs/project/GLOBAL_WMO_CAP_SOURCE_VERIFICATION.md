@@ -35,6 +35,15 @@ text/geocodes. This is a parser-shape observation, not a decision to ingest or e
 message. In the sample, `status=Actual`, `msgType=Update`, and `scope=Public`; cancellations and
 tests must be handled separately before an adapter is enabled.
 
+A bounded follow-up direct read on 2026-10-15 returned HTTP 200 for the exact Australian RSS URL,
+287,988 bytes and 500 items. Its channel title and Atom self link identify the Bureau of
+Meteorology feed. Each sampled item has a title, WMO-hosted CAP XML link, `AusBoM-` GUID and RSS
+publication time. A linked 3,983-byte CAP document returned HTTP 200 and contained multiple
+`info` blocks, including an area cancellation in an otherwise updated message. The checked-in
+`global_wmo_bom.rss` fixture reduces three observed items. Its parser reads RSS metadata only,
+marks CAP status/severity/expiry/area unverified, and keeps items at background attention. It
+does not fetch or parse the linked CAP documents; direct WMO HTTP remains disabled in the app.
+
 ## Local policy for the future parser
 
 The SWIC dashboard and source-directory registry entries are `source_health_probe_only` with a

@@ -245,6 +245,8 @@ def parse_fixture_items(
         return _parse_gdacs_rss(source, payload_text)
     if parser_name == "ecdc_rss":
         return _parse_ecdc_rss(source, payload_text)
+    if parser_name == "wmo_bom_rss":
+        return _parse_wmo_bom_rss(source, payload_text)
     if parser_name == "nhc_basin_rss":
         return _parse_nhc_basin_rss(source, payload_text)
     if parser_name == "un_news_rss":
@@ -494,6 +496,82 @@ def _gdacs_item(
         },
     }
     return item
+
+
+_WMO_BOM_RSS_URL = "https://severeweather.wmo.int/v2/cap-alerts/au-bom-en/rss.xml"
+_WMO_BOM_CAP_PATH = re.compile(
+    r"/v2/cap-alerts/au-bom-en/\d{4}/\d{2}/\d{2}/\d{2}/\d{2}/[^/]+\.xml\Z"
+)
+
+
+def _parse_wmo_bom_rss(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:
+    if str(source.get("scope") or "").upper() != "GLOBAL":
+        raise NewsParserError("WMO BoM RSS parser requires GLOBAL scope.")
+    if str(source.get("kind") or "").lower() not in {"rss", "local_file_rss"}:
+        raise NewsParserError("WMO BoM parser requires an RSS source kind.")
+    try:
+        root = ET.fromstring(payload_text)
+    except ET.ParseError as exc:
+        raise NewsParserError(f"Malformed WMO BoM RSS fixture: {exc}") from exc
+    channel = root.find("./channel") if _local_name(root.tag) == "rss" else None
+    if channel is None or _element_text(channel.find("./title")) != (
+        "Latest Official Public alerts in English for Bureau of Meteorology"
+    ):
+        raise NewsParserError("WMO BoM fixture has no verified RSS channel identity.")
+    self_link = channel.find("{http://www.w3.org/2005/Atom}link")
+    if (self_link is None or self_link.get("href") != _WMO_BOM_RSS_URL
+            or self_link.get("rel") != "self"):
+        raise NewsParserError("WMO BoM fixture has no exact official feed identity.")
+    elements = channel.findall("./item")
+    if len(elements) > 500:
+        raise NewsParserError("WMO BoM fixture exceeds the 500-item feed cap.")
+    items: list[dict[str, Any]] = []
+    for index, element in enumerate(elements):
+        title = _element_text(element.find("./title"))
+        url = _element_text(element.find("./link"))
+        guid = _element_text(element.find("./guid"))
+        published = normalize_timestamp(_element_text(element.find("./pubDate")))
+        try:
+            parts = urlsplit(url or "")
+        except ValueError as exc:
+            raise NewsParserError(f"WMO BoM item {index} has an invalid URL.") from exc
+        if (parts.scheme != "https" or parts.hostname != "severeweather.wmo.int"
+                or not _WMO_BOM_CAP_PATH.fullmatch(parts.path) or parts.query or parts.fragment):
+            raise NewsParserError(f"WMO BoM item {index} has no official CAP URL.")
+        if not title or not guid or not guid.startswith("AusBoM-") or not published:
+            raise NewsParserError(f"WMO BoM item {index} lacks identity or time.")
+        cancelled = title.casefold().startswith("cancellation of ")
+        item = _normalize_item(source, {
+            "title": title,
+            "url": url,
+            "description": bounded_text(
+                _wsdot_plain_text(_element_text(element.find("./description"))),
+                max_chars=320,
+            ),
+            "published_at": published,
+            "tags": ["official", "weather", "global", "wmo_cap_link",
+                     "cancellation" if cancelled else "warning_candidate"],
+        }, index=index)
+        item["evidence"]["wmo_bom_rss"] = {
+            "issuer": "Australian Government Bureau of Meteorology",
+            "aggregator": "WMO Severe Weather Information Centre",
+            "guid": bounded_text(guid, max_chars=120),
+            "cap_url": item["url"],
+            "published_at": published,
+            "warning_state": "cancelled" if cancelled else "cap_status_unverified",
+            "cap_severity": None,
+            "cap_expires_at": None,
+            "affected_area": None,
+            "ranking": {"official_feed": True, "active_warning_unverified": True},
+        }
+        item["evidence"]["global_identity"] = {
+            "public_value_class": "background",
+            "public_value_basis": (
+                "cancellation_headline" if cancelled else "cap_status_and_expiry_unverified"
+            ),
+        }
+        items.append(item)
+    return items
 
 
 def _parse_ecdc_rss(source: dict[str, Any], payload_text: str) -> list[dict[str, Any]]:

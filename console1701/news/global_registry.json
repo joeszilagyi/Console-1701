@@ -1342,6 +1342,26 @@
     "future_phase": "G7"
   },
   {
+    "source_key": "wmo_bom_cap_rss",
+    "source_name": "Bureau of Meteorology warnings via WMO RSS",
+    "source_family": "wmo",
+    "source_class": "official_weather_hazard",
+    "scope": "GLOBAL",
+    "raw_url": "https://severeweather.wmo.int/v2/cap-alerts/au-bom-en/rss.xml",
+    "expected_access_kind": "public official RSS of CAP links",
+    "adapter": "rss_atom",
+    "refresh_interval": "15 min",
+    "priority": "55",
+    "official_status": "official",
+    "privacy_risk": "low",
+    "policy_risk": "low",
+    "parser_risk": "medium",
+    "retention_sensitivity": "medium",
+    "verification_status": "official_feed_seen",
+    "why_it_matters": "Verified BoM RSS metadata; CAP status and expiry require linked-document parsing.",
+    "future_phase": "G7"
+  },
+  {
     "source_key": "wmo_sources",
     "source_name": "WMO warning sources",
     "source_family": "wmo",

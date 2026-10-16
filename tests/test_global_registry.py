@@ -34,14 +34,20 @@ def test_global_inventory_is_complete_and_disabled():
     keys = {str(entry["source_key"]) for entry in entries}
     summary = global_source_registry_summary()
 
-    assert len(entries) == len(keys) == 173
+    assert len(entries) == len(keys) == 174
     assert all(entry["scope"] == "GLOBAL" and entry["enabled"] is False for entry in entries)
     assert all(entry["source_health_behavior"] for entry in entries)
-    assert summary["source_count"] == 173
+    assert summary["source_count"] == 174
     assert summary["enabled_by_default"] is False
     gdacs = get_global_source_registry_entry("gdacs_feed_reference")
     assert gdacs is not None and gdacs["kind"] == "rss"
     assert gdacs["verification_status"] == "official_page_seen"
+    bom = get_global_source_registry_entry("wmo_bom_cap_rss")
+    assert bom is not None and bom["kind"] == "rss"
+    assert bom["enabled"] is False
+    assert bom["raw_url"] == (
+        "https://severeweather.wmo.int/v2/cap-alerts/au-bom-en/rss.xml"
+    )
 
 
 def test_wmo_dashboard_and_directory_remain_reference_only(tmp_path, monkeypatch):
@@ -108,9 +114,9 @@ def test_global_registry_seeds_config_and_sqlite_without_fetch(tmp_path):
             "WHERE scope = 'GLOBAL'"
         ).fetchall()
         summary = get_news_storage_summary(conn, config)
-    assert len(rows) == 173
+    assert len(rows) == 174
     assert all(row["enabled_by_default"] == 0 for row in rows)
-    assert summary["global_registry"]["source_count"] == 173
+    assert summary["global_registry"]["source_count"] == 174
 
 
 def test_every_global_inventory_entry_can_seed_config_under_explicit_policy_gates():

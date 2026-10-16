@@ -1755,8 +1755,8 @@ sensitivity, verification status, source-health behavior, and future phase field
 values and keep every GLOBAL source disabled until explicitly configured.
 
 Current state: `console1701/news/global_registry.json` contains all 172 original GLOBAL source
-targets plus one verified IAEA Top News RSS entry, preserving provenance, access, risk, verification, priority, and
-future-phase fields. The loader validates scope, URL shape, enum values, and duplicate keys, and
+targets plus verified IAEA Top News and WMO-hosted BoM RSS entries, preserving provenance, access,
+risk, verification, priority, and future-phase fields. The loader validates scope, URL shape, enum values, and duplicate keys, and
 adds source-health planning behavior. Config defaults remain disabled, known metadata fields reject
 unknown values, and explicit `news-scan` persists the inventory in `news_source_registry`. This is
 planning metadata; it does not enable or allowlist any GLOBAL live request.
@@ -1789,7 +1789,7 @@ impact tags, retention purge evidence, and source verification metadata. Use JSO
 indexes for latest-by-scope, event ranking, source health, source family, event type, affected
 country/region, and `expires_at` purge. Do not store full article bodies by default.
 
-Current state: the shared scoped source registry stores all 173 GLOBAL inventory rows and exposes a
+Current state: the shared scoped source registry stores all 174 GLOBAL inventory rows and exposes a
 GLOBAL registry summary. Shared source, fetch, item, health, cluster, and retention tables persist
 GLOBAL records without full article bodies. `news_item_facets` indexes country, verified region,
 event type, source family, impact tag, and explicit sensitivity flags; it backfills existing GLOBAL
@@ -1807,9 +1807,11 @@ sources, auth-required sources, and parser failures. Fixture ingest must not per
 and must be safe for pytest.
 
 Current state: checked-in GDACS RSS/API GeoJSON, ReliefWeb disaster/report, WHO DON, ECDC RSS,
-USGS earthquake, NHC RSS, UN News RSS, UN Press RSS and IAEA RSS fixtures exercise offline parser
-and `news-scan` persistence paths. Smithsonian GVP, broader news and remaining health/failure
-variants are pending. A bounded read of the BBC World RSS candidate on 2026-10-15 returned HTTP
+USGS earthquake, NHC RSS, WMO-hosted BoM warning RSS, UN News RSS, UN Press RSS and IAEA RSS
+fixtures exercise offline parser and `news-scan` persistence paths. The BoM sample retains
+official issuer, CAP links, GUID/time and cancellation labels as background evidence because RSS
+does not verify CAP status, severity, expiry or affected area. Smithsonian GVP, broader news and
+remaining health/failure variants are pending. A bounded read of the BBC World RSS candidate on 2026-10-15 returned HTTP
 200 with title, link, GUID, publication time and description fields. Its feed points to BBC reuse
 terms, and [BBC's published terms](https://downloads.bbc.co.uk/usingthebbc/bbc_terms_of_use_31March2022english.pdf)
 restrict extracting metadata from RSS feeds. Keep `bbc_world_rss` disabled and do not build a
@@ -1917,7 +1919,9 @@ RSS channel was reachable but had no current items. The SWIC dashboard and direc
 reference-only health entries, never alert adapters, with an offline scan regression proving no
 file or HTTP ingest. The [verification notes](docs/project/GLOBAL_WMO_CAP_SOURCE_VERIFICATION.md)
 record issuer attribution, parser fields, tentative feed-specific cadence, and policy/health gates.
-No CAP URL is live-allowlisted by the app.
+A separate fixture-only `wmo_bom_rss` parser now accepts the exact BoM channel and stores bounded
+headline metadata/CAP links with no linked-document fetch. Direct CAP parsing and exact-feed live
+ingest remain open; no CAP or RSS URL is live-allowlisted by the app.
 
 ### USGS Global Earthquake GeoJSON Parser
 

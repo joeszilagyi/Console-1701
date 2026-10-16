@@ -90,10 +90,10 @@ Each selected row needs working implementation, relevant verification, and a mat
 
 ### GLOBAL World Recent Signal Layer
 
-- [x] **RS-059** [GLOBAL Source Registry Design Implementation](../../BACKLOG.md#L1275) — 173 disabled entries after IAEA Top News feed verification, enum validation, config defaults, SQLite sync, and summary.
+- [x] **RS-059** [GLOBAL Source Registry Design Implementation](../../BACKLOG.md#L1275) — 174 disabled entries after WMO-hosted BoM feed verification, enum validation, config defaults, SQLite sync, and summary.
 - [x] **RS-060** [Disabled-By-Default GLOBAL Config](../../BACKLOG.md#L1285) — validated inclusion/attention flags and explicit social, auth, heavy-data, homepage, conflict gates.
 - [x] **RS-061** [GLOBAL SQLite Schema Or Extension](../../BACKLOG.md#L1296) — scoped registry/cluster/item storage plus indexed geography, event, family, impact and sensitivity facets; migration, refresh, expiry and purge verified.
-- [ ] **RS-062** [GLOBAL Fixture Pack](../../BACKLOG.md#L1306) — partial: GDACS, ReliefWeb, WHO, ECDC, USGS, NHC, UN News, UN Press and IAEA fixtures; other families/states pending.
+- [ ] **RS-062** [GLOBAL Fixture Pack](../../BACKLOG.md#L1306) — partial: GDACS, ReliefWeb, WHO, ECDC, USGS, NHC, WMO-hosted BoM RSS, UN News, UN Press and IAEA fixtures; other families/states pending.
 - [x] **RS-063** [GDACS Feed Parser](../../BACKLOG.md#L1316) — official RSS shape verified; dedicated GLOBAL parser, evidence, fixture, and scan persistence test.
 - [x] **RS-064** [GDACS API Fixture Parser](../../BACKLOG.md#L1324) — official Search GeoJSON shape verified; dedicated GLOBAL parser, evidence, fixture, and scan persistence test.
 - [x] **RS-065** [ReliefWeb Disasters API Parser](../../BACKLOG.md#L1332) — documented v2 fixture contract, metadata-only parser, offline persistence and appname gate tests; live response unverified.
@@ -247,6 +247,7 @@ The seven open host-console entries under High and Medium Priority remain in `BA
 
 ## Progress log
 
+- **2026-10-15:** Advanced RS-062 with an observed WMO-hosted Bureau of Meteorology RSS fixture. A bounded direct read returned HTTP 200, 287,988 bytes and 500 items; a linked CAP XML read returned HTTP 200, 3,983 bytes and multiple info blocks. The exact-channel RSS parser stores bounded issuer/GUID/CAP-link metadata and cancellation labels, keeps all rows background because CAP status/severity/expiry/area are unverified in RSS, and never fetches linked CAP. Offline persistence and changed-identity tests pass; live WMO access remains blocked. Full pytest and Ruff passed. Progress: 136/150.
 - **2026-10-15:** Advanced RS-078 with source-backed GLIDE identity. A bounded GDACS RSS read exposed six nonempty GLIDE values; ReliefWeb documents GLIDE fields for disasters and linked reports. The parsers retain those fields, exact valid IDs join GDACS and ReliefWeb items, and conflicting valid IDs prevent contextual merging. A three-source offline scan persists one corroborated event; direct GDACS and ReliefWeb HTTP remains disabled in app config. Full pytest and Ruff passed. Progress: 136/150.
 - **2026-10-15:** Strengthened completed RS-055 with a second exact NATIONAL live opt-in: NWS Actual Severe/Extreme alerts. Official OpenAPI filters and a bounded 756,698-byte/136-feature response were verified. Parser backstop, five-minute minimum, mocked gate/304/GET tests and an isolated temporary-state HTTP 200 scan pass; source health was healthy and all 136 stored records had UGC-derived states. Full pytest passed (723 tests); Ruff passed. Standing config remains disabled. Progress: 136/150.
 - **2026-10-15:** Advanced RS-034 with two BLS release Atom feeds. Bounded official reads returned HTTP 200 and 12 entries each; the fixture parser validates exact source/channel/release identities, retains title/link/time metadata and drops body text. Employment Situation and CPI registry rows stay disabled; no live BLS fetch is admitted. Offline scan and malformed-source tests pass. Progress: 136/150.
