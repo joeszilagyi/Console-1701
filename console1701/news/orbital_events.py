@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from datetime import UTC, datetime
+from math import isfinite
 from typing import Any
 
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
@@ -24,6 +25,16 @@ def _time(value: Any) -> datetime | None:
     except ValueError:
         return None
     return parsed.astimezone(UTC) if parsed.tzinfo else parsed.replace(tzinfo=UTC)
+
+
+def _number(value: Any) -> float | None:
+    if isinstance(value, bool):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if isfinite(number) else None
 
 
 def orbital_independent_family(value: Any) -> str:
@@ -62,9 +73,25 @@ def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     if designation and approach:
         identifiers.add(f"cad:{designation}:{approach}")
     fireball = evidence.get("jpl_fireball") or {}
-    fireball_time = _normalized(fireball.get("event_time_utc"))
-    if fireball_time:
-        identifiers.add(f"fireball:{fireball_time}")
+    fireball_at = _time(fireball.get("event_time_utc"))
+    fireball_identity = None
+    if event_type == "fireball" and fireball_at:
+        latitude = _number(fireball.get("latitude"))
+        longitude = _number(fireball.get("longitude"))
+        if (latitude is not None and longitude is not None
+                and -90 <= latitude <= 90 and -180 <= longitude <= 180):
+            fireball_identity = (
+                f"{fireball_at.isoformat()}:geo:{latitude:g}:{longitude:g}"
+            )
+        else:
+            radiated = _number(fireball.get("radiated_energy_1e10_joules"))
+            impact = _number(fireball.get("estimated_impact_energy_kt"))
+            if radiated is not None and impact is not None:
+                fireball_identity = (
+                    f"{fireball_at.isoformat()}:energy:{radiated:g}:{impact:g}"
+                )
+        if fireball_identity:
+            identifiers.add(f"fireball:{fireball_identity}")
     context = {
         field: _normalized(identity.get(field)) for field in (
             "mission_name", "launch_vehicle", "payload", "provider", "neo_designation",
@@ -107,6 +134,7 @@ def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         } if swpc_kp else {},
         "launch_at": _time(launch_library.get("net")),
         "ll_event_at": _time(launch_library.get("event_time")),
+        "fireball_identity": fireball_identity,
     }
 
 
@@ -142,6 +170,10 @@ def orbital_match_basis(left: dict[str, Any], right: dict[str, Any]) -> list[str
     )
     if hours > MATCH_WINDOW_HOURS and not near_source_launch and not near_source_event:
         return []
+    if left["event_type"] == right["event_type"] == "fireball":
+        return ["fireball_time_location_or_energy", "time_window"] if (
+            left["fireball_identity"] and left["fireball_identity"] == right["fireball_identity"]
+        ) else []
     if near_source_event:
         return ["linked_launch_library_event_id", "event_window"]
     if {left["event_type"], right["event_type"]} == {
