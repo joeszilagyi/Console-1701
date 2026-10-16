@@ -3144,6 +3144,11 @@ The circular ID in ORBITAL correlation now comes from the MPC-family `mpc_mpec.m
 parser field, so a changed copied `object_id` cannot split a revision or merge two
 different circulars behind a shared URL. A foreign-family parser field and a missing
 MPC parser ID cannot manufacture that notice identity. Other adapter identities remain open.
+The MPC object designation now comes from the matching parser's bounded `notice_title`
+only when it has the documented object-title shape. A changed generic
+`orbital_identity.mpc_designation` alias cannot split a circular revision, and a copied
+MPC parser block in another source family cannot claim the designation. The circular ID
+still takes precedence when two publications name the same object.
 Other adapter identities, including reentry and safe satellite cases pending verified sources,
 remain open.
 JPL fireball correlation now uses reported UTC peak-brightness time plus coordinates when

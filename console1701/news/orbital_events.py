@@ -8,6 +8,7 @@ from math import isfinite
 from typing import Any
 
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
+_MPC_OBJECT_TITLE = re.compile(r"20\d{2} [A-Z]{1,2}\d{0,3}\Z")
 _STOPWORDS = {
     "a", "an", "and", "at", "by", "for", "from", "in", "of", "on", "the",
     "to", "with", "nasa", "esa", "swpc", "space", "new", "update", "latest",
@@ -61,6 +62,7 @@ def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     identity = evidence.get("orbital_identity") or {}
     event_type = _normalized(identity.get("event_type")).replace(" ", "_")
     mpec = (evidence.get("mpc_mpec") or {}) if source_family == "mpc" else {}
+    mpc_title = str(mpec.get("notice_title") or "").strip()
     scout = (evidence.get("jpl_scout") or {}) if source_family == "jpl_cneos" else {}
     celestrak = (evidence.get("celestrak_iss") or {}) if source_family == "celestrak" else {}
     launch_library = (
@@ -109,6 +111,8 @@ def orbital_item_signature(item: dict[str, Any]) -> dict[str, Any]:
             "launch_library", "spaceflight_news_api"
         }:
             raw_value = source_event_id
+        elif field == "mpc_designation":
+            raw_value = mpc_title if _MPC_OBJECT_TITLE.fullmatch(mpc_title) else None
         else:
             raw_value = identity.get(field)
         value = _normalized(raw_value)

@@ -325,6 +325,12 @@ def test_mpc_designation_does_not_merge_distinct_circulars():
     assert "minor_planet_notice:2025 a18" in orbital_item_signature(revised)[
         "identifiers"
     ]
+    assert "mpc_designation:2025 aa" in orbital_item_signature(revised)[
+        "identifiers"
+    ]
+    assert "mpc_designation:2025 ab" not in orbital_item_signature(revised)[
+        "identifiers"
+    ]
     assert correlate_orbital_items([circulars[0], revised])[0]["item_ids"] == [1, 3]
 
     conflicting = deepcopy(circulars[0])
@@ -338,6 +344,9 @@ def test_mpc_designation_does_not_merge_distinct_circulars():
     foreign["evidence"]["source"]["source_family"] = "esa"
     foreign["evidence"]["orbital_identity"].pop("object_id")
     assert "minor_planet_notice:2025 a18" not in orbital_item_signature(foreign)[
+        "identifiers"
+    ]
+    assert "mpc_designation:2025 aa" not in orbital_item_signature(foreign)[
         "identifiers"
     ]
     missing = deepcopy(circulars[0])
