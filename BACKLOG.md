@@ -1496,8 +1496,17 @@ observed notice-page `At a glance` and first-summary-paragraph excerpts with exa
 The parser verifies each page's distribution date and message type from its badge and lead text,
 without storing the HTML or conferring alert/impact rank. One page also provides an exact public
 recommendations section anchor, stored only for that notice as its instruction URL. Eleven
-notices still have unverified type and distribution date. Offline scanning performs no HTTP. See
+additional official notice pages were checked through a rendered browser view after direct HTML
+requests again returned HTTP 403. Their bounded, manually transcribed At-a-glance and Summary
+observations now verify message type for all 14 index notices and distribution date for 13;
+HAN-00522 shows no date or notice ID in its rendered At-a-glance section, so its distribution
+date remains unknown. Five notices have source-printed ET time labels, retained without invented
+UTC instants. This is explicitly a rendered-page observation fixture, not a verified raw HTML
+shape or live parser. The search index's last-reviewed date remains the item timestamp; none of
+the page observations prove a current alert, affected geography, public instruction URL, or
+impact. Offline scanning performs no HTTP. See
 `docs/project/NATIONAL_CDC_HAN_ENDPOINT_BLOCKER.md` for source evidence and remaining gate.
+See `docs/project/NATIONAL_CDC_HAN_RENDERED_PAGE_OBSERVATIONS.md` for each observed page.
 
 CDC's documented Content Services media API returned zero records for both an exact HAN notice
 path filter and a Health Alert Network query in bounded 2026-10-15 checks; it does not unblock
@@ -1505,6 +1514,8 @@ this parser.
 Earlier bounded Content Services searches for a current HAN ID and three current notice-title
 terms also returned HTTP 200 with zero results. Earlier direct archive and notice reads
 returned HTTP 403; the later follow-up fetched the CDC archive and three notices successfully.
+Another bounded Content Services query for HAN-00532 and matching title terms returned zero
+media records on 2026-10-15; the content API still supplies no current notice alternative.
 CDC Stacks exposes machine-readable HAN archive metadata, but its collection expressly
 says entries are past alerts that may be superseded or expired, not current notices;
 it does not unblock live Recent Signal ingest. The search service is an index used by CDC's

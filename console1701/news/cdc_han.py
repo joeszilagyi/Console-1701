@@ -1,10 +1,10 @@
-"""Offline CDC HAN notice metadata from the archive's first-party JSON search view."""
+"""Offline CDC HAN index metadata and bounded official-page observations."""
 
 from __future__ import annotations
 
 import json
 import re
-from datetime import datetime
+from datetime import date, datetime
 from html import unescape
 from html.parser import HTMLParser
 from typing import Any
@@ -35,6 +35,12 @@ _BADGE_TYPES = {
 _PAGE_BADGE_TYPES = {
     "CDC Health Advisory": "Health Advisory",
     "This is an official CDC health update": "Health Update",
+}
+_OBSERVED_TYPE_PHRASES = {
+    "Health Alert Network (HAN) Health Advisory": "Health Advisory",
+    "This Health Advisory": "Health Advisory",
+    "is issuing this Health Advisory": "Health Advisory",
+    "Health Alert Network (HAN) Health Update": "Health Update",
 }
 
 
@@ -106,6 +112,50 @@ def _page_summary(summary: Any, lead: Any, anchor: Any,
     return distribution_date, badge_type, public_anchor
 
 
+def _rendered_page_observation(row: dict[str, Any], notice_id: str) -> tuple[
+    str | None, str, str | None
+]:
+    """Validate a bounded, manually transcribed official page observation.
+
+    This is an offline research snapshot, not a raw HTML response or live parser.
+    """
+    observed_at = row.get("observed_at")
+    if (set(row) != {"permalink", "at_a_glance", "summary_type_phrase", "observed_at"}
+            or not isinstance(observed_at, str)
+            or not re.fullmatch(r"20\d{2}-\d{2}-\d{2}", observed_at)
+            or not isinstance(row["at_a_glance"], list)):
+        raise NewsParserError("CDC HAN rendered observation lacks provenance")
+    try:
+        date.fromisoformat(observed_at)
+    except ValueError as exc:
+        raise NewsParserError("CDC HAN rendered observation lacks provenance") from exc
+    glance = row["at_a_glance"]
+    if (len(glance) not in {1, 3}
+            or any(not isinstance(value, str) or len(value) > 100 for value in glance)
+            or glance[0] != "Distributed via the CDC Health Alert Network"
+            or (len(glance) == 3 and glance[2] != notice_id)):
+        raise NewsParserError("CDC HAN rendered observation lacks distribution fields")
+    phrase = row["summary_type_phrase"]
+    message_type = _OBSERVED_TYPE_PHRASES.get(phrase)
+    if not message_type:
+        raise NewsParserError("CDC HAN rendered observation lacks summary message type")
+    if len(glance) == 1:
+        return None, message_type, None
+    # Date-only labels include one comma between day and year. Split a time
+    # suffix only after the four-digit year.
+    date_match = re.fullmatch(r"([A-Za-z]+ \d{1,2}, \d{4})(?:, (\d{1,2}:\d{2} [AP]M ET))?",
+                              glance[1])
+    if not date_match:
+        raise NewsParserError("CDC HAN rendered observation has invalid distribution date")
+    try:
+        distribution_date = datetime.strptime(date_match.group(1), "%B %d, %Y").date()
+        if date_match.group(2):
+            datetime.strptime(date_match.group(2), "%I:%M %p ET")
+    except ValueError as exc:
+        raise NewsParserError("CDC HAN rendered observation has invalid distribution date") from exc
+    return distribution_date.isoformat(), message_type, date_match.group(2)
+
+
 def _plain(value: Any, *, max_chars: int) -> str | None:
     if not isinstance(value, str):
         return None
@@ -144,7 +194,7 @@ def parse_cdc_han_search_fixture(source: dict[str, Any], payload_text: str) -> l
     summaries = payload.get("notice_summaries", [])
     if not isinstance(summaries, list) or len(summaries) > 20:
         raise NewsParserError("CDC HAN fixture has unbounded notice summaries")
-    by_url: dict[str, tuple[str, str, str | None]] = {}
+    by_url: dict[str, dict[str, str | None]] = {}
     for summary in summaries:
         if not isinstance(summary, dict) or not isinstance(summary.get("permalink"), str):
             raise NewsParserError("CDC HAN notice summary lacks a permalink")
@@ -159,11 +209,46 @@ def parse_cdc_han_search_fixture(source: dict[str, Any], payload_text: str) -> l
                 or parts.username or parts.password or port or parts.query or parts.fragment
                 or not match or summary_url in by_url):
             raise NewsParserError("CDC HAN notice summary has invalid or duplicate URL")
-        by_url[summary_url] = _page_summary(
+        date, message_type, anchor = _page_summary(
             summary.get("page_summary_html"), summary.get("summary_lead_html"),
             summary.get("recommendation_anchor_html"),
             f"CDCHAN-{match.group(1)}"
         )
+        by_url[summary_url] = {
+            "date": date, "type": message_type, "anchor": anchor, "time": None,
+            "type_basis": "official_notice_page_badge_and_summary_lead",
+            "date_basis": "official_notice_page_at_a_glance",
+            "observed_at": None,
+        }
+    observations = payload.get("notice_observations", [])
+    if not isinstance(observations, list) or len(observations) > 20:
+        raise NewsParserError("CDC HAN fixture has unbounded rendered observations")
+    for observation in observations:
+        if not isinstance(observation, dict):
+            raise NewsParserError("CDC HAN rendered observation must be an object")
+        observation_url = observation.get("permalink")
+        if not isinstance(observation_url, str):
+            raise NewsParserError("CDC HAN rendered observation lacks a permalink")
+        try:
+            parts = urlsplit(observation_url)
+            port = parts.port
+        except ValueError as exc:
+            raise NewsParserError("CDC HAN rendered observation has invalid URL") from exc
+        match = _NOTICE_PATH.fullmatch(parts.path)
+        if (parts.scheme != "https" or parts.hostname != "www.cdc.gov"
+                or parts.username or parts.password or port or parts.query or parts.fragment
+                or not match or observation_url in by_url):
+            raise NewsParserError("CDC HAN rendered observation has invalid or duplicate URL")
+        date, message_type, local_time = _rendered_page_observation(
+            observation, f"CDCHAN-{match.group(1)}"
+        )
+        by_url[observation_url] = {
+            "date": date, "type": message_type, "anchor": None,
+            "time": local_time,
+            "type_basis": "official_notice_page_rendered_summary_phrase",
+            "date_basis": "official_notice_page_rendered_at_a_glance" if date else None,
+            "observed_at": observation["observed_at"],
+        }
     items: list[dict[str, Any]] = []
     seen: set[str] = set()
     for index, row in enumerate(rows):
@@ -202,7 +287,7 @@ def parse_cdc_han_search_fixture(source: dict[str, Any], payload_text: str) -> l
             and badge.startswith("https://www.cdc.gov/han/media/images/") else None
         )
         detail = by_url.pop(url, None)
-        if detail and message_type_hint and detail[1] != message_type_hint:
+        if detail and message_type_hint and detail["type"] != message_type_hint:
             raise NewsParserError(f"CDC HAN row {index} conflicts with its notice summary")
         item = _normalize_item(source, {
             "title": title, "url": url, "description": excerpt,
@@ -214,18 +299,23 @@ def parse_cdc_han_search_fixture(source: dict[str, Any], payload_text: str) -> l
             "search_url": SEARCH_URL, "notice_url": url,
             "index_last_reviewed_at": reviewed, "index_article_date_at": article_date,
             "date_basis": "CDC search index last-reviewed date; distribution time unverified",
-            "message_type": detail[1] if detail else None,
-            "message_type_basis": "official_notice_page_badge_and_summary_lead" if detail else None,
+            "message_type": detail["type"] if detail else None,
+            "message_type_basis": detail["type_basis"] if detail else None,
+            "notice_page_observed_at": detail["observed_at"] if detail else None,
             "message_type_hint": message_type_hint,
             "message_type_hint_basis": (
                 "index badge filename; separate from notice-page verification"
             ),
-            "distribution_date": detail[0] if detail else None,
-            "distribution_time": None,
-            "distribution_date_basis": "official_notice_page_at_a_glance" if detail else None,
+            "distribution_date": detail["date"] if detail else None,
+            "distribution_time": detail["time"] if detail else None,
+            "distribution_date_basis": detail["date_basis"] if detail else None,
+            "distribution_time_basis": (
+                "official_notice_page_rendered_at_a_glance_ET"
+                if detail and detail["time"] else None
+            ),
             "affected_population": None, "jurisdiction": None,
             "public_instruction_url": (
-                f"{url}#{detail[2]}" if detail and detail[2] else None
+                f"{url}#{detail['anchor']}" if detail and detail["anchor"] else None
             ),
             "preliminary_status": "unverified",
             "active_alert_verified": False, "public_impact_verified": False,
