@@ -51,10 +51,13 @@ def _time(value: Any) -> datetime | None:
 def global_item_signature(item: dict[str, Any]) -> dict[str, Any]:
     evidence = item.get("evidence") or {}
     contract = evidence.get("global") or {}
-    gdacs = evidence.get("gdacs") or {}
-    disaster = evidence.get("reliefweb_disaster") or {}
-    report = evidence.get("reliefweb_report") or {}
-    who = evidence.get("who_don") or {}
+    source = evidence.get("source") or {}
+    family = _normalized(source.get("source_family")) or "unknown"
+    gdacs = (evidence.get("gdacs") or {}) if family == "gdacs" else {}
+    disaster = (evidence.get("reliefweb_disaster") or {}) if family == "reliefweb" else {}
+    report = (evidence.get("reliefweb_report") or {}) if family == "reliefweb" else {}
+    who = (evidence.get("who_don") or {}) if family == "who" else {}
+    usgs = (evidence.get("usgs_earthquake") or {}) if family == "usgs" else {}
     identity = evidence.get("global_identity") or {}
     identifiers: set[str] = set()
     if gdacs.get("event_id") and gdacs.get("event_type"):
@@ -75,9 +78,9 @@ def global_item_signature(item: dict[str, Any]) -> dict[str, Any]:
             identifiers.add(identifier)
     if who.get("don_id"):
         identifiers.add(f"who_don:{_normalized(who['don_id'])}")
-    if (evidence.get("usgs_earthquake") or {}).get("id"):
+    if usgs.get("id"):
         identifiers.add(
-            f"usgs_earthquake:{_normalized(evidence['usgs_earthquake']['id'])}"
+            f"usgs_earthquake:{_normalized(usgs['id'])}"
         )
     for field in ("storm_id", "earthquake_id", "cyber_incident_id"):
         if identity.get(field):
@@ -126,9 +129,9 @@ def global_item_signature(item: dict[str, Any]) -> dict[str, Any]:
         },
         "tokens": set(_TOKEN_RE.findall(str(item.get("title") or "").lower())) - _STOPWORDS,
         "published_at": _time(item.get("source_published_at") or item.get("first_seen_at")),
-        "family": _normalized((evidence.get("source") or {}).get("source_family")) or "unknown",
-        "source_key": str((evidence.get("source") or {}).get("source_key") or ""),
-        "official": (evidence.get("source") or {}).get("official_status") == "official",
+        "family": family,
+        "source_key": str(source.get("source_key") or ""),
+        "official": source.get("official_status") == "official",
         "article_url": str(item.get("canonical_url") or item.get("url") or "").strip(),
         "syndication_id": _normalized(identity.get("syndication_id")),
     }

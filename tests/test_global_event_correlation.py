@@ -90,13 +90,33 @@ def test_global_correlation_rejects_conflicting_source_ids_across_families():
                   title="Strong earthquake near Example Island")
     second = _item(2, family="reliefweb", event_type="earthquake",
                    title="Strong earthquake near Example Island")
-    first["evidence"]["usgs_earthquake"] = {"id": "us1001"}
-    second["evidence"]["usgs_earthquake"] = {"id": "us1002"}
+    first["evidence"]["global_identity"] = {"earthquake_id": "us1001"}
+    second["evidence"]["global_identity"] = {"earthquake_id": "us1002"}
     assert [group["item_ids"] for group in correlate_global_items([first, second])] == [
         [1], [2]
     ]
-    second["evidence"]["usgs_earthquake"]["id"] = "us1001"
+    second["evidence"]["global_identity"]["earthquake_id"] = "us1001"
     assert correlate_global_items([first, second])[0]["item_ids"] == [1, 2]
+
+
+def test_global_correlation_ignores_other_families_source_ids():
+    field_cases = (
+        ("gdacs", {"event_type": "TC", "event_id": "12345"}),
+        ("reliefweb_disaster", {"id": "51000", "glide": "TC-2026-000001-GUM"}),
+        ("reliefweb_report", {"disaster_ids": ["51000"]}),
+        ("who_don", {"don_id": "2026-DON620"}),
+        ("usgs_earthquake", {"id": "us1001"}),
+    )
+    for key, value in field_cases:
+        first = _item(1, family="un_press", title="Different story")
+        second = _item(2, family="un_news", title="Another story")
+        first["evidence"][key] = value
+        second["evidence"][key] = value
+        first["evidence"]["global"]["geography_basis"] = "unverified"
+        second["evidence"]["global"]["geography_basis"] = "unverified"
+        assert [group["item_ids"] for group in correlate_global_items([
+            first, second
+        ])] == [[1], [2]]
 
 
 def test_global_correlation_rejects_multi_country_bridge():
